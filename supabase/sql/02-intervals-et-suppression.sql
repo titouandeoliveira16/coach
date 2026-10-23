@@ -11,6 +11,8 @@ create table if not exists public.intervals_cles (
 );
 alter table public.intervals_cles enable row level security;
 revoke all on public.intervals_cles from anon, authenticated;
+-- Le projet n'expose pas automatiquement les nouvelles tables : droit explicite pour la fonction serveur
+grant select, insert, update, delete on public.intervals_cles to service_role;
 
 -- Bouton « Supprimer toutes mes données » (Réglages)
 drop policy if exists "supprimer mes donnees" on public.donnees;
