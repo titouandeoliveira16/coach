@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { aujourdhui } from '../../../core/dates'
 import { Carte } from '../../../core/ui/Carte'
 import { ChampNombre } from '../../../core/ui/ChampNombre'
 import { formatNombre } from '../../../core/format'
@@ -35,7 +36,7 @@ export function SectionVelo() {
       {calculateur && (
         <CalculateurCP
           onUtiliser={(cpW, wPrimeKj) => {
-            modifier({ cpW, wPrimeKj })
+            modifier({ cpW, wPrimeKj, tests: [...reglages.tests, { date: aujourdhui(), type: 'cp', valeur: cpW }] })
             setCalculateur(false)
           }}
         />

@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie'
-import type { MesureMatin } from '../modules/entrainement/types'
+import type { Decision, Indispo, MesureMatin, Seance, SeancePrevue } from '../modules/entrainement/types'
 
 /** Un réglage = une clé (ex. "profil") et sa valeur (objet libre). */
 export interface Reglage {
@@ -38,6 +38,10 @@ class BaseCoach extends Dexie {
   mesures!: Table<MesureMatin, string>
   pesees!: Table<Pesee, string>
   suppressions!: Table<Suppression, string>
+  seances!: Table<Seance, string>
+  prevues!: Table<SeancePrevue, string>
+  indispos!: Table<Indispo, string>
+  decisions!: Table<Decision, string>
 
   constructor() {
     super('coach')
@@ -46,6 +50,8 @@ class BaseCoach extends Dexie {
     this.version(2).stores({ mesures: 'date', pesees: 'date' })
     // Synchronisation : suppressions en attente d'envoi
     this.version(3).stores({ suppressions: 'id' })
+    // Étapes 4 à 11 : séances réalisées et prévues, indisponibilités, décisions du jour
+    this.version(4).stores({ seances: 'id, date', prevues: 'id, date', indispos: 'date', decisions: 'date' })
   }
 }
 
@@ -55,7 +61,8 @@ export const db = new BaseCoach()
  * Tables qui contiennent les données de l'utilisateur :
  * ce sont elles qui sont synchronisées, exportées et importées.
  */
-export const TABLES_DONNEES = () => [db.reglages, db.mesures, db.pesees] as Table<object, string>[]
+export const TABLES_DONNEES = () =>
+  [db.reglages, db.mesures, db.pesees, db.seances, db.prevues, db.indispos, db.decisions] as Table<object, string>[]
 
 /**
  * Demande à iOS / au navigateur de ne pas effacer nos données

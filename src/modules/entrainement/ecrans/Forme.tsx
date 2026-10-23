@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { db } from '../../../core/db'
 import { aujourdhui } from '../../../core/dates'
 import { Carte } from '../../../core/ui/Carte'
+import { CarteAujourdhui } from '../forme/CarteAujourdhui'
 import { CartePesee } from '../forme/CartePesee'
 import { ResumeMatin } from '../forme/ResumeMatin'
 import { SaisieMatin } from '../forme/SaisieMatin'
@@ -31,6 +32,8 @@ export function Forme() {
       ) : (
         <SaisieMatin key={duJour?.modifieLe} existante={duJour} onTermine={() => setEdition(false)} />
       )}
+
+      {duJour && !edition && <CarteAujourdhui />}
 
       <CartePesee />
 

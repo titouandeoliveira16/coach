@@ -27,7 +27,7 @@ export function surEcriture(ecouteur: Ecouteur) {
 const prevenir = () => ecouteurs.forEach((e) => e())
 
 /** Ajoute ou remplace une ligne. */
-export async function enregistrer<T>(table: Table<T, string>, ligne: T) {
+export async function enregistrer<T>(table: Table<T, string>, ligne: NoInfer<T>) {
   const { _recu, ...propre } = ligne as T & Horodate
   await table.put({ ...propre, _modifie: new Date().toISOString() } as T)
   prevenir()

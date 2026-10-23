@@ -245,3 +245,19 @@ export function demarrerSynchro() {
     if (document.visibilityState === 'visible') synchroniser()
   })
 }
+
+/**
+ * Supprime TOUTES les données : sur le serveur (si connecté) puis sur cet appareil.
+ * Le compte lui-même reste (pour le supprimer : Supabase → Authentication → Users).
+ */
+export async function supprimerToutesMesDonnees() {
+  const userId = etat.session?.user.id
+  if (userId) {
+    const { error } = await supabase.from('donnees').delete().eq('user_id', userId)
+    if (error) throw new Error(`Suppression sur le serveur impossible : ${error.message}`)
+    localStorage.removeItem(cleCurseurs(userId))
+  }
+  await db.transaction('rw', [...TABLES_DONNEES(), db.suppressions], async () => {
+    for (const t of [...TABLES_DONNEES(), db.suppressions]) await t.clear()
+  })
+}

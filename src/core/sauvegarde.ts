@@ -80,3 +80,43 @@ export async function importerDonnees(fichier: File): Promise<void> {
   })
   signalerEcriture()
 }
+
+/** Transforme des lignes (objets) en CSV (séparateur « ; », compatible Excel français). */
+export function versCsv(lignes: Record<string, unknown>[]) {
+  const colonnes = [...new Set(lignes.flatMap((l) => Object.keys(l)))].filter((c) => !c.startsWith('_'))
+  const cellule = (v: unknown) => {
+    if (v === undefined || v === null) return ''
+    const texte = Array.isArray(v) ? v.join('|') : typeof v === 'number' ? String(v).replace('.', ',') : String(v)
+    return /[;"\n]/.test(texte) ? `"${texte.replace(/"/g, '""')}"` : texte
+  }
+  return [colonnes.join(';'), ...lignes.map((l) => colonnes.map((c) => cellule(l[c])).join(';'))].join('\n')
+}
+
+/** Exporte chaque table de données en CSV (un fichier par table). */
+export async function exporterCsv(): Promise<boolean> {
+  const jour = new Date().toISOString().slice(0, 10)
+  const fichiers: File[] = []
+  for (const table of TABLES_DONNEES()) {
+    if (table.name === 'reglages') continue
+    const lignes = (await table.toArray()) as Record<string, unknown>[]
+    if (lignes.length) fichiers.push(new File(['﻿' + versCsv(lignes)], `coach-${table.name}-${jour}.csv`, { type: 'text/csv' }))
+  }
+  if (!fichiers.length) throw new Error('Aucune donnée à exporter.')
+  if (navigator.canShare?.({ files: fichiers })) {
+    try {
+      await navigator.share({ files: fichiers })
+    } catch (e) {
+      if ((e as Error).name === 'AbortError') return false
+      throw e
+    }
+  } else {
+    for (const f of fichiers) {
+      const lien = document.createElement('a')
+      lien.href = URL.createObjectURL(f)
+      lien.download = f.name
+      lien.click()
+      URL.revokeObjectURL(lien.href)
+    }
+  }
+  return true
+}

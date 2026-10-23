@@ -2,7 +2,8 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useRef, useState } from 'react'
 import { db } from '../core/db'
 import { depuis } from '../core/format'
-import { CLE_DERNIERE_SAUVEGARDE, exporterDonnees, importerDonnees } from '../core/sauvegarde'
+import { CLE_DERNIERE_SAUVEGARDE, exporterCsv, exporterDonnees, importerDonnees } from '../core/sauvegarde'
+import { supprimerToutesMesDonnees } from '../core/synchro'
 import { Bouton } from '../core/ui/Bouton'
 import { Carte } from '../core/ui/Carte'
 
@@ -48,7 +49,29 @@ export function SectionSauvegarde() {
         <Bouton variante="secondaire" onClick={() => champFichier.current?.click()}>
           Restaurer une sauvegarde
         </Bouton>
+        <Bouton variante="secondaire" onClick={async () => {
+          try {
+            if (await exporterCsv()) setMessage('Fichiers CSV exportés ✓')
+          } catch (e) {
+            setMessage((e as Error).message)
+          }
+        }}>
+          Exporter en CSV (tableur)
+        </Bouton>
       </div>
+      <button type="button" className="mt-3 w-full py-2 text-sm text-[#f87171]"
+        onClick={async () => {
+          if (!confirm('Supprimer TOUTES tes données (séances, mesures, réglages), ici et sur ton compte ? C’est définitif.')) return
+          if (!confirm('Vraiment ? Pense à exporter une sauvegarde avant.')) return
+          try {
+            await supprimerToutesMesDonnees()
+            setMessage('Toutes les données ont été supprimées. Déconnecte aussi tes autres appareils.')
+          } catch (e) {
+            setMessage((e as Error).message)
+          }
+        }}>
+        Supprimer toutes mes données
+      </button>
       <input
         ref={champFichier}
         type="file"

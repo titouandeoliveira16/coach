@@ -12,6 +12,10 @@ const DEFAUT: ReglagesEntrainement = {
     { nom: 'Z5', wMin: 296, wMax: 431, fcMin: 194, fcMax: 204 },
     { nom: 'Sprint', wMin: 674 },
   ],
+  seuilCoursePct: 87,
+  chargeRef: 'trimp',
+  modeleCible: 'polarise',
+  tests: [{ date: '2026-09-01', type: 'vma', valeur: 18.5 }],
 }
 
 export const useReglagesEntrainement = () => useReglage<ReglagesEntrainement>('entrainement', DEFAUT)
