@@ -11,9 +11,11 @@ Points décidés ou mis de côté, à reprendre au bon moment.
 1. La charge de course doit faire baisser le budget vélo quand elle monte fort.
 2. Phases spécifique et affûtage : attendre les courses vélo 2027.
 3. Point après 4 semaines de données réelles (watts Z2, durées, seuils du feu).
-4. Rappels : revoir le rappel du matin avant l'installation dans Supabase.
 
 ## Plus tard
 - Début décembre (Zwift) : envoi des séances dans Zwift (mode ERG).
 - Capteur de puissance dehors : vrais kJ des sorties extérieures.
 - Autres modules : Nutrition, Apprentissage, Argent.
+
+## Fait
+- Rappels installés et testés le 23/10/2026 (matin 8 h 30, pesée le mardi).
