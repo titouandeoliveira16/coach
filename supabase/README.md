@@ -16,3 +16,12 @@ ne sont pas transmises par son API (règles de Strava) : relie Garmin Connect et
 5. **Dans l'appli** : Réglages → Intervals.icu → coller la clé (et l'ID athlète) → Relier → Importer mes 3 derniers mois.
 
 La fonction vérifie elle-même l'utilisateur connecté : la vérification JWT de Supabase peut rester activée.
+
+## Rappels par notification (à faire une fois)
+
+1. **Supabase → Edge Functions → Deploy a new function → Via Editor** : nom **`rappels`**, coller
+   `functions/rappels/index.ts`, Deploy. Puis, dans les réglages de la fonction, **désactiver « Verify JWT »**
+   (la fonction vérifie elle-même l'utilisateur, et l'envoi programmé l'appelle sans compte).
+2. **Supabase → SQL Editor** : exécuter `sql/03-rappels.sql` (tables + envoi toutes les 15 min).
+   Si `pg_cron` ou `pg_net` est refusé : Database → Extensions → activer **pg_cron** et **pg_net**, puis relancer le script.
+3. **Dans l'appli, sur l'iPhone (ouverte depuis l'écran d'accueil)** : Réglages → Rappels → Activer → Autoriser.

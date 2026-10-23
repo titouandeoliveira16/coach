@@ -81,6 +81,11 @@ export function ModeEmploi() {
           <p>Partout dans l'appli, touche un <b className="text-texte">?</b> pour savoir comment un chiffre est calculé et sur quelle étude il s'appuie.</p>
         </Rubrique>
 
+        <Rubrique titre="🔔 Rappels">
+          <p>Chaque matin à 8 h 30 pour ton matin, le mardi pour la pesée. Rien n'arrive si c'est déjà fait.</p>
+          <p>À activer une fois dans <b className="text-texte">Réglages → Rappels</b>, sur l'iPhone.</p>
+        </Rubrique>
+
         <Rubrique titre="🔄 Sauvegarde et mises à jour">
           <p>Tout se sauvegarde <b className="text-texte">seul sur le serveur</b> : téléphone et ordi voient les mêmes données.</p>
           <p>Après une mise à jour : <b className="text-texte">ferme complètement l'appli puis rouvre-la</b>. Le numéro de version est en bas de Réglages.</p>

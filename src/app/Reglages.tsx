@@ -5,6 +5,7 @@ import { EnTete } from '../core/ui/EnTete'
 import { useProfil } from '../core/profil'
 import { MODULES } from './modules'
 import { SectionCompte } from './SectionCompte'
+import { SectionRappels } from './SectionRappels'
 
 /** Vrai si l'appli est lancée depuis l'écran d'accueil (et non dans Safari). */
 function estInstallee() {
@@ -25,6 +26,7 @@ export function Reglages() {
       <EnTete titre="Réglages" />
       <div className="space-y-3 px-4">
         <SectionCompte />
+        <SectionRappels />
 
         <Carte titre="Profil">
           <ChampNombre libelle="FC max" unite="bpm" decimales={0} valeur={profil.fcMax} onValider={(v) => modifierProfil({ fcMax: v })} />
