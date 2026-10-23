@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { aujourdhui } from '../../../core/dates'
 import { CarteAujourdhui } from '../forme/CarteAujourdhui'
+import { CartePanne } from '../forme/CartePanne'
 import { CartePesee } from '../forme/CartePesee'
 import { CarteRemise } from '../forme/CarteRemise'
 import { CarteResultat } from '../forme/CarteResultat'
@@ -33,6 +34,7 @@ export function Aujourdhui() {
       ) : (
         <SaisieMatin key={duJour?.modifieLe} existante={duJour} onTermine={() => setEdition(false)} />
       )}
+      <CartePanne />
       <CartePesee />
     </div>
   )

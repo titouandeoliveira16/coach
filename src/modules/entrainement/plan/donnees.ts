@@ -5,6 +5,7 @@ import { srpe } from '../../../metrics/charge'
 import { replanifier, trimpPrevu, type Deplacement } from '../../../metrics/planif'
 import { chargeDe, chargerContexte, lundiDe } from '../seances/donnees'
 import { TYPES_COURSE, type Indispo, type Raison, type SeancePrevue } from '../types'
+import { joursPanneVelo } from './imprevus'
 
 /** Les 7 dates (lundi → dimanche) de la semaine qui commence `lundi`. */
 export const joursDe = (lundi: string) => Array.from({ length: 7 }, (_, i) => decalerJour(lundi, i))
@@ -16,7 +17,7 @@ const RPE_TYPIQUE = { basse: 2.5, moyenne: 5.5, haute: 7.5 } as const
 const actives = (p: SeancePrevue) => p.statut === 'prevue' || p.statut === 'faite'
 
 /** Applique le résultat d'une replanification et renvoie des phrases lisibles. */
-async function appliquer(deplacements: Deplacement[], raison?: Raison) {
+export async function appliquer(deplacements: Deplacement[], raison?: Raison) {
   const phrases: string[] = []
   for (const d of deplacements) {
     const p = await db.prevues.get(d.id)
@@ -61,6 +62,8 @@ export async function declarerNonFaite(p: SeancePrevue, raison: Raison) {
   if (demain > semaine[6]) return [`${p.titre} non faite (${raison}) : la semaine est terminée.`]
   const prevues = (await db.prevues.where('date').between(semaine[0], semaine[6], true, true).toArray()).filter((x) => x.statut === 'prevue')
   const indispos = new Set((await db.indispos.where('date').between(semaine[0], semaine[6], true, true).toArray()).map((i) => i.date))
+  // Vélo en panne : pas de vélo ces jours-là
+  if (p.sport === 'velo') for (const d of await joursPanneVelo()) indispos.add(d)
   return appliquer(replanifier(semaine, [...prevues, p], indispos, [p.id], demain), raison)
 }
 

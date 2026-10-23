@@ -112,7 +112,7 @@ export const TYPES_COURSE = {
 export type TypeCourse = keyof typeof TYPES_COURSE
 
 /** Raisons d'indisponibilité ou de séance non faite. */
-export const RAISONS = ['Boulot', 'Cours / fac', 'Stage', 'Fatigue', 'Malade', 'Douleur / blessure', 'Météo', 'Perso'] as const
+export const RAISONS = ['Boulot', 'Cours / fac', 'Stage', 'Fatigue', 'Malade', 'Douleur / blessure', 'Matériel', 'Météo', 'Perso'] as const
 export type Raison = (typeof RAISONS)[number]
 
 /** Une séance réalisée (saisie, importée d'un .FIT ou d'Intervals.icu). */
@@ -185,6 +185,8 @@ export interface SeancePrevue {
   minutesCle?: number
   /** Vélo généré : famille, format, palier, cible */
   velo?: SeanceVelo
+  /** Minutes ajoutées pour compenser un imprévu (ex. vélo en panne) */
+  compensationMin?: number
   /** Séance d'intensité : blocs tous tenus ou non (fait avancer la progression) */
   resultat?: 'reussie' | 'ratee'
 }

@@ -10,6 +10,7 @@ import { Feuille } from '../../../core/ui/Feuille'
 import { Puces } from '../../../core/ui/Puces'
 import { AIDES } from '../aides'
 import { Deroule } from '../plan/Deroule'
+import { joursPanneVelo } from '../plan/imprevus'
 import { FormulairePrevue } from '../plan/FormulairePrevue'
 import { chargesSemaine, declarerNonFaite, joursDe, supprimerPrevue } from '../plan/donnees'
 import { alertesCumul, estIntensite, genererSemaineVelo, lireMeta, noterResultat } from '../plan/programme'
@@ -43,6 +44,7 @@ export function Semaine() {
   const jours = joursDe(lundi)
   const prevues = useLiveQuery(() => db.prevues.where('date').between(jours[0], jours[6], true, true).toArray(), [lundi])
   const seances = useLiveQuery(() => db.seances.where('date').between(jours[0], jours[6], true, true).toArray(), [lundi])
+  const pannes = useLiveQuery(joursPanneVelo)
   const [ajout, setAjout] = useState<string | null>(null)
   const [choisie, setChoisie] = useState<SeancePrevue | null>(null)
   const [message, setMessage] = useState<string[]>()
@@ -74,7 +76,10 @@ export function Semaine() {
         return (
           <section key={d} className={`rounded-2xl border bg-surface p-3 ${d === aujourdhui() ? 'border-accent' : 'border-bordure'}`}>
             <div className="flex items-center justify-between">
-              <p className="font-semibold capitalize">{depuisJour(d).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric' })}</p>
+              <p className="font-semibold capitalize">
+                {depuisJour(d).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric' })}
+                {pannes?.has(d) && <span className="ml-2 text-xs font-normal normal-case text-[#fb923c]">🔧 vélo en panne</span>}
+              </p>
               <button type="button" onClick={() => setAjout(d)} aria-label="Ajouter une séance" className="px-2 text-xl text-accent">+</button>
             </div>
             {duJour.map((p) => {

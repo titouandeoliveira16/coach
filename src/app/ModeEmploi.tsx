@@ -59,6 +59,12 @@ export function ModeEmploi() {
           <p>Après une séance d'intensité, réponds à <b className="text-texte">« Tenue ? »</b> : Oui = la prochaine sera un peu plus longue ou plus forte. Pas tout = un peu plus facile.</p>
         </Rubrique>
 
+        <Rubrique titre="🔧 Un imprévu (vélo en panne)">
+          <p>Dans <b className="text-texte">Aujourd'hui</b>, touche « Un imprévu ? Vélo en panne » et dis jusqu'à quand.</p>
+          <p>L'appli annule le vélo de ces jours-là, déplace l'intensité après la réparation si possible, et rallonge un peu ton prochain footing facile (15 min au plus).</p>
+          <p>Vélo réparé plus tôt ? Touche « Il remarche ».</p>
+        </Rubrique>
+
         <Rubrique titre="🎯 Les tests CP">
           <p>Ils sont déjà dans ton programme (dates dans <b className="text-texte">Progrès → Mes prochains tests</b>).</p>
           <p>Complet = 3 efforts à fond (1 h 50, le dimanche). Court = 2 efforts (1 h 15).</p>

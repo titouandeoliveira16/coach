@@ -10,6 +10,7 @@ import { programmeDe } from '../reglagesEntrainement'
 import { chargeDe, chargerContexte, domaineDe, lundiDe } from '../seances/donnees'
 import type { ReglagesEntrainement, SeancePrevue } from '../types'
 import { chargePrevue, joursDe } from './donnees'
+import { joursPanneVelo } from './imprevus'
 
 /** Familles de séances d'intensité (hors Z2 et test). */
 const INTENSITES: Famille[] = ['vo2-courts', 'vo2-longs', 'seuil', 'seuil-variable', 'sweet-spot', 'tempo']
@@ -132,6 +133,8 @@ export async function genererSemaineVelo(lundi: string) {
   const prevues = (await db.prevues.where('date').between(decalerJour(lundi, -1), decalerJour(lundi, 7), true, true).toArray()).filter(actives)
   const seances = await db.seances.where('date').between(decalerJour(lundi, -1), decalerJour(lundi, 7), true, true).toArray()
   const indispos = new Set((await db.indispos.where('date').between(lundi, semaine[6], true, true).toArray()).map((i) => i.date))
+  // Vélo en panne : aucun vélo ces jours-là
+  for (const d of await joursPanneVelo()) indispos.add(d)
   const dansSemaine = (d: string) => d >= lundi && d <= semaine[6]
 
   // Jours occupés (une séance par jour) et séances dures (pour ne pas enchaîner deux jours durs)
