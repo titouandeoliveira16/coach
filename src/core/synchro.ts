@@ -138,9 +138,17 @@ async function envoyer(userId: string, curseurs: Curseurs) {
   }
   if (!aEnvoyer.length) return
 
+  // Une même ligne ne doit figurer qu'une fois dans l'envoi (ex. supprimée puis recréée) : on garde la version la plus récente
+  const parCle = new Map<string, (typeof aEnvoyer)[number]>()
+  for (const l of aEnvoyer) {
+    const k = `${l.table_nom}|${l.cle}`
+    const deja = parCle.get(k)
+    if (!deja || l.modifie_le >= deja.modifie_le) parCle.set(k, l)
+  }
+
   const { error } = await supabase
     .from('donnees')
-    .upsert(aEnvoyer.map((l) => ({ ...l, user_id: userId })), { onConflict: 'user_id,table_nom,cle' })
+    .upsert([...parCle.values()].map((l) => ({ ...l, user_id: userId })), { onConflict: 'user_id,table_nom,cle' })
   if (error) throw error
 
   await db.suppressions.clear()

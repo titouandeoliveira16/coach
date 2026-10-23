@@ -29,7 +29,12 @@ const prevenir = () => ecouteurs.forEach((e) => e())
 /** Ajoute ou remplace une ligne. */
 export async function enregistrer<T>(table: Table<T, string>, ligne: NoInfer<T>) {
   const { _recu, ...propre } = ligne as T & Horodate
-  await table.put({ ...propre, _modifie: new Date().toISOString() } as T)
+  const cle = (propre as Record<string, unknown>)[table.schema.primKey.keyPath as string]
+  await db.transaction('rw', table, db.suppressions, async () => {
+    await table.put({ ...propre, _modifie: new Date().toISOString() } as T)
+    // Ligne recréée après une suppression : la suppression en attente n'a plus lieu d'être
+    await db.suppressions.delete(`${table.name}|${cle}`)
+  })
   prevenir()
 }
 

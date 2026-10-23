@@ -13,7 +13,7 @@ export function useReglage<T extends object>(cle: string, defaut: T) {
   // Lecture + écriture dans une même transaction : deux champs modifiés
   // coup sur coup ne s'écrasent pas l'un l'autre.
   const modifier = (changements: Partial<T>) =>
-    db.transaction('rw', db.reglages, async () => {
+    db.transaction('rw', db.reglages, db.suppressions, async () => {
       const actuel = (await db.reglages.get(cle))?.valeur as Partial<T> | undefined
       await enregistrer(db.reglages, { id: cle, valeur: { ...defaut, ...actuel, ...changements } })
     })
