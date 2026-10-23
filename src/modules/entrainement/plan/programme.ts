@@ -2,7 +2,7 @@ import { db } from '../../../core/db'
 import { aujourdhui, decalerJour, NOMS_JOURS, depuisJour } from '../../../core/dates'
 import { enregistrer, supprimer } from '../../../core/stockage'
 import {
-  budgetSemaine, formatDe, projeterSaison, choisirFormat, construireIntervalles, construireTest, construireZ2, estSemaineAllegee, etatProgression,
+  budgetSemaine, formatDe, plafondsReprise, projeterSaison, choisirFormat, construireIntervalles, construireTest, construireZ2, estSemaineAllegee, etatProgression,
   minutesPourKj, NOMS_PHASES, palierPossible, phaseDe, placer, SPRINTS, type BilanSemaine, type Famille, type HistoIntensite,
   type SeanceConstruite,
 } from '../../../metrics/programme'
@@ -165,6 +165,8 @@ export async function genererSemaineVelo(lundi: string) {
   const raisonAllegee = course ? `semaine de ta course (${course.nom})` : 'semaine allégée (1 sur 4)'
   const { w: z2W } = await z2Actuel()
   const maxDuJour = (d: string) => (roles[semaine.indexOf(d)] === 'velo-long' ? prog.maxLongMin : prog.maxSemaineMin)
+  // Reprise progressive : durées des séances Z2 plafonnées les premières semaines
+  const cap = plafondsReprise(phase.type === 'reprise' ? nSemaine : undefined, prog.maxSemaineMin, prog.maxLongMin)
   const phrases: string[] = []
 
   // Séance d'intensité
@@ -192,8 +194,8 @@ export async function genererSemaineVelo(lundi: string) {
 
   // Budget kJ de la semaine
   const kjIntensite = intensite?.kj ?? 0
-  const nominal = kjIntensite + construireZ2(60, z2W).kj + construireZ2(100, z2W).kj
-  const plafond = kjIntensite + roles.filter((x) => x === 'velo-z2').length * construireZ2(prog.maxSemaineMin, z2W).kj + construireZ2(prog.maxLongMin, z2W).kj
+  const nominal = kjIntensite + construireZ2(Math.min(60, cap.z2), z2W).kj + construireZ2(Math.min(100, cap.long), z2W).kj
+  const plafond = kjIntensite + roles.filter((x) => x === 'velo-z2').length * construireZ2(cap.z2, z2W).kj + construireZ2(cap.long, z2W).kj
   const b = budgetSemaine(await bilanPrecedent(lundi), nominal, plafond, allegee, raisonAllegee)
 
   // Répartition du reste du budget en Z2 : 60 % pour la sortie longue
@@ -207,11 +209,11 @@ export async function genererSemaineVelo(lundi: string) {
   const aCreer: [string, SeanceConstruite][] = []
   if (placement.intensite && intensite) aCreer.push([placement.intensite, intensite])
   if (placement.long) {
-    const min = borner(prog.minLongMin * (allegee ? 0.7 : 1), prog.maxLongMin, minutesPourKj(reste * partLong, z2W))
+    const min = borner(Math.min(prog.minLongMin, cap.long) * (allegee ? 0.7 : 1), cap.long, minutesPourKj(reste * partLong, z2W))
     aCreer.push([placement.long, construireZ2(min, z2W, SPRINTS[Math.min(nLongs, SPRINTS.length - 1)])])
   }
   for (const d of placement.z2) {
-    const min = borner(45, maxDuJour(d), minutesPourKj((reste * (1 - partLong)) / placement.z2.length, z2W))
+    const min = borner(Math.min(45, cap.z2), Math.min(maxDuJour(d), cap.z2), minutesPourKj((reste * (1 - partLong)) / placement.z2.length, z2W))
     aCreer.push([d, construireZ2(min, z2W)])
   }
 
@@ -302,13 +304,19 @@ export async function saison() {
   const { w: z2W } = await z2Actuel()
   const kjIntensite = construireIntervalles(formatDe('30-15')!, 0, r.cpW, 0).kj
   const nZ2 = prog.semaineType.filter((x) => x === 'velo-z2').length
-  const nominal = kjIntensite + construireZ2(60, z2W).kj + construireZ2(100, z2W).kj
-  const plafond = kjIntensite + nZ2 * construireZ2(prog.maxSemaineMin, z2W).kj + construireZ2(prog.maxLongMin, z2W).kj
+  const capDe = (l: string) => {
+    const { phase, semaine } = phaseDe(l, prog.phases)
+    return plafondsReprise(phase.type === 'reprise' ? semaine : undefined, prog.maxSemaineMin, prog.maxLongMin)
+  }
+  const cap0 = capDe(lundi)
+  const nominal = kjIntensite + construireZ2(Math.min(60, cap0.z2), z2W).kj + construireZ2(Math.min(100, cap0.long), z2W).kj
+  const plafondDe = (l: string) => kjIntensite + nZ2 * construireZ2(capDe(l).z2, z2W).kj + construireZ2(capDe(l).long, z2W).kj
+  const plafond = plafondDe(lundi)
   const meta = await lireMeta(lundi)
   const derniere = [...prog.phases].sort((a, b) => a.debut.localeCompare(b.debut)).pop()!
   const semaines = projeterSaison({
     lundi, jusquA: decalerJour(derniere.debut, 21), phases: prog.phases, testsCp: prog.testsCp, testsCourts: prog.testsCourts, competitions: prog.competitions,
-    histo: (await histoIntensite()).filter((h) => h.date < lundi), budgetDepart: meta?.budgetRef ?? nominal, plafond,
+    histo: (await histoIntensite()).filter((h) => h.date < lundi), budgetDepart: meta?.budgetRef ?? nominal, plafond, plafondDe,
   })
   // Semaine en cours déjà générée : on montre la vraie séance et le vrai budget
   const reelle = (await db.prevues.where('date').between(lundi, decalerJour(lundi, 6), true, true).toArray())

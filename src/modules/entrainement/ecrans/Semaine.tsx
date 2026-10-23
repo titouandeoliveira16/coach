@@ -12,6 +12,7 @@ import { AIDES } from '../aides'
 import { Deroule } from '../plan/Deroule'
 import { joursPanneVelo } from '../plan/imprevus'
 import { FormulairePrevue } from '../plan/FormulairePrevue'
+import { ImportCampus } from '../plan/ImportCampus'
 import { chargesSemaine, declarerNonFaite, joursDe, supprimerPrevue } from '../plan/donnees'
 import { alertesCumul, estIntensite, genererSemaineVelo, lireMeta, noterResultat } from '../plan/programme'
 import { programmeDe, useReglagesEntrainement } from '../reglagesEntrainement'
@@ -107,6 +108,8 @@ export function Semaine() {
           </section>
         )
       })}
+
+      <ImportCampus jours={jours} />
 
       {ajout && (
         <Feuille titre="Ajouter une séance" onFermer={() => setAjout(null)}>

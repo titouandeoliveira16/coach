@@ -428,6 +428,16 @@ export function budgetSemaine(prec: BilanSemaine | undefined, nominal: number, p
   return { budgetRef: ref, budget: Math.round(allegee ? ref * 0.65 : ref), raison: allegee ? `${raison} · ${raisonAllegee} : −35 %` : raison }
 }
 
+/**
+ * Reprise progressive : pendant la phase de reprise, les séances Z2 s'allongent semaine après semaine
+ * (sortie longue 75 min la 1re semaine puis +10 min par semaine ; Z2 de semaine 50 min puis +5 min),
+ * sans dépasser les créneaux. `n` = numéro de semaine dans la reprise (0 = première), absent hors reprise.
+ */
+export function plafondsReprise(n: number | undefined, maxSemaine: number, maxLong: number) {
+  if (n === undefined) return { z2: maxSemaine, long: maxLong }
+  return { z2: Math.min(maxSemaine, 50 + 5 * n), long: Math.min(maxLong, 75 + 10 * n) }
+}
+
 /** Minutes de Z2 pour produire un travail donné. */
 export const minutesPourKj = (kj: number, z2W: number) => (kj * 1000) / z2W / 60
 
@@ -538,6 +548,8 @@ export function projeterSaison(o: {
   histo: HistoIntensite[]
   budgetDepart: number
   plafond: number
+  /** Plafond propre à une semaine (reprise progressive) */
+  plafondDe?: (lundi: string) => number
 }): SemaineSaison[] {
   const triees = [...o.phases].sort((a, b) => a.debut.localeCompare(b.debut))
   const histo = [...o.histo]
@@ -551,7 +563,9 @@ export function projeterSaison(o: {
     const competition = o.competitions.find((c) => c.date >= l && c.date <= fin)
     const test = o.testsCp.find((d) => d >= l && d <= fin)
     const allegee = estSemaineAllegee(semaine) || !!competition
-    if (semaines.length && !precedenteAllegee) ref = Math.min(o.plafond, ref * 1.075)
+    const plafond = o.plafondDe?.(l) ?? o.plafond
+    if (semaines.length && !precedenteAllegee) ref = ref * 1.075
+    ref = Math.min(plafond, ref)
     precedenteAllegee = allegee
 
     let intensite: string

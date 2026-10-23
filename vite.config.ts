@@ -38,6 +38,8 @@ export default defineConfig({
       workbox: {
         // Tout le code et les icônes sont mis en cache : l'appli marche sans réseau
         globPatterns: ['**/*.{js,css,html,svg,png}'],
+        // Moteur de lecture des captures (plusieurs Mo) : chargé seulement quand on s'en sert
+        globIgnores: ['ocr/**'],
         // Réception des notifications (rappels)
         importScripts: ['push-sw.js'],
       },

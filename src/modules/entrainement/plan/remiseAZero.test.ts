@@ -17,7 +17,7 @@ describe('remise à zéro', () => {
     expect(await db.mesures.count()).toBe(1)
     expect(await db.reglages.get('semaine-2026-10-12')).toBeUndefined()
     const p = (await db.prevues.toArray()).sort((a, b) => a.date.localeCompare(b.date))
-    expect(p.map((x) => [x.date, x.sport, x.dureeMin])).toEqual([['2026-10-23', 'velo', 60], ['2026-10-24', 'course', 45], ['2026-10-25', 'velo', 120]])
+    expect(p.map((x) => [x.date, x.sport, x.dureeMin])).toEqual([['2026-10-23', 'velo', 60], ['2026-10-24', 'course', 45], ['2026-10-25', 'velo', 75]])
     expect(p[0].velo?.etapes?.length).toBeGreaterThan(1)
     expect((await db.suppressions.toArray()).length).toBeGreaterThan(0)
   })

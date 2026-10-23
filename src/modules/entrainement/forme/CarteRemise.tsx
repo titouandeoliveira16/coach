@@ -15,7 +15,7 @@ export function CarteRemise() {
       <ul className="space-y-1 text-sm text-texte-2">
         <li>✓ Gardé : tes séances de cette semaine, tes mesures du matin, tes pesées, tes réglages.</li>
         <li>✗ Supprimé : l'historique d'avant le 19/10, toutes les séances prévues.</li>
-        <li>＋ Ajouté : vendredi HT Z2 1 h, samedi footing 45', dimanche HT Z2 longue 2 h.</li>
+        <li>＋ Ajouté : vendredi HT Z2 1 h, samedi footing 45', dimanche HT Z2 longue 1 h 15.</li>
       </ul>
       <p className="mt-2 text-xs text-texte-3">À faire une seule fois, sur l'appareil où tout est à jour : ça s'applique aussi au serveur et à tes autres appareils.</p>
       <Bouton className="mt-3" disabled={occupe} onClick={async () => {
