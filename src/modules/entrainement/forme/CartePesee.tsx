@@ -8,6 +8,7 @@ import { useProfil } from '../../../core/profil'
 import { Bouton } from '../../../core/ui/Bouton'
 import { Carte } from '../../../core/ui/Carte'
 import { ChampNombre } from '../../../core/ui/ChampNombre'
+import { CLE_PESEES_EFFACEES } from '../import/intervals'
 
 /** Poids : une ligne avec la dernière pesée ; on se pèse quand on veut (toucher pour saisir ou effacer). */
 export function CartePesee() {
@@ -42,12 +43,19 @@ export function CartePesee() {
       <Bouton className="mt-2" disabled={!kg} onClick={async () => {
         if (!kg) return
         await enregistrer(db.pesees, { date: aujourdhui(), poidsKg: kg })
+        // Nouvelle pesée saisie : la date n'est plus « effacée »
+        const effacees = ((await db.reglages.get(CLE_PESEES_EFFACEES))?.valeur as string[] | undefined) ?? []
+        if (effacees.includes(aujourdhui())) await enregistrer(db.reglages, { id: CLE_PESEES_EFFACEES, valeur: effacees.filter((d) => d !== aujourdhui()) })
         await modifierProfil({ poidsKg: kg })
         setOuverte(false)
       }}>Enregistrer</Bouton>
       {duJour && (
         <button type="button" className="mt-1 w-full py-2 text-sm text-[#f87171]" onClick={async () => {
           await supprimer(db.pesees, duJour.date)
+          // Sinon l'import Garmin (Intervals) la recréerait
+          const effacees = ((await db.reglages.get(CLE_PESEES_EFFACEES))?.valeur as string[] | undefined) ?? []
+          await enregistrer(db.reglages, { id: CLE_PESEES_EFFACEES, valeur: [...new Set([...effacees, duJour.date])] })
+          if (precedente) await modifierProfil({ poidsKg: precedente.poidsKg })
           setOuverte(false)
         }}>Supprimer la pesée d'aujourd'hui</button>
       )}

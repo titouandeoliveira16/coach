@@ -24,6 +24,7 @@ export interface EtatIntervals {
 }
 
 const CLE = 'intervals'
+export const CLE_PESEES_EFFACEES = 'pesees-effacees'
 const JOURS_HISTORIQUE = 90
 /** On relit toujours les 3 derniers jours (synchronisations tardives de la montre). */
 const MARGE_JOURS = 3
@@ -89,6 +90,8 @@ async function importerWellness(depuis: string) {
   const { jours } = await appeler<{ jours: JourWellness[] }>('wellness', { oldest: depuis })
   let n = 0
   let dernierPoids: number | undefined
+  // Pesées supprimées à la main : on ne les réimporte pas depuis Garmin
+  const effacees = ((await db.reglages.get(CLE_PESEES_EFFACEES))?.valeur as string[] | undefined) ?? []
   for (const j of jours) {
     const avant = await db.mesures.get(j.date)
     const m: MesureMatin = { modifieLe: new Date().toISOString(), ...avant, date: j.date }
@@ -99,7 +102,7 @@ async function importerWellness(depuis: string) {
       await enregistrer(db.mesures, m)
       n++
     }
-    if (j.weight && !(await db.pesees.get(j.date))) {
+    if (j.weight && !(await db.pesees.get(j.date)) && !effacees.includes(j.date)) {
       await enregistrer(db.pesees, { date: j.date, poidsKg: Math.round(j.weight * 10) / 10 })
       dernierPoids = j.weight
     }
