@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from './db'
+import { enregistrer } from './stockage'
 
 /**
  * Lit un réglage (objet) dans la base et le tient à jour automatiquement.
@@ -14,7 +15,7 @@ export function useReglage<T extends object>(cle: string, defaut: T) {
   const modifier = (changements: Partial<T>) =>
     db.transaction('rw', db.reglages, async () => {
       const actuel = (await db.reglages.get(cle))?.valeur as Partial<T> | undefined
-      await db.reglages.put({ id: cle, valeur: { ...defaut, ...actuel, ...changements } })
+      await enregistrer(db.reglages, { id: cle, valeur: { ...defaut, ...actuel, ...changements } })
     })
 
   return [valeur, modifier] as const

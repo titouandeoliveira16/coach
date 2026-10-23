@@ -1,4 +1,5 @@
-import { db } from './db'
+import { TABLES_DONNEES, db, type Reglage } from './db'
+import { enregistrer, signalerEcriture } from './stockage'
 
 /** Clé du réglage qui retient la date de la dernière sauvegarde. */
 export const CLE_DERNIERE_SAUVEGARDE = 'derniere-sauvegarde'
@@ -19,7 +20,7 @@ interface FichierSauvegarde {
 export async function exporterDonnees(): Promise<boolean> {
   const maintenant = new Date().toISOString()
   const fichier: FichierSauvegarde = { app: 'coach', format: 1, exporteLe: maintenant, tables: {} }
-  for (const table of db.tables) {
+  for (const table of TABLES_DONNEES()) {
     fichier.tables[table.name] = await table.toArray()
   }
 
@@ -42,7 +43,7 @@ export async function exporterDonnees(): Promise<boolean> {
     URL.revokeObjectURL(lien.href)
   }
 
-  await db.reglages.put({ id: CLE_DERNIERE_SAUVEGARDE, valeur: { le: maintenant } })
+  await enregistrer(db.reglages, { id: CLE_DERNIERE_SAUVEGARDE, valeur: { le: maintenant } })
   return true
 }
 
@@ -61,14 +62,21 @@ export async function importerDonnees(fichier: File): Promise<void> {
     throw new Error("Ce fichier n'est pas une sauvegarde de Coach.")
   }
 
+  // Les lignes restaurées sont datées de maintenant : elles priment et partent au serveur
+  const maintenant = new Date().toISOString()
+  const tables = TABLES_DONNEES()
+
   // Tout ou rien : en cas d'erreur, aucune donnée n'est modifiée
-  await db.transaction('rw', db.tables, async () => {
-    for (const table of db.tables) {
+  await db.transaction('rw', tables, async () => {
+    for (const table of tables) {
       await table.clear()
       const lignes = donnees.tables[table.name]
-      if (Array.isArray(lignes)) await table.bulkPut(lignes)
+      if (Array.isArray(lignes)) {
+        await table.bulkPut((lignes as Record<string, unknown>[]).map(({ _recu, ...l }) => ({ ...l, _modifie: maintenant })))
+      }
     }
     // Les données sont désormais celles de ce fichier : il devient la dernière sauvegarde
-    await db.reglages.put({ id: CLE_DERNIERE_SAUVEGARDE, valeur: { le: donnees.exporteLe } })
+    await db.reglages.put({ id: CLE_DERNIERE_SAUVEGARDE, valeur: { le: donnees.exporteLe }, _modifie: maintenant } as Reglage)
   })
+  signalerEcriture()
 }

@@ -1,4 +1,5 @@
 import { db } from '../../../core/db'
+import { enregistrer } from '../../../core/stockage'
 import { aujourdhui, decalerJour, ecartJours } from '../../../core/dates'
 import type { MesureMatin, Note } from '../types'
 
@@ -19,7 +20,7 @@ export function scoreRessenti(m: MesureMatin): number | undefined {
 
 /** Enregistre (ou remplace) la mesure d'un jour. */
 export const enregistrerMesure = (m: Omit<MesureMatin, 'modifieLe'>) =>
-  db.mesures.put({ ...m, modifieLe: new Date().toISOString() })
+  enregistrer(db.mesures, { ...m, modifieLe: new Date().toISOString() })
 
 /** Mesures des n derniers jours (aujourd'hui compris), de la plus récente à la plus ancienne. */
 export const mesuresRecentes = (n: number) =>

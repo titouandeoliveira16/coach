@@ -5,6 +5,7 @@ import { EnTete } from '../core/ui/EnTete'
 import { useProfil } from '../core/profil'
 import { NOMS_JOURS } from '../core/dates'
 import { MODULES } from './modules'
+import { SectionCompte } from './SectionCompte'
 import { SectionSauvegarde } from './SectionSauvegarde'
 
 /** Vrai si l'appli est lancée depuis l'écran d'accueil (et non dans Safari). */
@@ -25,6 +26,8 @@ export function Reglages() {
     <>
       <EnTete titre="Réglages" />
       <div className="space-y-3 px-4">
+        <SectionCompte />
+
         <Carte titre="Profil">
           <ChampNombre libelle="Poids" unite="kg" valeur={profil.poidsKg} onValider={(v) => modifierProfil({ poidsKg: v })} />
           <ChampNombre libelle="Taille" unite="cm" decimales={0} valeur={profil.tailleCm} onValider={(v) => modifierProfil({ tailleCm: v })} />

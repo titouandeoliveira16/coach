@@ -4,8 +4,10 @@ import './index.css'
 import App from './app/App.tsx'
 import { demanderStockagePersistant } from './core/db'
 import { registerSW } from 'virtual:pwa-register'
+import { demarrerSynchro } from './core/synchro'
 
 demanderStockagePersistant()
+demarrerSynchro()
 
 // Mises à jour : on vérifie s'il existe une nouvelle version à chaque retour
 // sur l'appli (iPhone : l'appli est souvent « réveillée » plutôt que relancée)

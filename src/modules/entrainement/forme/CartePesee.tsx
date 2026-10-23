@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { db } from '../../../core/db'
+import { enregistrer } from '../../../core/stockage'
 import { aujourdhui, jourCourt } from '../../../core/dates'
 import { formatNombre } from '../../../core/format'
 import { useProfil } from '../../../core/profil'
@@ -52,7 +53,7 @@ export function CartePesee() {
         onClick={async () => {
           const kg = poids ?? profil.poidsKg
           if (!kg) return
-          await db.pesees.put({ date: aujourdhui(), poidsKg: kg })
+          await enregistrer(db.pesees, { date: aujourdhui(), poidsKg: kg })
           await modifierProfil({ poidsKg: kg })
           setOuverte(false)
         }}
