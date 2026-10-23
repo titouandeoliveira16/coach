@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { depuis } from '../core/format'
-import { demanderCode, seDeconnecter, synchroniser, useSynchro, validerCode } from '../core/synchro'
+import { creerCompte, seConnecter, seDeconnecter, synchroniser, useSynchro } from '../core/synchro'
 import { Bouton } from '../core/ui/Bouton'
 import { Carte } from '../core/ui/Carte'
 
 const champ = 'w-full rounded-xl border border-bordure bg-surface-2 px-4 py-3 text-lg outline-none focus:border-accent'
 
-/** Compte et synchronisation : connexion par email + code à 6 chiffres. */
+/** Compte et synchronisation : connexion par email + mot de passe. */
 export function SectionCompte() {
   const { session } = useSynchro()
   return <Carte titre="Compte et synchronisation">{session ? <Connecte /> : <Connexion />}</Carte>
@@ -14,16 +14,16 @@ export function SectionCompte() {
 
 function Connexion() {
   const [email, setEmail] = useState('')
-  const [code, setCode] = useState('')
-  const [codeEnvoye, setCodeEnvoye] = useState(false)
+  const [motDePasse, setMotDePasse] = useState('')
   const [occupe, setOccupe] = useState(false)
   const [message, setMessage] = useState<string>()
+  const pret = email.includes('@') && motDePasse.length >= 6 && !occupe
 
-  const agir = async (action: () => Promise<void>) => {
+  const agir = async (action: (email: string, mdp: string) => Promise<void>) => {
     setOccupe(true)
     setMessage(undefined)
     try {
-      await action()
+      await action(email.trim(), motDePasse)
     } catch (e) {
       setMessage((e as Error).message)
     } finally {
@@ -32,37 +32,19 @@ function Connexion() {
   }
 
   return (
-    <div className="space-y-3">
+    <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); if (pret) agir(seConnecter) }}>
       <p className="text-sm text-texte-2">
         Connecte-toi pour sauvegarder tes données en ligne et les retrouver sur tous tes appareils. Sans compte,
         l'appli fonctionne quand même, uniquement sur cet appareil.
       </p>
-
-      {!codeEnvoye ? (
-        <>
-          <input type="email" inputMode="email" autoComplete="email" placeholder="ton@email.fr" value={email}
-            onChange={(e) => setEmail(e.target.value)} className={champ} />
-          <Bouton disabled={occupe || !email.includes('@')}
-            onClick={() => agir(async () => { await demanderCode(email.trim()); setCodeEnvoye(true) })}>
-            {occupe ? 'Envoi…' : 'Recevoir un code'}
-          </Bouton>
-        </>
-      ) : (
-        <>
-          <p className="text-sm">Code envoyé à <span className="font-semibold">{email}</span>. Regarde tes emails (et les spams).</p>
-          <input inputMode="numeric" autoComplete="one-time-code" placeholder="123456" maxLength={8} value={code}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-            className={`${champ} text-center text-2xl font-bold tracking-[0.4em]`} />
-          <Bouton disabled={occupe || code.length < 6} onClick={() => agir(() => validerCode(email.trim(), code))}>
-            {occupe ? 'Vérification…' : 'Se connecter'}
-          </Bouton>
-          <button type="button" onClick={() => { setCodeEnvoye(false); setCode('') }} className="w-full py-1 text-sm text-texte-3">
-            Changer d'email
-          </button>
-        </>
-      )}
+      <input type="email" inputMode="email" autoComplete="username" placeholder="ton@email.fr" value={email}
+        onChange={(e) => setEmail(e.target.value)} className={champ} />
+      <input type="password" autoComplete="current-password" placeholder="Mot de passe (6 caractères min.)" value={motDePasse}
+        onChange={(e) => setMotDePasse(e.target.value)} className={champ} />
+      <Bouton type="submit" disabled={!pret}>{occupe ? 'Connexion…' : 'Se connecter'}</Bouton>
+      <Bouton variante="secondaire" disabled={!pret} onClick={() => agir(creerCompte)}>Créer mon compte</Bouton>
       {message && <p className="text-sm text-[#f87171]">{message}</p>}
-    </div>
+    </form>
   )
 }
 

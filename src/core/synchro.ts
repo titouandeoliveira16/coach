@@ -195,16 +195,17 @@ function planifier() {
 
 // ---------- Compte ----------
 
-/** Envoie le code à 6 chiffres par email (crée le compte s'il n'existe pas). */
-export async function demanderCode(email: string) {
-  const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true } })
+/** Connexion avec un compte existant ; en cas de succès, la synchro démarre. */
+export async function seConnecter(email: string, motDePasse: string) {
+  const { error } = await supabase.auth.signInWithPassword({ email, password: motDePasse })
   if (error) throw new Error(traduire(error.message))
 }
 
-/** Vérifie le code reçu par email ; en cas de succès, la session s'ouvre et la synchro démarre. */
-export async function validerCode(email: string, code: string) {
-  const { error } = await supabase.auth.verifyOtp({ email, token: code.trim(), type: 'email' })
+/** Création de compte (la confirmation par email est désactivée côté Supabase). */
+export async function creerCompte(email: string, motDePasse: string) {
+  const { data, error } = await supabase.auth.signUp({ email, password: motDePasse })
   if (error) throw new Error(traduire(error.message))
+  if (!data.session) throw new Error('Compte créé, mais Supabase demande une confirmation par email : désactive « Confirm email » dans Supabase.')
 }
 
 /**
@@ -222,8 +223,11 @@ export async function seDeconnecter() {
 }
 
 function traduire(message: string) {
-  if (/rate limit|security purposes/i.test(message)) return 'Trop de demandes : patiente quelques minutes avant de redemander un code.'
-  if (/expired|invalid/i.test(message)) return 'Code incorrect ou expiré.'
+  if (/invalid login credentials/i.test(message)) return 'Email ou mot de passe incorrect.'
+  if (/already registered|already exists/i.test(message)) return 'Un compte existe déjà avec cet email : utilise « Se connecter ».'
+  if (/at least|password should/i.test(message)) return 'Mot de passe trop court (6 caractères minimum).'
+  if (/email not confirmed/i.test(message)) return 'Email non confirmé : désactive « Confirm email » dans Supabase.'
+  if (/rate limit|security purposes/i.test(message)) return 'Trop de tentatives : patiente quelques minutes.'
   if (/fetch|network/i.test(message)) return 'Pas de connexion internet.'
   return message
 }
