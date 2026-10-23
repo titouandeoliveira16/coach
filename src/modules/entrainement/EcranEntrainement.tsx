@@ -9,6 +9,7 @@ import { Saison } from './ecrans/Saison'
 import { Semaine } from './ecrans/Semaine'
 import { AideFit } from './import/AideFit'
 import { importerIntervalsSiBesoin } from './import/intervals'
+import { nettoyerPeseesEffacees } from './forme/pesees'
 import { nettoyerDoublons } from './seances/donnees'
 import { FormulaireSeance } from './seances/FormulaireSeance'
 
@@ -24,7 +25,7 @@ export function EcranEntrainement() {
   // Nouvelles données Intervals.icu à l'ouverture (au plus une fois par heure)
   // (et fusion des éventuels doublons déjà enregistrés)
   useEffect(() => {
-    nettoyerDoublons().then(importerIntervalsSiBesoin)
+    nettoyerDoublons().then(nettoyerPeseesEffacees).then(importerIntervalsSiBesoin)
   }, [])
 
   return (

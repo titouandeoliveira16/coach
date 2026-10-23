@@ -26,12 +26,16 @@ export function Progres() {
   if (!t) return null
   const pct = (a?: number, b?: number) => (a !== undefined && b ? ((a - b) / b) * 100 : undefined)
   const prog = programmeDe(r.programme)
+  const premierTest = t.tests[0]
+  const dernierTest = t.tests[t.tests.length - 1]
+  const avantDernier = t.tests[t.tests.length - 2]
 
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-3 gap-2">
-        <Tuile libelle="CP" valeur={t.cpW ? `${t.cpW} W` : '–'} evolution={t.cpW && t.cpPrecedente ? `${t.cpW - t.cpPrecedente >= 0 ? '+' : ''}${t.cpW - t.cpPrecedente} W` : undefined}
-          hausse={t.cpW && t.cpPrecedente ? t.cpW >= t.cpPrecedente : undefined} sous="vs test précédent" />
+        <Tuile libelle="CP" valeur={dernierTest?.wkg ? formatNombre(dernierTest.wkg, 2) : '–'} sous={dernierTest ? `W/kg · ${dernierTest.w} W` : 'W/kg'}
+          evolution={dernierTest?.wkg && avantDernier?.wkg ? `${dernierTest.wkg >= avantDernier.wkg ? '+' : ''}${formatNombre(dernierTest.wkg - avantDernier.wkg, 2)}` : undefined}
+          hausse={dernierTest?.wkg && avantDernier?.wkg ? dernierTest.wkg >= avantDernier.wkg : undefined} />
         <Tuile libelle="Efficacité" aide={AIDES.efficacite} valeur={t.effRecente ? formatNombre(t.effRecente, 2) : '–'} sous="W par bpm"
           evolution={signe(pct(t.effRecente, t.effAvant))} hausse={t.effAvant ? t.effRecente! >= t.effAvant : undefined} />
         <Tuile libelle="Vélo 28 j" valeur={formatNombre(t.kj28)} sous="kJ" evolution={signe(pct(t.kj28, t.kj28Avant))} hausse={t.kj28Avant ? t.kj28 >= t.kj28Avant : undefined} />
@@ -42,31 +46,35 @@ export function Progres() {
           <p className="text-sm text-texte-3">Ton premier test donnera ton point de départ.</p>
         ) : (
           <>
-            {t.tests.length >= 2 && (() => {
-              const premier = t.tests[0].valeur
-              const dernier = t.tests[t.tests.length - 1].valeur
-              return (
-                <p className="text-sm text-texte-2">
-                  Depuis le {depuisJour(t.tests[0].date).toLocaleDateString('fr-FR')} :{' '}
-                  <b className={dernier >= premier ? 'text-nutrition' : 'text-[#f87171]'}>
-                    {dernier - premier >= 0 ? '+' : ''}{dernier - premier} W ({signe(((dernier - premier) / premier) * 100)})
-                  </b>
-                </p>
-              )
-            })()}
+            {premierTest && dernierTest && t.tests.length >= 2 && (
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <Ecart libelle="W/kg" a={premierTest.wkg} b={dernierTest.wkg} decimales={2} />
+                <Ecart libelle="CP (W)" a={premierTest.w} b={dernierTest.w} />
+                <Ecart libelle="Poids (kg)" a={premierTest.poidsKg} b={dernierTest.poidsKg} decimales={1} inverse />
+              </div>
+            )}
             {t.tests.length >= 2 && (
-              <GraphiqueLignes etiquettes={t.tests.map((x) => jj(x.date))} series={[{ nom: 'CP (W)', couleur: SERIES[1], valeurs: t.tests.map((x) => x.valeur) }]} />
+              <>
+                <p className="mt-3 text-xs text-texte-3">Depuis le {depuisJour(t.tests[0].date).toLocaleDateString('fr-FR')} · rapport poids / puissance (W/kg)<Aide titre="W/kg" texte={AIDES.wkg} /></p>
+                <GraphiqueLignes etiquettes={t.tests.map((x) => jj(x.date))} format={(n) => n.toFixed(2).replace('.', ',')}
+                  series={[{ nom: 'W/kg', couleur: SERIES[1], valeurs: t.tests.map((x) => x.wkg) }]} />
+              </>
             )}
             <ul className="mt-2 text-sm">
-              {[...t.tests].reverse().map((x, i, l) => (
-                <li key={x.date + i} className="flex justify-between border-t border-bordure py-1.5">
-                  <span className="text-texte-2">{depuisJour(x.date).toLocaleDateString('fr-FR')}</span>
-                  <span className="font-semibold">
-                    CP {x.valeur} W{t.poidsKg ? <span className="font-normal text-texte-3"> · {formatNombre(x.valeur / t.poidsKg, 2)} W/kg</span> : null}
-                    {l[i + 1] && <span className={x.valeur >= l[i + 1].valeur ? 'text-nutrition' : 'text-[#f87171]'}> ({x.valeur - l[i + 1].valeur >= 0 ? '+' : ''}{x.valeur - l[i + 1].valeur})</span>}
-                  </span>
-                </li>
-              ))}
+              {[...t.tests].reverse().map((x, i, l) => {
+                const avant = l[i + 1]
+                const ecart = x.wkg && avant?.wkg ? x.wkg - avant.wkg : undefined
+                return (
+                  <li key={x.date + i} className="flex items-baseline justify-between gap-2 border-t border-bordure py-1.5">
+                    <span className="text-texte-2">{depuisJour(x.date).toLocaleDateString('fr-FR')}</span>
+                    <span className="text-right">
+                      <b>{x.wkg ? `${formatNombre(x.wkg, 2)} W/kg` : `${x.w} W`}</b>
+                      {ecart !== undefined && <span className={ecart >= 0 ? 'text-nutrition' : 'text-[#f87171]'}> ({ecart >= 0 ? '+' : ''}{formatNombre(ecart, 2)})</span>}
+                      <span className="block text-xs text-texte-3">{x.w} W{x.poidsKg ? ` · ${formatNombre(x.poidsKg, 1)} kg` : ''}</span>
+                    </span>
+                  </li>
+                )
+              })}
             </ul>
           </>
         )}
@@ -170,6 +178,21 @@ export function Progres() {
 
       <h2 className="px-1 pt-2 text-lg font-bold">Mes séances</h2>
       <Historique />
+    </div>
+  )
+}
+
+/** Écart entre le premier et le dernier test (vert = progrès ; pour le poids, une baisse compte comme un progrès). */
+function Ecart({ libelle, a, b, decimales = 0, inverse = false }: { libelle: string; a?: number; b?: number; decimales?: number; inverse?: boolean }) {
+  const d = a !== undefined && b !== undefined ? b - a : undefined
+  const bien = d !== undefined && (inverse ? d <= 0 : d >= 0)
+  return (
+    <div className="rounded-xl bg-surface-2 py-2">
+      <p className="text-xs text-texte-3">{libelle}</p>
+      <p className={`text-lg font-bold tabular-nums ${d === undefined ? '' : bien ? 'text-nutrition' : 'text-[#f87171]'}`}>
+        {d === undefined ? '–' : `${d >= 0 ? '+' : ''}${formatNombre(d, decimales)}`}
+      </p>
+      {a !== undefined && b !== undefined && a !== 0 && <p className="text-[11px] text-texte-3">{signe(((b - a) / a) * 100)}</p>}
     </div>
   )
 }

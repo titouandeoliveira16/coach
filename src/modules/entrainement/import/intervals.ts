@@ -7,6 +7,7 @@ import { chargerContexte, completerMetriques, enregistrerSeance, fusionner, nett
 import { sportDepuisType } from '../sports'
 import type { MesureMatin } from '../types'
 import { analyserFlux } from './flux'
+import { CLE_PESEES_EFFACEES, nettoyerPeseesEffacees } from '../forme/pesees'
 
 /**
  * Import Intervals.icu (via la fonction serveur « intervals » : la clé API n'est jamais dans l'appli).
@@ -24,7 +25,6 @@ export interface EtatIntervals {
 }
 
 const CLE = 'intervals'
-export const CLE_PESEES_EFFACEES = 'pesees-effacees'
 const JOURS_HISTORIQUE = 90
 /** On relit toujours les 3 derniers jours (synchronisations tardives de la montre). */
 const MARGE_JOURS = 3
@@ -163,6 +163,7 @@ export async function importerIntervals(surProgression?: (n: number) => void) {
   const mesures = await importerWellness(depuis)
   const { n, viaStrava } = await importerActivites(depuis, surProgression)
   await nettoyerDoublons()
+  await nettoyerPeseesEffacees()
   await ecrireEtat({ relie: true, depuis: decalerJour(aujourdhui(), -MARGE_JOURS), dernierImport: new Date().toISOString() })
   return { seances: n, mesures, viaStrava }
 }

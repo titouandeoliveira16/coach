@@ -208,4 +208,6 @@ export interface TestPhysio {
   date: string
   type: 'vma' | 'cp'
   valeur: number
+  /** Poids le jour du test (rapport poids / puissance) */
+  poidsKg?: number
 }

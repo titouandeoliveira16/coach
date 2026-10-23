@@ -6,6 +6,7 @@ import { formatNombre } from '../../../core/format'
 import { useProfil } from '../../../core/profil'
 import { useReglagesEntrainement } from '../reglagesEntrainement'
 import { CalculateurCP } from './CalculateurCP'
+import { poidsAu } from '../forme/pesees'
 import { recalculerApresTest } from '../plan/programme'
 import { JoursVelo } from './SectionProgramme'
 
@@ -40,7 +41,8 @@ export function SectionVelo() {
             // Zones de puissance recalées sur la nouvelle CP (même % de CP qu'avant)
             const ratio = cpW / (reglages.cpW ?? 260)
             const zonesVelo = reglages.zonesVelo.map((z) => ({ ...z, wMin: Math.round(z.wMin * ratio), wMax: z.wMax && Math.round(z.wMax * ratio) }))
-            await modifier({ cpW, wPrimeKj, zonesVelo, tests: [...reglages.tests, { date: aujourdhui(), type: 'cp', valeur: cpW }] })
+            const poidsKg = await poidsAu(aujourdhui())
+            await modifier({ cpW, wPrimeKj, zonesVelo, tests: [...reglages.tests, { date: aujourdhui(), type: 'cp', valeur: cpW, poidsKg }] })
             setCalculateur(false)
             await recalculerApresTest()
             setMessage(`CP ${cpW} W enregistrée : zones et watts de tes séances à venir recalculés.`)

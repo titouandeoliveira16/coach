@@ -44,4 +44,6 @@ export const AIDES = {
     "Une nuit de moins de 6 h (Craven 2022 : ≤ 6 h dégrade la performance) ou une dette de sommeil (moyenne sur 7 jours sous 7 h, seuil du « sommeil court » de Walsh 2021, ou sous ta moyenne habituelle de plus de 45 min) déclenchent une alerte : intensité raccourcie. Une seule alerte « sommeil et ressenti », même si plusieurs causes. Repère : 8 h, ou ta moyenne habituelle si elle est plus haute.",
   cpEstimee:
     "CP calculée sur tes meilleurs efforts de 3, 7 et 12 min des 6 dernières semaines (méthode validée par Karsten 2015 si ces efforts sont donnés à fond). À l'entraînement ils le sont rarement : l'estimation sert seulement à repérer un progrès (plus de 3 % au-dessus de ta CP), elle ne change jamais ta CP.",
+  wkg:
+    "Rapport poids / puissance = CP / poids le jour du test (la pesée saisie, sinon la plus proche dans les 30 jours avant). C'est lui qui compte en montée et pour comparer tes tests : plus de watts en prenant du poids n'est pas forcément un progrès.",
 } as const
