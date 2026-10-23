@@ -17,7 +17,11 @@ export function SaisieMatin({ existante, onTermine }: { existante?: MesureMatin;
 
   return (
     <Carte titre="Ton matin">
-      <p className="mb-1 text-xs text-texte-3">Garmin Connect → Statut VFC (moyenne de la nuit) et FC au repos.</p>
+      <p className="mb-1 text-xs text-texte-3">
+        {existante?.vfcMs !== undefined && !QUESTIONS.some((q) => existante[q.cle] !== undefined)
+          ? '✓ Chiffres reçus de ta Garmin (via Intervals.icu) : il ne reste que ton ressenti.'
+          : 'Garmin Connect → Statut VFC (moyenne de la nuit) et FC au repos.'}
+      </p>
       <ChampNombre libelle="VFC" unite="ms" decimales={0} valeur={m.vfcMs} onValider={(v) => changer({ vfcMs: v })} />
       <ChampNombre libelle="FC de repos" unite="bpm" decimales={0} valeur={m.fcRepos} onValider={(v) => changer({ fcRepos: v })} />
       <ChampNombre libelle="Durée de sommeil" unite="h" valeur={m.sommeilH} onValider={(v) => changer({ sommeilH: v })} />

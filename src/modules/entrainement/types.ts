@@ -66,7 +66,7 @@ export type TypeSeance = (typeof TYPES_SEANCE)[number]
 export const RAISONS = ['Boulot', 'Cours / fac', 'Stage', 'Fatigue', 'Malade', 'Douleur / blessure', 'Météo', 'Perso'] as const
 export type Raison = (typeof RAISONS)[number]
 
-/** Une séance réalisée (saisie, importée d'un .FIT ou de Strava). */
+/** Une séance réalisée (saisie, importée d'un .FIT ou d'Intervals.icu). */
 export interface Seance {
   id: string
   /** Jour, "2026-10-23" */
@@ -101,8 +101,9 @@ export interface Seance {
   tss?: number
   /** Découplage cardiaque (%) pour les séances ≥ 45 min avec flux */
   decouplage?: number
-  source: 'manuel' | 'fit' | 'strava'
-  stravaId?: number
+  source: 'manuel' | 'fit' | 'intervals'
+  /** Identifiant de l'activité chez Intervals.icu */
+  idExterne?: string
   /** Séance prévue à laquelle elle correspond */
   prevueId?: string
 }

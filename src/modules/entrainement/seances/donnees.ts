@@ -52,7 +52,7 @@ export async function chargerContexte(): Promise<Contexte> {
 /**
  * Complète les métriques d'une séance saisie à la main (sans flux) :
  * TRIMP depuis la FC moyenne, kJ depuis la puissance moyenne, TSS / rTSS.
- * Les métriques déjà calculées depuis un flux (.FIT, Strava) sont conservées.
+ * Les métriques déjà calculées depuis un flux (.FIT, Intervals.icu) sont conservées.
  */
 export function completerMetriques(s: Seance, c: Contexte): Seance {
   const r = { ...s }
@@ -96,11 +96,11 @@ export function domaineDe(s: Seance, bornes: BornesZones): Intensite {
 }
 
 /** Doublon : même sport et départ à ± 2 minutes (ou même jour si pas d'heure). */
-export async function trouverDoublon(s: Pick<Seance, 'id' | 'date' | 'debut' | 'sport' | 'stravaId'>) {
+export async function trouverDoublon(s: Pick<Seance, 'id' | 'date' | 'debut' | 'sport' | 'idExterne'>) {
   const memeJour = await db.seances.where('date').equals(s.date).toArray()
   return memeJour.find((x) => {
     if (x.id === s.id || x.sport !== s.sport) return false
-    if (s.stravaId && x.stravaId === s.stravaId) return true
+    if (s.idExterne && x.idExterne === s.idExterne) return true
     if (!x.debut || !s.debut) return false
     return Math.abs(new Date(x.debut).getTime() - new Date(s.debut).getTime()) <= 2 * 60_000
   })

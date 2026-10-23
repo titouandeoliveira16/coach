@@ -86,7 +86,7 @@ function CarteSeance({ s, charge }: { s: Seance; charge: number }) {
       <span className="min-w-0 flex-1">
         <span className="block truncate font-semibold">
           {s.titre ?? s.type ?? (s.sport === 'velo' ? 'Vélo' : 'Course')}
-          {s.source !== 'manuel' && <span className="ml-1.5 text-xs font-normal text-texte-3">{s.source === 'fit' ? '.FIT' : 'Strava'}</span>}
+          {s.source !== 'manuel' && <span className="ml-1.5 text-xs font-normal text-texte-3">{s.source === 'fit' ? '.FIT' : 'Intervals'}</span>}
         </span>
         <span className="block text-sm text-texte-3">
           <span className="capitalize">{depuisJour(s.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' })}</span> · {details.join(' · ')}

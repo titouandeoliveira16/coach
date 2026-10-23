@@ -3,35 +3,16 @@
 ## Déjà en place
 - `sql/01-donnees.sql` : table de synchronisation (exécuté à l'étape 3 bis).
 
-## Connexion Strava (à faire une fois)
+## Connexion Intervals.icu (à faire une fois)
 
-### 1. Créer l'application Strava
-1. Va sur https://www.strava.com/settings/api (connecté à ton compte Strava).
-2. Remplis :
-   - **Application Name** : Coach Titouan (le mot « Strava » est interdit dans le nom)
-   - **Category** : Training
-   - **Website** : https://titouandeoliveira16.github.io/coach/
-   - **Authorization Callback Domain** : `vjjuopkiwfyqjolxmnho.supabase.co`
-3. Valide, puis note le **Client ID** et le **Client Secret** (bouton « show »).
+Intervals.icu fournit une API gratuite par clé personnelle. Les activités arrivées dans Intervals **via Strava**
+ne sont pas transmises par son API (règles de Strava) : relie Garmin Connect et Zwift **directement** à Intervals.
 
-### 2. Créer les tables
-Supabase → **SQL Editor** → New query → colle `sql/02-strava-et-suppression.sql` → **Run**.
+1. **Intervals.icu → Settings → Connections** : relier Garmin Connect (et Zwift).
+2. **Intervals.icu → Settings → Developer Settings** : générer une **API Key** (et noter l'**Athlete ID**, ex. `i123456`).
+3. **Supabase → SQL Editor** : exécuter `sql/02-intervals-et-suppression.sql`.
+4. **Supabase → Edge Functions → Deploy a new function → Via Editor** : nom **`intervals`**, coller
+   `functions/intervals/index.ts`, Deploy. Aucun secret à ajouter.
+5. **Dans l'appli** : Réglages → Intervals.icu → coller la clé (et l'ID athlète) → Relier → Importer mes 3 derniers mois.
 
-### 3. Installer la fonction serveur
-1. Supabase → **Edge Functions** → **Deploy a new function** → **Via Editor**.
-2. Nom de la fonction : **`strava`** (exactement).
-3. Remplace tout le code par le contenu de `functions/strava/index.ts`, puis **Deploy**.
-4. Dans les réglages de la fonction (**Details**), **désactive « Verify JWT with legacy secret » / « Enforce JWT verification »**
-   (Strava appelle `/strava/retour` sans jeton ; la fonction vérifie elle-même l'utilisateur sur les autres routes).
-
-### 4. Ajouter les secrets
-Supabase → **Edge Functions** → **Secrets** (ou Project Settings → Edge Functions) :
-- `STRAVA_CLIENT_ID` = le Client ID
-- `STRAVA_CLIENT_SECRET` = le Client Secret
-
-### 5. Dans l'appli
-Réglages → **Strava** → **Connecter Strava** → autorise (coche l'accès aux activités privées) → reviens dans Coach
-→ **Importer mes 3 derniers mois**.
-
-Limites : une appli Strava nouvellement créée n'accepte qu'**un seul athlète** (toi). Pour la partager, il faudra la
-faire valider par Strava. Les traces GPS ne sont jamais récupérées.
+La fonction vérifie elle-même l'utilisateur connecté : la vérification JWT de Supabase peut rester activée.

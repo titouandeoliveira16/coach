@@ -9,10 +9,10 @@ export function AideFit() {
       <button type="button" onClick={() => navigate(-1)} className="py-2 text-accent">‹ Retour</button>
       <h1 className="text-2xl font-bold">Récupérer un fichier .FIT</h1>
 
-      <Carte titre="a. Le plus simple : Strava (automatique)">
+      <Carte titre="a. Le plus simple : Intervals.icu (automatique)">
         <p className="text-texte-2">
-          Si iGPSPORT, Zwift et Garmin Connect sont reliés à Strava, connecte Strava dans Réglages : tes séances
-          arrivent seules, sans fichier.
+          Si Garmin Connect et Zwift sont reliés directement à Intervals.icu, relie Intervals.icu dans Réglages :
+          tes séances arrivent seules, sans fichier. (Les activités arrivées dans Intervals via Strava ne sont pas transmises.)
         </p>
       </Carte>
 

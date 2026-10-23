@@ -84,7 +84,7 @@ function Charge({ t, filtre, setFiltre }: { t: Tableau; filtre: FiltreSport; set
           <p className="text-sm">🧭 Calibration en cours : <span className="font-semibold">{t.a.joursHistorique}/{JOURS_AMORCAGE} jours</span> d'historique.</p>
           <p className="mt-1 text-xs text-texte-3">
             La fitness (CTL) se construit sur 42 jours : avant 4 semaines, les chiffres sont trompeurs. Pour démarrer
-            avec une valeur réaliste, importe tes 3 derniers mois depuis Strava (<Link to="/reglages" className="text-accent">Réglages</Link>).
+            avec une valeur réaliste, importe tes 3 derniers mois depuis Intervals.icu (<Link to="/reglages" className="text-accent">Réglages</Link>).
           </p>
         </Carte>
       )}
@@ -222,7 +222,7 @@ function Progres({ t, tests }: { t: Tableau; tests: { date: string; type: 'vma' 
       </Carte>
       <Carte titre="Découplage cardiaque (séances ≥ 45 min)">
         <p className="mb-1 text-xs text-texte-3">Sous 5 % : bonne endurance<Aide titre="Découplage" texte={AIDES.decouplage} /></p>
-        {decouplages.length === 0 ? <p className="text-sm text-texte-3">Importe un .FIT ou relie Strava pour le calculer.</p> : (
+        {decouplages.length === 0 ? <p className="text-sm text-texte-3">Importe un .FIT ou relie Intervals.icu pour le calculer.</p> : (
           <ul className="text-sm">
             {[...decouplages].reverse().map((s) => (
               <li key={s.id} className="flex justify-between border-t border-bordure py-1.5">

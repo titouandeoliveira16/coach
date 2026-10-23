@@ -6,7 +6,7 @@ import type { Contexte } from '../seances/donnees'
 import { nouvelId } from '../seances/donnees'
 import type { Seance, Sport } from '../types'
 
-/** Flux d'une activité (fichier .FIT ou Strava), aligné sur le temps. Pas de GPS : inutile pour la charge. */
+/** Flux d'une activité (fichier .FIT ou Intervals.icu), aligné sur le temps. Pas de GPS : inutile pour la charge. */
 export interface Flux {
   /** Secondes depuis le départ */
   t: number[]
@@ -28,7 +28,7 @@ export interface Resume {
   homeTrainer?: boolean
   titre?: string
   source: Seance['source']
-  stravaId?: number
+  idExterne?: string
 }
 
 const moyenne = (v: (number | null)[] | undefined) => {
@@ -58,7 +58,7 @@ export function analyserFlux(flux: Flux, r: Resume, c: Contexte): Seance {
     deniveleM: r.deniveleM !== undefined ? Math.round(r.deniveleM) : undefined,
     homeTrainer: r.sport === 'velo' ? r.homeTrainer : undefined,
     source: r.source,
-    stravaId: r.stravaId,
+    idExterne: r.idExterne,
   }
 
   if (aFc) {

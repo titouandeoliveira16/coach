@@ -8,7 +8,7 @@ import { Forme } from './ecrans/Forme'
 import { Historique } from './ecrans/Historique'
 import { Plan } from './ecrans/Plan'
 import { AideFit } from './import/AideFit'
-import { importerStravaSiBesoin } from './import/strava'
+import { importerIntervalsSiBesoin } from './import/intervals'
 import { FormulaireSeance } from './seances/FormulaireSeance'
 
 const ONGLETS = [
@@ -20,9 +20,9 @@ const ONGLETS = [
 
 /** Écran racine du module : onglets en haut, bouton « + » en bas à droite. */
 export function EcranEntrainement() {
-  // Nouvelles activités Strava à l'ouverture (au plus une fois par heure)
+  // Nouvelles données Intervals.icu à l'ouverture (au plus une fois par heure)
   useEffect(() => {
-    importerStravaSiBesoin()
+    importerIntervalsSiBesoin()
   }, [])
 
   return (

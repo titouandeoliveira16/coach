@@ -8,7 +8,7 @@ import { CartePesee } from '../forme/CartePesee'
 import { ResumeMatin } from '../forme/ResumeMatin'
 import { SaisieMatin } from '../forme/SaisieMatin'
 import { SeptJours } from '../forme/SeptJours'
-import { mesuresRecentes } from '../forme/donnees'
+import { QUESTIONS, mesuresRecentes } from '../forme/donnees'
 
 /** Nombre de jours de mesures avant de pouvoir calculer un signal fiable (étape 6). */
 const JOURS_CALIBRATION = 14
@@ -22,18 +22,20 @@ export function Forme() {
   const dateDuJour = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
   if (!recentes) return null
   const duJour = recentes.find((m) => m.date === aujourdhui())
+  // Les chiffres peuvent arriver seuls de Garmin (Intervals.icu) : le matin n'est complet qu'avec le ressenti
+  const complet = duJour !== undefined && QUESTIONS.some((q) => duJour[q.cle] !== undefined)
 
   return (
     <div className="space-y-3">
       <p className="text-lg capitalize text-texte-2">{dateDuJour}</p>
 
-      {duJour && !edition ? (
-        <ResumeMatin mesure={duJour} onModifier={() => setEdition(true)} />
+      {complet && !edition ? (
+        <ResumeMatin mesure={duJour!} onModifier={() => setEdition(true)} />
       ) : (
         <SaisieMatin key={duJour?.modifieLe} existante={duJour} onTermine={() => setEdition(false)} />
       )}
 
-      {duJour && !edition && <CarteAujourdhui />}
+      {complet && !edition && <CarteAujourdhui />}
 
       <CartePesee />
 
