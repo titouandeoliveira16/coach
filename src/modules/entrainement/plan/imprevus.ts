@@ -91,3 +91,26 @@ export async function veloRepare() {
   const pannes = (await lirePannes()).flatMap((p) => (p.au < aujourdhui() ? [p] : p.du <= hier ? [{ ...p, au: hier }] : []))
   await enregistrer(db.reglages, { id: CLE, valeur: pannes })
 }
+
+/**
+ * Feu rouge (fatigue, pas maladie) : la séance d'intensité vélo du jour est reportée au prochain jour possible
+ * de la semaine (jamais à côté d'une séance dure), plutôt que supprimée (Vesterinen 2016, Javaloyes 2019).
+ * Sans jour possible, elle passe « à reporter ».
+ */
+export async function reporterIntensite(p: SeancePrevue) {
+  const semaine = joursDe(lundiDe(p.date))
+  const demain = decalerJour(p.date, 1)
+  const plan = (await db.prevues.where('date').between(semaine[0], semaine[6], true, true).toArray()).filter((x) => x.statut === 'prevue')
+  const indispos = new Set([...(await db.indispos.toArray()).map((i) => i.date), ...(await joursPanneVelo())])
+  const d = demain > semaine[6] ? undefined : replanifier(semaine, plan, indispos, [p.id], demain)[0]
+  await enregistrer(db.prevues, d?.statut === 'deplacee' && d.vers
+    ? { ...p, date: d.vers, reporteeDu: p.date, raison: 'Fatigue' }
+    : { ...p, statut: 'reportee', reporteeDu: p.date, raison: 'Fatigue' })
+}
+
+/** Le feu n'est plus rouge (ou « je maintiens ») : la séance reportée revient au jour prévu. */
+export async function annulerReport(jour: string) {
+  for (const p of await db.prevues.toArray())
+    if (p.reporteeDu === jour && (p.statut === 'prevue' || p.statut === 'reportee'))
+      await enregistrer(db.prevues, { ...p, date: jour, statut: 'prevue', reporteeDu: undefined, raison: undefined })
+}

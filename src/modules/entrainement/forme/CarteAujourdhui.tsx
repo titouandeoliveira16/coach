@@ -2,11 +2,13 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { db } from '../../../core/db'
-import { aujourdhui } from '../../../core/dates'
+import { aujourdhui, depuisJour } from '../../../core/dates'
 import { enregistrer, supprimer } from '../../../core/stockage'
 import { Carte } from '../../../core/ui/Carte'
 import { analyser } from '../analyse/donnees'
 import { adapterDuJour } from '../plan/adaptation'
+import { annulerReport, reporterIntensite } from '../plan/imprevus'
+import { estIntensite } from '../plan/programme'
 import { Deroule } from '../plan/Deroule'
 import { iconeSport } from '../sports'
 import type { Raison } from '../types'
@@ -23,6 +25,8 @@ export function CarteAujourdhui() {
   // null = pas encore de décision ; undefined = lecture en cours
   const decision = useLiveQuery(async () => (await db.decisions.get(jour)) ?? null, [jour])
   const indispo = useLiveQuery(() => db.indispos.get(jour), [jour])
+  // Séance d'intensité reportée aujourd'hui à cause du feu rouge
+  const reportee = useLiveQuery(async () => (await db.prevues.toArray()).find((p) => p.reporteeDu === jour) ?? null, [jour])
 
   // On garde une trace du signal du jour (sans écraser un forçage)
   const couleur = a?.signal.couleur
@@ -30,6 +34,16 @@ export function CarteAujourdhui() {
     if (!couleur || decision === undefined || decision?.force) return
     if (decision?.couleur !== couleur) enregistrer(db.decisions, { date: jour, couleur, force: false })
   }, [couleur, decision, jour])
+
+  // Feu rouge sans maladie : l'intensité vélo est reportée (pas supprimée) ; sinon elle revient
+  const maladie = a?.signal.alertes.some((x) => x.code === 'malade')
+  const rougeFatigue = a?.signal.couleur === 'rouge' && !maladie && !decision?.force
+  const aReporter = prevues?.find((p) => p.statut === 'prevue' && p.sport === 'velo' && (estIntensite(p) || p.velo?.famille === 'test'))
+  useEffect(() => {
+    if (!a || !prevues || decision === undefined || reportee === undefined) return
+    if (rougeFatigue && aReporter) reporterIntensite(aReporter)
+    else if (!rougeFatigue && reportee) annulerReport(jour)
+  }, [a, prevues, decision, reportee, rougeFatigue, aReporter, jour])
 
   if (!a || !prevues) return null
   const { signal } = a
@@ -68,9 +82,20 @@ export function CarteAujourdhui() {
           </>
         ) : (
           <p className="text-texte-2">
-            {signal.couleur === 'rouge' ? 'Repos ou récupération active (20-30 min très facile). ' : 'Rien de prévu. '}
+            {reportee && (
+              <span className="mb-1 block font-semibold" style={{ color: COULEUR.rouge }}>
+                Feu rouge : {reportee.titre} {reportee.statut === 'reportee' ? 'est à reporter (plus de jour possible cette semaine)' : `reportée au ${depuisJour(reportee.date).toLocaleDateString('fr-FR', { weekday: 'long' })}`}.
+              </span>
+            )}
+            {signal.couleur === 'rouge' ? 'Aujourd’hui : 30 à 45 min très facile, ou repos. ' : 'Rien de prévu. '}
             <Link to="/entrainement/semaine" className="text-accent">Ma semaine ›</Link>
           </p>
+        )}
+        {reportee && !prevue && (
+          <button type="button" className="mt-2 text-sm text-texte-3 underline"
+            onClick={() => enregistrer(db.decisions, { date: jour, couleur: signal.couleur, force: true })}>
+            Je maintiens quand même ma séance aujourd'hui
+          </button>
         )}
         {adaptation?.modifiee && (
           <button type="button" className="mt-2 text-sm text-texte-3 underline"

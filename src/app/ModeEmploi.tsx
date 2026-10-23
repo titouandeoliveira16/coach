@@ -37,7 +37,7 @@ export function ModeEmploi() {
           <Etape n={2}>Regarde ton <b className="text-texte">feu</b> et ta <b className="text-texte">séance du jour</b>.</Etape>
           <p>🟢 Fais la séance prévue.</p>
           <p>🟠 Fais la <b className="text-texte">version raccourcie</b> affichée (mêmes watts, moins de répétitions).</p>
-          <p>🔴 Pas d'intensité : 30 à 45 min très facile, ou repos.</p>
+          <p>🔴 Pas d'intensité aujourd'hui : 30 à 45 min très facile, ou repos. Ton intensité vélo est <b className="text-texte">reportée</b> au prochain jour possible de la semaine (sauf si tu es malade).</p>
           <p>Tu peux toujours appuyer sur « Je maintiens quand même ma séance ».</p>
           <p>Malade ou une douleur ? Appuie sur 🤒 ou 🤕.</p>
           <p>⚖️ <b className="text-texte">Poids</b> : touche la ligne quand tu veux te peser.</p>

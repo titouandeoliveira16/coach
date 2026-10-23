@@ -185,6 +185,8 @@ export interface SeancePrevue {
   minutesCle?: number
   /** Vélo généré : famille, format, palier, cible */
   velo?: SeanceVelo
+  /** Intensité reportée à cause d'un feu rouge : date d'origine */
+  reporteeDu?: string
   /** Changée de jour à la main : le recalcul du vélo la laisse où elle est */
   deplacee?: boolean
   /** Minutes ajoutées pour compenser un imprévu (ex. vélo en panne) */

@@ -17,7 +17,8 @@ const arrondi5 = (n: number) => Math.round(n / 5) * 5
  * Séance du jour selon le feu :
  *  - 🟢 séance prévue ;
  *  - 🟠 intensité raccourcie (une série en moins ou un tiers des répétitions en moins, mêmes watts) ;
- *  - 🔴 intensité supprimée : 30 à 45 min très facile, ou repos.
+ *  - 🔴 pas d'intensité aujourd'hui : 30 à 45 min très facile, ou repos. Hors maladie, l'intensité vélo
+ *    est reportée à un autre jour de la semaine (voir reporterIntensite).
  * Une séance raccourcie ou supprimée ne compte pas pour la progression.
  */
 export function adapterDuJour(p: SeancePrevue, couleur: Couleur): Adaptation {
@@ -31,7 +32,7 @@ export function adapterDuJour(p: SeancePrevue, couleur: Couleur): Adaptation {
   const tresFacile = (min: number): Etape[] => [{ debutSec: 0, dureeSec: min * 60, libelle: 'Très facile, pédale souple (RPE ≤ 2)', w: cpEff ? arrondi5(cpEff * 0.5) : p.velo?.cibleW ? arrondi5(p.velo.cibleW * 0.8) : undefined }]
 
   if (couleur === 'rouge') {
-    if (p.sport === 'velo') return { texte: 'Feu rouge : intensité supprimée. 30 à 45 min très facile, ou repos complet.', etapes: tresFacile(40), modifiee: true }
+    if (p.sport === 'velo') return { texte: 'Feu rouge : pas d’intensité aujourd’hui. 30 à 45 min très facile, ou repos complet.', etapes: tresFacile(40), modifiee: true }
     if (p.sport === 'course') return { texte: 'Feu rouge : remplace par 30 min de footing très facile, ou repos complet.', modifiee: true }
     return { texte: 'Feu rouge : repos ou mobilité légère.', modifiee: true }
   }
