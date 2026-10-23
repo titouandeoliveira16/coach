@@ -3,8 +3,6 @@ import { depuisJour } from '../../../core/dates'
 import { Bouton } from '../../../core/ui/Bouton'
 import { ChampNombre } from '../../../core/ui/ChampNombre'
 import { Puces } from '../../../core/ui/Puces'
-import { allureDuType, tableauAllures } from '../allures'
-import { useReglagesEntrainement } from '../reglagesEntrainement'
 import { iconeSport, NOMS_SPORTS } from '../sports'
 import { TYPES_COURSE, TYPES_SEANCE, type Intensite, type SeancePrevue, type Sport, type TypeCourse } from '../types'
 import { champsCourse, enregistrerPrevue } from './donnees'
@@ -16,11 +14,8 @@ const champ = 'w-full rounded-xl border border-bordure bg-surface-2 px-4 py-3 ou
 
 /** Ajout ou modification d'une séance prévue : course Campus Coach (le plus souvent), renfo, ou vélo à la main. */
 export function FormulairePrevue({ initiale, jours, onTermine }: { initiale: SeancePrevue; jours: string[]; onTermine: () => void }) {
-  const [r] = useReglagesEntrainement()
   const [p, setP] = useState(initiale)
   const changer = (c: Partial<SeancePrevue>) => setP((x) => ({ ...x, ...c }))
-  const allures = tableauAllures(r.courseRef, r.vmaKmh, r.seuilCoursePct)
-  const cible = p.sport === 'course' ? allureDuType(p.typeCourse, allures) : undefined
 
   const choisirSport = (sport: Sport) =>
     changer(sport === 'renfo'
@@ -44,7 +39,6 @@ export function FormulairePrevue({ initiale, jours, onTermine }: { initiale: Sea
         <div>
           <p className="mb-2 text-sm text-texte-2">Type de séance (comme dans Campus Coach)</p>
           <Puces options={NOMS_TYPES_COURSE} valeur={p.typeCourse} onChoisir={choisirType} />
-          {cible && <p className="mt-2 text-sm text-texte-2">Allure cible : <span className="font-semibold text-texte">{cible}</span></p>}
         </div>
       )}
 

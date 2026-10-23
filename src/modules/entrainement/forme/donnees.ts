@@ -1,6 +1,6 @@
 import { db } from '../../../core/db'
 import { enregistrer } from '../../../core/stockage'
-import { aujourdhui, decalerJour, ecartJours } from '../../../core/dates'
+import { aujourdhui, decalerJour } from '../../../core/dates'
 import type { MesureMatin, Note } from '../types'
 
 /** Les 5 questions du ressenti, dans l'ordre d'affichage. */
@@ -34,15 +34,4 @@ export const mesuresRecentes = (n: number) =>
 export function moyenne(mesures: MesureMatin[], cle: 'vfcMs' | 'fcRepos'): { valeur: number; nb: number } | undefined {
   const v = mesures.map((m) => m[cle]).filter((x): x is number => x !== undefined)
   return v.length ? { valeur: v.reduce((a, b) => a + b, 0) / v.length, nb: v.length } : undefined
-}
-
-/**
- * Faut-il proposer la pesée ? Oui si c'est le jour de pesée et qu'elle n'est pas faite,
- * ou si la dernière pesée date de plus de 7 jours (jour raté).
- */
-export function peseeAttendue(jourPesee: number, dernierePesee?: string): boolean {
-  const jour = aujourdhui()
-  if (dernierePesee === jour) return false
-  const estLeJour = new Date().getDay() === jourPesee
-  return estLeJour || !dernierePesee || ecartJours(dernierePesee, jour) >= 7
 }

@@ -9,7 +9,6 @@ import { Carte } from '../../../core/ui/Carte'
 import { Feuille } from '../../../core/ui/Feuille'
 import { Puces } from '../../../core/ui/Puces'
 import { AIDES } from '../aides'
-import { allureDuType, tableauAllures } from '../allures'
 import { Deroule } from '../plan/Deroule'
 import { FormulairePrevue } from '../plan/FormulairePrevue'
 import { chargesSemaine, declarerNonFaite, joursDe, supprimerPrevue } from '../plan/donnees'
@@ -33,8 +32,6 @@ export function Semaine() {
   const jours = joursDe(lundi)
   const prevues = useLiveQuery(() => db.prevues.where('date').between(jours[0], jours[6], true, true).toArray(), [lundi])
   const seances = useLiveQuery(() => db.seances.where('date').between(jours[0], jours[6], true, true).toArray(), [lundi])
-  const [r] = useReglagesEntrainement()
-  const allures = tableauAllures(r.courseRef, r.vmaKmh, r.seuilCoursePct)
   const [ajout, setAjout] = useState<string | null>(null)
   const [choisie, setChoisie] = useState<SeancePrevue | null>(null)
   const [message, setMessage] = useState<string[]>()
@@ -77,7 +74,6 @@ export function Semaine() {
                 </span>
                 <span className="block text-sm text-texte-2">
                   {p.dureeMin} min{p.kjPrevu ? ` · ${p.kjPrevu} kJ` : ''}
-                  {p.sport === 'course' && allureDuType(p.typeCourse, allures) ? ` · ${allureDuType(p.typeCourse, allures)}` : ''}
                 </span>
               </button>
             ))}

@@ -24,7 +24,8 @@ export function JoursVelo() {
 
   return (
     <div className="mt-3 border-t border-bordure pt-3">
-      <p className="mb-2 text-sm text-texte-2">Ma semaine type<Aide titre="Programme vélo" texte={AIDES.programme} /></p>
+      <p className="text-sm font-semibold">Ma semaine type<Aide titre="Programme vélo" texte={AIDES.programme} /></p>
+      <p className="mb-2 text-xs text-texte-3">Les jours où tu fais habituellement chaque chose : l'appli y place ton vélo, et met l'intensité loin de ta séance dure de course.</p>
       {JOURS.map((j, i) => (
         <label key={j} className="flex items-center justify-between py-1">
           <span className="text-texte-2">{j}</span>

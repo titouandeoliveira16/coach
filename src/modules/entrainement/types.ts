@@ -53,18 +53,9 @@ export interface ReglagesEntrainement {
   /** Distribution d'intensité visée */
   modeleCible: 'polarise' | 'pyramidal'
   tests: TestPhysio[]
-  /** Course de référence pour les allures (ex. test 1500 m) */
-  courseRef?: CourseRef
   /** Objectif de kJ sur une période (système kJ : 90 jours) */
   objectifKj?: ObjectifKj
   programme: ReglagesProgramme
-}
-
-/** Course de référence : les allures (VMA, seuil 30, seuil 60) en découlent (Riegel). */
-export interface CourseRef {
-  date: string
-  distanceM: number
-  tempsSec: number
 }
 
 /** Programme vélo automatique : semaine type, phases, tests et compétitions. */

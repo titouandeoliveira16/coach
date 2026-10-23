@@ -20,34 +20,3 @@ export function rtss(dureeSec: number, vitesseKmhMoy: number, vmaKmh: number, se
   return (dureeSec / 3600) * intensite ** 2 * 100
 }
 
-/**
- * Allures « temps de maintien » (logique Campus Coach) à partir d'une course de référence.
- * Formule de Riegel (1981) : T2 = T1 × (D2 / D1)^1,06, donc la distance tenue pendant T vaut
- * D1 × (T / T1)^(1 / 1,06). Le seuil 60 est la vitesse tenable 60 min, le seuil 30 celle de 30 min,
- * la VMA celle d'environ 5 min (définition alternative de Campus).
- */
-export const EXPOSANT_RIEGEL = 1.06
-
-/** Vitesse (km/h) tenable pendant `dureeCibleSec`, prédite depuis une course (distance en m, temps en s). */
-export function vitesseTenue(distanceM: number, tempsSec: number, dureeCibleSec: number) {
-  const d = distanceM * (dureeCibleSec / tempsSec) ** (1 / EXPOSANT_RIEGEL)
-  return (d / 1000 / dureeCibleSec) * 3600
-}
-
-/** Temps prédit (s) sur une distance (m), depuis une course de référence. */
-export const tempsPredit = (distanceM: number, tempsSec: number, distanceCibleM: number) =>
-  tempsSec * (distanceCibleM / distanceM) ** EXPOSANT_RIEGEL
-
-export interface AlluresCourse {
-  vmaKmh: number
-  seuil30Kmh: number
-  seuil60Kmh: number
-}
-
-export function alluresDepuisCourse(distanceM: number, tempsSec: number): AlluresCourse {
-  return {
-    vmaKmh: vitesseTenue(distanceM, tempsSec, 300),
-    seuil30Kmh: vitesseTenue(distanceM, tempsSec, 1800),
-    seuil60Kmh: vitesseTenue(distanceM, tempsSec, 3600),
-  }
-}

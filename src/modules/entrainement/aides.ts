@@ -5,7 +5,7 @@ export const AIDES = {
     'TRIMP (Banister) = pour chaque minute, part de ta réserve de FC utilisée × 0,64 × e^(1,92 × cette part). Calculé seconde par seconde avec un fichier, sinon depuis ta FC moyenne (ou estimé depuis le RPE si pas de FC).',
   kj: 'kJ = puissance (W) × durée (s) / 1000 : le travail mécanique produit. Seulement avec un capteur de puissance (home trainer).',
   tss: 'TSS = durée × puissance normalisée × IF / (CP × 3600) × 100, avec IF = puissance normalisée / CP. 1 h à ta CP = 100.',
-  rtss: 'rTSS = heures × (vitesse / vitesse au seuil 60)² × 100. Le seuil 60 vient de ta course de référence (Réglages → Course), sinon 87 % de ta VMA.',
+  rtss: 'rTSS = heures × (vitesse / vitesse au seuil 60)² × 100. Vitesse seuil estimée à 87 % de la VMA.',
   allure: 'Allure = durée / distance. % VMA = vitesse moyenne / ta VMA.',
   np: 'Puissance normalisée = moyenne glissante sur 30 s, élevée à la puissance 4, moyennée, puis racine 4e : reflète mieux le coût des efforts irréguliers.',
   decouplage:
@@ -36,8 +36,6 @@ export const AIDES = {
     'Puissance Z2 : 62 % de ta CP au départ (ou ta valeur dans Réglages), puis +5 W après une sortie Z2 du programme avec découplage < 5 % et RPE ≤ 3, −5 W si découplage > 5 % ou RPE > 3. Repart de zéro à chaque test CP, toujours dans ta zone 2.',
   progression:
     "Règle 6 du système kJ : on allonge d'abord le temps de travail (4 paliers par famille : VO2 courts, VO2 longs, seuil…), puis +2,5 % de watts une fois le dernier palier réussi (et retour au 2e palier). Un bloc pas tenu : −5 % de watts la fois suivante. Une réussite fait avancer toute la famille (ex. un 30/30 réussi fait progresser le 30/15).",
-  allures:
-    "Allures calculées depuis ta course de référence avec la formule de Riegel (temps × distance^1,06) : seuil 60 = vitesse tenable 60 min, seuil 30 = 30 min, VMA ≈ 5 min, comme chez Campus Coach. Endurance fondamentale = 70-80 % du seuil 60, sweet spot = 95 %.",
   phases:
     "Reprise & endurance : volume en Z2, intensité sous le seuil ou 30/15 léger. Dominante VO2 : 2 séances VO2 pour 1 de seuil. Dominante seuil : l'inverse. À charge égale, l'ordre change peu les progrès (Sylta 2016) : on garde toujours un peu des deux. Une semaine allégée toutes les 4, et la semaine d'une course.",
   efficacite:

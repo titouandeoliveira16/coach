@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { contrainte, modeleForme, monotonie, ratioPic, srpe, trimpBanister, trimpDepuisMoyenne } from './charge'
-import { allureSecKm, alluresDepuisCourse, pctVma, rtss, tempsPredit, vitesseKmh } from './course'
+import { allureSecKm, pctVma, rtss, vitesseKmh } from './course'
 import { decouplage, domaineDepuisFc, domaines, tempsParZone, type BornesZones } from './fc'
 import { kjDepuisEchantillons, kjDepuisMoyenne, puissanceNormalisee, tss } from './puissance'
 import { analyserVfc, decaler } from './vfc'
@@ -89,16 +89,6 @@ describe('course', () => {
   it('rTSS : 1 h au seuil = 100', () => {
     expect(rtss(3600, 18.5 * 0.87, 18.5)).toBeCloseTo(100, 5)
     expect(rtss(1800, 18.5 * 0.87, 18.5)).toBeCloseTo(50, 5)
-  })
-
-  it('allures de Riegel depuis un 1500 m', () => {
-    // 1500 m en 5'00 : la VMA (≈ 5 min) vaut la vitesse du 1500 m
-    const a = alluresDepuisCourse(1500, 300)
-    expect(a.vmaKmh).toBeCloseTo(18, 5)
-    // Seuil 60 ≈ 87 % de la VMA (12^(1/1,06 − 1))
-    expect(a.seuil60Kmh / a.vmaKmh).toBeCloseTo(0.869, 3)
-    expect(a.seuil30Kmh).toBeGreaterThan(a.seuil60Kmh)
-    expect(tempsPredit(5000, 1200, 10000)).toBeCloseTo(2502, 0)
   })
 })
 

@@ -146,10 +146,15 @@ async function envoyer(userId: string, curseurs: Curseurs) {
     if (!deja || l.modifie_le >= deja.modifie_le) parCle.set(k, l)
   }
 
-  const { error } = await supabase
-    .from('donnees')
-    .upsert([...parCle.values()].map((l) => ({ ...l, user_id: userId })), { onConflict: 'user_id,table_nom,cle' })
-  if (error) throw error
+  const lignes = [...parCle.values()].map((l) => ({ ...l, user_id: userId }))
+  const { error } = await supabase.from('donnees').upsert(lignes, { onConflict: 'user_id,table_nom,cle' })
+  if (error) {
+    // Envoi groupé refusé : on envoie ligne par ligne pour ne pas bloquer toute la synchro
+    for (const l of lignes) {
+      const r = await supabase.from('donnees').upsert(l, { onConflict: 'user_id,table_nom,cle' })
+      if (r.error) throw r.error
+    }
+  }
 
   await db.suppressions.clear()
   curseurs.envoye = aEnvoyer.reduce((max, l) => (l.modifie_le > max ? l.modifie_le : max), depuis)

@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Carte } from '../../../core/ui/Carte'
 import { useReglagesEntrainement } from '../reglagesEntrainement'
 import { SectionAnalyse } from './SectionAnalyse'
-import { SectionCourse } from './SectionCourse'
 import { SectionIntervals } from './SectionIntervals'
 import { ProgrammeAvance } from './SectionProgramme'
 import { SectionVelo } from './SectionVelo'
@@ -15,7 +14,6 @@ export function SectionReglagesEntrainement() {
   return (
     <>
       <SectionIntervals />
-      <SectionCourse />
       <SectionVelo />
       <button type="button" onClick={() => setAvance(!avance)} className="w-full py-2 text-left text-sm font-semibold text-texte-3">
         {avance ? '▾ Avancé' : '▸ Avancé (zones, phases, tests, analyse)'}
