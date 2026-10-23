@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { aujourdhui } from '../../../core/dates'
 import { CarteAujourdhui } from '../forme/CarteAujourdhui'
 import { CartePesee } from '../forme/CartePesee'
+import { CarteRemise } from '../forme/CarteRemise'
 import { CarteResultat } from '../forme/CarteResultat'
 import { ResumeMatin } from '../forme/ResumeMatin'
 import { SaisieMatin } from '../forme/SaisieMatin'
@@ -22,6 +23,7 @@ export function Aujourdhui() {
   return (
     <div className="space-y-3">
       <p className="text-lg capitalize text-texte-2">{dateDuJour}</p>
+      <CarteRemise />
       <CarteResultat />
       {complet && !edition ? (
         <>

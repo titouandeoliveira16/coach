@@ -2,12 +2,12 @@ import { db } from '../../../core/db'
 import { aujourdhui, decalerJour, NOMS_JOURS, depuisJour } from '../../../core/dates'
 import { enregistrer, supprimer } from '../../../core/stockage'
 import {
-  budgetSemaine, choisirFormat, construireIntervalles, construireTest, construireZ2, estSemaineAllegee, etatProgression,
+  budgetSemaine, formatDe, projeterSaison, choisirFormat, construireIntervalles, construireTest, construireZ2, estSemaineAllegee, etatProgression,
   minutesPourKj, NOMS_PHASES, palierPossible, phaseDe, placer, SPRINTS, type BilanSemaine, type Famille, type HistoIntensite,
   type SeanceConstruite,
 } from '../../../metrics/programme'
 import { PROGRAMME_DEFAUT } from '../reglagesEntrainement'
-import { chargeDe, chargerContexte, domaineDe } from '../seances/donnees'
+import { chargeDe, chargerContexte, domaineDe, lundiDe } from '../seances/donnees'
 import type { ReglagesEntrainement, SeancePrevue } from '../types'
 import { chargePrevue, joursDe } from './donnees'
 
@@ -44,9 +44,11 @@ const arrondi5 = (n: number) => Math.round(n / 5) * 5
 /** Séances d'intensité générées (passées et prévues) : alternance des formats et progression. */
 async function histoIntensite(): Promise<HistoIntensite[]> {
   const autos = (await db.prevues.toArray()).filter((p) => p.origine === 'auto' && estIntensite(p) && actives(p))
+  // Jour orange ou rouge (sans « je maintiens ») : séance raccourcie ou supprimée, elle ne fait pas progresser
+  const adaptes = new Set((await db.decisions.toArray()).filter((d) => d.couleur !== 'vert' && !d.force).map((d) => d.date))
   return autos.map((p) => ({
     date: p.date, famille: p.velo!.famille as Famille, formatId: p.velo!.formatId!, palier: p.velo!.palier ?? 0,
-    allegee: p.velo!.allegee, resultat: p.resultat,
+    allegee: p.velo!.allegee || adaptes.has(p.date), resultat: p.resultat,
   }))
 }
 
@@ -282,4 +284,40 @@ export async function alertesCumul(lundi: string) {
     alertes.push(`Course : charge prévue +${Math.round((prevueCourse / moy4 - 1) * 100)} % par rapport à tes 4 dernières semaines. Au-delà de +30 %, le risque de blessure augmente en reprise (Nielsen 2014).`)
 
   return alertes
+}
+
+/** Vision de la saison : semaines à venir jusqu'à 3 semaines après le début de la dernière phase. */
+export async function saison() {
+  const r = await lireReglages()
+  const prog = r.programme
+  const phases = [...prog.phases].sort((a, b) => a.debut.localeCompare(b.debut))
+  // Avant la première phase : la projection commence au démarrage du programme
+  const lundi = lundiDe(aujourdhui()) < phases[0].debut ? phases[0].debut : lundiDe(aujourdhui())
+  const { w: z2W } = await z2Actuel()
+  const kjIntensite = construireIntervalles(formatDe('30-15')!, 0, r.cpW, 0).kj
+  const nZ2 = prog.semaineType.filter((x) => x === 'velo-z2').length
+  const nominal = kjIntensite + construireZ2(60, z2W).kj + construireZ2(100, z2W).kj
+  const plafond = kjIntensite + nZ2 * construireZ2(prog.maxSemaineMin, z2W).kj + construireZ2(prog.maxLongMin, z2W).kj
+  const meta = await lireMeta(lundi)
+  const derniere = [...prog.phases].sort((a, b) => a.debut.localeCompare(b.debut)).pop()!
+  const semaines = projeterSaison({
+    lundi, jusquA: decalerJour(derniere.debut, 21), phases: prog.phases, testsCp: prog.testsCp, competitions: prog.competitions,
+    histo: (await histoIntensite()).filter((h) => h.date < lundi), budgetDepart: meta?.budgetRef ?? nominal, plafond,
+  })
+  // Semaine en cours déjà générée : on montre la vraie séance et le vrai budget
+  const reelle = (await db.prevues.where('date').between(lundi, decalerJour(lundi, 6), true, true).toArray())
+    .find((p) => p.origine === 'auto' && (estIntensite(p) || p.velo?.famille === 'test'))
+  if (semaines[0]) {
+    if (reelle) semaines[0].intensite = reelle.titre
+    if (meta) semaines[0].budget = meta.budget
+  }
+  return { semaines, phases, fin: decalerJour(derniere.debut, 27), demarrage: lundi > lundiDe(aujourdhui()) ? lundi : undefined }
+}
+
+/** Progression de chaque famille de séances d'intensité déjà travaillée : palier (1 à 4) et bonus de watts. */
+export async function progressionFamilles() {
+  const histo = await histoIntensite()
+  const etat = etatProgression(histo)
+  const vues = [...new Set(histo.map((h) => h.famille))]
+  return vues.map((f) => ({ famille: f, palier: etat[f].palier + 1, bonus: etat[f].bonus, seances: histo.filter((h) => h.famille === f && h.resultat).length }))
 }

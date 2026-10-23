@@ -13,6 +13,7 @@ export function SectionVelo() {
   const [reglages, modifier] = useReglagesEntrainement()
   const [profil] = useProfil()
   const [calculateur, setCalculateur] = useState(false)
+  const [message, setMessage] = useState<string>()
 
   const wkg = reglages.cpW && profil.poidsKg ? reglages.cpW / profil.poidsKg : undefined
 
@@ -35,12 +36,17 @@ export function SectionVelo() {
       {calculateur && (
         <CalculateurCP
           onUtiliser={(cpW, wPrimeKj) => {
-            modifier({ cpW, wPrimeKj, tests: [...reglages.tests, { date: aujourdhui(), type: 'cp', valeur: cpW }] })
+            // Zones de puissance recalées sur la nouvelle CP (même % de CP qu'avant)
+            const ratio = cpW / (reglages.cpW ?? 260)
+            const zonesVelo = reglages.zonesVelo.map((z) => ({ ...z, wMin: Math.round(z.wMin * ratio), wMax: z.wMax && Math.round(z.wMax * ratio) }))
+            modifier({ cpW, wPrimeKj, zonesVelo, tests: [...reglages.tests, { date: aujourdhui(), type: 'cp', valeur: cpW }] })
             setCalculateur(false)
+            setMessage(`CP ${cpW} W enregistrée, zones recalées. Dans Semaine, appuie sur « Recalculer le vélo » pour mettre à jour les séances déjà prévues.`)
           }}
         />
       )}
 
+      {message && <p className="mt-2 text-sm text-nutrition">{message}</p>}
       <JoursVelo />
     </Carte>
   )

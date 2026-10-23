@@ -38,4 +38,8 @@ export const AIDES = {
     "Règle 6 du système kJ : on allonge d'abord le temps de travail (4 paliers par famille : VO2 courts, VO2 longs, seuil…), puis +2,5 % de watts une fois le dernier palier réussi (et retour au 2e palier). Un bloc pas tenu : −5 % de watts la fois suivante. Une réussite fait avancer toute la famille (ex. un 30/30 réussi fait progresser le 30/15).",
   allures:
     "Allures calculées depuis ta course de référence avec la formule de Riegel (temps × distance^1,06) : seuil 60 = vitesse tenable 60 min, seuil 30 = 30 min, VMA ≈ 5 min, comme chez Campus Coach. Endurance fondamentale = 70-80 % du seuil 60, sweet spot = 95 %.",
+  phases:
+    "Reprise & endurance : volume en Z2, intensité sous le seuil ou 30/15 léger. Dominante VO2 : 2 séances VO2 pour 1 de seuil. Dominante seuil : l'inverse. À charge égale, l'ordre change peu les progrès (Sylta 2016) : on garde toujours un peu des deux. Une semaine allégée toutes les 4, et la semaine d'une course.",
+  efficacite:
+    "Efficacité aérobie = puissance moyenne / FC moyenne sur tes sorties faciles de 45 min et plus. Évolution : moyenne de tes 4 dernières sorties comparée aux 4 d'avant.",
 } as const

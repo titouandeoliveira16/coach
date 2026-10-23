@@ -10,10 +10,11 @@ import { Feuille } from '../../../core/ui/Feuille'
 import { Puces } from '../../../core/ui/Puces'
 import { AIDES } from '../aides'
 import { allureDuType, tableauAllures } from '../allures'
+import { Deroule } from '../plan/Deroule'
 import { FormulairePrevue } from '../plan/FormulairePrevue'
 import { chargesSemaine, declarerNonFaite, joursDe, supprimerPrevue } from '../plan/donnees'
 import { alertesCumul, estIntensite, genererSemaineVelo, lireMeta, noterResultat } from '../plan/programme'
-import { useReglagesEntrainement } from '../reglagesEntrainement'
+import { PROGRAMME_DEFAUT, useReglagesEntrainement } from '../reglagesEntrainement'
 import { lundiDe, nouvelId } from '../seances/donnees'
 import { iconeSport } from '../sports'
 import { RAISONS, type Raison, type Seance, type SeancePrevue } from '../types'
@@ -106,11 +107,14 @@ export function Semaine() {
 
 /** Vélo de la semaine : une jauge de kJ (fait / prévu) et le bouton pour générer les séances. */
 function CarteVelo({ lundi, deps, onMessage }: { lundi: string; deps: unknown[]; onMessage: (m: string[]) => void }) {
+  const [r] = useReglagesEntrainement()
   const meta = useLiveQuery(async () => (await lireMeta(lundi)) ?? null, [lundi, ...deps])
   const kj = useLiveQuery(() => chargesSemaine(lundi), [lundi, ...deps])
   const [occupe, setOccupe] = useState(false)
   if (meta === undefined || !kj) return null
-  const passee = decalerJour(lundi, 6) < aujourdhui()
+  // Le programme démarre avec la première phase : avant, les séances sont fixées à la main
+  const debutProgramme = [...(r.programme?.phases ?? PROGRAMME_DEFAUT.phases)].map((p) => p.debut).sort()[0]
+  const passee = decalerJour(lundi, 6) < aujourdhui() || lundi < debutProgramme
 
   const generer = async () => {
     setOccupe(true)
@@ -180,6 +184,7 @@ function DetailSeance({ p, jours, onFermer, onMessage }: { p: SeancePrevue; jour
     <Feuille titre={p.titre} onFermer={onFermer}>
       <p className="text-sm text-texte-2">{p.dureeMin} min{p.kjPrevu ? ` · ${p.kjPrevu} kJ` : ''}</p>
       {p.detail && <p className="mt-2 text-sm">{p.detail}</p>}
+      {p.velo?.etapes && <Deroule etapes={p.velo.etapes} />}
       {p.velo?.pourquoi && <p className="mt-2 text-xs text-texte-3">Pourquoi cette séance : {p.velo.pourquoi}</p>}
       {mode === 'actions' ? (
         <div className="mt-4 space-y-2">

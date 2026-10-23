@@ -3,6 +3,7 @@ import { aujourdhui, decalerJour } from '../../../core/dates'
 import { modeleForme } from '../../../metrics/charge'
 import { analyserVfc } from '../../../metrics/vfc'
 import { lundiDe } from '../seances/donnees'
+import { PROGRAMME_DEFAUT } from '../reglagesEntrainement'
 import type { ReglagesEntrainement } from '../types'
 import { analyser, chargesParJour } from './donnees'
 
@@ -15,14 +16,24 @@ export async function donneesProgres() {
   const { contexte: c, seances } = a
   const r = (await db.reglages.get('entrainement'))?.valeur as Partial<ReglagesEntrainement> | undefined
 
-  // Watts : tests CP et puissance des sorties Z2 (séances vélo faciles de 45 min et plus, avec capteur)
-  const tests = (r?.tests ?? []).filter((t) => t.type === 'cp').map((t) => ({ date: t.date, w: t.valeur }))
-  const z2 = seances
-    .filter((s) => s.sport === 'velo' && s.puissanceMoyW && s.dureeSec >= 2700 && s.date > decalerJour(jour, -180) &&
-      (s.tempsZones ? s.tempsZones[0] + s.tempsZones[1] >= 0.8 * s.dureeSec : s.rpe !== undefined && s.rpe <= 3))
-    .map((s) => ({ date: s.date, w: s.puissanceMoyW! }))
-  const datesWatts = [...new Set([...tests, ...z2].map((x) => x.date))].sort()
-  const watts = datesWatts.map((d) => ({ date: d, cp: tests.find((t) => t.date === d)?.w, z2: z2.find((t) => t.date === d)?.w }))
+  // CP : tests et évolution depuis le précédent
+  const tests = (r?.tests ?? []).filter((t) => t.type === 'cp').sort((x, y) => x.date.localeCompare(y.date))
+  const cpPrecedente = tests.length >= 2 ? tests[tests.length - 2].valeur : undefined
+
+  // Efficacité aérobie vélo : watts par battement sur les sorties faciles de 45 min et plus (capteur + cardio)
+  const efficacite = seances
+    .filter((s) => s.sport === 'velo' && s.puissanceMoyW && s.fcMoy && s.dureeSec >= 2700 &&
+      (s.tempsZones ? s.tempsZones[0] + s.tempsZones[1] >= 0.8 * s.dureeSec : s.fcMoy < c.bornes[1]))
+    .sort((x, y) => x.date.localeCompare(y.date))
+    .map((s) => ({ date: s.date, valeur: s.puissanceMoyW! / s.fcMoy! }))
+  const moy = (x: { valeur: number }[]) => (x.length ? somme(x.map((v) => v.valeur)) / x.length : undefined)
+  const effRecente = moy(efficacite.slice(-4))
+  const effAvant = efficacite.length >= 6 ? moy(efficacite.slice(-8, -4)) : undefined
+
+  // kJ vélo : 28 derniers jours contre les 28 précédents
+  const kjEntre = (du: string, au: string) => somme(seances.filter((s) => s.sport === 'velo' && s.date >= du && s.date <= au).map((s) => s.kj ?? 0))
+  const kj28 = kjEntre(decalerJour(jour, -27), jour)
+  const kj28Avant = kjEntre(decalerJour(jour, -55), decalerJour(jour, -28))
 
   // Volume par semaine (12 semaines) : kJ vélo et charge course
   const lundi = lundiDe(jour)
@@ -45,5 +56,7 @@ export async function donneesProgres() {
     return { date: d, ln7: v.ln7, bas: v.zoneBasse, haut: v.zoneHaute, fcRepos: parDate.get(d)?.fcRepos }
   })
 
-  return { a, cpW: r?.cpW, vmaKmh: r?.vmaKmh, watts, semaines, kjVelo, chargeCourse, unite: c.chargeRef === 'trimp' ? 'TRIMP' : 'sRPE', forme, physio }
+  return {
+    a, cpW: r?.cpW, cpPrecedente, tests, testsPrevus: (r?.programme?.testsCp ?? PROGRAMME_DEFAUT.testsCp).filter((d) => d >= jour).sort(),
+    efficacite, effRecente, effAvant, kj28, kj28Avant, semaines, kjVelo, chargeCourse, unite: c.chargeRef === 'trimp' ? 'TRIMP' : 'sRPE', forme, physio }
 }

@@ -5,9 +5,9 @@ import { db } from '../../../core/db'
 import { aujourdhui } from '../../../core/dates'
 import { enregistrer, supprimer } from '../../../core/stockage'
 import { Carte } from '../../../core/ui/Carte'
-import { adapterSeance } from '../../../metrics/signal'
 import { analyser } from '../analyse/donnees'
-import { z2Actuel } from '../plan/programme'
+import { adapterDuJour } from '../plan/adaptation'
+import { Deroule } from '../plan/Deroule'
 import { iconeSport } from '../sports'
 import type { Raison } from '../types'
 
@@ -23,7 +23,6 @@ export function CarteAujourdhui() {
   // null = pas encore de décision ; undefined = lecture en cours
   const decision = useLiveQuery(async () => (await db.decisions.get(jour)) ?? null, [jour])
   const indispo = useLiveQuery(() => db.indispos.get(jour), [jour])
-  const z2 = useLiveQuery(z2Actuel)
 
   // On garde une trace du signal du jour (sans écraser un forçage)
   const couleur = a?.signal.couleur
@@ -35,6 +34,7 @@ export function CarteAujourdhui() {
   if (!a || !prevues) return null
   const { signal } = a
   const prevue = prevues.find((p) => p.statut === 'prevue' && p.intensite !== 'basse') ?? prevues.find((p) => p.statut === 'prevue')
+  const adaptation = prevue ? adapterDuJour(prevue, signal.couleur) : undefined
   const malade = indispo?.raison === 'Malade' || indispo?.raison === 'Douleur / blessure'
   const troisJours = [signal, ...a.signauxPrecedents].every((s) => s.couleur !== 'vert' && s.alertes.some((x) => x.code === 'malade'))
 
@@ -61,14 +61,18 @@ export function CarteAujourdhui() {
           <>
             <p className="font-semibold">{iconeSport(prevue.sport)} {prevue.titre} · {prevue.dureeMin} min{prevue.kjPrevu ? ` · ${prevue.kjPrevu} kJ` : ''}</p>
             {prevue.detail && <p className="mt-1 text-xs text-texte-2">{prevue.detail}</p>}
+            <p className="mt-2 font-semibold" style={{ color: decision?.force ? undefined : COULEUR[signal.couleur] }}>
+              {decision?.force ? '✋ Tu as choisi de maintenir ta séance.' : adaptation!.texte}
+            </p>
+            {(decision?.force ? prevue.velo?.etapes : adaptation!.etapes) && <Deroule etapes={(decision?.force ? prevue.velo?.etapes : adaptation!.etapes)!} />}
           </>
         ) : (
-          <p className="text-texte-2">Rien de prévu. <Link to="/entrainement/semaine" className="text-accent">Ma semaine ›</Link></p>
+          <p className="text-texte-2">
+            {signal.couleur === 'rouge' ? 'Repos ou récupération active (20-30 min très facile). ' : 'Rien de prévu. '}
+            <Link to="/entrainement/semaine" className="text-accent">Ma semaine ›</Link>
+          </p>
         )}
-        <p className="mt-1 font-semibold" style={{ color: decision?.force ? undefined : COULEUR[signal.couleur] }}>
-          {decision?.force ? '✋ Tu as choisi de maintenir ta séance.' : adapterSeance(prevue, signal, prevue?.sport === 'velo' ? z2?.w : undefined)}
-        </p>
-        {prevue && signal.couleur !== 'vert' && (
+        {adaptation?.modifiee && (
           <button type="button" className="mt-2 text-sm text-texte-3 underline"
             onClick={() => enregistrer(db.decisions, { date: jour, couleur: signal.couleur, force: !decision?.force })}>
             {decision?.force ? 'Annuler : suivre la recommandation' : 'Je maintiens quand même ma séance'}

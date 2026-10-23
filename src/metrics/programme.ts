@@ -95,6 +95,16 @@ const arrondi5 = (w: number) => Math.round(w / 5) * 5
 const enMin = (sec: number) => (sec % 60 ? `${Math.floor(sec / 60)}'${String(sec % 60).padStart(2, '0')}` : `${sec / 60}'`)
 const enDuree = (sec: number) => (sec < 60 ? `${sec}"` : enMin(sec))
 
+/** Une étape du déroulé (à suivre minute par minute sur le compteur). */
+export interface Etape {
+  /** Début de l'étape (s depuis le départ) */
+  debutSec: number
+  dureeSec: number
+  libelle: string
+  /** Watts cibles (absent : à fond ou libre) */
+  w?: number
+}
+
 /** Une séance vélo générée (stockée dans la séance prévue). */
 export interface SeanceVelo {
   famille: Famille | 'z2' | 'z2-long' | 'test'
@@ -105,6 +115,8 @@ export interface SeanceVelo {
   cibleW?: number
   /** Explication du choix (phase, alternance, progression) */
   pourquoi?: string
+  /** Déroulé détaillé */
+  etapes?: Etape[]
 }
 
 export interface SeanceConstruite {
@@ -115,9 +127,11 @@ export interface SeanceConstruite {
   velo: SeanceVelo
 }
 
+const lePalier = (f: Format, palier: number | Palier) => (typeof palier === 'number' ? f.paliers[palier] : palier)
+
 /** Durée totale (s) d'un format à un palier. */
-export function dureeFormat(f: Format, palier: number) {
-  const pa = f.paliers[palier]
+export function dureeFormat(f: Format, palier: number | Palier) {
+  const pa = lePalier(f, palier)
   const t = pa.travailSec ?? f.travailSec
   const bloc = f.continu ? pa.reps * (t + f.recupSec) : pa.reps * t + (pa.reps - 1) * f.recupSec
   const corps = pa.series * bloc + (pa.series - 1) * (f.recupSerieSec ?? 0)
@@ -130,25 +144,63 @@ export function palierPossible(f: Format, vise: number, maxMin: number) {
   return 0
 }
 
-/** Construit une séance d'intervalles : structure, watts, durée, kJ. */
-export function construireIntervalles(f: Format, palier: number, cpW: number, bonus: number): SeanceConstruite {
+/** Version raccourcie (feu orange) : une série de moins, ou un tiers de répétitions en moins. Mêmes watts. */
+export function palierRaccourci(f: Format, palier: number): Palier {
   const pa = f.paliers[palier]
+  return pa.series > 1 ? { ...pa, series: pa.series - 1 } : { ...pa, reps: Math.max(1, Math.round(pa.reps * 0.66)) }
+}
+
+/** Échauffement détaillé des séances d'intensité (15 min). */
+function echauffement(cpW: number): Etape[] {
+  return [
+    { debutSec: 0, dureeSec: 300, libelle: 'Échauffement, très facile', w: arrondi5(cpW * 0.5) },
+    { debutSec: 300, dureeSec: 300, libelle: 'Échauffement, facile', w: arrondi5(cpW * 0.6) },
+    { debutSec: 600, dureeSec: 300, libelle: 'Échauffement, modéré, avec 3 accélérations de 10" (à 11\', 12\' et 13\') vers ' + arrondi5(cpW * 1.1) + ' W', w: arrondi5(cpW * 0.7) },
+  ]
+}
+
+/** Construit une séance d'intervalles : structure, déroulé, watts, durée, kJ. */
+export function construireIntervalles(f: Format, palier: number | Palier, cpW: number, bonus: number): SeanceConstruite {
+  const pa = lePalier(f, palier)
   const t = pa.travailSec ?? f.travailSec
   const { totalSec, corpsSec, travailSec } = dureeFormat(f, palier)
   const wT = arrondi5(cpW * (f.pct / 100) * (1 + bonus))
   const wR = arrondi5(cpW * (f.pctRecup / 100) * (f.continu ? 1 + bonus : 1))
-  const wEch = arrondi5(cpW * 0.6)
-  const wRet = arrondi5(cpW * 0.5)
-  const kj = (ECHAUFFEMENT_SEC * wEch + travailSec * wT + (corpsSec - travailSec) * wR + RETOUR_SEC * wRet) / 1000
+  const wFacile = arrondi5(cpW * 0.5)
+  const kj = (ECHAUFFEMENT_SEC * cpW * 0.6 + travailSec * wT + (corpsSec - travailSec) * wR + RETOUR_SEC * wFacile) / 1000
+
+  // Déroulé : échauffement, séries / répétitions, récupérations, retour au calme
+  const etapes = echauffement(cpW)
+  let h = ECHAUFFEMENT_SEC
+  const ajouter = (dureeSec: number, libelle: string, w?: number) => {
+    etapes.push({ debutSec: h, dureeSec, libelle, w })
+    h += dureeSec
+  }
+  const recupSerie = f.recupSerieSec ?? 0
+  for (let si = 1; si <= pa.series; si++) {
+    if (f.continu) {
+      ajouter(pa.reps * (t + f.recupSec), `Bloc ${si}/${pa.series} : ${pa.reps} × (${enDuree(f.recupSec)} à ${wR} W puis ${enDuree(t)} à ${wT} W), sans pause`)
+    } else if (f.famille === 'vo2-courts') {
+      const bloc = pa.reps * t + (pa.reps - 1) * f.recupSec
+      ajouter(bloc, `Série ${si}/${pa.series} : ${pa.reps} × (${enDuree(t)} à ${wT} W puis ${enDuree(f.recupSec)} à ${wR} W)`, wT)
+    } else {
+      for (let ri = 1; ri <= pa.reps; ri++) {
+        ajouter(t, `${pa.reps > 1 ? `Répétition ${ri}/${pa.reps}` : 'Bloc'} : ${enMin(t)} régulier`, wT)
+        if (ri < pa.reps) ajouter(f.recupSec, 'Récupération, pédale souple', wR)
+      }
+    }
+    if (si < pa.series) ajouter(recupSerie, 'Récupération entre séries, pédale souple', wFacile)
+  }
+  ajouter(RETOUR_SEC, 'Retour au calme, très facile', wFacile)
 
   let titre: string
   let corps: string
   if (f.continu) {
     titre = `${pa.series} × ${pa.reps} cycles over-unders`
-    corps = `${pa.series} × [${pa.reps} × (${enDuree(f.recupSec)} à ${wR} W + ${enDuree(t)} à ${wT} W)], ${enMin(f.recupSerieSec ?? 0)} facile entre les blocs`
+    corps = `${pa.series} × [${pa.reps} × (${enDuree(f.recupSec)} à ${wR} W + ${enDuree(t)} à ${wT} W)], ${enMin(recupSerie)} facile entre les blocs`
   } else if (f.famille === 'vo2-courts') {
     titre = `${pa.series} × ${pa.reps} × ${f.nom}`
-    corps = `${pa.series} séries de ${pa.reps} × (${enDuree(t)} à ${wT} W / ${enDuree(f.recupSec)} à ${wR} W), ${enMin(f.recupSerieSec ?? 0)} facile entre les séries`
+    corps = `${pa.series} séries de ${pa.reps} × (${enDuree(t)} à ${wT} W / ${enDuree(f.recupSec)} à ${wR} W), ${enMin(recupSerie)} facile entre les séries`
   } else if (pa.reps === 1 && pa.series === 1) {
     titre = `${enMin(t)} ${f.nom}`
     corps = `${enMin(t)} à ${wT} W`
@@ -156,10 +208,10 @@ export function construireIntervalles(f: Format, palier: number, cpW: number, bo
     titre = `${pa.reps} × ${enMin(t)} ${f.famille === 'seuil' ? 'seuil' : f.nom.replace(/^intervalles de .*/, 'VO2')}`
     corps = `${pa.reps} × ${enMin(t)} à ${wT} W, ${enMin(f.recupSec)} à ${wR} W entre`
   }
-  const detail = `Échauffement 15' progressif (≈ ${wEch} W, 3 accélérations de 10") · ${corps} · Retour au calme 10' (≈ ${wRet} W)`
+  const detail = `Échauffement 15' · ${corps} · Retour au calme 10'`
   return {
     titre, detail, dureeMin: Math.round(totalSec / 60), kj: Math.round(kj),
-    velo: { famille: f.famille, formatId: f.id, palier, cibleW: wT },
+    velo: { famille: f.famille, formatId: f.id, palier: typeof palier === 'number' ? palier : undefined, cibleW: wT, etapes },
   }
 }
 
@@ -173,25 +225,53 @@ export function construireZ2(dureeMin: number, z2W: number, sprints?: { n: numbe
   const ech = Math.min(10, dureeMin) * 60
   const wEch = arrondi5(z2W * 0.85)
   const kj = (ech * wEch + (dureeMin * 60 - ech) * z2W) / 1000 + (sprints ? sprints.n * sprints.sec * z2W * 2.5 / 1000 : 0)
-  const s = sprints
-    ? ` · ${sprints.n} sprints de ${sprints.sec}" à fond (assis puis debout), un toutes les 10 min environ à partir de la 20e minute, bien récupérer entre`
-    : ''
+  const fin = dureeMin * 60
+  const etapes: Etape[] = [
+    { debutSec: 0, dureeSec: ech, libelle: 'Mise en route progressive', w: wEch },
+    { debutSec: ech, dureeSec: fin - ech - 300, libelle: 'Z2 régulière : RPE ≤ 3, tu peux parler en phrases', w: z2W },
+    { debutSec: fin - 300, dureeSec: 300, libelle: 'Retour au calme', w: wEch },
+  ]
+  let sprintsTexte = ''
+  if (sprints) {
+    // Un sprint toutes les 10 min à partir de la 20e, avant les 10 dernières minutes
+    const minutes = Array.from({ length: sprints.n }, (_, i) => 20 + i * 10).filter((m) => m <= dureeMin - 10)
+    sprintsTexte = `Sprints à ${minutes.map((m) => `${m}'`).join(', ')} : ${sprints.sec}" à fond (assis puis debout en alternance), puis 2' très facile avant de reprendre la Z2`
+    etapes.splice(2, 0, { debutSec: minutes[0] * 60, dureeSec: 0, libelle: sprintsTexte })
+  }
   return {
     titre: sprints ? `Z2 longue + ${sprints.n} sprints` : 'Endurance Z2',
-    detail: `10' progressif (≈ ${wEch} W) puis ${dureeMin - 10}' à ${z2W} W (Z2, RPE ≤ 3, aisance respiratoire)${s}`,
+    detail: `10' progressif puis Z2 à ${z2W} W (RPE ≤ 3)${sprints ? ` · ${sprints.n} sprints de ${sprints.sec}"` : ''}`,
     dureeMin, kj: Math.round(kj),
-    velo: { famille: sprints ? 'z2-long' : 'z2', cibleW: z2W },
+    velo: { famille: sprints ? 'z2-long' : 'z2', cibleW: z2W, etapes },
   }
 }
 
 /** Test CP 12-7-3 (calculateur des Réglages). */
 export function construireTest(cpW: number): SeanceConstruite {
+  const facile = arrondi5(cpW * 0.45)
+  const etapes: Etape[] = []
+  let h = 0
+  const ajouter = (dureeSec: number, libelle: string, w?: number) => {
+    etapes.push({ debutSec: h, dureeSec, libelle, w })
+    h += dureeSec
+  }
+  ajouter(600, 'Échauffement progressif', arrondi5(cpW * 0.55))
+  ajouter(60, 'Éveil : 1\' soutenu', arrondi5(cpW * 1.1))
+  ajouter(240, 'Facile', facile)
+  ajouter(60, 'Éveil : 1\' soutenu', arrondi5(cpW * 1.1))
+  ajouter(240, 'Facile', facile)
+  ajouter(720, 'EFFORT 12\' À FOND : départ prudent, régulier, finis fort', undefined)
+  ajouter(600, 'Récupération très facile', facile)
+  ajouter(420, 'EFFORT 7\' À FOND', undefined)
+  ajouter(600, 'Récupération très facile', facile)
+  ajouter(180, 'EFFORT 3\' À FOND', undefined)
+  ajouter(600, 'Retour au calme', facile)
   return {
     titre: 'Test CP 12-7-3',
-    detail: "Échauffement 20' dont 2 × 1' à 110 % de CP · 12' à fond (régulier) · 10' très facile · 7' à fond · 10' très facile · 3' à fond · 10' retour au calme. Saisis ensuite tes 3 puissances moyennes : Réglages → Vélo → Calculer depuis mon test.",
-    dureeMin: 85,
+    detail: 'Note la puissance moyenne de chaque effort, puis Réglages → Vélo → Calculer depuis mon test : tes zones et tes watts sont recalés.',
+    dureeMin: Math.round(h / 60),
     kj: Math.round((20 * 60 * cpW * 0.6 + 12 * 60 * cpW * 1.02 + 7 * 60 * cpW * 1.1 + 3 * 60 * cpW * 1.25 + 30 * 60 * cpW * 0.45) / 1000),
-    velo: { famille: 'test' },
+    velo: { famille: 'test', etapes },
   }
 }
 
@@ -409,4 +489,72 @@ export function placer(semaine: string[], roles: Role[], autres: Occupation[], i
     if (libre(d) && !utilises.has(d)) z2.push(prendre(d)!)
   }
   return { intensite, long, z2: z2.sort() }
+}
+
+// ——— Vision de la saison ———
+
+export interface SemaineSaison {
+  lundi: string
+  phase: TypePhase
+  /** Numéro de la semaine dans la phase (1 = première) et nombre de semaines de la phase (absent : phase ouverte) */
+  numero: number
+  total?: number
+  type: 'normale' | 'allegee' | 'competition' | 'test'
+  /** Budget kJ estimé (recalculé chaque semaine selon ce qui est fait) */
+  budget: number
+  /** Séance d'intensité prévue (famille et format) */
+  intensite: string
+  competition?: string
+}
+
+export const NOMS_FAMILLES: Record<Famille, string> = {
+  'vo2-courts': 'VO2 courts', 'vo2-longs': 'VO2 longs', seuil: 'Seuil', 'seuil-variable': 'Seuil variable', 'sweet-spot': 'Sweet spot', tempo: 'Tempo',
+}
+
+/**
+ * Projette les semaines à venir : phase, semaine allégée / course / test, budget estimé et séance d'intensité.
+ * Hypothèse : budget validé chaque semaine (+7,5 %, dans la limite des créneaux).
+ */
+export function projeterSaison(o: {
+  lundi: string
+  jusquA: string
+  phases: Phase[]
+  testsCp: string[]
+  competitions: { date: string; nom: string }[]
+  histo: HistoIntensite[]
+  budgetDepart: number
+  plafond: number
+}): SemaineSaison[] {
+  const triees = [...o.phases].sort((a, b) => a.debut.localeCompare(b.debut))
+  const histo = [...o.histo]
+  const semaines: SemaineSaison[] = []
+  let ref = o.budgetDepart
+  let precedenteAllegee = false
+  for (let l = o.lundi; l <= o.jusquA; l = decaler(l, 7)) {
+    const fin = decaler(l, 6)
+    const { phase, semaine } = phaseDe(l, triees)
+    const suivante = triees.find((p) => p.debut > phase.debut)
+    const competition = o.competitions.find((c) => c.date >= l && c.date <= fin)
+    const test = o.testsCp.find((d) => d >= l && d <= fin)
+    const allegee = estSemaineAllegee(semaine) || !!competition
+    if (semaines.length && !precedenteAllegee) ref = Math.min(o.plafond, ref * 1.075)
+    precedenteAllegee = allegee
+
+    let intensite: string
+    if (test) intensite = 'Test CP 12-7-3'
+    else {
+      const choix = choisirFormat(l, triees, histo)
+      const famille = NOMS_FAMILLES[choix.famille]
+      intensite = famille.toLowerCase() === choix.format.nom ? famille : `${famille} · ${choix.format.nom}`
+      histo.push({ date: decaler(l, 1), famille: choix.famille, formatId: choix.format.id, palier: 0 })
+    }
+    semaines.push({
+      lundi: l, phase: phase.type, numero: semaine + 1,
+      total: suivante ? Math.round((Date.parse(suivante.debut) - Date.parse(phase.debut)) / (7 * 86_400_000)) : undefined,
+      type: competition ? 'competition' : test ? 'test' : allegee ? 'allegee' : 'normale',
+      budget: Math.round((allegee ? ref * 0.65 : ref) / 50) * 50,
+      intensite, competition: competition?.nom,
+    })
+  }
+  return semaines
 }

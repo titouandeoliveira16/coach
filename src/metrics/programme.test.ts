@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   budgetSemaine, choisirFormat, construireIntervalles, construireZ2, dureeFormat, etatProgression, formatDe, FORMATS,
-  palierPossible, phaseDe, placer, type HistoIntensite, type Phase, type Role,
+  palierPossible, phaseDe, placer, projeterSaison, type HistoIntensite, type Phase, type Role,
 } from './programme'
 import { decaler } from './vfc'
 
@@ -126,5 +126,20 @@ describe('placement', () => {
     const autres = [{ date: semaine[3], dure: true }]
     const p = placer(semaine, ROLES, autres, new Set(), semaine[0], { competitions: [semaine[6]] })
     expect([semaine[3], semaine[4], semaine[5]]).not.toContain(p.intensite)
+  })
+})
+
+describe('saison', () => {
+  it('projette phases, semaines allégées, test et course', () => {
+    const s = projeterSaison({
+      lundi: '2026-10-26', jusquA: '2027-01-04', phases: PHASES, testsCp: ['2026-10-30'],
+      competitions: [{ date: '2026-12-13', nom: '5 km' }], histo: [], budgetDepart: 2000, plafond: 3000,
+    })
+    expect(s[0]).toMatchObject({ type: 'test', intensite: 'Test CP 12-7-3', numero: 1, total: 7, phase: 'reprise' })
+    expect(s[3].type).toBe('allegee')
+    expect(s.find((x) => x.lundi === '2026-12-07')).toMatchObject({ type: 'competition', competition: '5 km' })
+    expect(s.find((x) => x.lundi === '2026-12-14')).toMatchObject({ phase: 'vo2', numero: 1 })
+    expect(s[1].budget).toBeGreaterThan(s[0].budget)
+    expect(s[3].budget).toBeLessThan(s[2].budget)
   })
 })

@@ -5,6 +5,7 @@ import { Onglets } from '../../core/ui/Onglets'
 import { IconePlus } from '../../core/ui/icones'
 import { Aujourdhui } from './ecrans/Aujourdhui'
 import { Progres } from './ecrans/Progres'
+import { Saison } from './ecrans/Saison'
 import { Semaine } from './ecrans/Semaine'
 import { AideFit } from './import/AideFit'
 import { importerIntervalsSiBesoin } from './import/intervals'
@@ -14,6 +15,7 @@ import { FormulaireSeance } from './seances/FormulaireSeance'
 const ONGLETS = [
   { libelle: 'Aujourd’hui', vers: '/entrainement/aujourdhui' },
   { libelle: 'Semaine', vers: '/entrainement/semaine' },
+  { libelle: 'Saison', vers: '/entrainement/saison' },
   { libelle: 'Progrès', vers: '/entrainement/progres' },
 ]
 
@@ -45,6 +47,7 @@ function AvecOnglets() {
         <Routes>
           <Route path="aujourdhui" element={<Aujourdhui />} />
           <Route path="semaine" element={<Semaine />} />
+          <Route path="saison" element={<Saison />} />
           <Route path="progres" element={<Progres />} />
           <Route path="*" element={<Navigate to="aujourdhui" replace />} />
         </Routes>
