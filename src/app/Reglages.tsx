@@ -1,5 +1,10 @@
+import type { CSSProperties } from 'react'
 import { Carte } from '../core/ui/Carte'
+import { ChampNombre } from '../core/ui/ChampNombre'
 import { EnTete } from '../core/ui/EnTete'
+import { useProfil } from '../core/profil'
+import { MODULES } from './modules'
+import { SectionSauvegarde } from './SectionSauvegarde'
 
 /** Vrai si l'appli est lancée depuis l'écran d'accueil (et non dans Safari). */
 function estInstallee() {
@@ -10,29 +15,40 @@ function estInstallee() {
   )
 }
 
-/** Réglages généraux. Le contenu (profil, sauvegarde…) arrive à l'étape 2. */
+/** Réglages : profil commun, puis réglages de chaque module, sauvegarde et état de l'appli. */
 export function Reglages() {
+  const [profil, modifierProfil] = useProfil()
   const installee = estInstallee()
 
   return (
     <>
       <EnTete titre="Réglages" />
       <div className="space-y-3 px-4">
+        <Carte titre="Profil">
+          <ChampNombre libelle="Poids" unite="kg" valeur={profil.poidsKg} onValider={(v) => modifierProfil({ poidsKg: v })} />
+          <ChampNombre libelle="Taille" unite="cm" decimales={0} valeur={profil.tailleCm} onValider={(v) => modifierProfil({ tailleCm: v })} />
+          <ChampNombre libelle="FC max" unite="bpm" decimales={0} valeur={profil.fcMax} onValider={(v) => modifierProfil({ fcMax: v })} />
+        </Carte>
+
+        {/* Chaque module affiche ses réglages avec sa propre couleur d'accent */}
+        {MODULES.filter((m) => m.SectionReglages).map((m) => (
+          <div key={m.id} style={{ '--accent': m.couleur } as CSSProperties} className="space-y-3">
+            {m.SectionReglages && <m.SectionReglages />}
+          </div>
+        ))}
+
+        <SectionSauvegarde />
+
         <Carte titre="État de l'appli">
           <Ligne libelle="Installée sur l'écran d'accueil" valeur={installee ? 'Oui ✓' : 'Non'} ok={installee} />
           <Ligne libelle="Version" valeur={__VERSION__} />
-        </Carte>
-        {!installee && (
-          <Carte titre="Installer sur iPhone">
-            <ol className="list-decimal space-y-1 pl-5 text-texte-2">
+          {!installee && (
+            <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-texte-2">
               <li>Ouvre cette page dans Safari</li>
               <li>Touche le bouton Partager (carré avec une flèche)</li>
               <li>Choisis « Sur l'écran d'accueil »</li>
             </ol>
-          </Carte>
-        )}
-        <Carte titre="À venir (étape 2)">
-          <p className="text-texte-2">Profil, VMA, FTP, zones et sauvegarde des données.</p>
+          )}
         </Carte>
       </div>
     </>
