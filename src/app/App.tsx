@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react'
 import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { BarreNavigation } from './BarreNavigation'
+import { ModeEmploi } from './ModeEmploi'
 import { MODULES } from './modules'
 import { Reglages } from './Reglages'
 
@@ -19,6 +20,7 @@ function Coquille() {
         {MODULES.map((m) => (
           <Route key={m.id} path={`${m.chemin}/*`} element={<m.Ecran />} />
         ))}
+        <Route path="/aide" element={<ModeEmploi />} />
         <Route path="/reglages" element={<Reglages />} />
         {/* Par défaut : premier module */}
         <Route path="*" element={<Navigate to={MODULES[0].chemin} replace />} />

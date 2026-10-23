@@ -1,14 +1,15 @@
 import { NavLink } from 'react-router-dom'
 import { MODULES } from './modules'
-import { IconeReglages } from '../core/ui/icones'
+import { IconeAide, IconeReglages } from '../core/ui/icones'
 
 /**
  * Barre de navigation en bas de l'écran (accessible au pouce).
- * Un onglet par module, puis Réglages à droite.
+ * Un onglet par module, puis le mode d'emploi et Réglages à droite.
  */
 export function BarreNavigation() {
   const entrees = [
     ...MODULES.map((m) => ({ id: m.id, nom: m.nom, chemin: m.chemin, couleur: m.couleur, Icone: m.Icone })),
+    { id: 'aide', nom: "Mode d'emploi", chemin: '/aide', couleur: '#f2f4f7', Icone: IconeAide },
     { id: 'reglages', nom: 'Réglages', chemin: '/reglages', couleur: '#f2f4f7', Icone: IconeReglages },
   ]
 
