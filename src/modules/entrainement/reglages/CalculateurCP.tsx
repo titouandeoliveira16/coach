@@ -22,8 +22,8 @@ export function CalculateurCP({ onUtiliser }: { onUtiliser: (cpW: number, wPrime
 
   return (
     <div className="mt-3 rounded-xl bg-surface-2 p-3">
-      <p className="mb-1 text-sm font-semibold">Test CP 12-7-3</p>
-      <p className="mb-2 text-xs text-texte-3">Puissance moyenne de chaque effort maximal.</p>
+      <p className="mb-1 text-sm font-semibold">Test CP</p>
+      <p className="mb-2 text-xs text-texte-3">Puissance moyenne de chaque effort à fond. Test court : remplis seulement 3 et 12 min.</p>
       {DUREES_MIN.map((min, i) => (
         <ChampNombre
           key={min}

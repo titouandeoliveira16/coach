@@ -6,7 +6,7 @@ import {
   minutesPourKj, NOMS_PHASES, palierPossible, phaseDe, placer, SPRINTS, type BilanSemaine, type Famille, type HistoIntensite,
   type SeanceConstruite,
 } from '../../../metrics/programme'
-import { PROGRAMME_DEFAUT } from '../reglagesEntrainement'
+import { programmeDe } from '../reglagesEntrainement'
 import { chargeDe, chargerContexte, domaineDe, lundiDe } from '../seances/donnees'
 import type { ReglagesEntrainement, SeancePrevue } from '../types'
 import { chargePrevue, joursDe } from './donnees'
@@ -35,8 +35,11 @@ export const lireMeta = async (lundi: string) => (await db.reglages.get(cleSemai
 
 async function lireReglages() {
   const r = (await db.reglages.get('entrainement'))?.valeur as Partial<ReglagesEntrainement> | undefined
-  return { cpW: r?.cpW ?? CP_DEFAUT, zones: r?.zonesVelo, tests: r?.tests ?? [], programme: { ...PROGRAMME_DEFAUT, ...r?.programme } }
+  return { cpW: r?.cpW ?? CP_DEFAUT, zones: r?.zonesVelo, tests: r?.tests ?? [], programme: programmeDe(r?.programme) }
 }
+
+/** Dates des tests CP réalisés (résultats saisis). */
+const datesTests = (tests: { date: string; type: string }[]) => tests.filter((t) => t.type === 'cp').map((t) => t.date)
 
 const actives = (p: SeancePrevue) => p.statut === 'prevue' || p.statut === 'faite' || p.statut === 'reportee'
 const arrondi5 = (n: number) => Math.round(n / 5) * 5
@@ -166,11 +169,11 @@ export async function genererSemaineVelo(lundi: string) {
   const histo = await histoIntensite()
   if (placement.intensite) {
     if (placement.intensite === dateTest) {
-      intensite = construireTest(r.cpW)
+      intensite = construireTest(r.cpW, prog.testsCourts?.includes(dateTest))
       intensite.velo.pourquoi = 'Test prévu : il recale toutes tes cibles en watts.'
     } else {
       const choix = choisirFormat(lundi, prog.phases, histo)
-      const etat = etatProgression(histo)[choix.famille]
+      const etat = etatProgression(histo, datesTests(r.tests))[choix.famille]
       const vise = allegee ? Math.max(0, etat.palier - 1) : etat.palier
       const palier = palierPossible(choix.format, vise, maxDuJour(placement.intensite))
       intensite = construireIntervalles(choix.format, palier, r.cpW, etat.bonus)
@@ -301,7 +304,7 @@ export async function saison() {
   const meta = await lireMeta(lundi)
   const derniere = [...prog.phases].sort((a, b) => a.debut.localeCompare(b.debut)).pop()!
   const semaines = projeterSaison({
-    lundi, jusquA: decalerJour(derniere.debut, 21), phases: prog.phases, testsCp: prog.testsCp, competitions: prog.competitions,
+    lundi, jusquA: decalerJour(derniere.debut, 21), phases: prog.phases, testsCp: prog.testsCp, testsCourts: prog.testsCourts, competitions: prog.competitions,
     histo: (await histoIntensite()).filter((h) => h.date < lundi), budgetDepart: meta?.budgetRef ?? nominal, plafond,
   })
   // Semaine en cours déjà générée : on montre la vraie séance et le vrai budget
@@ -317,7 +320,19 @@ export async function saison() {
 /** Progression de chaque famille de séances d'intensité déjà travaillée : palier (1 à 4) et bonus de watts. */
 export async function progressionFamilles() {
   const histo = await histoIntensite()
-  const etat = etatProgression(histo)
+  const r = await lireReglages()
+  const etat = etatProgression(histo, datesTests(r.tests))
   const vues = [...new Set(histo.map((h) => h.famille))]
   return vues.map((f) => ({ famille: f, palier: etat[f].palier + 1, bonus: etat[f].bonus, seances: histo.filter((h) => h.famille === f && h.resultat).length }))
+}
+
+/**
+ * Après un test CP : les séances vélo encore à faire (semaine en cours et semaines déjà générées)
+ * sont recalculées avec la nouvelle CP.
+ */
+export async function recalculerApresTest() {
+  const lundi = lundiDe(aujourdhui())
+  for (const l of [lundi, decalerJour(lundi, 7), decalerJour(lundi, 14)]) {
+    if (await lireMeta(l)) await genererSemaineVelo(l).catch(() => {})
+  }
 }

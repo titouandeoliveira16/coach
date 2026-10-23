@@ -1,7 +1,7 @@
 import { versJour } from '../../../core/dates'
 import { trimpBanister } from '../../../metrics/charge'
 import { decouplage, tempsParZone } from '../../../metrics/fc'
-import { kjDepuisEchantillons, puissanceNormalisee, reechantillonner1Hz } from '../../../metrics/puissance'
+import { DUREES_MEILLEURS, kjDepuisEchantillons, meilleurePuissance, puissanceNormalisee, reechantillonner1Hz } from '../../../metrics/puissance'
 import type { Contexte } from '../seances/donnees'
 import { nouvelId } from '../seances/donnees'
 import type { Seance, Sport } from '../types'
@@ -71,8 +71,16 @@ export function analyserFlux(flux: Flux, r: Resume, c: Contexte): Seance {
   if (aPuissance) {
     s.kj = Math.round(kjDepuisEchantillons(t, flux.w!))
     s.puissanceMoyW = dureeSec ? Math.round((s.kj * 1000) / dureeSec) : undefined
-    const np = puissanceNormalisee(reechantillonner1Hz(t, flux.w!))
+    const w1Hz = reechantillonner1Hz(t, flux.w!)
+    const np = puissanceNormalisee(w1Hz)
     s.puissanceNormW = np ? Math.round(np) : undefined
+    // Meilleurs efforts : estimation de la CP entre deux tests
+    const meilleurs: Record<string, number> = {}
+    for (const d of DUREES_MEILLEURS) {
+      const m = meilleurePuissance(w1Hz, d)
+      if (m) meilleurs[d] = Math.round(m)
+    }
+    if (Object.keys(meilleurs).length) s.meilleurs = meilleurs
   }
   if (aFc && dureeSec >= DUREE_MIN_DECOUPLAGE) {
     const sortie = aPuissance ? flux.w! : flux.v

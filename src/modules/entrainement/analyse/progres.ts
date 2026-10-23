@@ -3,7 +3,9 @@ import { aujourdhui, decalerJour } from '../../../core/dates'
 import { modeleForme } from '../../../metrics/charge'
 import { analyserVfc } from '../../../metrics/vfc'
 import { lundiDe } from '../seances/donnees'
-import { PROGRAMME_DEFAUT } from '../reglagesEntrainement'
+import { calculerCP } from '../calculs'
+import { DUREES_MEILLEURS } from '../../../metrics/puissance'
+import { programmeDe } from '../reglagesEntrainement'
 import type { ReglagesEntrainement } from '../types'
 import { analyser, chargesParJour } from './donnees'
 
@@ -19,6 +21,15 @@ export async function donneesProgres() {
   // CP : tests et évolution depuis le précédent
   const tests = (r?.tests ?? []).filter((t) => t.type === 'cp').sort((x, y) => x.date.localeCompare(y.date))
   const cpPrecedente = tests.length >= 2 ? tests[tests.length - 2].valeur : undefined
+
+  // Estimation de la CP entre deux tests : meilleurs efforts de 3, 7 et 12 min des 6 dernières semaines (Karsten 2015)
+  const recents = seances.filter((s) => s.sport === 'velo' && s.meilleurs && s.date > decalerJour(jour, -42))
+  const efforts = DUREES_MEILLEURS.flatMap((d) => {
+    const w = Math.max(0, ...recents.map((s) => s.meilleurs?.[d] ?? 0))
+    return w ? [{ dureeSec: d, puissanceW: w }] : []
+  })
+  const estimation = efforts.length >= 2 ? calculerCP(efforts) : undefined
+  const cpEstimee = estimation && estimation.cpW > 0 && estimation.r2 > 0.95 ? Math.round(estimation.cpW) : undefined
 
   // Efficacité aérobie vélo : watts par battement sur les sorties faciles de 45 min et plus (capteur + cardio)
   const efficacite = seances
@@ -57,6 +68,6 @@ export async function donneesProgres() {
   })
 
   return {
-    a, cpW: r?.cpW, cpPrecedente, tests, testsPrevus: (r?.programme?.testsCp ?? PROGRAMME_DEFAUT.testsCp).filter((d) => d >= jour).sort(),
+    a, cpW: r?.cpW, cpPrecedente, tests, cpEstimee, poidsKg: ((await db.reglages.get('profil'))?.valeur as { poidsKg?: number } | undefined)?.poidsKg, testsPrevus: programmeDe(r?.programme).testsCp.filter((d) => d >= jour).sort(), testsCourts: programmeDe(r?.programme).testsCourts ?? [],
     efficacite, effRecente, effAvant, kj28, kj28Avant, semaines, kjVelo, chargeCourse, unite: c.chargeRef === 'trimp' ? 'TRIMP' : 'sRPE', forme, physio }
 }

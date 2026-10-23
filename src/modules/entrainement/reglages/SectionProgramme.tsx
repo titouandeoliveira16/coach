@@ -7,7 +7,7 @@ import { ChampNombre } from '../../../core/ui/ChampNombre'
 import { NOMS_PHASES, type Role } from '../../../metrics/programme'
 import { AIDES } from '../aides'
 import { z2Actuel } from '../plan/programme'
-import { PROGRAMME_DEFAUT, useReglagesEntrainement } from '../reglagesEntrainement'
+import { programmeDe, useReglagesEntrainement } from '../reglagesEntrainement'
 import type { ReglagesProgramme } from '../types'
 
 const JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
@@ -19,7 +19,7 @@ const select = 'rounded-lg border border-bordure bg-surface-2 px-2 py-2 text-sm'
 /** Mes jours : semaine type et créneaux (le programme vélo se place sur ces jours). */
 export function JoursVelo() {
   const [r, modifier] = useReglagesEntrainement()
-  const p = { ...PROGRAMME_DEFAUT, ...r.programme }
+  const p = programmeDe(r.programme)
   const changer = (c: Partial<ReglagesProgramme>) => modifier({ programme: { ...p, ...c } })
 
   return (
@@ -48,7 +48,7 @@ export function JoursVelo() {
 /** Réglages avancés du programme : Z2 de départ, phases, tests CP, compétitions. */
 export function ProgrammeAvance() {
   const [r, modifier] = useReglagesEntrainement()
-  const p = { ...PROGRAMME_DEFAUT, ...r.programme }
+  const p = programmeDe(r.programme)
   const changer = (c: Partial<ReglagesProgramme>) => modifier({ programme: { ...p, ...c } })
   const z2 = useLiveQuery(z2Actuel, [r.programme])
   const [nouvelleCompet, setNouvelleCompet] = useState({ date: '', nom: '' })

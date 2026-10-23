@@ -1,4 +1,10 @@
+import { useLiveQuery } from 'dexie-react-hooks'
+import { db } from '../../../core/db'
+import { decalerJour } from '../../../core/dates'
+import { Aide } from '../../../core/ui/Aide'
 import { Carte } from '../../../core/ui/Carte'
+import { analyserSommeil, enHeures, SEUILS_DEFAUT } from '../../../metrics/signal'
+import { AIDES } from '../aides'
 import { COULEURS_NOTE } from '../../../core/ui/ChoixNote'
 import { formatNombre } from '../../../core/format'
 import type { MesureMatin } from '../types'
@@ -13,6 +19,7 @@ export function ResumeMatin({ mesure, onModifier }: { mesure: MesureMatin; onMod
         <Chiffre libelle="FC repos" valeur={mesure.fcRepos} unite="bpm" />
         <Chiffre libelle="Sommeil" valeur={mesure.sommeilH} unite="h" decimales={1} />
       </div>
+      <LigneSommeil date={mesure.date} />
       <div className="mt-3 flex justify-between gap-1">
         {QUESTIONS.map((q) => {
           const n = mesure[q.cle]
@@ -45,5 +52,22 @@ function Chiffre({ libelle, valeur, unite, decimales = 0 }: { libelle: string; v
         <span className="ml-1 text-xs font-normal text-texte-3">{unite}</span>
       </p>
     </div>
+  )
+}
+
+/** Sommeil : moyenne 7 jours, comparée au repère (8 h, ou ta moyenne habituelle si elle est plus haute). */
+function LigneSommeil({ date }: { date: string }) {
+  const s = useLiveQuery(async () => {
+    const m = await db.mesures.where('date').between(decalerJour(date, -40), date, true, true).toArray()
+    return analyserSommeil(m.map((x) => ({ date: x.date, h: x.sommeilH })), date)
+  }, [date])
+  if (!s?.moyenne7) return null
+  const repere = Math.max(8, s.moyenne30 ?? 0)
+  const bas = s.moyenne7 < SEUILS_DEFAUT.moyenne7MinH || (s.moyenne30 !== undefined && s.moyenne7 < s.moyenne30 - SEUILS_DEFAUT.ecartPersoH)
+  return (
+    <p className="mt-2 text-center text-sm text-texte-2">
+      Sommeil sur 7 j : <b className={bas ? 'text-[#fb923c]' : 'text-texte'}>{enHeures(s.moyenne7)}</b> · repère {enHeures(repere)}
+      <Aide titre="Sommeil" texte={AIDES.sommeil} />
+    </p>
   )
 }

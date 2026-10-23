@@ -13,17 +13,28 @@ import { Deroule } from '../plan/Deroule'
 import { FormulairePrevue } from '../plan/FormulairePrevue'
 import { chargesSemaine, declarerNonFaite, joursDe, supprimerPrevue } from '../plan/donnees'
 import { alertesCumul, estIntensite, genererSemaineVelo, lireMeta, noterResultat } from '../plan/programme'
-import { PROGRAMME_DEFAUT, useReglagesEntrainement } from '../reglagesEntrainement'
+import { programmeDe, useReglagesEntrainement } from '../reglagesEntrainement'
 import { lundiDe, nouvelId } from '../seances/donnees'
 import { iconeSport } from '../sports'
 import { RAISONS, type Raison, type Seance, type SeancePrevue } from '../types'
 
-const STATUTS: Record<SeancePrevue['statut'], { libelle: string; couleur: string }> = {
-  prevue: { libelle: '', couleur: 'var(--color-texte-2)' },
-  faite: { libelle: 'Faite ✓', couleur: '#4ade80' },
-  'non-faite': { libelle: 'Pas faite', couleur: '#f87171' },
-  reportee: { libelle: 'À reporter', couleur: '#fb923c' },
-  abandonnee: { libelle: 'Annulée', couleur: 'var(--color-texte-3)' },
+const VERT = '#4ade80'
+const ORANGE = '#fb923c'
+const ROUGE = '#f87171'
+
+/**
+ * Couleur d'une séance prévue :
+ *  - vert : faite ;
+ *  - orange : à valider (jour passé sans séance remontée, ou intensité faite sans « Tenue ? ») ;
+ *  - rouge : pas faite (avec la raison) ;
+ *  - neutre : à venir. L'orange n'apparaît que le lendemain : une séance du soir met du temps à remonter.
+ */
+function etatVisuel(p: SeancePrevue, jour: string): { libelle: string; couleur?: string } {
+  if (p.statut === 'faite') return estIntensite(p) && !p.resultat ? { libelle: 'Tenue ?', couleur: ORANGE } : { libelle: 'Faite ✓', couleur: VERT }
+  if (p.statut === 'non-faite' || p.statut === 'abandonnee') return { libelle: `Pas faite${p.raison ? ` · ${p.raison}` : ''}`, couleur: ROUGE }
+  if (p.statut === 'reportee') return { libelle: 'À reporter', couleur: ORANGE }
+  if (p.date < jour) return { libelle: 'À valider', couleur: ORANGE }
+  return { libelle: '' }
 }
 
 /** Semaine : la course saisie depuis Campus Coach, le vélo généré autour, une jauge de kJ. */
@@ -58,7 +69,7 @@ export function Semaine() {
       <Alertes lundi={lundi} deps={[prevues, seances]} />
 
       {jours.map((d) => {
-        const duJour = prevues.filter((p) => p.date === d && p.statut !== 'abandonnee')
+        const duJour = prevues.filter((p) => p.date === d)
         const horsPlan = seances.filter((s) => s.date === d && !duJour.some((p) => p.id === s.prevueId))
         return (
           <section key={d} className={`rounded-2xl border bg-surface p-3 ${d === aujourdhui() ? 'border-accent' : 'border-bordure'}`}>
@@ -66,20 +77,25 @@ export function Semaine() {
               <p className="font-semibold capitalize">{depuisJour(d).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric' })}</p>
               <button type="button" onClick={() => setAjout(d)} aria-label="Ajouter une séance" className="px-2 text-xl text-accent">+</button>
             </div>
-            {duJour.map((p) => (
-              <button key={p.id} type="button" onClick={() => setChoisie(p)} className="mt-2 block w-full rounded-xl bg-surface-2 p-2.5 text-left">
+            {duJour.map((p) => {
+              const e = etatVisuel(p, aujourdhui())
+              return (
+              <button key={p.id} type="button" onClick={() => setChoisie(p)}
+                className="mt-2 block w-full rounded-xl border-l-4 bg-surface-2 p-2.5 text-left"
+                style={{ borderLeftColor: e.couleur ?? 'transparent', background: e.couleur ? `color-mix(in srgb, ${e.couleur} 12%, var(--color-surface-2))` : undefined }}>
                 <span className="flex items-center justify-between gap-2">
-                  <span className="font-semibold">{iconeSport(p.sport)} {p.titre}</span>
-                  <span className="shrink-0 text-xs font-semibold" style={{ color: STATUTS[p.statut].couleur }}>{STATUTS[p.statut].libelle}</span>
+                  <span className={`font-semibold ${e.couleur === ROUGE ? 'line-through opacity-70' : ''}`}>{iconeSport(p.sport)} {p.titre}</span>
+                  <span className="shrink-0 text-xs font-semibold" style={{ color: e.couleur }}>{e.libelle}</span>
                 </span>
                 <span className="block text-sm text-texte-2">
                   {p.dureeMin} min{p.kjPrevu ? ` · ${p.kjPrevu} kJ` : ''}
                 </span>
               </button>
-            ))}
+              )
+            })}
             {horsPlan.map((s) => (
-              <p key={s.id} className="mt-2 rounded-xl border border-dashed border-bordure p-2 text-sm text-texte-2">
-                ✓ {iconeSport(s.sport, s.homeTrainer)} {s.titre ?? s.type ?? 'Séance'} · {Math.round(s.dureeSec / 60)} min
+              <p key={s.id} className="mt-2 rounded-xl border border-dashed p-2 text-sm text-texte-2" style={{ borderColor: VERT }}>
+                <span style={{ color: VERT }}>✓</span> {iconeSport(s.sport, s.homeTrainer)} {s.titre ?? s.type ?? 'Séance'} · {Math.round(s.dureeSec / 60)} min · hors plan
               </p>
             ))}
             {!duJour.length && !horsPlan.length && <p className="mt-1 text-sm text-texte-3">Repos</p>}
@@ -109,7 +125,7 @@ function CarteVelo({ lundi, deps, onMessage }: { lundi: string; deps: unknown[];
   const [occupe, setOccupe] = useState(false)
   if (meta === undefined || !kj) return null
   // Le programme démarre avec la première phase : avant, les séances sont fixées à la main
-  const debutProgramme = [...(r.programme?.phases ?? PROGRAMME_DEFAUT.phases)].map((p) => p.debut).sort()[0]
+  const debutProgramme = [...programmeDe(r.programme).phases].map((p) => p.debut).sort()[0]
   const passee = decalerJour(lundi, 6) < aujourdhui() || lundi < debutProgramme
 
   const generer = async () => {

@@ -82,6 +82,9 @@ describe('progression', () => {
     expect(etatProgression([r('2026-11-03', 0, 'reussie')])['vo2-courts']).toEqual({ palier: 1, bonus: 0 })
     expect(etatProgression([r('2026-11-03', 3, 'reussie')])['vo2-courts']).toEqual({ palier: 1, bonus: 0.025 })
     expect(etatProgression([r('2026-11-03', 1, 'ratee')])['vo2-courts'].bonus).toBeCloseTo(-0.05)
+    // Un test CP remet le bonus à zéro, le palier reste
+    expect(etatProgression([r('2026-11-03', 3, 'reussie')], ['2026-11-05'])['vo2-courts']).toEqual({ palier: 1, bonus: 0 })
+    expect(etatProgression([r('2026-11-03', 3, 'reussie'), r('2026-11-10', 1, 'ratee')], ['2026-11-05'])['vo2-courts'].bonus).toBeCloseTo(-0.05)
     // Une autre famille n'est pas touchée
     expect(etatProgression([r('2026-11-03', 0, 'reussie')]).seuil).toEqual({ palier: 0, bonus: 0 })
   })
@@ -135,7 +138,7 @@ describe('saison', () => {
       lundi: '2026-10-26', jusquA: '2027-01-04', phases: PHASES, testsCp: ['2026-10-30'],
       competitions: [{ date: '2026-12-13', nom: '5 km' }], histo: [], budgetDepart: 2000, plafond: 3000,
     })
-    expect(s[0]).toMatchObject({ type: 'test', intensite: 'Test CP 12-7-3', numero: 1, total: 7, phase: 'reprise' })
+    expect(s[0]).toMatchObject({ type: 'test', intensite: 'Test CP complet 12-7-3', numero: 1, total: 7, phase: 'reprise' })
     expect(s[3].type).toBe('allegee')
     expect(s.find((x) => x.lundi === '2026-12-07')).toMatchObject({ type: 'competition', competition: '5 km' })
     expect(s.find((x) => x.lundi === '2026-12-14')).toMatchObject({ phase: 'vo2', numero: 1 })

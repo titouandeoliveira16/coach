@@ -21,13 +21,13 @@ describe('génération de la semaine vélo', () => {
   })
   afterAll(() => vi.useRealTimers())
 
-  it('semaine du test : test CP vendredi, Z2 mercredi, sortie longue dimanche', async () => {
+  it('semaine du test : Z2 mercredi et vendredi, test CP complet dimanche (créneau long)', async () => {
     const phrases = await genererSemaineVelo('2026-10-26')
     const velo = (await db.prevues.toArray()).filter((p) => p.origine === 'auto').sort((a, b) => a.date.localeCompare(b.date))
     expect(velo.map((p) => [p.date, p.velo?.famille])).toEqual([
       ['2026-10-28', 'z2'],
-      ['2026-10-30', 'test'],
-      ['2026-11-01', 'z2-long'],
+      ['2026-10-30', 'z2'],
+      ['2026-11-01', 'test'],
     ])
     expect(phrases.some((x) => x.includes('budget'))).toBe(true)
     const meta = await lireMeta('2026-10-26')

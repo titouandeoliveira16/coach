@@ -13,8 +13,24 @@ export const PROGRAMME_DEFAUT: ReglagesProgramme = {
     { debut: '2027-02-01', type: 'seuil' },
     { debut: '2027-03-15', type: 'entretien' },
   ],
-  testsCp: ['2026-10-30'],
+  // Tests complets le dimanche (créneau long : 30' de récupération entre les efforts), tests courts en début de phase
+  testsCp: ['2026-11-01', '2026-12-15', '2027-02-02', '2027-03-21'],
+  testsCourts: ['2026-12-15', '2027-02-02'],
   competitions: [{ date: '2026-12-13', nom: '5 km route' }],
+}
+
+/**
+ * Programme enregistré + valeurs par défaut. Les versions d'avant les tests courts (un seul test le 30/10)
+ * reçoivent le calendrier de tests de la saison.
+ */
+export function programmeDe(p?: Partial<ReglagesProgramme>): ReglagesProgramme {
+  const prog = { ...PROGRAMME_DEFAUT, ...p }
+  if (p && p.testsCourts === undefined) {
+    const autres = (p.testsCp ?? []).filter((d) => d !== '2026-10-30')
+    prog.testsCp = [...new Set([...PROGRAMME_DEFAUT.testsCp, ...autres])].sort()
+    prog.testsCourts = PROGRAMME_DEFAUT.testsCourts
+  }
+  return prog
 }
 
 /** Valeurs de départ : VMA Campus Coach et zones Frive de début de programme. */

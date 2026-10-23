@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { contrainte, modeleForme, monotonie, ratioPic, srpe, trimpBanister, trimpDepuisMoyenne } from './charge'
 import { allureSecKm, pctVma, rtss, vitesseKmh } from './course'
 import { decouplage, domaineDepuisFc, domaines, tempsParZone, type BornesZones } from './fc'
-import { kjDepuisEchantillons, kjDepuisMoyenne, puissanceNormalisee, tss } from './puissance'
+import { kjDepuisEchantillons, kjDepuisMoyenne, meilleurePuissance, puissanceNormalisee, tss } from './puissance'
 import { analyserVfc, decaler } from './vfc'
-import { adapterSeance, calculerSignal } from './signal'
+import { adapterSeance, analyserSommeil, calculerSignal } from './signal'
 import { hausseCharge, replanifier, trimpPrevu, type SeancePlan } from './planif'
 
 const secondes = (n: number) => Array.from({ length: n + 1 }, (_, i) => i)
@@ -151,6 +151,18 @@ describe('signal', () => {
     expect(adapterSeance({ intensite: 'haute', dureeMin: 60 }, s)).toMatch(/endurance basse/)
   })
 
+  it('sommeil : nuit courte ou dette = une seule alerte (🟠)', () => {
+    const court = calculerSignal({ vfc: vfcOk, sommeilH: { nuit: 5.5, moyenne7: 6.5 }, sommeil: 1, ressenti: 2 })
+    expect(court.couleur).toBe('orange')
+    expect(court.alertes).toHaveLength(1)
+    expect(court.raison).toMatch(/nuit courte/i)
+    // Dette personnelle : 7 j à 7 h 10 contre 8 h d'habitude
+    expect(calculerSignal({ vfc: vfcOk, sommeilH: { nuit: 7, moyenne7: 7.17, moyenne30: 8 } }).couleur).toBe('orange')
+    expect(calculerSignal({ vfc: vfcOk, sommeilH: { nuit: 7.5, moyenne7: 7.6, moyenne30: 8 } }).couleur).toBe('vert')
+    const n = analyserSommeil([{ date: '2026-10-21', h: 7 }, { date: '2026-10-22', h: 6 }, { date: '2026-10-23', h: 8 }], '2026-10-23')
+    expect(n).toEqual({ nuit: 8, moyenne7: 7, moyenne30: undefined })
+  })
+
   it('🔴 si deux indicateurs ou malade', () => {
     expect(calculerSignal({ vfc: { ...vfcOk, ln7: 3.9 }, tsb: -28 }).couleur).toBe('rouge')
     expect(calculerSignal({ vfc: vfcOk, maladeOuDouleur: true }).couleur).toBe('rouge')
@@ -201,5 +213,13 @@ describe('planification', () => {
   it('charge prévue et hausse', () => {
     expect(trimpPrevu('haute', 60)).toBeGreaterThan(trimpPrevu('basse', 60))
     expect(hausseCharge(575, [500, 500, 500, 500])).toBeCloseTo(15, 5)
+  })
+})
+
+describe('meilleurs efforts', () => {
+  it('meilleure moyenne glissante', () => {
+    const w = [...Array(100).fill(100), ...Array(180).fill(300), ...Array(100).fill(100)]
+    expect(meilleurePuissance(w, 180)).toBe(300)
+    expect(meilleurePuissance(w, 420)).toBeUndefined()
   })
 })

@@ -246,8 +246,11 @@ export function construireZ2(dureeMin: number, z2W: number, sprints?: { n: numbe
   }
 }
 
-/** Test CP 12-7-3 (calculateur des Réglages). */
-export function construireTest(cpW: number): SeanceConstruite {
+/**
+ * Test CP (Karsten et al. 2015 : efforts à fond de 12, 7 et 3 min, 30 min de récupération entre les efforts).
+ * Version courte : seulement 3' et 12' (2 points suffisent au modèle de CP, un peu moins précis).
+ */
+export function construireTest(cpW: number, court = false): SeanceConstruite {
   const facile = arrondi5(cpW * 0.45)
   const etapes: Etape[] = []
   let h = 0
@@ -256,21 +259,21 @@ export function construireTest(cpW: number): SeanceConstruite {
     h += dureeSec
   }
   ajouter(600, 'Échauffement progressif', arrondi5(cpW * 0.55))
-  ajouter(60, 'Éveil : 1\' soutenu', arrondi5(cpW * 1.1))
+  ajouter(60, "Éveil : 1' soutenu", arrondi5(cpW * 1.1))
   ajouter(240, 'Facile', facile)
-  ajouter(60, 'Éveil : 1\' soutenu', arrondi5(cpW * 1.1))
+  ajouter(60, "Éveil : 1' soutenu", arrondi5(cpW * 1.1))
   ajouter(240, 'Facile', facile)
-  ajouter(720, 'EFFORT 12\' À FOND : départ prudent, régulier, finis fort', undefined)
-  ajouter(600, 'Récupération très facile', facile)
-  ajouter(420, 'EFFORT 7\' À FOND', undefined)
-  ajouter(600, 'Récupération très facile', facile)
-  ajouter(180, 'EFFORT 3\' À FOND', undefined)
-  ajouter(600, 'Retour au calme', facile)
+  const efforts = court ? [3, 12] : [12, 7, 3]
+  efforts.forEach((m, i) => {
+    ajouter(m * 60, `EFFORT ${m}' À FOND : ${m >= 7 ? 'départ prudent, régulier, finis fort' : 'tout donner, régulier'}`)
+    ajouter(i < efforts.length - 1 ? 1800 : 600, i < efforts.length - 1 ? 'Récupération très facile (30\' : indispensable pour un test juste)' : 'Retour au calme', facile)
+  })
+  const travail = efforts.reduce((a, m) => a + m * 60 * cpW * (m >= 12 ? 1.02 : m >= 7 ? 1.1 : 1.25), 0)
   return {
-    titre: 'Test CP 12-7-3',
-    detail: 'Note la puissance moyenne de chaque effort, puis Réglages → Vélo → Calculer depuis mon test : tes zones et tes watts sont recalés.',
+    titre: court ? "Test CP court 3' + 12'" : 'Test CP complet 12-7-3',
+    detail: `Note la puissance moyenne de chaque effort, puis Réglages → Vélo → Calculer depuis mon test${court ? " (remplis 3' et 12')" : ''} : zones et watts recalés.`,
     dureeMin: Math.round(h / 60),
-    kj: Math.round((20 * 60 * cpW * 0.6 + 12 * 60 * cpW * 1.02 + 7 * 60 * cpW * 1.1 + 3 * 60 * cpW * 1.25 + 30 * 60 * cpW * 0.45) / 1000),
+    kj: Math.round((1200 * cpW * 0.6 + travail + (h - 1200 - efforts.reduce((a, m) => a + m * 60, 0)) * cpW * 0.45) / 1000),
     velo: { famille: 'test', etapes },
   }
 }
@@ -347,11 +350,19 @@ export function choisirFormat(lundi: string, phases: Phase[], histo: HistoIntens
   return { famille, format: formats[i], phase, dominante }
 }
 
-/** Progression par famille : palier atteint (0 à 3) et bonus de watts. */
-export function etatProgression(histo: HistoIntensite[]) {
+/**
+ * Progression par famille : palier atteint (0 à 3) et bonus de watts.
+ * Chaque test CP remet les bonus à zéro (le progrès est alors dans la nouvelle CP) ; les paliers restent acquis.
+ */
+export function etatProgression(histo: HistoIntensite[], datesTestsCp: string[] = []) {
   const etat = {} as Record<Famille, { palier: number; bonus: number }>
   for (const f of FORMATS) etat[f.famille] = { palier: 0, bonus: 0 }
+  const tests = [...datesTestsCp].sort()
   for (const h of [...histo].sort((a, b) => a.date.localeCompare(b.date))) {
+    while (tests.length && tests[0] < h.date) {
+      tests.shift()
+      for (const e of Object.values(etat)) e.bonus = 0
+    }
     if (!h.resultat || h.allegee) continue
     const e = etat[h.famille]
     if (h.resultat === 'reussie') {
@@ -364,6 +375,8 @@ export function etatProgression(histo: HistoIntensite[]) {
       e.bonus -= 0.05
     }
   }
+  // Test passé après la dernière séance
+  if (tests.length) for (const e of Object.values(etat)) e.bonus = 0
   return etat
 }
 
@@ -520,6 +533,7 @@ export function projeterSaison(o: {
   jusquA: string
   phases: Phase[]
   testsCp: string[]
+  testsCourts?: string[]
   competitions: { date: string; nom: string }[]
   histo: HistoIntensite[]
   budgetDepart: number
@@ -541,7 +555,7 @@ export function projeterSaison(o: {
     precedenteAllegee = allegee
 
     let intensite: string
-    if (test) intensite = 'Test CP 12-7-3'
+    if (test) intensite = o.testsCourts?.includes(test) ? "Test CP court 3' + 12'" : 'Test CP complet 12-7-3'
     else {
       const choix = choisirFormat(l, triees, histo)
       const famille = NOMS_FAMILLES[choix.famille]

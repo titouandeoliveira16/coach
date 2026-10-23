@@ -1,5 +1,5 @@
 import { db } from '../../../core/db'
-import { aujourdhui, decalerJour } from '../../../core/dates'
+import { aujourdhui, decalerJour, ecartJours } from '../../../core/dates'
 import type { Profil } from '../../../core/profil'
 import { enregistrer, supprimer } from '../../../core/stockage'
 import { srpe, trimpDepuisMoyenne } from '../../../metrics/charge'
@@ -135,6 +135,7 @@ export function fusionner(gardee: Seance, autre: Seance): Seance {
     notes: gardee.notes ?? autre.notes,
     type: gardee.type ?? autre.type,
     prevueId: gardee.prevueId ?? autre.prevueId,
+    meilleurs: gardee.meilleurs ?? autre.meilleurs,
     autresIds: [...new Set([...(gardee.autresIds ?? []), ...(autre.autresIds ?? []), ...(autre.idExterne ? [autre.idExterne] : [])])]
       .filter((id) => id !== gardee.idExterne),
   }
@@ -169,8 +170,15 @@ export async function enregistrerSeance(s: Seance) {
   const c = await chargerContexte()
   const complete = completerMetriques(s, c)
   if (!complete.prevueId) {
-    const prevue = (await db.prevues.where('date').equals(s.date).toArray()).find((p) => p.sport === s.sport && p.statut === 'prevue')
+    // Séance prévue le même jour, sinon la plus proche (2 jours au plus, même semaine) : séance décalée
+    const lundi = lundiDe(s.date)
+    const proches = (await db.prevues.where('date').between(decalerJour(s.date, -2), decalerJour(s.date, 2), true, true).toArray())
+      .filter((p) => p.sport === s.sport && p.statut === 'prevue' && lundiDe(p.date) === lundi)
+      .sort((a, b) => Math.abs(ecartJours(a.date, s.date)) - Math.abs(ecartJours(b.date, s.date)) || a.date.localeCompare(b.date))
+    const prevue = proches[0]
     if (prevue) {
+      // La séance prévue suit la date réelle
+      if (prevue.date !== s.date) await enregistrer(db.prevues, { ...prevue, date: s.date })
       complete.prevueId = prevue.id
       // Séance importée (montre, Intervals) : elle prend le nom de la séance prévue (ex. « Seuil 30 »)
       if (s.source !== 'manuel') {

@@ -2,7 +2,7 @@ import { db } from '../../../core/db'
 import { aujourdhui, decalerJour, ecartJours } from '../../../core/dates'
 import { contrainte, modeleForme, monotonie, ratioPic, type PointForme } from '../../../metrics/charge'
 import { analyserVfc, type AnalyseVfc } from '../../../metrics/vfc'
-import { calculerSignal, type Signal } from '../../../metrics/signal'
+import { analyserSommeil, calculerSignal, type Signal } from '../../../metrics/signal'
 import { scoreRessenti } from '../forme/donnees'
 import { chargeDe, chargerContexte, type Contexte } from '../seances/donnees'
 import type { MesureMatin, Seance } from '../types'
@@ -63,6 +63,7 @@ function signalDu(date: string, a: Omit<Analyse, 'signal' | 'signauxPrecedents' 
     vfc,
     ressenti: matin ? scoreRessenti(matin) : undefined,
     sommeil: matin?.sommeil,
+    sommeilH: analyserSommeil(a.mesures.map((m) => ({ date: m.date, h: m.sommeilH })), date),
     tsb: a.amorcage ? undefined : point?.tsb,
     ratioPic: a.joursHistorique >= 35 ? ratioPic(charge7, hebdo) : undefined,
     atlSurCtl: point && point.ctl > 0 ? point.atl / point.ctl : undefined,

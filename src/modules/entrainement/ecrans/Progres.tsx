@@ -10,7 +10,7 @@ import { AIDES } from '../aides'
 import { JOURS_AMORCAGE } from '../analyse/donnees'
 import { donneesProgres } from '../analyse/progres'
 import { progressionFamilles } from '../plan/programme'
-import { PROGRAMME_DEFAUT, useReglagesEntrainement } from '../reglagesEntrainement'
+import { programmeDe, useReglagesEntrainement } from '../reglagesEntrainement'
 import { NOMS_FAMILLES } from '../../../metrics/programme'
 import { Historique } from './Historique'
 
@@ -22,9 +22,10 @@ export function Progres() {
   const familles = useLiveQuery(progressionFamilles)
   const [r, modifier] = useReglagesEntrainement()
   const [dateTest, setDateTest] = useState('')
+  const [court, setCourt] = useState(true)
   if (!t) return null
   const pct = (a?: number, b?: number) => (a !== undefined && b ? ((a - b) / b) * 100 : undefined)
-  const prog = { ...PROGRAMME_DEFAUT, ...r.programme }
+  const prog = programmeDe(r.programme)
 
   return (
     <div className="space-y-3">
@@ -36,33 +37,75 @@ export function Progres() {
         <Tuile libelle="Vélo 28 j" valeur={formatNombre(t.kj28)} sous="kJ" evolution={signe(pct(t.kj28, t.kj28Avant))} hausse={t.kj28Avant ? t.kj28 >= t.kj28Avant : undefined} />
       </div>
 
-      <Carte titre="Tests et zones">
-        <p className="text-sm text-texte-2">Chaque test CP recale tes zones et les watts de toutes tes séances.</p>
-        {t.tests.length > 0 && (
-          <ul className="mt-2 text-sm">
-            {[...t.tests].reverse().map((x, i, l) => (
-              <li key={x.date + i} className="flex justify-between border-t border-bordure py-1.5">
-                <span className="text-texte-2">{depuisJour(x.date).toLocaleDateString('fr-FR')}</span>
-                <span className="font-semibold">CP {x.valeur} W{l[i + 1] && <span className={x.valeur >= l[i + 1].valeur ? 'text-nutrition' : 'text-[#f87171]'}> ({x.valeur - l[i + 1].valeur >= 0 ? '+' : ''}{x.valeur - l[i + 1].valeur})</span>}</span>
-              </li>
-            ))}
-          </ul>
+      <Carte titre="Évolution de mes tests">
+        {t.tests.length === 0 ? (
+          <p className="text-sm text-texte-3">Ton premier test donnera ton point de départ.</p>
+        ) : (
+          <>
+            {t.tests.length >= 2 && (() => {
+              const premier = t.tests[0].valeur
+              const dernier = t.tests[t.tests.length - 1].valeur
+              return (
+                <p className="text-sm text-texte-2">
+                  Depuis le {depuisJour(t.tests[0].date).toLocaleDateString('fr-FR')} :{' '}
+                  <b className={dernier >= premier ? 'text-nutrition' : 'text-[#f87171]'}>
+                    {dernier - premier >= 0 ? '+' : ''}{dernier - premier} W ({signe(((dernier - premier) / premier) * 100)})
+                  </b>
+                </p>
+              )
+            })()}
+            {t.tests.length >= 2 && (
+              <GraphiqueLignes etiquettes={t.tests.map((x) => jj(x.date))} series={[{ nom: 'CP (W)', couleur: SERIES[1], valeurs: t.tests.map((x) => x.valeur) }]} />
+            )}
+            <ul className="mt-2 text-sm">
+              {[...t.tests].reverse().map((x, i, l) => (
+                <li key={x.date + i} className="flex justify-between border-t border-bordure py-1.5">
+                  <span className="text-texte-2">{depuisJour(x.date).toLocaleDateString('fr-FR')}</span>
+                  <span className="font-semibold">
+                    CP {x.valeur} W{t.poidsKg ? <span className="font-normal text-texte-3"> · {formatNombre(x.valeur / t.poidsKg, 2)} W/kg</span> : null}
+                    {l[i + 1] && <span className={x.valeur >= l[i + 1].valeur ? 'text-nutrition' : 'text-[#f87171]'}> ({x.valeur - l[i + 1].valeur >= 0 ? '+' : ''}{x.valeur - l[i + 1].valeur})</span>}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </>
         )}
-        <p className="mt-3 text-sm font-semibold">Prochains tests</p>
+        {t.cpEstimee && (
+          <p className="mt-2 text-sm text-texte-2">
+            D'après tes meilleurs efforts des 6 dernières semaines : <b className="text-texte">~{t.cpEstimee} W</b>
+            <Aide titre="Estimation entre deux tests" texte={AIDES.cpEstimee} />
+            {t.cpW && t.cpEstimee > t.cpW * 1.03 && <span className="block font-semibold text-nutrition">Tu sembles avoir progressé : avance ton prochain test.</span>}
+          </p>
+        )}
+      </Carte>
+
+      <Carte titre="Mes prochains tests">
+        <p className="text-sm text-texte-2">Chaque test recale tes zones et les watts de tes séances à venir.</p>
         {t.testsPrevus.length === 0 && <p className="text-sm text-texte-3">Aucun test programmé.</p>}
         {t.testsPrevus.map((d) => (
           <div key={d} className="flex items-center justify-between py-1 text-sm">
-            <span className="capitalize">{depuisJour(d).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+            <span>
+              <span className="capitalize">{depuisJour(d).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+              <span className="text-texte-3"> · {t.testsCourts.includes(d) ? "court (3' + 12')" : 'complet (12-7-3)'}</span>
+            </span>
             <button type="button" className="px-2 text-texte-3" aria-label="Retirer ce test"
-              onClick={() => modifier({ programme: { ...prog, testsCp: prog.testsCp.filter((x) => x !== d) } })}>×</button>
+              onClick={() => modifier({ programme: { ...prog, testsCp: prog.testsCp.filter((x) => x !== d), testsCourts: (prog.testsCourts ?? []).filter((x) => x !== d) } })}>×</button>
           </div>
         ))}
-        <div className="mt-1 flex gap-2">
-          <input type="date" value={dateTest} onChange={(e) => setDateTest(e.target.value)} className="flex-1 rounded-lg border border-bordure bg-surface-2 px-2 py-2 text-sm" />
-          <button type="button" disabled={!dateTest} className="px-3 text-sm font-semibold text-accent disabled:opacity-40"
-            onClick={() => { modifier({ programme: { ...prog, testsCp: [...new Set([...prog.testsCp, dateTest])] } }); setDateTest('') }}>Programmer</button>
+        <div className="mt-2 flex items-center gap-2">
+          <input type="date" value={dateTest} onChange={(e) => setDateTest(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-bordure bg-surface-2 px-2 py-2 text-sm" />
+          <select value={court ? 'court' : 'complet'} onChange={(e) => setCourt(e.target.value === 'court')} className="rounded-lg border border-bordure bg-surface-2 px-2 py-2 text-sm">
+            <option value="court">Court</option>
+            <option value="complet">Complet</option>
+          </select>
+          <button type="button" disabled={!dateTest} className="px-2 text-sm font-semibold text-accent disabled:opacity-40"
+            onClick={() => {
+              modifier({ programme: { ...prog, testsCp: [...new Set([...prog.testsCp, dateTest])].sort(),
+                testsCourts: court ? [...new Set([...(prog.testsCourts ?? []), dateTest])] : (prog.testsCourts ?? []).filter((x) => x !== dateTest) } })
+              setDateTest('')
+            }}>OK</button>
         </div>
-        <p className="mt-2 text-xs text-texte-3">Conseil : un test toutes les 6 à 8 semaines, en fin de semaine allégée. Résultat à saisir dans <Link to="/reglages" className="text-accent">Réglages → Vélo</Link>.</p>
+        <p className="mt-2 text-xs text-texte-3">Conseil : un test toutes les 6 à 8 semaines, frais (après une semaine allégée). Complet = 1 h 50 (le dimanche), court = 1 h 15. Résultat à saisir dans <Link to="/reglages" className="text-accent">Réglages → Vélo</Link>.</p>
       </Carte>
 
       {familles && familles.length > 0 && (

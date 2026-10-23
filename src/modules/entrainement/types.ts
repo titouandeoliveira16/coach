@@ -69,6 +69,8 @@ export interface ReglagesProgramme {
   phases: Phase[]
   /** Dates des tests CP prévus */
   testsCp: string[]
+  /** Parmi eux, les tests courts (3' + 12') ; les autres sont complets (12-7-3) */
+  testsCourts?: string[]
   /** Compétitions (course à pied ou vélo) : semaine allégée, pas d'intensité vélo juste avant */
   competitions: { date: string; nom: string }[]
   /** Puissance Z2 de départ (W) : ajustée ensuite automatiquement */
@@ -148,6 +150,8 @@ export interface Seance {
   tss?: number
   /** Découplage cardiaque (%) pour les séances ≥ 45 min avec flux */
   decouplage?: number
+  /** Meilleures puissances moyennes (W) sur 3, 7 et 12 min (clé : durée en s) */
+  meilleurs?: Record<string, number>
   source: 'manuel' | 'fit' | 'intervals'
   /** Identifiant de l'activité chez Intervals.icu */
   idExterne?: string

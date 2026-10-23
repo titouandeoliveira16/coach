@@ -51,3 +51,19 @@ export function tss(dureeSec: number, np: number, seuilW: number) {
   const intensite = np / seuilW
   return ((dureeSec * np * intensite) / (seuilW * 3600)) * 100
 }
+
+/** Meilleure puissance moyenne tenue pendant `dureeSec` (fenêtre glissante, signal à 1 Hz). */
+export function meilleurePuissance(w1Hz: number[], dureeSec: number) {
+  if (w1Hz.length < dureeSec) return undefined
+  let somme = 0
+  for (let i = 0; i < dureeSec; i++) somme += w1Hz[i]
+  let max = somme
+  for (let i = dureeSec; i < w1Hz.length; i++) {
+    somme += w1Hz[i] - w1Hz[i - dureeSec]
+    if (somme > max) max = somme
+  }
+  return max / dureeSec
+}
+
+/** Durées des meilleurs efforts gardés pour estimer la CP entre deux tests (Karsten 2015 : 3, 7 et 12 min). */
+export const DUREES_MEILLEURS = [180, 420, 720] as const

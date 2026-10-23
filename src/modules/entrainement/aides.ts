@@ -40,4 +40,8 @@ export const AIDES = {
     "Reprise & endurance : volume en Z2, intensité sous le seuil ou 30/15 léger. Dominante VO2 : 2 séances VO2 pour 1 de seuil. Dominante seuil : l'inverse. À charge égale, l'ordre change peu les progrès (Sylta 2016) : on garde toujours un peu des deux. Une semaine allégée toutes les 4, et la semaine d'une course.",
   efficacite:
     "Efficacité aérobie = puissance moyenne / FC moyenne sur tes sorties faciles de 45 min et plus. Évolution : moyenne de tes 4 dernières sorties comparée aux 4 d'avant.",
+  sommeil:
+    "Une nuit de moins de 6 h (Craven 2022 : ≤ 6 h dégrade la performance) ou une dette de sommeil (moyenne sur 7 jours sous 7 h, seuil du « sommeil court » de Walsh 2021, ou sous ta moyenne habituelle de plus de 45 min) déclenchent une alerte : intensité raccourcie. Une seule alerte « sommeil et ressenti », même si plusieurs causes. Repère : 8 h, ou ta moyenne habituelle si elle est plus haute.",
+  cpEstimee:
+    "CP calculée sur tes meilleurs efforts de 3, 7 et 12 min des 6 dernières semaines (méthode validée par Karsten 2015 si ces efforts sont donnés à fond). À l'entraînement ils le sont rarement : l'estimation sert seulement à repérer un progrès (plus de 3 % au-dessus de ta CP), elle ne change jamais ta CP.",
 } as const
