@@ -9,6 +9,7 @@ import { Carte } from '../../../core/ui/Carte'
 import { Feuille } from '../../../core/ui/Feuille'
 import { Puces } from '../../../core/ui/Puces'
 import { AIDES } from '../aides'
+import { CarteBilan } from '../plan/CarteBilan'
 import { Deroule } from '../plan/Deroule'
 import { joursPanneVelo } from '../plan/imprevus'
 import { FormulairePrevue } from '../plan/FormulairePrevue'
@@ -58,6 +59,9 @@ export function Semaine() {
         <p className="font-semibold">Semaine du {depuisJour(lundi).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}</p>
         <button type="button" onClick={() => setLundi(decalerJour(lundi, 7))} className="px-3 py-2 text-2xl text-accent" aria-label="Semaine suivante">›</button>
       </div>
+
+      {/* Semaine terminée (ou dimanche) : son bilan */}
+      {decalerJour(lundi, 6) <= aujourdhui() && <CarteBilan lundi={lundi} deps={[prevues, seances]} />}
 
       <CarteVelo lundi={lundi} deps={[prevues, seances]} onMessage={(m) => setMessage(m.length ? m : undefined)} />
 

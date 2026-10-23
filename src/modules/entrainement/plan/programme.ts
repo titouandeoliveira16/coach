@@ -2,7 +2,7 @@ import { db } from '../../../core/db'
 import { aujourdhui, decalerJour, NOMS_JOURS, depuisJour } from '../../../core/dates'
 import { enregistrer, supprimer } from '../../../core/stockage'
 import {
-  budgetSemaine, formatDe, plafondsReprise, projeterSaison, choisirFormat, construireIntervalles, construireTest, construireZ2, estSemaineAllegee, etatProgression,
+  budgetSemaine, formatDe, NOMS_FAMILLES, plafondsReprise, projeterSaison, choisirFormat, construireIntervalles, construireTest, construireZ2, estSemaineAllegee, etatProgression,
   minutesPourKj, NOMS_PHASES, palierPossible, phaseDe, placer, SPRINTS, type BilanSemaine, type Famille, type HistoIntensite,
   type SeanceConstruite,
 } from '../../../metrics/programme'
@@ -347,4 +347,79 @@ export async function recalculerApresTest() {
   for (const l of [lundi, decalerJour(lundi, 7), decalerJour(lundi, 14)]) {
     if (await lireMeta(l)) await genererSemaineVelo(l).catch(() => {})
   }
+}
+
+/**
+ * Bilan du dimanche, en 3 lignes : ce qui a été fait, ce qui change la semaine suivante, et pourquoi.
+ * Le budget et la séance d'intensité annoncés sont ceux que la génération de la semaine suivante utilisera.
+ */
+export async function bilanDimanche(lundi: string) {
+  const fin = decalerJour(lundi, 6)
+  const suivant = decalerJour(lundi, 7)
+  const r = await lireReglages()
+  const prog = r.programme
+  const prevues = (await db.prevues.where('date').between(lundi, fin, true, true).toArray()).filter((p) => p.statut !== 'abandonnee')
+  const seances = await db.seances.where('date').between(lundi, fin, true, true).toArray()
+  const decisions = await db.decisions.where('date').between(lundi, fin, true, true).toArray()
+  if (!prevues.length && !seances.length) return undefined
+
+  // 1. Ce qui a été fait
+  const faites = prevues.filter((p) => p.statut === 'faite').length
+  const kjVelo = seances.filter((s) => s.sport === 'velo').reduce((a, s) => a + (s.kj ?? prevues.find((p) => p.id === s.prevueId)?.kjPrevu ?? 0), 0)
+  const kjPrevus = prevues.filter((p) => p.sport === 'velo').reduce((a, p) => a + (p.kjPrevu ?? 0), 0)
+  const minCourse = Math.round(seances.filter((s) => s.sport === 'course').reduce((a, s) => a + s.dureeSec, 0) / 60)
+  const heures = (m: number) => `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')}`
+  const fait = [
+    `${faites}/${prevues.length} séances prévues faites`,
+    kjPrevus ? `vélo ${Math.round(kjVelo)} / ${kjPrevus} kJ (${Math.round((kjVelo / kjPrevus) * 100)} %)` : kjVelo ? `vélo ${Math.round(kjVelo)} kJ` : undefined,
+    minCourse ? `course ${heures(minCourse)}` : undefined,
+  ].filter(Boolean).join(' · ')
+
+  // 2. Ce qui change la semaine suivante
+  const { phase, semaine: nSemaine } = phaseDe(suivant, prog.phases)
+  const finSuivante = decalerJour(suivant, 6)
+  const course = prog.competitions.find((c) => c.date >= suivant && c.date <= finSuivante)
+  const test = prog.testsCp.find((d) => d >= suivant && d <= finSuivante)
+  const allegee = estSemaineAllegee(nSemaine) || !!course
+  const { w: z2W } = await z2Actuel()
+  const cap = plafondsReprise(phase.type === 'reprise' ? nSemaine : undefined, prog.maxSemaineMin, prog.maxLongMin)
+  const histo = await histoIntensite()
+  let intensite: string
+  let kjIntensite: number
+  if (test) {
+    const t = construireTest(r.cpW, prog.testsCourts?.includes(test))
+    intensite = `${t.titre} (${nomJour(test)})`
+    kjIntensite = t.kj
+  } else {
+    const choix = choisirFormat(suivant, prog.phases, histo)
+    const etat = etatProgression(histo, datesTests(r.tests))[choix.famille]
+    const palier = palierPossible(choix.format, allegee ? Math.max(0, etat.palier - 1) : etat.palier, prog.maxSemaineMin)
+    const s = construireIntervalles(choix.format, palier, r.cpW, etat.bonus)
+    intensite = `${s.titre} (palier ${palier + 1}/4)`
+    kjIntensite = s.kj
+  }
+  const nZ2 = prog.semaineType.filter((x) => x === 'velo-z2').length
+  const nominal = kjIntensite + construireZ2(Math.min(60, cap.z2), z2W).kj + construireZ2(Math.min(100, cap.long), z2W).kj
+  const plafond = kjIntensite + nZ2 * construireZ2(cap.z2, z2W).kj + construireZ2(cap.long, z2W).kj
+  const meta = await lireMeta(lundi)
+  const b = budgetSemaine(await bilanPrecedent(suivant), nominal, plafond, allegee, course ? `semaine de ta course (${course.nom})` : 'semaine allégée (1 sur 4)')
+  const ecart = meta ? b.budget - meta.budget : undefined
+  const change = [
+    `budget vélo ${b.budget} kJ${ecart !== undefined ? ` (${ecart >= 0 ? '+' : ''}${ecart})` : ''}`,
+    `intensité : ${intensite}`,
+    `${NOMS_PHASES[phase.type]}, semaine ${nSemaine + 1}${allegee ? ' (allégée)' : ''}`,
+    `sortie longue jusqu'à ${cap.long} min`,
+  ].join(' · ')
+
+  // 3. Pourquoi
+  const rouges = decisions.filter((d) => d.couleur === 'rouge').length
+  const oranges = decisions.filter((d) => d.couleur === 'orange').length
+  const tenues = histo.filter((h) => h.date >= lundi && h.date <= fin && h.resultat)
+  const pourquoi = [
+    b.raison,
+    ...(decisions.length ? [`feu : ${decisions.length - rouges - oranges} vert(s), ${oranges} orange(s), ${rouges} rouge(s)`] : []),
+    ...tenues.map((h) => (h.resultat === 'reussie' ? `${NOMS_FAMILLES[h.famille]} tenu → palier suivant` : `${NOMS_FAMILLES[h.famille]} pas tenu → −5 % de watts`)),
+  ].join(' · ')
+
+  return { lundi, fait, change, pourquoi }
 }

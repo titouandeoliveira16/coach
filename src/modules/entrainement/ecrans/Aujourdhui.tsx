@@ -1,6 +1,8 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
-import { aujourdhui } from '../../../core/dates'
+import { aujourdhui, decalerJour } from '../../../core/dates'
+import { CarteBilan } from '../plan/CarteBilan'
+import { lundiDe } from '../seances/donnees'
 import { CarteAujourdhui } from '../forme/CarteAujourdhui'
 import { CartePanne } from '../forme/CartePanne'
 import { CartePesee } from '../forme/CartePesee'
@@ -16,6 +18,7 @@ export function Aujourdhui() {
   const [edition, setEdition] = useState(false)
 
   if (!recentes) return null
+  const jourSemaine = new Date(`${aujourdhui()}T12:00:00`).getDay()
   const duJour = recentes.find((m) => m.date === aujourdhui())
   // Les chiffres peuvent arriver seuls de Garmin (Intervals.icu) : le matin n'est complet qu'avec le ressenti
   const complet = duJour !== undefined && QUESTIONS.some((q) => duJour[q.cle] !== undefined)
@@ -26,6 +29,9 @@ export function Aujourdhui() {
       <p className="text-lg capitalize text-texte-2">{dateDuJour}</p>
       <CarteRemise />
       <CarteResultat />
+      {/* Le dimanche : bilan de la semaine ; le lundi : celui de la semaine écoulée */}
+      {jourSemaine === 0 && <CarteBilan lundi={lundiDe(aujourdhui())} />}
+      {jourSemaine === 1 && <CarteBilan lundi={decalerJour(lundiDe(aujourdhui()), -7)} />}
       {complet && !edition ? (
         <>
           <CarteAujourdhui />

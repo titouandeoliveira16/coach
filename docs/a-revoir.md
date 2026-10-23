@@ -9,7 +9,6 @@ Points décidés ou mis de côté, à reprendre au bon moment.
 
 ## À reprendre ensuite (dans l'ordre proposé)
 1. La charge de course doit faire baisser le budget vélo quand elle monte fort.
-2. Bilan du dimanche en 3 lignes (fait, ce qui change, pourquoi).
 3. Phases spécifique et affûtage : attendre les courses vélo 2027.
 4. Point après 4 semaines de données réelles (watts Z2, durées, seuils du feu).
 5. Rappels : revoir le rappel du matin avant l'installation dans Supabase.
