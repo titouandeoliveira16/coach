@@ -18,21 +18,32 @@ type Ligne = SeanceLue & { garder: boolean; dejaPrevue: boolean }
 /** Importe les séances Campus Coach d'une capture d'écran (texte lu sur le téléphone), à vérifier avant l'ajout. */
 export function ImportCampus({ jours }: { jours: string[] }) {
   const champFichier = useRef<HTMLInputElement>(null)
-  const [progression, setProgression] = useState<number>()
+  const [progression, setProgression] = useState<{ n: number; total: number; part: number }>()
   const [lignes, setLignes] = useState<Ligne[]>()
   const [texte, setTexte] = useState('')
   const [voirTexte, setVoirTexte] = useState(false)
   const [message, setMessage] = useState<string>()
 
-  const lire = async (fichier?: File) => {
-    if (!fichier) return
+  const lire = async (fichiers: File[]) => {
+    if (!fichiers.length) return
     setMessage(undefined)
-    setProgression(0)
+    setProgression({ n: 1, total: fichiers.length, part: 0 })
     try {
-      const t = await lireTexteImage(fichier, setProgression)
+      // Les captures sont lues dans l'ordre choisi, puis mises bout à bout (un jour peut continuer sur la capture suivante)
+      const textes: string[] = []
+      for (const [i, f] of fichiers.entries()) textes.push(await lireTexteImage(f, (part) => setProgression({ n: i + 1, total: fichiers.length, part })))
+      const t = textes.join('\n')
       setTexte(t)
       const prevues = await db.prevues.where('date').between(jours[0], jours[6], true, true).toArray()
-      setLignes(lireCampus(t, jours).map((s) => {
+      // Captures qui se chevauchent : une même séance n'apparaît qu'une fois
+      const vues = new Set<string>()
+      const lues = lireCampus(t, jours).filter((s) => {
+        const cle = `${s.date}|${s.sport}|${s.typeCourse}`
+        if (s.date && vues.has(cle)) return false
+        vues.add(cle)
+        return true
+      })
+      setLignes(lues.map((s) => {
         const dejaPrevue = prevues.some((p) => p.date === s.date && p.sport === s.sport && p.statut !== 'abandonnee')
         return { ...s, dejaPrevue, garder: !dejaPrevue }
       }))
@@ -64,11 +75,13 @@ export function ImportCampus({ jours }: { jours: string[] }) {
 
   return (
     <Carte titre="Importer une capture Campus Coach">
-      <p className="text-sm text-texte-2">Fais une capture de ton plan Campus de la semaine : l'appli lit les séances (sur ton téléphone) et tu vérifies avant de les ajouter.</p>
+      <p className="text-sm text-texte-2">Fais une ou plusieurs captures de ton plan Campus (dans l'ordre des jours) : l'appli lit les séances (sur ton téléphone) et tu vérifies avant de les ajouter.</p>
       <Bouton variante="secondaire" className="mt-2" disabled={progression !== undefined} onClick={() => champFichier.current?.click()}>
-        {progression !== undefined ? `Lecture… ${Math.round(progression * 100)} %` : '📷 Choisir une capture'}
+        {progression
+          ? `Lecture${progression.total > 1 ? ` ${progression.n}/${progression.total}` : ''}… ${Math.round(progression.part * 100)} %`
+          : '📷 Choisir une ou plusieurs captures'}
       </Bouton>
-      <input ref={champFichier} type="file" accept="image/*" className="hidden" onChange={(e) => { lire(e.target.files?.[0]); e.target.value = '' }} />
+      <input ref={champFichier} type="file" accept="image/*" multiple className="hidden" onChange={(e) => { lire([...(e.target.files ?? [])]); e.target.value = '' }} />
       {message && <p className="mt-2 text-sm text-texte-2">{message}</p>}
 
       {lignes && (

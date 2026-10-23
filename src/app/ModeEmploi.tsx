@@ -45,7 +45,7 @@ export function ModeEmploi() {
 
         <Rubrique titre="📅 Chaque dimanche : Semaine">
           <Etape n={1}>Va sur la semaine suivante (flèche ›).</Etape>
-          <Etape n={2}>Ajoute tes séances <b className="text-texte">Campus Coach</b> et ton renfo : soit avec le <b className="text-texte">+</b> de chaque jour, soit d'un coup avec <b className="text-texte">📷 Importer une capture</b> en bas de la semaine (tu vérifies avant d'ajouter).</Etape>
+          <Etape n={2}>Ajoute tes séances <b className="text-texte">Campus Coach</b> et ton renfo : soit avec le <b className="text-texte">+</b> de chaque jour, soit d'un coup avec <b className="text-texte">📷 une ou plusieurs captures</b> en bas de la semaine (tu vérifies avant d'ajouter).</Etape>
           <Etape n={3}>Appuie sur <b className="text-texte">Générer mon vélo de la semaine</b>.</Etape>
           <p>Si ta course change en cours de semaine : modifie-la, puis « Recalculer le vélo ». Ce qui est déjà fait est gardé.</p>
           <p className="pt-1 font-semibold text-texte">Les couleurs</p>
