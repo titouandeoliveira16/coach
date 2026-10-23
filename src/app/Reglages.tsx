@@ -3,6 +3,7 @@ import { Carte } from '../core/ui/Carte'
 import { ChampNombre } from '../core/ui/ChampNombre'
 import { EnTete } from '../core/ui/EnTete'
 import { useProfil } from '../core/profil'
+import { NOMS_JOURS } from '../core/dates'
 import { MODULES } from './modules'
 import { SectionSauvegarde } from './SectionSauvegarde'
 
@@ -28,6 +29,19 @@ export function Reglages() {
           <ChampNombre libelle="Poids" unite="kg" valeur={profil.poidsKg} onValider={(v) => modifierProfil({ poidsKg: v })} />
           <ChampNombre libelle="Taille" unite="cm" decimales={0} valeur={profil.tailleCm} onValider={(v) => modifierProfil({ tailleCm: v })} />
           <ChampNombre libelle="FC max" unite="bpm" decimales={0} valeur={profil.fcMax} onValider={(v) => modifierProfil({ fcMax: v })} />
+          <label className="flex items-center justify-between py-1.5">
+            <span className="text-texte-2">Jour de pesée</span>
+            <select
+              value={profil.jourPesee}
+              onChange={(e) => modifierProfil({ jourPesee: Number(e.target.value) })}
+              className="rounded-lg border border-bordure bg-surface-2 px-3 py-2 font-semibold capitalize outline-none"
+            >
+              {/* Du lundi au dimanche */}
+              {[1, 2, 3, 4, 5, 6, 0].map((j) => (
+                <option key={j} value={j}>{NOMS_JOURS[j]}</option>
+              ))}
+            </select>
+          </label>
         </Carte>
 
         {/* Chaque module affiche ses réglages avec sa propre couleur d'accent */}
