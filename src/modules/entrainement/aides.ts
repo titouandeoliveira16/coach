@@ -24,6 +24,8 @@ export const AIDES = {
   zoneVfc: 'Zone normale = ta moyenne de ln(RMSSD) sur 60 jours ± 0,5 écart-type (plus petit changement significatif).',
   cv: 'Coefficient de variation de ln(RMSSD) sur 7 jours : une forte hausse indique une VFC instable.',
   fcRepos7: 'Moyenne de ta FC de repos sur 7 jours, comparée à ta moyenne sur 60 jours.',
+  budgetKj: 'Système kJ : travail vélo réalisé cette semaine (kJ des séances avec puissance) comparé au budget prévu (réalisé + kJ prévus des séances restantes). Valider le budget chaque semaine, puis le faire monter sur 90 jours.',
+  objectifKj: 'Système kJ : total de kJ à accumuler sur la période. Le rythme attendu suppose une progression régulière jour après jour.',
   chargePrevue: 'Charge prévue = TRIMP estimé de chaque séance prévue, selon sa durée et son intensité.',
   efficience: 'Efficience = vitesse (km/h) ou puissance (W) par battement de FC moyenne, sur les séances en basse intensité. Plus elle monte, plus tu es efficace.',
 } as const

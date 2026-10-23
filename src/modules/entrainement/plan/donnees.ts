@@ -82,7 +82,28 @@ export async function chargesSemaine(lundi: string) {
   const reste = prevues.filter((p) => p.statut === 'prevue').reduce((a, p) => a + estimer(p), 0)
   const prevue = realisee + reste
   const precedentes = [1, 2, 3, 4].map((n) => realiseeEntre(decalerJour(lundi, -7 * n), decalerJour(lundi, -7 * n + 6)))
-  return { prevue, realisee, precedente: precedentes[0], moyenne4: precedentes.reduce((a, b) => a + b, 0) / 4, unite: c.chargeRef === 'trimp' ? 'TRIMP' : 'sRPE' }
+  // Budget kJ (vélo) : réalisé + reste à faire
+  const kjRealises = seances.filter((s) => s.date >= lundi && s.date <= decalerJour(lundi, 6)).reduce((a, s) => a + (s.kj ?? 0), 0)
+  const kjReste = prevues.filter((p) => p.statut === 'prevue').reduce((a, p) => a + (p.kjPrevu ?? 0), 0)
+  return {
+    prevue, realisee, precedente: precedentes[0], moyenne4: precedentes.reduce((a, b) => a + b, 0) / 4,
+    unite: c.chargeRef === 'trimp' ? 'TRIMP' : 'sRPE', kjRealises, kjPrevus: kjRealises + kjReste,
+  }
+}
+
+/** Avancement de l'objectif de kJ (système kJ) : cumul réalisé et rythme attendu à ce jour. */
+export async function avancementObjectifKj(o: { debut: string; fin: string; kj: number }) {
+  const jour = aujourdhui()
+  const seances = await db.seances.where('date').between(o.debut, o.fin, true, true).toArray()
+  const realises = seances.reduce((a, s) => a + (s.kj ?? 0), 0)
+  // Rythme attendu : kJ prévus par le plan jusqu'à hier (la séance du jour n'est pas encore due), sinon progression linéaire
+  const hier = decalerJour(jour, -1)
+  const prevues = (await db.prevues.where('date').between(o.debut, hier < o.fin ? hier : o.fin, true, true).toArray())
+    .filter((p) => p.kjPrevu && p.statut !== 'abandonnee')
+  const total = (new Date(`${o.fin}T12:00:00`).getTime() - new Date(`${o.debut}T12:00:00`).getTime()) / 86400000 + 1
+  const ecoules = Math.min(total, Math.max(0, (new Date(`${jour}T12:00:00`).getTime() - new Date(`${o.debut}T12:00:00`).getTime()) / 86400000 + 1))
+  const attendu = prevues.length ? prevues.reduce((x, p) => x + p.kjPrevu!, 0) : (o.kj * ecoules) / total
+  return { realises, attendu, joursRestants: Math.max(0, Math.round(total - ecoules)) }
 }
 
 /** Propose les séances de course de la semaine selon le bloc en cours. */
@@ -127,6 +148,7 @@ export async function ajouterPropositions(props: SeanceProposee[], lundi: string
 
 /** Une séance d'un fichier de plan (format préparé par Claude à partir de ton plan écrit). */
 interface LignePlan {
+  kj?: number
   date: string
   sport: 'velo' | 'course'
   titre: string
@@ -143,13 +165,18 @@ interface LignePlan {
  * Réimporter le même fichier remplace les séances au lieu de les dupliquer.
  */
 export async function importerPlan(fichier: File) {
-  let contenu: { app?: string; seances?: LignePlan[] }
+  let contenu: { app?: string; seances?: LignePlan[]; objectifKj?: { debut: string; fin: string; kj: number } }
   try {
     contenu = JSON.parse(await fichier.text())
   } catch {
     throw new Error("Ce fichier n'est pas un fichier JSON lisible.")
   }
   if (contenu.app !== 'coach-plan' || !Array.isArray(contenu.seances)) throw new Error("Ce fichier n'est pas un plan Coach.")
+  // Objectif de kJ du plan (ex. 90 jours du système kJ)
+  if (contenu.objectifKj?.kj) {
+    const r = (await db.reglages.get('entrainement'))?.valeur as Record<string, unknown> | undefined
+    await enregistrer(db.reglages, { id: 'entrainement', valeur: { ...r, objectifKj: contenu.objectifKj } })
+  }
   let n = 0
   for (const l of contenu.seances) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(l.date) || !l.titre || !l.dureeMin) continue
@@ -158,9 +185,18 @@ export async function importerPlan(fichier: File) {
     await enregistrer(db.prevues, {
       id, date: l.date, sport: l.sport === 'course' ? 'course' : 'velo', titre: l.titre, type: l.type,
       intensite: ['basse', 'moyenne', 'haute'].includes(l.intensite) ? l.intensite : 'basse',
-      dureeMin: Math.round(l.dureeMin), detail: l.detail, priorite: l.priorite === 'cle' ? 'cle' : 'normale', longue: l.longue,
+      dureeMin: Math.round(l.dureeMin), detail: l.detail, kjPrevu: l.kj, priorite: l.priorite === 'cle' ? 'cle' : 'normale', longue: l.longue,
       statut: existante?.statut ?? 'prevue', raison: existante?.raison, origine: 'manuel',
     })
+    // Séance déjà faite ce jour-là (même sport, pas encore rattachée) : la prévue passe en « faite »
+    if (!existante || existante.statut === 'prevue') {
+      const faite = (await db.seances.where('date').equals(l.date).toArray()).find((s) => s.sport === (l.sport === 'course' ? 'course' : 'velo') && !s.prevueId)
+      if (faite) {
+        await enregistrer(db.seances, { ...faite, prevueId: id })
+        const p = await db.prevues.get(id)
+        if (p) await enregistrer(db.prevues, { ...p, statut: 'faite' })
+      }
+    }
     n++
   }
   return n

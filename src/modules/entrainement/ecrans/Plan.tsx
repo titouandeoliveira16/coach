@@ -12,8 +12,9 @@ import { hausseCharge } from '../../../metrics/planif'
 import { AIDES } from '../aides'
 import { BlocCourseCarte } from '../plan/BlocCourseCarte'
 import { FormulairePrevue } from '../plan/FormulairePrevue'
-import { chargesSemaine, declarerIndispo, declarerNonFaite, importerPlan, joursDe, leverIndispo, supprimerPrevue } from '../plan/donnees'
+import { avancementObjectifKj, chargesSemaine, declarerIndispo, declarerNonFaite, importerPlan, joursDe, leverIndispo, supprimerPrevue } from '../plan/donnees'
 import { lundiDe, nouvelId } from '../seances/donnees'
+import { useReglagesEntrainement } from '../reglagesEntrainement'
 import { RAISONS, type Raison, type Seance, type SeancePrevue } from '../types'
 
 const STATUTS: Record<SeancePrevue['statut'], { libelle: string; couleur: string }> = {
@@ -70,6 +71,15 @@ export function Plan() {
             <Chiffre libelle="Moy. 4 sem." valeur={charges.moyenne4} />
           </div>
           <p className="mt-2 text-xs text-texte-3">En {charges.unite} · réalisée à ce jour : {Math.round(charges.realisee)}</p>
+          {charges.kjPrevus > 0 && (
+            <div className="mt-3">
+              <p className="flex justify-between text-sm">
+                <span className="text-texte-2">Budget kJ vélo<Aide titre="Budget kJ" texte={AIDES.budgetKj} /></span>
+                <span><b>{Math.round(charges.kjRealises)}</b> / {Math.round(charges.kjPrevus)} kJ</span>
+              </p>
+              <Jauge part={charges.kjRealises / charges.kjPrevus} />
+            </div>
+          )}
           {hausse !== undefined && hausse > 10 && (
             <p className={`mt-2 text-sm font-semibold ${hausse > 15 ? 'text-[#f87171]' : 'text-argent'}`}>
               ⚠️ +{Math.round(hausse)} % par rapport à ta moyenne des 4 dernières semaines{hausse > 15 ? ' : hausse marquée, allège si possible.' : '.'}
@@ -77,6 +87,8 @@ export function Plan() {
           )}
         </Carte>
       )}
+
+      <CarteObjectifKj />
 
       {/* Jours */}
       {jours.map((d) => {
@@ -104,7 +116,7 @@ export function Plan() {
                   </span>
                   <span className="text-xs font-semibold" style={{ color: STATUTS[p.statut].couleur }}>{STATUTS[p.statut].libelle}</span>
                 </span>
-                <span className="block text-xs text-texte-3">{INTENSITE[p.intensite]}{p.raison && ` · ${p.raison}`}</span>
+                <span className="block text-xs text-texte-3">{INTENSITE[p.intensite]}{p.kjPrevu ? ` · ${p.kjPrevu} kJ` : ''}{p.raison && ` · ${p.raison}`}</span>
                 {p.detail && <span className="mt-1 block text-xs text-texte-2">{p.detail}</span>}
               </button>
             ))}
@@ -153,6 +165,36 @@ export function Plan() {
           }} />
       )}
     </div>
+  )
+}
+
+/** Barre de progression simple (0 à 1). */
+function Jauge({ part }: { part: number }) {
+  return (
+    <div className="mt-1 h-2 overflow-hidden rounded-full bg-surface-2">
+      <div className="h-full rounded-full bg-accent" style={{ width: `${Math.min(100, Math.max(0, part * 100))}%` }} />
+    </div>
+  )
+}
+
+/** Objectif de kJ sur 90 jours (système kJ) : cumul réalisé, comparé au rythme attendu à ce jour. */
+function CarteObjectifKj() {
+  const [r] = useReglagesEntrainement()
+  const o = r.objectifKj
+  const a = useLiveQuery(() => (o ? avancementObjectifKj(o) : undefined), [o?.debut, o?.fin, o?.kj])
+  if (!o || !a) return null
+  const enAvance = a.realises >= a.attendu
+  return (
+    <Carte titre="Objectif 90 jours">
+      <p className="flex justify-between text-sm">
+        <span className="text-texte-2">Du {depuisJour(o.debut).toLocaleDateString('fr-FR')} au {depuisJour(o.fin).toLocaleDateString('fr-FR')}<Aide titre="Objectif kJ" texte={AIDES.objectifKj} /></span>
+        <span><b>{Math.round(a.realises)}</b> / {o.kj} kJ</span>
+      </p>
+      <Jauge part={a.realises / o.kj} />
+      <p className={`mt-2 text-xs ${enAvance ? 'text-nutrition' : 'text-texte-3'}`}>
+        Prévu par le plan à ce jour : {Math.round(a.attendu)} kJ · {enAvance ? 'dans les temps ✓' : `${Math.round(a.attendu - a.realises)} kJ de retard`} · {a.joursRestants} jours restants
+      </p>
+    </Carte>
   )
 }
 

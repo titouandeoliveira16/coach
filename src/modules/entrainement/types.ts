@@ -53,6 +53,15 @@ export interface ReglagesEntrainement {
   modeleCible: 'polarise' | 'pyramidal'
   tests: TestPhysio[]
   bloc?: BlocCourse
+  /** Objectif de kJ sur une période (système kJ : 90 jours) */
+  objectifKj?: ObjectifKj
+}
+
+/** Objectif de travail cumulé (kJ) entre deux dates. */
+export interface ObjectifKj {
+  debut: string
+  fin: string
+  kj: number
 }
 
 export type Sport = 'velo' | 'course'
@@ -121,6 +130,8 @@ export interface SeancePrevue {
   dureeMin: number
   /** Consignes (allures, blocs…) */
   detail?: string
+  /** Travail prévu (kJ) : budget de la séance, système kJ */
+  kjPrevu?: number
   priorite: 'cle' | 'normale'
   longue?: boolean
   statut: 'prevue' | 'faite' | 'non-faite' | 'reportee' | 'abandonnee'
