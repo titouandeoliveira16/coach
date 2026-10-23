@@ -42,7 +42,7 @@ export async function tableauDeBord(filtre: FiltreSport) {
 
   // --- Charge hebdo sur 12 semaines (vélo + course) + charge prévue de la semaine en cours ---
   const semaines = Array.from({ length: 12 }, (_, i) => decalerJour(lundi, -7 * (11 - i)))
-  const chargeSem = (sport: Sport) => semaines.map((l) => somme(chargesParJour(seances, c, l, decalerJour(l, 6), sport).map((x) => x.charge)))
+  const chargeSem = (sport: 'velo' | 'course' | 'total') => semaines.map((l) => somme(chargesParJour(seances, c, l, decalerJour(l, 6), sport).map((x) => x.charge)))
   const prevueSemaine = (await chargesSemaine(lundi)).prevue
 
   // --- Physio sur 90 jours ---
@@ -79,6 +79,8 @@ export async function tableauDeBord(filtre: FiltreSport) {
   return {
     a, forme, semaines, prevueSemaine,
     chargeVelo: chargeSem('velo'), chargeCourse: chargeSem('course'),
+    // Natation, renfo, autres
+    chargeAutres: chargeSem('total').map((x, i) => Math.max(0, x - chargeSem('velo')[i] - chargeSem('course')[i])),
     physio, pesees,
     volume: { semaine, mois, annee, heuresVelo: heuresSem('velo'), heuresCourse: heuresSem('course') },
     intensite: { sept: distribution(sept, c), vingtHuit: distribution(vingtHuit, c), rpeSept: partsRpe(sept), rpe28: partsRpe(vingtHuit) },

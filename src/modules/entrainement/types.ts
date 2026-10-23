@@ -1,4 +1,5 @@
 import type { Note } from '../../core/ui/ChoixNote'
+import type { Phase, Role, SeanceVelo } from '../../metrics/programme'
 
 export type { Note }
 
@@ -52,9 +53,35 @@ export interface ReglagesEntrainement {
   /** Distribution d'intensité visée */
   modeleCible: 'polarise' | 'pyramidal'
   tests: TestPhysio[]
-  bloc?: BlocCourse
+  /** Course de référence pour les allures (ex. test 1500 m) */
+  courseRef?: CourseRef
   /** Objectif de kJ sur une période (système kJ : 90 jours) */
   objectifKj?: ObjectifKj
+  programme: ReglagesProgramme
+}
+
+/** Course de référence : les allures (VMA, seuil 30, seuil 60) en découlent (Riegel). */
+export interface CourseRef {
+  date: string
+  distanceM: number
+  tempsSec: number
+}
+
+/** Programme vélo automatique : semaine type, phases, tests et compétitions. */
+export interface ReglagesProgramme {
+  /** Rôle de chaque jour, du lundi au dimanche */
+  semaineType: Role[]
+  /** Durée maximale d'une séance vélo en semaine et le jour de la sortie longue (min) */
+  maxSemaineMin: number
+  maxLongMin: number
+  minLongMin: number
+  phases: Phase[]
+  /** Dates des tests CP prévus */
+  testsCp: string[]
+  /** Compétitions (course à pied ou vélo) : semaine allégée, pas d'intensité vélo juste avant */
+  competitions: { date: string; nom: string }[]
+  /** Puissance Z2 de départ (W) : ajustée ensuite automatiquement */
+  z2W?: number
 }
 
 /** Objectif de travail cumulé (kJ) entre deux dates. */
@@ -64,12 +91,32 @@ export interface ObjectifKj {
   kj: number
 }
 
-export type Sport = 'velo' | 'course'
+export type Sport = 'velo' | 'course' | 'natation' | 'renfo' | 'autre'
 export type Intensite = 'basse' | 'moyenne' | 'haute'
 
 /** Types de séance (mêmes intitulés que Campus Coach et la prépa vélo). */
 export const TYPES_SEANCE = ['Endurance', 'Sortie longue', 'Seuil', 'Fractionné / VMA', 'Récupération', 'Compétition', 'Test'] as const
 export type TypeSeance = (typeof TYPES_SEANCE)[number]
+
+/**
+ * Séances de course Campus Coach (intensités en temps de maintien).
+ * `fi` = facteur d'intensité (vitesse / vitesse au seuil 60) : sert à estimer la charge prévue.
+ */
+export const TYPES_COURSE = {
+  'Endurance fondamentale': { intensite: 'basse', fi: 0.75, type: 'Endurance' },
+  'Sortie longue': { intensite: 'basse', fi: 0.75, type: 'Sortie longue' },
+  'Endurance active': { intensite: 'basse', fi: 0.82, type: 'Endurance' },
+  Tempo: { intensite: 'moyenne', fi: 0.87, type: 'Seuil' },
+  'Allure spécifique': { intensite: 'moyenne', fi: 0.92, type: 'Seuil' },
+  'Sweet spot': { intensite: 'moyenne', fi: 0.95, type: 'Seuil' },
+  'Seuil 60': { intensite: 'haute', fi: 1, type: 'Seuil' },
+  'Seuil 30': { intensite: 'haute', fi: 1.04, type: 'Seuil' },
+  VMA: { intensite: 'haute', fi: 1.15, type: 'Fractionné / VMA' },
+  Côtes: { intensite: 'haute', fi: 1.1, type: 'Fractionné / VMA' },
+  Test: { intensite: 'haute', fi: 1.15, type: 'Test' },
+  Compétition: { intensite: 'haute', fi: 1.05, type: 'Compétition' },
+} as const satisfies Record<string, { intensite: Intensite; fi: number; type: TypeSeance }>
+export type TypeCourse = keyof typeof TYPES_COURSE
 
 /** Raisons d'indisponibilité ou de séance non faite. */
 export const RAISONS = ['Boulot', 'Cours / fac', 'Stage', 'Fatigue', 'Malade', 'Douleur / blessure', 'Météo', 'Perso'] as const
@@ -136,7 +183,15 @@ export interface SeancePrevue {
   longue?: boolean
   statut: 'prevue' | 'faite' | 'non-faite' | 'reportee' | 'abandonnee'
   raison?: Raison
-  origine: 'manuel' | 'propose'
+  /** auto = générée par le programme vélo */
+  origine: 'manuel' | 'propose' | 'auto'
+  /** Course : type Campus Coach et minutes à l'allure clé */
+  typeCourse?: TypeCourse
+  minutesCle?: number
+  /** Vélo généré : famille, format, palier, cible */
+  velo?: SeanceVelo
+  /** Séance d'intensité : blocs tous tenus ou non (fait avancer la progression) */
+  resultat?: 'reussie' | 'ratee'
 }
 
 /** Un jour d'indisponibilité. */
@@ -158,13 +213,4 @@ export interface TestPhysio {
   date: string
   type: 'vma' | 'cp'
   valeur: number
-}
-
-/** Bloc de course à pied (objectif). */
-export interface BlocCourse {
-  objectif: '5k' | '10k' | 'semi' | 'marathon' | 'entretien'
-  dateObjectif?: string
-  /** Lundi de début du bloc */
-  debut: string
-  seancesParSemaine: number
 }

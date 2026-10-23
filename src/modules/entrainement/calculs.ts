@@ -1,14 +1,5 @@
 /** Calculs du module Entraînement (fonctions pures, sans affichage). */
 
-/** Pourcentages de VMA affichés dans le tableau d'allures. */
-export const POURCENTAGES_VMA = [60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110]
-
-/** Vitesse (km/h) → allure en secondes par km */
-export const allureSecParKm = (kmh: number) => 3600 / kmh
-
-/** Temps (secondes) pour parcourir une distance (m) à une vitesse (km/h) */
-export const tempsSec = (distanceM: number, kmh: number) => (distanceM / 1000 / kmh) * 3600
-
 /** Un effort maximal du test CP : sa durée et la puissance moyenne tenue. */
 export interface EffortTest {
   dureeSec: number

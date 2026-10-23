@@ -1,5 +1,21 @@
 import { useReglage } from '../../core/reglages'
-import type { ReglagesEntrainement } from './types'
+import type { ReglagesEntrainement, ReglagesProgramme } from './types'
+
+/** Semaine type : footing lundi, intensité vélo mardi, renfo mercredi, intensité course jeudi, Z2 vendredi, sortie longue course samedi, vélo long dimanche. */
+export const PROGRAMME_DEFAUT: ReglagesProgramme = {
+  semaineType: ['course', 'velo-dur', 'renfo', 'course', 'velo-z2', 'course', 'velo-long'],
+  maxSemaineMin: 75,
+  maxLongMin: 120,
+  minLongMin: 90,
+  phases: [
+    { debut: '2026-10-26', type: 'reprise' },
+    { debut: '2026-12-14', type: 'vo2' },
+    { debut: '2027-02-01', type: 'seuil' },
+    { debut: '2027-03-15', type: 'entretien' },
+  ],
+  testsCp: ['2026-10-30'],
+  competitions: [{ date: '2026-12-13', nom: '5 km route' }],
+}
 
 /** Valeurs de départ : VMA Campus Coach et zones Frive de début de programme. */
 const DEFAUT: ReglagesEntrainement = {
@@ -16,6 +32,7 @@ const DEFAUT: ReglagesEntrainement = {
   chargeRef: 'trimp',
   modeleCible: 'polarise',
   tests: [{ date: '2026-09-01', type: 'vma', valeur: 18.5 }],
+  programme: PROGRAMME_DEFAUT,
 }
 
 export const useReglagesEntrainement = () => useReglage<ReglagesEntrainement>('entrainement', DEFAUT)

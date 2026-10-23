@@ -3,7 +3,6 @@ import { aujourdhui, depuisJour } from '../../../core/dates'
 import { formatNombre } from '../../../core/format'
 import { Aide } from '../../../core/ui/Aide'
 import { Carte } from '../../../core/ui/Carte'
-import { ChampNombre } from '../../../core/ui/ChampNombre'
 import { Puces } from '../../../core/ui/Puces'
 import { AIDES } from '../aides'
 import { useReglagesEntrainement } from '../reglagesEntrainement'
@@ -29,7 +28,6 @@ export function SectionAnalyse() {
         <Puces options={MODELES} valeur={r.modeleCible} effacable={false} libelle={(o) => (o === 'polarise' ? 'Polarisé' : 'Pyramidal')}
           onChoisir={(modeleCible) => modeleCible && modifier({ modeleCible })} />
       </div>
-      <ChampNombre libelle="Allure seuil course" unite="% VMA" decimales={0} valeur={r.seuilCoursePct} onValider={(v) => v && modifier({ seuilCoursePct: v })} />
 
       <div className="mt-3 border-t border-bordure pt-3">
         <p className="mb-2 text-sm font-semibold">Historique des tests</p>

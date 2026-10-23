@@ -9,6 +9,8 @@ import { Carte } from '../../../core/ui/Carte'
 import { adapterSeance } from '../../../metrics/signal'
 import { AIDES } from '../aides'
 import { analyser } from '../analyse/donnees'
+import { z2Actuel } from '../plan/programme'
+import { iconeSport } from '../sports'
 import type { Raison } from '../types'
 
 const PASTILLE = { vert: '🟢', orange: '🟠', rouge: '🔴' }
@@ -23,6 +25,7 @@ export function CarteAujourdhui() {
   // null = pas encore de décision ; undefined = lecture en cours
   const decision = useLiveQuery(async () => (await db.decisions.get(jour)) ?? null, [jour])
   const indispo = useLiveQuery(() => db.indispos.get(jour), [jour])
+  const z2 = useLiveQuery(z2Actuel)
 
   // On garde une trace du signal du jour (sans écraser un forçage)
   const couleur = a?.signal.couleur
@@ -64,12 +67,15 @@ export function CarteAujourdhui() {
       <div className="mt-3 rounded-xl bg-surface-2 p-3">
         <p className="text-xs uppercase tracking-wider text-texte-3">Séance du jour</p>
         {prevue ? (
-          <p className="font-semibold">{prevue.sport === 'velo' ? '🚴' : '🏃'} {prevue.titre} · {prevue.dureeMin} min</p>
+          <>
+            <p className="font-semibold">{iconeSport(prevue.sport)} {prevue.titre} · {prevue.dureeMin} min{prevue.kjPrevu ? ` · ${prevue.kjPrevu} kJ` : ''}</p>
+            {prevue.detail && <p className="mt-1 text-xs text-texte-2">{prevue.detail}</p>}
+          </>
         ) : (
           <p className="text-texte-2">Rien de prévu. <Link to="/entrainement/plan" className="text-accent">Plan de la semaine ›</Link></p>
         )}
         <p className="mt-1 font-semibold" style={{ color: decision?.force ? undefined : COULEUR[signal.couleur] }}>
-          {decision?.force ? '✋ Tu as choisi de maintenir ta séance.' : adapterSeance(prevue, signal)}
+          {decision?.force ? '✋ Tu as choisi de maintenir ta séance.' : adapterSeance(prevue, signal, prevue?.sport === 'velo' ? z2?.w : undefined)}
         </p>
         {prevue && signal.couleur !== 'vert' && (
           <button type="button" className="mt-2 text-sm text-texte-3 underline"

@@ -14,6 +14,7 @@ import { CIBLES, tableauDeBord, volume } from '../analyse/tableau'
 import { CarteAujourdhui } from '../forme/CarteAujourdhui'
 import { useReglagesEntrainement } from '../reglagesEntrainement'
 import { lundiDe } from '../seances/donnees'
+import { iconeSport } from '../sports'
 
 const SECTIONS = ['Aujourd’hui', 'Charge', 'Physio', 'Volume', 'Intensité', 'Progrès', 'Calendrier'] as const
 type Section = (typeof SECTIONS)[number]
@@ -108,7 +109,7 @@ function Charge({ t, filtre, setFiltre }: { t: Tableau; filtre: FiltreSport; set
       </Carte>
       <Carte titre={`Charge par semaine (${unite})`}>
         <GraphiqueBarres etiquettes={t.semaines.map(jj)}
-          series={[{ nom: 'Vélo', couleur: SERIES[0], valeurs: t.chargeVelo }, { nom: 'Course', couleur: SERIES[1], valeurs: t.chargeCourse }]}
+          series={[{ nom: 'Vélo', couleur: SERIES[0], valeurs: t.chargeVelo }, { nom: 'Course', couleur: SERIES[1], valeurs: t.chargeCourse }, { nom: 'Natation, renfo', couleur: SERIES[2], valeurs: t.chargeAutres }]}
           repere={{ nom: 'Prévue', valeurs: t.semaines.map((_, i) => (i === t.semaines.length - 1 ? t.prevueSemaine : undefined)) }} />
       </Carte>
     </>
@@ -226,7 +227,7 @@ function Progres({ t, tests }: { t: Tableau; tests: { date: string; type: 'vma' 
           <ul className="text-sm">
             {[...decouplages].reverse().map((s) => (
               <li key={s.id} className="flex justify-between border-t border-bordure py-1.5">
-                <span className="text-texte-2">{jj(s.date)} · {s.sport === 'velo' ? '🚴' : '🏃'} {Math.round(s.dureeSec / 60)} min</span>
+                <span className="text-texte-2">{jj(s.date)} · {iconeSport(s.sport, s.homeTrainer)} {Math.round(s.dureeSec / 60)} min</span>
                 <span className={`font-semibold ${s.decouplage! < 5 ? 'text-nutrition' : 'text-argent'}`}>{f1(s.decouplage!)} %</span>
               </li>
             ))}
@@ -283,7 +284,7 @@ function Calendrier() {
             <div key={d} className={`min-h-12 rounded-lg p-1 ${d.slice(0, 7) !== mois ? 'opacity-30' : ''} ${indispo ? 'bg-[#f87171]/15' : 'bg-surface-2'} ${d === aujourdhui() ? 'ring-1 ring-accent' : ''}`}>
               <span className="block text-texte-2">{Number(d.slice(8))}</span>
               <span className="flex flex-wrap justify-center gap-0.5">
-                {faites.map((s) => <span key={s.id} title="Réalisée" className="text-[10px]">{s.sport === 'velo' ? '🚴' : '🏃'}</span>)}
+                {faites.map((s) => <span key={s.id} title="Réalisée" className="text-[10px]">{iconeSport(s.sport, s.homeTrainer)}</span>)}
                 {prevues.map((p) => (
                   <span key={p.id} title={p.statut} className="h-2 w-2 rounded-full"
                     style={{ background: p.statut === 'prevue' ? 'var(--color-texte-3)' : p.statut === 'reportee' ? '#fb923c' : '#f87171' }} />

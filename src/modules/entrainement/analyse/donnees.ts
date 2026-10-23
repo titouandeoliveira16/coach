@@ -5,12 +5,12 @@ import { analyserVfc, type AnalyseVfc } from '../../../metrics/vfc'
 import { calculerSignal, type Signal } from '../../../metrics/signal'
 import { scoreRessenti } from '../forme/donnees'
 import { chargeDe, chargerContexte, domaineDe, type Contexte } from '../seances/donnees'
-import type { Intensite, MesureMatin, Seance, Sport } from '../types'
+import type { Intensite, MesureMatin, Seance } from '../types'
 
 /** Jours d'historique de charge nécessaires avant d'afficher CTL / TSB (amorçage). */
 export const JOURS_AMORCAGE = 28
 
-export type FiltreSport = Sport | 'total'
+export type FiltreSport = 'velo' | 'course' | 'total'
 
 /** Charge de chaque jour entre deux dates (incluses), jours sans séance = 0. */
 export function chargesParJour(seances: Seance[], c: Contexte, du: string, au: string, sport: FiltreSport = 'total') {

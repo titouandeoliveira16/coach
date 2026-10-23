@@ -1,12 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { contrainte, modeleForme, monotonie, ratioPic, srpe, trimpBanister, trimpDepuisMoyenne } from './charge'
-import { allureSecKm, pctVma, rtss, vitesseKmh } from './course'
+import { allureSecKm, alluresDepuisCourse, pctVma, rtss, tempsPredit, vitesseKmh } from './course'
 import { decouplage, domaineDepuisFc, domaines, tempsParZone, type BornesZones } from './fc'
 import { kjDepuisEchantillons, kjDepuisMoyenne, puissanceNormalisee, tss } from './puissance'
 import { analyserVfc, decaler } from './vfc'
 import { adapterSeance, calculerSignal } from './signal'
 import { hausseCharge, replanifier, trimpPrevu, type SeancePlan } from './planif'
-import { allurePct, proposerSemaineCourse, volumeCible } from './propositionsCourse'
 
 const secondes = (n: number) => Array.from({ length: n + 1 }, (_, i) => i)
 const BORNES: BornesZones = [143, 163, 184, 194]
@@ -92,9 +91,14 @@ describe('course', () => {
     expect(rtss(1800, 18.5 * 0.87, 18.5)).toBeCloseTo(50, 5)
   })
 
-  it('allure à un % VMA', () => {
-    expect(allurePct(18.5, 100)).toBe("3'15")
-    expect(allurePct(18.5, 75)).toBe("4'19")
+  it('allures de Riegel depuis un 1500 m', () => {
+    // 1500 m en 5'00 : la VMA (≈ 5 min) vaut la vitesse du 1500 m
+    const a = alluresDepuisCourse(1500, 300)
+    expect(a.vmaKmh).toBeCloseTo(18, 5)
+    // Seuil 60 ≈ 87 % de la VMA (12^(1/1,06 − 1))
+    expect(a.seuil60Kmh / a.vmaKmh).toBeCloseTo(0.869, 3)
+    expect(a.seuil30Kmh).toBeGreaterThan(a.seuil60Kmh)
+    expect(tempsPredit(5000, 1200, 10000)).toBeCloseTo(2502, 0)
   })
 })
 
@@ -207,43 +211,5 @@ describe('planification', () => {
   it('charge prévue et hausse', () => {
     expect(trimpPrevu('haute', 60)).toBeGreaterThan(trimpPrevu('basse', 60))
     expect(hausseCharge(575, [500, 500, 500, 500])).toBeCloseTo(15, 5)
-  })
-})
-
-describe('propositions course', () => {
-  const semaine = Array.from({ length: 7 }, (_, i) => decaler('2026-10-26', i))
-  const base = {
-    objectif: '10k' as const, seancesParSemaine: 3, vmaKmh: 18.5, semaine,
-    volumesPrecedentsMin: [150, 150, 150], numeroSemaine: 1, indispos: new Set<string>(), joursVeloIntense: new Set<string>(),
-  }
-
-  it('volume : +8 %, semaine allégée toutes les 4 semaines', () => {
-    expect(volumeCible(base)).toBe(160)
-    expect(volumeCible({ ...base, numeroSemaine: 4 })).toBe(115)
-  })
-
-  it('1 qualité, 1 sortie longue le dimanche, footings', () => {
-    const s = proposerSemaineCourse(base)
-    expect(s).toHaveLength(3)
-    expect(s.find((x) => x.longue)!.date).toBe(semaine[6])
-    expect(s.filter((x) => x.intensite !== 'basse')).toHaveLength(1)
-  })
-
-  it('pas de qualité à côté d’un vélo intense', () => {
-    const s = proposerSemaineCourse({ ...base, joursVeloIntense: new Set([semaine[1], semaine[2]]) })
-    const q = s.find((x) => x.intensite !== 'basse')!
-    expect([semaine[0], semaine[1], semaine[2], semaine[3]]).not.toContain(q.date)
-  })
-})
-
-describe('propositions course — footings', () => {
-  it('les footings évitent les jours de vélo intense quand c’est possible', () => {
-    const semaine = Array.from({ length: 7 }, (_, i) => decaler('2026-10-26', i))
-    const s = proposerSemaineCourse({
-      objectif: '10k', seancesParSemaine: 3, vmaKmh: 18.5, semaine, volumesPrecedentsMin: [150], numeroSemaine: 1,
-      indispos: new Set([semaine[1]]), joursVeloIntense: new Set([semaine[0], semaine[3]]),
-    })
-    const footings = s.filter((x) => x.titre === 'Footing')
-    expect(footings.every((f) => f.date !== semaine[0] && f.date !== semaine[3])).toBe(true)
   })
 })

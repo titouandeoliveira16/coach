@@ -15,6 +15,7 @@ import { srpe } from '../../../metrics/charge'
 import { allureSecKm, pctVma, vitesseKmh } from '../../../metrics/course'
 import { AIDES } from '../aides'
 import { importerFit } from '../import/fit'
+import { iconeSport, NOMS_SPORTS, SPORTS } from '../sports'
 import { TYPES_SEANCE, type Seance, type Sport } from '../types'
 import { chargerContexte, completerMetriques, derniereSeance, enregistrerSeance, nouvelId, supprimerSeance, trouverDoublon } from './donnees'
 
@@ -52,7 +53,7 @@ export function FormulaireSeance() {
 
   const dupliquer = async () => {
     const d = await derniereSeance(s.sport)
-    if (!d) return setMessage(`Aucune séance de ${s.sport === 'velo' ? 'vélo' : 'course'} à dupliquer.`)
+    if (!d) return setMessage(`Aucune séance de ${NOMS_SPORTS[s.sport].toLowerCase()} à dupliquer.`)
     const { id: _id, debut: _debut, idExterne: _externe, autresIds: _autres, prevueId: _prevue, notes: _notes, ...reste } = d
     setS({ ...reste, id: nouvelId(), date: aujourdhui(), source: 'manuel', trimpFlux: false, tempsZones: undefined, decouplage: undefined })
     setMessage('Dernière séance copiée : ajuste ce qui a changé.')
@@ -90,11 +91,11 @@ export function FormulaireSeance() {
 
       <div className="space-y-3">
         {/* ① Sport */}
-        <div className="grid grid-cols-2 gap-3">
-          {(['velo', 'course'] as Sport[]).map((sp) => (
+        <div className="grid grid-cols-4 gap-2">
+          {SPORTS.map((sp) => (
             <button key={sp} type="button" onClick={() => changer({ sport: sp })}
-              className={`rounded-2xl border py-4 text-lg font-bold ${s.sport === sp ? 'border-accent bg-accent text-fond' : 'border-bordure bg-surface text-texte-2'}`}>
-              {sp === 'velo' ? '🚴 Vélo' : '🏃 Course'}
+              className={`rounded-2xl border py-2.5 text-sm font-bold ${s.sport === sp ? 'border-accent bg-accent text-fond' : 'border-bordure bg-surface text-texte-2'}`}>
+              <span className="block text-2xl">{iconeSport(sp)}</span>{NOMS_SPORTS[sp]}
             </button>
           ))}
         </div>
@@ -131,15 +132,15 @@ export function FormulaireSeance() {
         </Carte>
 
         {/* ③ Spécifique au sport */}
-        <Carte titre={s.sport === 'velo' ? 'Vélo' : 'Course'}>
+        <Carte titre={NOMS_SPORTS[s.sport]}>
           {s.sport === 'velo' && (
             <label className="flex items-center justify-between py-2">
               <span className="text-texte-2">Home trainer</span>
               <input type="checkbox" checked={!!s.homeTrainer} onChange={(e) => changer({ homeTrainer: e.target.checked })} className="h-6 w-6 accent-[var(--color-accent)]" />
             </label>
           )}
-          <ChampNombre libelle="Distance" unite="km" valeur={s.distanceKm} onValider={(distanceKm) => changer({ distanceKm })} />
-          <ChampNombre libelle="Dénivelé +" unite="m" decimales={0} valeur={s.deniveleM} onValider={(deniveleM) => changer({ deniveleM })} />
+          {s.sport !== 'renfo' && <ChampNombre libelle="Distance" unite="km" valeur={s.distanceKm} onValider={(distanceKm) => changer({ distanceKm })} />}
+          {(s.sport === 'velo' || s.sport === 'course') && <ChampNombre libelle="Dénivelé +" unite="m" decimales={0} valeur={s.deniveleM} onValider={(deniveleM) => changer({ deniveleM })} />}
           {s.sport === 'velo' ? (
             <>
               <ChampNombre libelle="Puissance moy." unite="W" decimales={0} valeur={s.puissanceMoyW} onValider={(puissanceMoyW) => changer({ puissanceMoyW, kj: undefined })} />
@@ -149,7 +150,7 @@ export function FormulaireSeance() {
               )}
             </>
           ) : (
-            s.distanceKm && s.dureeSec > 0 && contexte?.vmaKmh && (
+            s.sport === 'course' && s.distanceKm && s.dureeSec > 0 && contexte?.vmaKmh && (
               <Ligne libelle="Allure" aide={AIDES.allure}
                 valeur={`${formatMinSec(allureSecKm(s.distanceKm, s.dureeSec))}/km · ${Math.round(pctVma(vitesseKmh(s.distanceKm, s.dureeSec), contexte.vmaKmh))} % VMA`} />
             )
@@ -187,7 +188,9 @@ export function FormulaireSeance() {
             <div className="grid grid-cols-3 gap-2 text-center">
               <Chiffre libelle="sRPE" aide={AIDES.srpe} valeur={s.rpe !== undefined ? Math.round(srpe(s.rpe, min)) : undefined} />
               <Chiffre libelle={apercu.trimpFlux ? 'TRIMP' : 'TRIMP est.'} aide={AIDES.trimp} valeur={apercu.trimp !== undefined ? Math.round(apercu.trimp) : undefined} />
-              <Chiffre libelle={s.sport === 'velo' ? 'TSS' : 'rTSS'} aide={s.sport === 'velo' ? AIDES.tss : AIDES.rtss} valeur={apercu.tss !== undefined ? Math.round(apercu.tss) : undefined} />
+              {(s.sport === 'velo' || s.sport === 'course') && (
+                <Chiffre libelle={s.sport === 'velo' ? 'TSS' : 'rTSS'} aide={s.sport === 'velo' ? AIDES.tss : AIDES.rtss} valeur={apercu.tss !== undefined ? Math.round(apercu.tss) : undefined} />
+              )}
             </div>
             {apercu.decouplage !== undefined && <Ligne libelle="Découplage cardiaque" aide={AIDES.decouplage} valeur={`${formatNombre(apercu.decouplage, 1)} %`} />}
             {apercu.puissanceNormW !== undefined && <Ligne libelle="Puissance normalisée" aide={AIDES.np} valeur={`${Math.round(apercu.puissanceNormW)} W`} />}

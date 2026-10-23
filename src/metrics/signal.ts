@@ -118,7 +118,10 @@ export function calculerSignal(e: EntreeSignal, s: Seuils = SEUILS_DEFAUT): Sign
 export function adapterSeance(
   prevue: { intensite: 'basse' | 'moyenne' | 'haute'; dureeMin: number } | undefined,
   signal: Signal,
+  /** Puissance Z2 (vélo) : précise la séance de remplacement */
+  z2W?: number,
 ): string {
+  const watts = z2W ? ` à ${z2W} W` : ''
   if (!prevue) return signal.couleur === 'rouge' ? 'Repos ou récupération active (20-30 min très facile).' : 'Pas de séance prévue.'
   const intense = prevue.intensite !== 'basse'
   switch (signal.recommandation) {
@@ -128,7 +131,7 @@ export function adapterSeance(
       return `Séance maintenue mais allégée : environ ${Math.round(prevue.dureeMin * 0.75)} min, arrête-toi si les sensations ne suivent pas.`
     case 'remplacer':
       return intense
-        ? `Remplace par de l'endurance basse (Z1-Z2) : ${Math.round(prevue.dureeMin * 0.75)} à ${prevue.dureeMin} min.`
+        ? `Remplace par de l'endurance basse (Z1-Z2) : ${Math.round(prevue.dureeMin * 0.75)} à ${prevue.dureeMin} min${watts}.`
         : 'Séance facile maintenue, reste bien en zone basse.'
     case 'repos':
       return 'Repos ou récupération active (20-30 min très facile). La séance clé est à reporter.'

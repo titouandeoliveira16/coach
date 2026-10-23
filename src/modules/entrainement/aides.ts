@@ -5,7 +5,7 @@ export const AIDES = {
     'TRIMP (Banister) = pour chaque minute, part de ta réserve de FC utilisée × 0,64 × e^(1,92 × cette part). Calculé seconde par seconde avec un fichier, sinon depuis ta FC moyenne (ou estimé depuis le RPE si pas de FC).',
   kj: 'kJ = puissance (W) × durée (s) / 1000 : le travail mécanique produit. Seulement avec un capteur de puissance (home trainer).',
   tss: 'TSS = durée × puissance normalisée × IF / (CP × 3600) × 100, avec IF = puissance normalisée / CP. 1 h à ta CP = 100.',
-  rtss: 'rTSS = heures × (vitesse / vitesse seuil)² × 100. Vitesse seuil = % de ta VMA réglé dans Réglages (87 % par défaut).',
+  rtss: 'rTSS = heures × (vitesse / vitesse au seuil 60)² × 100. Le seuil 60 vient de ta course de référence (Réglages → Course), sinon 87 % de ta VMA.',
   allure: 'Allure = durée / distance. % VMA = vitesse moyenne / ta VMA.',
   np: 'Puissance normalisée = moyenne glissante sur 30 s, élevée à la puissance 4, moyennée, puis racine 4e : reflète mieux le coût des efforts irréguliers.',
   decouplage:
@@ -28,4 +28,14 @@ export const AIDES = {
   objectifKj: 'Système kJ : total de kJ à accumuler sur la période. Le rythme attendu suppose une progression régulière jour après jour.',
   chargePrevue: 'Charge prévue = TRIMP estimé de chaque séance prévue, selon sa durée et son intensité.',
   efficience: 'Efficience = vitesse (km/h) ou puissance (W) par battement de FC moyenne, sur les séances en basse intensité. Plus elle monte, plus tu es efficace.',
+  programme:
+    "L'appli place 1 séance d'intensité vélo par semaine (jamais la veille ni le lendemain d'un seuil 60, seuil 30, VMA ou d'une compétition en course), une Z2 et une sortie longue Z2 avec sprints, une seule séance par jour. L'intensité suit la phase (reprise, dominante VO2, dominante seuil) en mélangeant les formats : à charge égale, l'ordre VO2 / seuil change peu les progrès (Sylta 2016, Almquist 2022). Chaque matin, le signal 🟢🟠🔴 adapte la séance du jour.",
+  budgetAuto:
+    'Système kJ : chaque semaine, budget de la précédente +7,5 % s’il a été réalisé à 90 % ou plus avec au plus 1 jour orange, stable si les signaux sont mitigés ou le budget pas atteint, −15 % avec 2 jours rouges ou plus. Semaine allégée (−35 %) 1 sur 4 et la semaine d’une compétition. La séance d’intensité est comptée d’abord, le reste en Z2 (60 % pour la sortie longue).',
+  z2Auto:
+    'Puissance Z2 : 62 % de ta CP au départ (ou ta valeur dans Réglages), puis +5 W après une sortie Z2 du programme avec découplage < 5 % et RPE ≤ 3, −5 W si découplage > 5 % ou RPE > 3. Repart de zéro à chaque test CP, toujours dans ta zone 2.',
+  progression:
+    "Règle 6 du système kJ : on allonge d'abord le temps de travail (4 paliers par famille : VO2 courts, VO2 longs, seuil…), puis +2,5 % de watts une fois le dernier palier réussi (et retour au 2e palier). Un bloc pas tenu : −5 % de watts la fois suivante. Une réussite fait avancer toute la famille (ex. un 30/30 réussi fait progresser le 30/15).",
+  allures:
+    "Allures calculées depuis ta course de référence avec la formule de Riegel (temps × distance^1,06) : seuil 60 = vitesse tenable 60 min, seuil 30 = 30 min, VMA ≈ 5 min, comme chez Campus Coach. Endurance fondamentale = 70-80 % du seuil 60, sweet spot = 95 %.",
 } as const

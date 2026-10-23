@@ -5,6 +5,7 @@ import { aujourdhui } from '../../../core/dates'
 import { Carte } from '../../../core/ui/Carte'
 import { CarteAujourdhui } from '../forme/CarteAujourdhui'
 import { CartePesee } from '../forme/CartePesee'
+import { CarteResultat } from '../forme/CarteResultat'
 import { ResumeMatin } from '../forme/ResumeMatin'
 import { SaisieMatin } from '../forme/SaisieMatin'
 import { SeptJours } from '../forme/SeptJours'
@@ -36,6 +37,8 @@ export function Forme() {
       )}
 
       {complet && !edition && <CarteAujourdhui />}
+
+      <CarteResultat />
 
       <CartePesee />
 

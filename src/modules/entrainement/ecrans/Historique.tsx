@@ -10,9 +10,10 @@ import { Puces } from '../../../core/ui/Puces'
 import { allureSecKm } from '../../../metrics/course'
 import { AIDES } from '../aides'
 import { chargeDe, chargerContexte, lundiDe } from '../seances/donnees'
+import { iconeSport, NOMS_SPORTS } from '../sports'
 import type { Seance } from '../types'
 
-const FILTRES = ['Tous', 'Vélo', 'Course'] as const
+const FILTRES = ['Tous', 'Vélo', 'Course', 'Autres'] as const
 type Filtre = (typeof FILTRES)[number]
 
 /** Durée en "1 h 05" ou "45 min". */
@@ -29,7 +30,8 @@ export function Historique() {
   const contexte = useLiveQuery(chargerContexte)
   if (!seances || !contexte) return null
 
-  const visibles = seances.filter((s) => filtre === 'Tous' || (filtre === 'Vélo' ? s.sport === 'velo' : s.sport === 'course'))
+  const visibles = seances.filter((s) =>
+    filtre === 'Tous' || (filtre === 'Vélo' ? s.sport === 'velo' : filtre === 'Course' ? s.sport === 'course' : s.sport !== 'velo' && s.sport !== 'course'))
   const semaines = new Map<string, Seance[]>()
   for (const s of visibles) {
     const l = lundiDe(s.date)
@@ -82,10 +84,10 @@ function CarteSeance({ s, charge }: { s: Seance; charge: number }) {
   ].filter(Boolean)
   return (
     <Link to={`/entrainement/seance/${s.id}`} className="flex items-center gap-3 rounded-2xl border border-bordure bg-surface p-3 active:bg-surface-2">
-      <span className="text-2xl">{s.sport === 'velo' ? (s.homeTrainer ? '🏠' : '🚴') : '🏃'}</span>
+      <span className="text-2xl">{iconeSport(s.sport, s.homeTrainer)}</span>
       <span className="min-w-0 flex-1">
         <span className="block truncate font-semibold">
-          {s.titre ?? s.type ?? (s.sport === 'velo' ? 'Vélo' : 'Course')}
+          {s.titre ?? s.type ?? NOMS_SPORTS[s.sport]}
           {s.source !== 'manuel' && <span className="ml-1.5 text-xs font-normal text-texte-3">{s.source === 'fit' ? '.FIT' : 'Intervals'}</span>}
         </span>
         <span className="block text-sm text-texte-3">

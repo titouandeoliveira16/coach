@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { db } from '../../../core/db'
 import { aujourdhui, decalerJour, depuisJour } from '../../../core/dates'
@@ -10,11 +10,13 @@ import { Feuille } from '../../../core/ui/Feuille'
 import { Puces } from '../../../core/ui/Puces'
 import { hausseCharge } from '../../../metrics/planif'
 import { AIDES } from '../aides'
-import { BlocCourseCarte } from '../plan/BlocCourseCarte'
+import { allureDuType, tableauAllures } from '../allures'
 import { FormulairePrevue } from '../plan/FormulairePrevue'
-import { avancementObjectifKj, chargesSemaine, declarerIndispo, declarerNonFaite, importerPlan, joursDe, leverIndispo, supprimerPrevue } from '../plan/donnees'
+import { avancementObjectifKj, chargesSemaine, declarerIndispo, declarerNonFaite, joursDe, leverIndispo, supprimerPrevue } from '../plan/donnees'
+import { alertesCumul, estIntensite, genererSemaineVelo, lireMeta, noterResultat } from '../plan/programme'
 import { lundiDe, nouvelId } from '../seances/donnees'
 import { useReglagesEntrainement } from '../reglagesEntrainement'
+import { iconeSport } from '../sports'
 import { RAISONS, type Raison, type Seance, type SeancePrevue } from '../types'
 
 const STATUTS: Record<SeancePrevue['statut'], { libelle: string; couleur: string }> = {
@@ -39,7 +41,8 @@ export function Plan() {
   const [edition, setEdition] = useState<SeancePrevue | null>(null)
   const [jourIndispo, setJourIndispo] = useState<string | null>(null)
   const [message, setMessage] = useState<string[]>()
-  const champPlan = useRef<HTMLInputElement>(null)
+  const [r] = useReglagesEntrainement()
+  const allures = tableauAllures(r.courseRef, r.vmaKmh, r.seuilCoursePct)
 
   if (!prevues || !seances || !indispos) return null
   const hausse = charges ? hausseCharge(charges.prevue, [charges.moyenne4]) : undefined
@@ -88,6 +91,8 @@ export function Plan() {
         </Carte>
       )}
 
+      <CarteProgramme lundi={lundi} onMessage={setMessage} />
+      <CarteAlertes lundi={lundi} deps={[prevues, seances]} />
       <CarteObjectifKj />
 
       {/* Jours */}
@@ -112,44 +117,32 @@ export function Plan() {
               <button key={p.id} type="button" onClick={() => setEdition(p)} className="mt-2 block w-full rounded-xl bg-surface-2 p-2.5 text-left">
                 <span className="flex items-center justify-between">
                   <span className={`font-semibold ${p.statut === 'abandonnee' ? 'line-through opacity-50' : ''}`}>
-                    {p.sport === 'velo' ? '🚴' : '🏃'} {p.titre} · {p.dureeMin} min {p.priorite === 'cle' && '⭐'}
+                    {iconeSport(p.sport)} {p.titre} · {p.dureeMin} min {p.priorite === 'cle' && '⭐'}{p.origine === 'auto' && <span className="ml-1 text-xs text-texte-3">auto</span>}
                   </span>
                   <span className="text-xs font-semibold" style={{ color: STATUTS[p.statut].couleur }}>{STATUTS[p.statut].libelle}</span>
                 </span>
-                <span className="block text-xs text-texte-3">{INTENSITE[p.intensite]}{p.kjPrevu ? ` · ${p.kjPrevu} kJ` : ''}{p.raison && ` · ${p.raison}`}</span>
+                <span className="block text-xs text-texte-3">
+                  {INTENSITE[p.intensite]}{p.kjPrevu ? ` · ${p.kjPrevu} kJ` : ''}{p.minutesCle ? ` · ${p.minutesCle} min à l'allure clé` : ''}{p.raison && ` · ${p.raison}`}
+                  {p.resultat && (p.resultat === 'reussie' ? ' · blocs tenus ✓' : ' · pas tout tenu')}
+                </span>
+                {p.sport === 'course' && allureDuType(p.typeCourse, allures) && <span className="block text-xs text-texte-2">Allure : {allureDuType(p.typeCourse, allures)}</span>}
                 {p.detail && <span className="mt-1 block text-xs text-texte-2">{p.detail}</span>}
+                {p.velo?.pourquoi && <span className="mt-1 block text-[11px] text-texte-3">↳ {p.velo.pourquoi}</span>}
               </button>
             ))}
             {faitesLibres.map((s) => (
               <p key={s.id} className="mt-2 rounded-xl border border-dashed border-bordure p-2 text-sm text-texte-2">
-                ✓ {s.sport === 'velo' ? '🚴' : '🏃'} {s.titre ?? s.type ?? 'Séance'} · {Math.round(s.dureeSec / 60)} min (hors plan)
+                ✓ {iconeSport(s.sport, s.homeTrainer)} {s.titre ?? s.type ?? 'Séance'} · {Math.round(s.dureeSec / 60)} min (hors plan)
               </p>
             ))}
           </section>
         )
       })}
 
-      <BlocCourseCarte lundi={lundi} />
-
-      <Carte titre="Importer un plan">
-        <p className="mb-2 text-sm text-texte-2">Fichier de plan préparé par Claude (ex. ta prépa vélo) : toutes les séances sont ajoutées d'un coup.</p>
-        <Bouton variante="secondaire" onClick={() => champPlan.current?.click()}>📥 Importer un fichier de plan</Bouton>
-        <input ref={champPlan} type="file" className="hidden" onChange={async (e) => {
-          const f = e.target.files?.[0]
-          e.target.value = ''
-          if (!f) return
-          try {
-            setMessage([`${await importerPlan(f)} séance(s) ajoutée(s) au plan.`])
-          } catch (err) {
-            setMessage([(err as Error).message])
-          }
-        }} />
-      </Carte>
-
       {ajout && (
         <Feuille titre="Séance prévue" onFermer={() => setAjout(null)}>
           <FormulairePrevue
-            initiale={{ id: nouvelId(), date: ajout.date, sport: 'velo', titre: '', intensite: 'basse', dureeMin: 60, priorite: 'normale', statut: 'prevue', origine: 'manuel' }}
+            initiale={{ id: nouvelId(), date: ajout.date, sport: 'course', titre: '', intensite: 'basse', dureeMin: 45, priorite: 'normale', statut: 'prevue', origine: 'manuel' }}
             jours={jours}
             onTermine={() => setAjout(null)}
           />
@@ -165,6 +158,61 @@ export function Plan() {
           }} />
       )}
     </div>
+  )
+}
+
+/** Programme vélo : phase, budget kJ de la semaine et génération des séances. */
+function CarteProgramme({ lundi, onMessage }: { lundi: string; onMessage: (m: string[]) => void }) {
+  const meta = useLiveQuery(async () => (await lireMeta(lundi)) ?? null, [lundi])
+  const [occupe, setOccupe] = useState(false)
+  if (meta === undefined) return null
+  const passee = decalerJour(lundi, 6) < aujourdhui()
+  const generer = async () => {
+    setOccupe(true)
+    try {
+      onMessage(await genererSemaineVelo(lundi))
+    } catch (e) {
+      onMessage([(e as Error).message])
+    } finally {
+      setOccupe(false)
+    }
+  }
+  return (
+    <Carte titre="Programme vélo">
+      {meta ? (
+        <>
+          <p className="text-sm">
+            <span className="font-semibold">{meta.phase}</span> · semaine {meta.semaineDansPhase}
+            {meta.allegee && <span className="ml-2 rounded-full bg-accent/20 px-2 py-0.5 text-xs font-semibold text-accent">allégée</span>}
+          </p>
+          <p className="mt-1 text-sm text-texte-2">
+            Budget <b className="text-texte">{meta.budget} kJ</b><Aide titre="Budget kJ automatique" texte={AIDES.budgetAuto} /> · Z2 à {meta.z2W} W<Aide titre="Puissance Z2" texte={AIDES.z2Auto} />
+          </p>
+          <p className="mt-1 text-xs text-texte-3">{meta.raison}</p>
+        </>
+      ) : (
+        <p className="text-sm text-texte-2">
+          Saisis d'abord tes séances Campus Coach et ton renfo (bouton + de chaque jour), puis génère ton vélo : l'appli place tes séances
+          autour, sans enchaîner deux jours durs.<Aide titre="Programme vélo" texte={AIDES.programme} />
+        </p>
+      )}
+      {!passee && (
+        <Bouton variante={meta ? 'secondaire' : 'principal'} className="mt-3" disabled={occupe} onClick={generer}>
+          {occupe ? 'Calcul…' : meta ? '↻ Regénérer le vélo (garde ce qui est fait)' : '⚙️ Générer ma semaine vélo'}
+        </Bouton>
+      )}
+    </Carte>
+  )
+}
+
+/** Alertes de cumul vélo + course. */
+function CarteAlertes({ lundi, deps }: { lundi: string; deps: unknown[] }) {
+  const alertes = useLiveQuery(() => alertesCumul(lundi), [lundi, ...deps])
+  if (!alertes?.length) return null
+  return (
+    <Carte titre="Vélo + course">
+      <ul className="space-y-1.5 text-sm">{alertes.map((a, i) => <li key={i}>⚠️ {a}</li>)}</ul>
+    </Carte>
   )
 }
 
@@ -232,6 +280,19 @@ function ActionsPrevue({ p, jours, onFermer, onMessage }: { p: SeancePrevue; jou
             }}>✓ Je l'ai faite : saisir</Bouton>
           )}
           {p.statut === 'prevue' && <Bouton variante="secondaire" onClick={() => setMode('non-faite')}>✗ Pas faite</Bouton>}
+          {p.statut === 'faite' && estIntensite(p) && (
+            <div className="rounded-xl bg-surface-2 p-3">
+              <p className="mb-2 text-sm text-texte-2">Tous les blocs tenus aux watts prévus ?<Aide titre="Progression" texte={AIDES.progression} /></p>
+              <div className="grid grid-cols-2 gap-2">
+                {(['reussie', 'ratee'] as const).map((x) => (
+                  <button key={x} type="button" onClick={async () => { await noterResultat(p, p.resultat === x ? undefined : x); onFermer() }}
+                    className={`rounded-xl border py-2.5 text-sm font-semibold ${p.resultat === x ? 'border-accent bg-accent text-fond' : 'border-bordure text-texte-2'}`}>
+                    {x === 'reussie' ? '✓ Oui, tout tenu' : '✗ Pas tout'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           <Bouton variante="secondaire" onClick={() => setMode('modifier')}>Modifier</Bouton>
           <button type="button" className="w-full py-2 text-[#f87171]" onClick={async () => { await supprimerPrevue(p.id); onFermer() }}>Supprimer</button>
         </div>

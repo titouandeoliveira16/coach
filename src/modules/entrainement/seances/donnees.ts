@@ -62,7 +62,7 @@ export function completerMetriques(s: Seance, c: Contexte): Seance {
     if (r.kj === undefined && s.puissanceMoyW) r.kj = kjDepuisMoyenne(s.puissanceMoyW, s.dureeSec)
     const p = s.puissanceNormW ?? s.puissanceMoyW
     r.tss = p && c.cpW ? tss(s.dureeSec, p, c.cpW) : undefined
-  } else {
+  } else if (s.sport === 'course') {
     r.tss = s.distanceKm && c.vmaKmh ? rtss(s.dureeSec, vitesseKmh(s.distanceKm, s.dureeSec), c.vmaKmh, c.seuilCoursePct) : undefined
   }
   return r
@@ -170,7 +170,14 @@ export async function enregistrerSeance(s: Seance) {
   const complete = completerMetriques(s, c)
   if (!complete.prevueId) {
     const prevue = (await db.prevues.where('date').equals(s.date).toArray()).find((p) => p.sport === s.sport && p.statut === 'prevue')
-    if (prevue) complete.prevueId = prevue.id
+    if (prevue) {
+      complete.prevueId = prevue.id
+      // Séance importée (montre, Intervals) : elle prend le nom de la séance prévue (ex. « Seuil 30 »)
+      if (s.source !== 'manuel') {
+        complete.titre = prevue.titre
+        complete.type = complete.type ?? prevue.type
+      }
+    }
   }
   await enregistrer(db.seances, complete)
   if (complete.prevueId) {

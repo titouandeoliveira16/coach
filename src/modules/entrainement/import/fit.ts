@@ -27,8 +27,10 @@ interface Record {
 function sportDe(session: Session): Sport {
   const s = `${session.sport ?? ''}`.toLowerCase()
   if (s.includes('cycling') || s.includes('biking')) return 'velo'
-  if (s.includes('running') || s.includes('walking') || s.includes('hiking')) return 'course'
-  throw new Error(`Sport « ${session.sport ?? 'inconnu'} » non géré : seuls le vélo et la course sont pris en charge.`)
+  if (s.includes('running')) return 'course'
+  if (s.includes('swimming')) return 'natation'
+  if (s.includes('training') || s.includes('fitness')) return 'renfo'
+  return 'autre'
 }
 
 /** Lit un fichier .FIT et renvoie la séance avec toutes ses métriques. */

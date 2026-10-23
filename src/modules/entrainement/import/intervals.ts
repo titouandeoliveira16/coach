@@ -4,7 +4,8 @@ import type { Profil } from '../../../core/profil'
 import { enregistrer } from '../../../core/stockage'
 import { CLE_PUBLIQUE, URL_SUPABASE, supabase } from '../../../core/supabase'
 import { chargerContexte, completerMetriques, enregistrerSeance, fusionner, nettoyerDoublons, richesse, trouverDoublon } from '../seances/donnees'
-import type { MesureMatin, Sport } from '../types'
+import { sportDepuisType } from '../sports'
+import type { MesureMatin } from '../types'
 import { analyserFlux } from './flux'
 
 /**
@@ -83,8 +84,6 @@ interface JourWellness {
   weight?: number
 }
 
-const sportDe = (type: string): Sport => (type.includes('Run') ? 'course' : 'velo')
-
 /** Données de Garmin (via Intervals) → mesures du matin et pesées. Ne remplace jamais une valeur saisie à la main. */
 async function importerWellness(depuis: string) {
   const { jours } = await appeler<{ jours: JourWellness[] }>('wellness', { oldest: depuis })
@@ -129,7 +128,7 @@ async function importerActivites(depuis: string, surProgression?: (n: number) =>
       let s = analyserFlux(
         { t: f.time ?? [], fc: f.heartrate, w: f.watts, v: f.velocity_smooth },
         {
-          sport: sportDe(a.type), debut, dureeSec: a.moving_time, distanceM: a.distance, deniveleM: a.total_elevation_gain,
+          sport: sportDepuisType(a.type), debut, dureeSec: a.moving_time, distanceM: a.distance, deniveleM: a.total_elevation_gain,
           homeTrainer: !!a.trainer || a.type.startsWith('Virtual'), titre: a.nom, source: 'intervals', idExterne: a.id,
         },
         c,
