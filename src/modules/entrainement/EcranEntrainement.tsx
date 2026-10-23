@@ -3,20 +3,18 @@ import { Link, Navigate, Route, Routes } from 'react-router-dom'
 import { EnTete } from '../../core/ui/EnTete'
 import { Onglets } from '../../core/ui/Onglets'
 import { IconePlus } from '../../core/ui/icones'
-import { Bord } from './ecrans/Bord'
-import { Forme } from './ecrans/Forme'
-import { Historique } from './ecrans/Historique'
-import { Plan } from './ecrans/Plan'
+import { Aujourdhui } from './ecrans/Aujourdhui'
+import { Progres } from './ecrans/Progres'
+import { Semaine } from './ecrans/Semaine'
 import { AideFit } from './import/AideFit'
 import { importerIntervalsSiBesoin } from './import/intervals'
 import { nettoyerDoublons } from './seances/donnees'
 import { FormulaireSeance } from './seances/FormulaireSeance'
 
 const ONGLETS = [
-  { libelle: 'Forme', vers: '/entrainement/forme' },
-  { libelle: 'Plan', vers: '/entrainement/plan' },
-  { libelle: 'Bord', vers: '/entrainement/bord' },
-  { libelle: 'Historique', vers: '/entrainement/historique' },
+  { libelle: 'Aujourd’hui', vers: '/entrainement/aujourdhui' },
+  { libelle: 'Semaine', vers: '/entrainement/semaine' },
+  { libelle: 'Progrès', vers: '/entrainement/progres' },
 ]
 
 /** Écran racine du module : onglets en haut, bouton « + » en bas à droite. */
@@ -45,11 +43,10 @@ function AvecOnglets() {
       </EnTete>
       <div className="px-4">
         <Routes>
-          <Route path="forme" element={<Forme />} />
-          <Route path="plan" element={<Plan />} />
-          <Route path="bord/*" element={<Bord />} />
-          <Route path="historique" element={<Historique />} />
-          <Route path="*" element={<Navigate to="forme" replace />} />
+          <Route path="aujourdhui" element={<Aujourdhui />} />
+          <Route path="semaine" element={<Semaine />} />
+          <Route path="progres" element={<Progres />} />
+          <Route path="*" element={<Navigate to="aujourdhui" replace />} />
         </Routes>
       </div>
 

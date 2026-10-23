@@ -16,18 +16,15 @@ const ROLES: Record<Role, string> = {
 }
 const select = 'rounded-lg border border-bordure bg-surface-2 px-2 py-2 text-sm'
 
-/** Réglages du programme vélo : semaine type, créneaux, phases, tests CP, compétitions. */
-export function SectionProgramme() {
+/** Mes jours : semaine type et créneaux (le programme vélo se place sur ces jours). */
+export function JoursVelo() {
   const [r, modifier] = useReglagesEntrainement()
   const p = { ...PROGRAMME_DEFAUT, ...r.programme }
-  const z2 = useLiveQuery(z2Actuel, [r.programme])
-  const [nouvelleCompet, setNouvelleCompet] = useState({ date: '', nom: '' })
-  const [nouveauTest, setNouveauTest] = useState('')
   const changer = (c: Partial<ReglagesProgramme>) => modifier({ programme: { ...p, ...c } })
 
   return (
-    <Carte titre="Programme vélo">
-      <p className="mb-2 text-sm text-texte-2">Semaine type<Aide titre="Programme vélo" texte={AIDES.programme} /></p>
+    <div className="mt-3 border-t border-bordure pt-3">
+      <p className="mb-2 text-sm text-texte-2">Ma semaine type<Aide titre="Programme vélo" texte={AIDES.programme} /></p>
       {JOURS.map((j, i) => (
         <label key={j} className="flex items-center justify-between py-1">
           <span className="text-texte-2">{j}</span>
@@ -42,14 +39,28 @@ export function SectionProgramme() {
         <ChampNombre libelle="Vélo en semaine, max" unite="min" decimales={0} valeur={p.maxSemaineMin} onValider={(v) => v && changer({ maxSemaineMin: v })} />
         <ChampNombre libelle="Sortie longue, min" unite="min" decimales={0} valeur={p.minLongMin} onValider={(v) => v && changer({ minLongMin: v })} />
         <ChampNombre libelle="Sortie longue, max" unite="min" decimales={0} valeur={p.maxLongMin} onValider={(v) => v && changer({ maxLongMin: v })} />
-        <ChampNombre libelle="Z2 de départ" unite="W" decimales={0} valeur={p.z2W} onValider={(z2W) => changer({ z2W })} />
-        {z2 && (
-          <p className="py-1 text-right text-xs text-texte-3">
-            Z2 actuelle : <b className="text-texte">{z2.w} W</b> ({z2.ajustement >= 0 ? '+' : ''}{z2.ajustement} W d'ajustement)<Aide titre="Puissance Z2" texte={AIDES.z2Auto} />
-          </p>
-        )}
       </div>
+    </div>
+  )
+}
 
+/** Réglages avancés du programme : Z2 de départ, phases, tests CP, compétitions. */
+export function ProgrammeAvance() {
+  const [r, modifier] = useReglagesEntrainement()
+  const p = { ...PROGRAMME_DEFAUT, ...r.programme }
+  const changer = (c: Partial<ReglagesProgramme>) => modifier({ programme: { ...p, ...c } })
+  const z2 = useLiveQuery(z2Actuel, [r.programme])
+  const [nouvelleCompet, setNouvelleCompet] = useState({ date: '', nom: '' })
+  const [nouveauTest, setNouveauTest] = useState('')
+
+  return (
+    <Carte titre="Programme vélo">
+      <ChampNombre libelle="Z2 de départ" unite="W" decimales={0} valeur={p.z2W} onValider={(z2W) => changer({ z2W })} />
+      {z2 && (
+        <p className="py-1 text-right text-xs text-texte-3">
+          Z2 actuelle : <b className="text-texte">{z2.w} W</b> ({z2.ajustement >= 0 ? '+' : ''}{z2.ajustement} W d'ajustement)<Aide titre="Puissance Z2" texte={AIDES.z2Auto} />
+        </p>
+      )}
       <div className="mt-2 border-t border-bordure pt-2">
         <p className="mb-1 text-sm font-semibold">Phases (début, un lundi)</p>
         {[...p.phases].sort((a, b) => a.debut.localeCompare(b.debut)).map((ph) => (

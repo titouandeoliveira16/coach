@@ -6,9 +6,9 @@ import { formatNombre } from '../../../core/format'
 import { useProfil } from '../../../core/profil'
 import { useReglagesEntrainement } from '../reglagesEntrainement'
 import { CalculateurCP } from './CalculateurCP'
-import { ZonesVelo } from './ZonesVelo'
+import { JoursVelo } from './SectionProgramme'
 
-/** Réglages vélo : CP, W′, calculateur de test et zones. */
+/** Réglages vélo : CP, calculateur de test et semaine type. */
 export function SectionVelo() {
   const [reglages, modifier] = useReglagesEntrainement()
   const [profil] = useProfil()
@@ -19,7 +19,6 @@ export function SectionVelo() {
   return (
     <Carte titre="Vélo">
       <ChampNombre libelle="CP" unite="W" decimales={0} valeur={reglages.cpW} onValider={(v) => modifier({ cpW: v })} />
-      <ChampNombre libelle="W′" unite="kJ" valeur={reglages.wPrimeKj} onValider={(v) => modifier({ wPrimeKj: v })} />
       {wkg && (
         <p className="py-1.5 text-right text-sm text-texte-2">
           soit <span className="font-semibold text-texte">{formatNombre(wkg, 2)} W/kg</span>
@@ -42,7 +41,7 @@ export function SectionVelo() {
         />
       )}
 
-      <ZonesVelo zones={reglages.zonesVelo} cpW={reglages.cpW} onModifier={(zonesVelo) => modifier({ zonesVelo })} />
+      <JoursVelo />
     </Carte>
   )
 }

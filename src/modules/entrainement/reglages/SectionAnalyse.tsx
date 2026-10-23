@@ -9,7 +9,6 @@ import { useReglagesEntrainement } from '../reglagesEntrainement'
 import type { TestPhysio } from '../types'
 
 const CHARGES = ['trimp', 'srpe'] as const
-const MODELES = ['polarise', 'pyramidal'] as const
 
 /** Paramètres d'analyse : charge de référence, distribution visée, seuil course, historique des tests. */
 export function SectionAnalyse() {
@@ -22,11 +21,6 @@ export function SectionAnalyse() {
         <p className="mb-2 text-texte-2">Charge de référence<Aide titre="Charge de référence" texte={`${AIDES.trimp} — ${AIDES.srpe}`} /></p>
         <Puces options={CHARGES} valeur={r.chargeRef} effacable={false} libelle={(o) => (o === 'trimp' ? 'TRIMP (FC)' : 'sRPE (ressenti)')}
           onChoisir={(chargeRef) => chargeRef && modifier({ chargeRef })} />
-      </div>
-      <div className="py-2">
-        <p className="mb-2 text-texte-2">Distribution visée<Aide titre="Distribution" texte="Polarisé : ~80 % basse, ~0-5 % moyenne, ~15-20 % haute. Pyramidal : ~75-80 % basse, ~15 % moyenne, ~5 % haute (Seiler ; Casado et al., 2023). Ton PDF : polarisé au palier Apprenti, pyramidal au palier Avancé." /></p>
-        <Puces options={MODELES} valeur={r.modeleCible} effacable={false} libelle={(o) => (o === 'polarise' ? 'Polarisé' : 'Pyramidal')}
-          onChoisir={(modeleCible) => modeleCible && modifier({ modeleCible })} />
       </div>
 
       <div className="mt-3 border-t border-bordure pt-3">

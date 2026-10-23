@@ -4,12 +4,10 @@ import { Link } from 'react-router-dom'
 import { db } from '../../../core/db'
 import { depuisJour } from '../../../core/dates'
 import { formatMinSec, formatNombre } from '../../../core/format'
-import { Aide } from '../../../core/ui/Aide'
 import { Carte } from '../../../core/ui/Carte'
 import { Puces } from '../../../core/ui/Puces'
 import { allureSecKm } from '../../../metrics/course'
-import { AIDES } from '../aides'
-import { chargeDe, chargerContexte, lundiDe } from '../seances/donnees'
+import { lundiDe } from '../seances/donnees'
 import { iconeSport, NOMS_SPORTS } from '../sports'
 import type { Seance } from '../types'
 
@@ -23,12 +21,11 @@ export function formatDuree(sec: number) {
   return h ? `${h} h ${String(m).padStart(2, '0')}` : `${m} min`
 }
 
-/** Historique des séances, groupées par semaine, avec filtre par sport et totaux. */
+/** Historique des séances, groupées par semaine, avec filtre par sport. */
 export function Historique() {
   const [filtre, setFiltre] = useState<Filtre>('Tous')
   const seances = useLiveQuery(() => db.seances.orderBy('date').reverse().toArray())
-  const contexte = useLiveQuery(chargerContexte)
-  if (!seances || !contexte) return null
+  if (!seances) return null
 
   const visibles = seances.filter((s) =>
     filtre === 'Tous' || (filtre === 'Vélo' ? s.sport === 'velo' : filtre === 'Course' ? s.sport === 'course' : s.sport !== 'velo' && s.sport !== 'course'))
@@ -52,7 +49,6 @@ export function Historique() {
       {[...semaines].map(([lundi, liste]) => {
         const duree = liste.reduce((a, s) => a + s.dureeSec, 0)
         const kj = liste.reduce((a, s) => a + (s.kj ?? 0), 0)
-        const charge = liste.reduce((a, s) => a + chargeDe(s, contexte), 0)
         return (
           <section key={lundi}>
             <div className="mb-1.5 flex items-baseline justify-between px-1">
@@ -60,12 +56,11 @@ export function Historique() {
                 Semaine du {depuisJour(lundi).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
               </h2>
               <p className="text-xs text-texte-3">
-                {formatDuree(duree)}{kj > 0 && ` · ${formatNombre(kj)} kJ`} · {Math.round(charge)} {contexte.chargeRef === 'trimp' ? 'TRIMP' : 'sRPE'}
-                <Aide titre={contexte.chargeRef === 'trimp' ? 'TRIMP' : 'sRPE'} texte={contexte.chargeRef === 'trimp' ? AIDES.trimp : AIDES.srpe} />
+                {formatDuree(duree)}{kj > 0 && ` · ${formatNombre(kj)} kJ`}
               </p>
             </div>
             <div className="space-y-2">
-              {liste.map((s) => <CarteSeance key={s.id} s={s} charge={chargeDe(s, contexte)} />)}
+              {liste.map((s) => <CarteSeance key={s.id} s={s} />)}
             </div>
           </section>
         )
@@ -74,7 +69,7 @@ export function Historique() {
   )
 }
 
-function CarteSeance({ s, charge }: { s: Seance; charge: number }) {
+function CarteSeance({ s }: { s: Seance }) {
   const details = [
     formatDuree(s.dureeSec),
     s.distanceKm && `${formatNombre(s.distanceKm, 1)} km`,
@@ -98,7 +93,6 @@ function CarteSeance({ s, charge }: { s: Seance; charge: number }) {
         {s.rpe !== undefined && (
           <span className={`block text-sm font-bold ${s.rpe < 3 ? 'text-nutrition' : s.rpe >= 7.5 ? 'text-[#f87171]' : 'text-texte'}`}>RPE {formatNombre(s.rpe, 1)}</span>
         )}
-        <span className="block text-xs text-texte-3">{Math.round(charge)}</span>
       </span>
     </Link>
   )

@@ -78,7 +78,7 @@ export function FormulaireSeance() {
   const valider = async () => {
     if (!s.dureeSec) return setMessage('Indique au moins la durée.')
     await enregistrerSeance(s)
-    navigate('/entrainement/historique', { replace: true, state: { enregistree: s.id } })
+    navigate(-1)
   }
 
   return (

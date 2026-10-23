@@ -4,8 +4,8 @@ import { contrainte, modeleForme, monotonie, ratioPic, type PointForme } from '.
 import { analyserVfc, type AnalyseVfc } from '../../../metrics/vfc'
 import { calculerSignal, type Signal } from '../../../metrics/signal'
 import { scoreRessenti } from '../forme/donnees'
-import { chargeDe, chargerContexte, domaineDe, type Contexte } from '../seances/donnees'
-import type { Intensite, MesureMatin, Seance } from '../types'
+import { chargeDe, chargerContexte, type Contexte } from '../seances/donnees'
+import type { MesureMatin, Seance } from '../types'
 
 /** Jours d'historique de charge nécessaires avant d'afficher CTL / TSB (amorçage). */
 export const JOURS_AMORCAGE = 28
@@ -30,31 +30,6 @@ export function chargesHebdo(seances: Seance[], c: Contexte, lundi: string, n: n
     const debut = decalerJour(lundi, -7 * (n - i))
     return chargesParJour(seances, c, debut, decalerJour(debut, 6), sport).reduce((a, x) => a + x.charge, 0)
   })
-}
-
-/** Temps (s) par domaine d'intensité sur un ensemble de séances. */
-export function distribution(seances: Seance[], c: Contexte): Record<Intensite, number> {
-  const d = { basse: 0, moyenne: 0, haute: 0 }
-  for (const s of seances) {
-    if (s.tempsZones) {
-      d.basse += s.tempsZones[0] + s.tempsZones[1]
-      d.moyenne += s.tempsZones[2]
-      d.haute += s.tempsZones[3] + s.tempsZones[4]
-    } else d[domaineDe(s, c.bornes)] += s.dureeSec
-  }
-  return d
-}
-
-/** Part du temps en « kJ faciles » (RPE < 3) et en « stress » (RPE ≥ 7,5), règle du PDF. */
-export function partsRpe(seances: Seance[]) {
-  const notees = seances.filter((s) => s.rpe !== undefined)
-  const total = notees.reduce((a, s) => a + s.dureeSec, 0)
-  if (!total) return undefined
-  const faciles = notees.filter((s) => s.rpe! < 3).reduce((a, s) => a + s.dureeSec, 0)
-  const stress = notees.filter((s) => s.rpe! >= 7.5).reduce((a, s) => a + s.dureeSec, 0)
-  const kjFaciles = notees.filter((s) => s.rpe! < 3).reduce((a, s) => a + (s.kj ?? 0), 0)
-  const kjStress = notees.filter((s) => s.rpe! >= 7.5).reduce((a, s) => a + (s.kj ?? 0), 0)
-  return { faciles: faciles / total, stress: stress / total, kjFaciles, kjStress }
 }
 
 export interface Analyse {

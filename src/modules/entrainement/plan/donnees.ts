@@ -106,18 +106,3 @@ export async function chargesSemaine(lundi: string) {
     unite: c.chargeRef === 'trimp' ? 'TRIMP' : 'sRPE', kjRealises, kjPrevus: kjRealises + kjReste,
   }
 }
-
-/** Avancement de l'objectif de kJ (système kJ) : cumul réalisé et rythme attendu à ce jour. */
-export async function avancementObjectifKj(o: { debut: string; fin: string; kj: number }) {
-  const jour = aujourdhui()
-  const seances = await db.seances.where('date').between(o.debut, o.fin, true, true).toArray()
-  const realises = seances.reduce((a, s) => a + (s.kj ?? 0), 0)
-  // Rythme attendu : kJ prévus par le plan jusqu'à hier (la séance du jour n'est pas encore due), sinon progression linéaire
-  const hier = decalerJour(jour, -1)
-  const prevues = (await db.prevues.where('date').between(o.debut, hier < o.fin ? hier : o.fin, true, true).toArray())
-    .filter((p) => p.kjPrevu && p.statut !== 'abandonnee')
-  const total = (new Date(`${o.fin}T12:00:00`).getTime() - new Date(`${o.debut}T12:00:00`).getTime()) / 86400000 + 1
-  const ecoules = Math.min(total, Math.max(0, (new Date(`${jour}T12:00:00`).getTime() - new Date(`${o.debut}T12:00:00`).getTime()) / 86400000 + 1))
-  const attendu = prevues.length ? prevues.reduce((x, p) => x + p.kjPrevu!, 0) : (o.kj * ecoules) / total
-  return { realises, attendu, joursRestants: Math.max(0, Math.round(total - ecoules)) }
-}

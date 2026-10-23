@@ -4,10 +4,8 @@ import { Link } from 'react-router-dom'
 import { db } from '../../../core/db'
 import { aujourdhui } from '../../../core/dates'
 import { enregistrer, supprimer } from '../../../core/stockage'
-import { Aide } from '../../../core/ui/Aide'
 import { Carte } from '../../../core/ui/Carte'
 import { adapterSeance } from '../../../metrics/signal'
-import { AIDES } from '../aides'
 import { analyser } from '../analyse/donnees'
 import { z2Actuel } from '../plan/programme'
 import { iconeSport } from '../sports'
@@ -37,7 +35,6 @@ export function CarteAujourdhui() {
   if (!a || !prevues) return null
   const { signal } = a
   const prevue = prevues.find((p) => p.statut === 'prevue' && p.intensite !== 'basse') ?? prevues.find((p) => p.statut === 'prevue')
-  const point = a.forme[a.forme.length - 1]
   const malade = indispo?.raison === 'Malade' || indispo?.raison === 'Douleur / blessure'
   const troisJours = [signal, ...a.signauxPrecedents].every((s) => s.couleur !== 'vert' && s.alertes.some((x) => x.code === 'malade'))
 
@@ -54,12 +51,6 @@ export function CarteAujourdhui() {
           <p className="text-xl font-bold" style={{ color: COULEUR[signal.couleur] }}>{TITRE[signal.couleur]}</p>
           {signal.calibrationVfc && <p className="text-xs text-texte-3">VFC en calibration ({a.vfc.nBase}/14 jours)</p>}
         </div>
-        {!a.amorcage && point && (
-          <div className="text-right">
-            <p className="text-xs text-texte-3">TSB<Aide titre="Fraîcheur (TSB)" texte={AIDES.tsb} /></p>
-            <p className="text-xl font-bold tabular-nums">{Math.round(point.tsb)}</p>
-          </div>
-        )}
       </div>
 
       <p className="mt-2 text-sm text-texte-2">{signal.raison}</p>
@@ -72,7 +63,7 @@ export function CarteAujourdhui() {
             {prevue.detail && <p className="mt-1 text-xs text-texte-2">{prevue.detail}</p>}
           </>
         ) : (
-          <p className="text-texte-2">Rien de prévu. <Link to="/entrainement/plan" className="text-accent">Plan de la semaine ›</Link></p>
+          <p className="text-texte-2">Rien de prévu. <Link to="/entrainement/semaine" className="text-accent">Ma semaine ›</Link></p>
         )}
         <p className="mt-1 font-semibold" style={{ color: decision?.force ? undefined : COULEUR[signal.couleur] }}>
           {decision?.force ? '✋ Tu as choisi de maintenir ta séance.' : adapterSeance(prevue, signal, prevue?.sport === 'velo' ? z2?.w : undefined)}
