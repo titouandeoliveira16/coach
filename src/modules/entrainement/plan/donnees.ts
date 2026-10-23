@@ -124,3 +124,44 @@ export async function ajouterPropositions(props: SeanceProposee[], lundi: string
     })
   }
 }
+
+/** Une séance d'un fichier de plan (format préparé par Claude à partir de ton plan écrit). */
+interface LignePlan {
+  date: string
+  sport: 'velo' | 'course'
+  titre: string
+  intensite: 'basse' | 'moyenne' | 'haute'
+  dureeMin: number
+  type?: SeancePrevue['type']
+  detail?: string
+  priorite?: 'cle' | 'normale'
+  longue?: boolean
+}
+
+/**
+ * Importe un plan (fichier JSON { "app": "coach-plan", "seances": [...] }).
+ * Réimporter le même fichier remplace les séances au lieu de les dupliquer.
+ */
+export async function importerPlan(fichier: File) {
+  let contenu: { app?: string; seances?: LignePlan[] }
+  try {
+    contenu = JSON.parse(await fichier.text())
+  } catch {
+    throw new Error("Ce fichier n'est pas un fichier JSON lisible.")
+  }
+  if (contenu.app !== 'coach-plan' || !Array.isArray(contenu.seances)) throw new Error("Ce fichier n'est pas un plan Coach.")
+  let n = 0
+  for (const l of contenu.seances) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(l.date) || !l.titre || !l.dureeMin) continue
+    const id = `plan-${l.date}-${l.sport}-${l.titre}`.toLowerCase().replace(/[^a-z0-9-]+/g, '-')
+    const existante = await db.prevues.get(id)
+    await enregistrer(db.prevues, {
+      id, date: l.date, sport: l.sport === 'course' ? 'course' : 'velo', titre: l.titre, type: l.type,
+      intensite: ['basse', 'moyenne', 'haute'].includes(l.intensite) ? l.intensite : 'basse',
+      dureeMin: Math.round(l.dureeMin), detail: l.detail, priorite: l.priorite === 'cle' ? 'cle' : 'normale', longue: l.longue,
+      statut: existante?.statut ?? 'prevue', raison: existante?.raison, origine: 'manuel',
+    })
+    n++
+  }
+  return n
+}

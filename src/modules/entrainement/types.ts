@@ -104,6 +104,8 @@ export interface Seance {
   source: 'manuel' | 'fit' | 'intervals'
   /** Identifiant de l'activité chez Intervals.icu */
   idExterne?: string
+  /** Identifiants des doublons fusionnés dans cette séance (ex. même sortie vue par la montre et le compteur) */
+  autresIds?: string[]
   /** Séance prévue à laquelle elle correspond */
   prevueId?: string
 }

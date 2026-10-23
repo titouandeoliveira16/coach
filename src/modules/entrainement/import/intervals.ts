@@ -3,7 +3,7 @@ import { aujourdhui, decalerJour } from '../../../core/dates'
 import type { Profil } from '../../../core/profil'
 import { enregistrer } from '../../../core/stockage'
 import { CLE_PUBLIQUE, URL_SUPABASE, supabase } from '../../../core/supabase'
-import { chargerContexte, completerMetriques, enregistrerSeance, trouverDoublon } from '../seances/donnees'
+import { chargerContexte, completerMetriques, enregistrerSeance, fusionner, nettoyerDoublons, richesse, trouverDoublon } from '../seances/donnees'
 import type { MesureMatin, Sport } from '../types'
 import { analyserFlux } from './flux'
 
@@ -115,7 +115,7 @@ async function importerWellness(depuis: string) {
 /** Séances Intervals.icu → séances de l'appli (métriques calculées sur les flux). */
 async function importerActivites(depuis: string, surProgression?: (n: number) => void) {
   const { activites, viaStrava } = await appeler<{ activites: Activite[]; viaStrava: number }>('activites', { oldest: depuis })
-  const connues = new Set((await db.seances.toArray()).map((s) => s.idExterne).filter(Boolean))
+  const connues = new Set((await db.seances.toArray()).flatMap((s) => [s.idExterne, ...(s.autresIds ?? [])]).filter(Boolean))
   const nouvelles = activites.filter((a) => !connues.has(a.id)).sort((a, b) => a.start_date.localeCompare(b.start_date))
   const c = await chargerContexte()
   let n = 0
@@ -138,11 +138,15 @@ async function importerActivites(depuis: string, surProgression?: (n: number) =>
       if (!s.fcMoy && a.average_heartrate) s = { ...s, fcMoy: Math.round(a.average_heartrate), fcMax: a.max_heartrate }
       if (!s.kj && a.joules) s = { ...s, kj: Math.round(a.joules / 1000), puissanceMoyW: a.average_watts && Math.round(a.average_watts) }
 
-      // Doublon (saisie manuelle ou .FIT) : on complète en gardant ton ressenti ; un .FIT a déjà les mêmes flux
+      // Doublon (saisie manuelle, .FIT, ou même sortie vue par la montre et le compteur) :
+      // on garde la version la plus riche et ton ressenti
+      s = completerMetriques(s, c)
       const doublon = await trouverDoublon(s)
-      if (doublon?.source === 'fit') continue
-      if (doublon) s = { ...s, id: doublon.id, rpe: doublon.rpe, sensations: doublon.sensations, notes: doublon.notes, type: doublon.type, prevueId: doublon.prevueId }
-      await enregistrerSeance(completerMetriques(s, c))
+      if (doublon) {
+        const [gardee, autre] = richesse(s) > richesse(doublon) ? [{ ...s, id: doublon.id }, doublon] : [doublon, s]
+        s = fusionner(gardee, autre)
+      }
+      await enregistrerSeance(s)
       n++
       surProgression?.(n)
     }
@@ -156,6 +160,7 @@ export async function importerIntervals(surProgression?: (n: number) => void) {
   const depuis = etat.depuis ?? decalerJour(aujourdhui(), -JOURS_HISTORIQUE)
   const mesures = await importerWellness(depuis)
   const { n, viaStrava } = await importerActivites(depuis, surProgression)
+  await nettoyerDoublons()
   await ecrireEtat({ relie: true, depuis: decalerJour(aujourdhui(), -MARGE_JOURS), dernierImport: new Date().toISOString() })
   return { seances: n, mesures, viaStrava }
 }

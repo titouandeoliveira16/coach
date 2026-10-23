@@ -95,15 +95,70 @@ export function domaineDe(s: Seance, bornes: BornesZones): Intensite {
   return 'basse'
 }
 
-/** Doublon : même sport et départ à ± 2 minutes (ou même jour si pas d'heure). */
-export async function trouverDoublon(s: Pick<Seance, 'id' | 'date' | 'debut' | 'sport' | 'idExterne'>) {
-  const memeJour = await db.seances.where('date').equals(s.date).toArray()
-  return memeJour.find((x) => {
-    if (x.id === s.id || x.sport !== s.sport) return false
-    if (s.idExterne && x.idExterne === s.idExterne) return true
-    if (!x.debut || !s.debut) return false
-    return Math.abs(new Date(x.debut).getTime() - new Date(s.debut).getTime()) <= 2 * 60_000
-  })
+/** Début et fin (ms) d'une séance, si son heure de départ est connue. */
+function plage(s: Pick<Seance, 'debut' | 'dureeSec'>) {
+  if (!s.debut) return undefined
+  const d = new Date(s.debut).getTime()
+  return [d, d + Math.max(s.dureeSec, 60) * 1000] as const
+}
+
+/**
+ * Doublon : même sport, même identifiant externe, ou séances qui se chevauchent
+ * sur au moins la moitié de la plus courte (ex. sortie enregistrée à la fois
+ * par la montre et par le compteur, lancés à quelques minutes d'écart).
+ */
+export function sontDoublons(a: Pick<Seance, 'id' | 'debut' | 'dureeSec' | 'sport' | 'idExterne' | 'autresIds'>, b: typeof a) {
+  if (a.id === b.id || a.sport !== b.sport) return false
+  const idsA = [a.idExterne, ...(a.autresIds ?? [])].filter(Boolean)
+  if (b.idExterne && idsA.includes(b.idExterne)) return true
+  const pa = plage(a)
+  const pb = plage(b)
+  if (!pa || !pb) return false
+  const commun = Math.min(pa[1], pb[1]) - Math.max(pa[0], pb[0])
+  return commun >= 0.5 * Math.min(pa[1] - pa[0], pb[1] - pb[0])
+}
+
+export async function trouverDoublon(s: Pick<Seance, 'id' | 'date' | 'debut' | 'dureeSec' | 'sport' | 'idExterne' | 'autresIds'>) {
+  const proches = await db.seances.where('date').between(decalerJour(s.date, -1), decalerJour(s.date, 1), true, true).toArray()
+  return proches.find((x) => sontDoublons(s, x))
+}
+
+/** Richesse des données d'une séance : on garde la plus riche lors d'une fusion. */
+export const richesse = (s: Seance) => (s.kj ? 4 : 0) + (s.tempsZones ? 2 : 0) + (s.fcMoy ? 1 : 0) + (s.distanceKm ? 1 : 0)
+
+/** Fusionne deux versions d'une même séance : données de la plus riche, ressenti saisi conservé. */
+export function fusionner(gardee: Seance, autre: Seance): Seance {
+  return {
+    ...gardee,
+    rpe: gardee.rpe ?? autre.rpe,
+    sensations: gardee.sensations ?? autre.sensations,
+    notes: gardee.notes ?? autre.notes,
+    type: gardee.type ?? autre.type,
+    prevueId: gardee.prevueId ?? autre.prevueId,
+    autresIds: [...new Set([...(gardee.autresIds ?? []), ...(autre.autresIds ?? []), ...(autre.idExterne ? [autre.idExterne] : [])])]
+      .filter((id) => id !== gardee.idExterne),
+  }
+}
+
+/** Fusionne les doublons déjà enregistrés. Renvoie le nombre de séances fusionnées. */
+export async function nettoyerDoublons() {
+  const toutes = (await db.seances.orderBy('date').toArray())
+  const supprimees = new Set<string>()
+  let n = 0
+  for (const a of toutes) {
+    if (supprimees.has(a.id)) continue
+    for (const b of toutes) {
+      if (b.id === a.id || supprimees.has(b.id) || b.date < decalerJour(a.date, -1) || b.date > decalerJour(a.date, 1)) continue
+      if (!sontDoublons(a, b)) continue
+      const [gardee, autre] = richesse(b) > richesse(a) ? [b, a] : [a, b]
+      await enregistrer(db.seances, fusionner(gardee, autre))
+      await supprimer(db.seances, autre.id)
+      supprimees.add(autre.id)
+      n++
+      if (autre.id === a.id) break
+    }
+  }
+  return n
 }
 
 /**

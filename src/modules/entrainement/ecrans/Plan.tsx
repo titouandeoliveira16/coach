@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { db } from '../../../core/db'
 import { aujourdhui, decalerJour, depuisJour } from '../../../core/dates'
@@ -12,7 +12,7 @@ import { hausseCharge } from '../../../metrics/planif'
 import { AIDES } from '../aides'
 import { BlocCourseCarte } from '../plan/BlocCourseCarte'
 import { FormulairePrevue } from '../plan/FormulairePrevue'
-import { chargesSemaine, declarerIndispo, declarerNonFaite, joursDe, leverIndispo, supprimerPrevue } from '../plan/donnees'
+import { chargesSemaine, declarerIndispo, declarerNonFaite, importerPlan, joursDe, leverIndispo, supprimerPrevue } from '../plan/donnees'
 import { lundiDe, nouvelId } from '../seances/donnees'
 import { RAISONS, type Raison, type Seance, type SeancePrevue } from '../types'
 
@@ -38,6 +38,7 @@ export function Plan() {
   const [edition, setEdition] = useState<SeancePrevue | null>(null)
   const [jourIndispo, setJourIndispo] = useState<string | null>(null)
   const [message, setMessage] = useState<string[]>()
+  const champPlan = useRef<HTMLInputElement>(null)
 
   if (!prevues || !seances || !indispos) return null
   const hausse = charges ? hausseCharge(charges.prevue, [charges.moyenne4]) : undefined
@@ -117,6 +118,21 @@ export function Plan() {
       })}
 
       <BlocCourseCarte lundi={lundi} />
+
+      <Carte titre="Importer un plan">
+        <p className="mb-2 text-sm text-texte-2">Fichier de plan préparé par Claude (ex. ta prépa vélo) : toutes les séances sont ajoutées d'un coup.</p>
+        <Bouton variante="secondaire" onClick={() => champPlan.current?.click()}>📥 Importer un fichier de plan</Bouton>
+        <input ref={champPlan} type="file" className="hidden" onChange={async (e) => {
+          const f = e.target.files?.[0]
+          e.target.value = ''
+          if (!f) return
+          try {
+            setMessage([`${await importerPlan(f)} séance(s) ajoutée(s) au plan.`])
+          } catch (err) {
+            setMessage([(err as Error).message])
+          }
+        }} />
+      </Carte>
 
       {ajout && (
         <Feuille titre="Séance prévue" onFermer={() => setAjout(null)}>

@@ -9,6 +9,7 @@ import { Historique } from './ecrans/Historique'
 import { Plan } from './ecrans/Plan'
 import { AideFit } from './import/AideFit'
 import { importerIntervalsSiBesoin } from './import/intervals'
+import { nettoyerDoublons } from './seances/donnees'
 import { FormulaireSeance } from './seances/FormulaireSeance'
 
 const ONGLETS = [
@@ -21,8 +22,9 @@ const ONGLETS = [
 /** Écran racine du module : onglets en haut, bouton « + » en bas à droite. */
 export function EcranEntrainement() {
   // Nouvelles données Intervals.icu à l'ouverture (au plus une fois par heure)
+  // (et fusion des éventuels doublons déjà enregistrés)
   useEffect(() => {
-    importerIntervalsSiBesoin()
+    nettoyerDoublons().then(importerIntervalsSiBesoin)
   }, [])
 
   return (

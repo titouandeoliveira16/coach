@@ -53,7 +53,7 @@ export function FormulaireSeance() {
   const dupliquer = async () => {
     const d = await derniereSeance(s.sport)
     if (!d) return setMessage(`Aucune séance de ${s.sport === 'velo' ? 'vélo' : 'course'} à dupliquer.`)
-    const { id: _id, debut: _debut, idExterne: _externe, prevueId: _prevue, notes: _notes, ...reste } = d
+    const { id: _id, debut: _debut, idExterne: _externe, autresIds: _autres, prevueId: _prevue, notes: _notes, ...reste } = d
     setS({ ...reste, id: nouvelId(), date: aujourdhui(), source: 'manuel', trimpFlux: false, tempsZones: undefined, decouplage: undefined })
     setMessage('Dernière séance copiée : ajuste ce qui a changé.')
   }
