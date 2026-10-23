@@ -12,8 +12,7 @@ import { AIDES } from '../aides'
 import { Deroule } from '../plan/Deroule'
 import { joursPanneVelo } from '../plan/imprevus'
 import { FormulairePrevue } from '../plan/FormulairePrevue'
-import { ImportCampus } from '../plan/ImportCampus'
-import { chargesSemaine, declarerNonFaite, joursDe, supprimerPrevue } from '../plan/donnees'
+import { changerDeJour, chargesSemaine, declarerNonFaite, joursDe, supprimerPrevue } from '../plan/donnees'
 import { alertesCumul, estIntensite, genererSemaineVelo, lireMeta, noterResultat } from '../plan/programme'
 import { programmeDe, useReglagesEntrainement } from '../reglagesEntrainement'
 import { lundiDe, nouvelId } from '../seances/donnees'
@@ -109,8 +108,6 @@ export function Semaine() {
         )
       })}
 
-      <ImportCampus jours={jours} />
-
       {ajout && (
         <Feuille titre="Ajouter une séance" onFermer={() => setAjout(null)}>
           <FormulairePrevue
@@ -120,7 +117,7 @@ export function Semaine() {
           />
         </Feuille>
       )}
-      {choisie && <DetailSeance p={choisie} jours={jours} onFermer={() => setChoisie(null)} onMessage={setMessage} />}
+      {choisie && <DetailSeance p={choisie} jours={jours} prevues={prevues} onFermer={() => setChoisie(null)} onMessage={setMessage} />}
     </div>
   )
 }
@@ -188,9 +185,11 @@ function Alertes({ lundi, deps }: { lundi: string; deps: unknown[] }) {
 }
 
 /** Détail d'une séance prévue : consignes, faite, pas faite, modifier, supprimer. */
-function DetailSeance({ p, jours, onFermer, onMessage }: { p: SeancePrevue; jours: string[]; onFermer: () => void; onMessage: (m: string[]) => void }) {
+function DetailSeance({ p, jours, prevues, onFermer, onMessage }: {
+  p: SeancePrevue; jours: string[]; prevues: SeancePrevue[]; onFermer: () => void; onMessage: (m: string[]) => void
+}) {
   const navigate = useNavigate()
-  const [mode, setMode] = useState<'actions' | 'non-faite' | 'modifier'>('actions')
+  const [mode, setMode] = useState<'actions' | 'non-faite' | 'modifier' | 'jour'>('actions')
   const [raison, setRaison] = useState<Raison>()
 
   if (mode === 'modifier')
@@ -227,9 +226,28 @@ function DetailSeance({ p, jours, onFermer, onMessage }: { p: SeancePrevue; jour
               </div>
             </div>
           )}
+          {p.statut === 'prevue' && <Bouton variante="secondaire" onClick={() => setMode('jour')}>↔ Changer de jour</Bouton>}
           {p.statut === 'prevue' && <Bouton variante="secondaire" onClick={() => setMode('non-faite')}>✗ Pas faite</Bouton>}
           <Bouton variante="secondaire" onClick={() => setMode('modifier')}>Modifier</Bouton>
           <button type="button" className="w-full py-2 text-[#f87171]" onClick={async () => { await supprimerPrevue(p.id); onFermer() }}>Supprimer</button>
+        </div>
+      ) : mode === 'jour' ? (
+        <div className="mt-4 space-y-2">
+          <p className="text-texte-2">Vers quel jour ? Si une séance y est déjà prévue, les deux échangent leur jour.</p>
+          {jours.map((d) => {
+            const la = prevues.filter((x) => x.date === d && x.statut === 'prevue' && x.id !== p.id)
+            return (
+              <button key={d} type="button" disabled={d === p.date}
+                onClick={async () => { onMessage(await changerDeJour(p, d)); onFermer() }}
+                className={`flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-left text-sm ${d === p.date ? 'border-accent opacity-60' : 'border-bordure'}`}>
+                <span className="font-semibold capitalize">{depuisJour(d).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric' })}</span>
+                <span className="text-texte-2">
+                  {d === p.date ? 'actuel' : la.length ? `↔ ${la.map((x) => `${iconeSport(x.sport)} ${x.titre}`).join(', ')}` : 'libre'}
+                </span>
+              </button>
+            )
+          })}
+          <button type="button" onClick={() => setMode('actions')} className="w-full py-2 text-sm text-texte-3">Annuler</button>
         </div>
       ) : (
         <div className="mt-4 space-y-3">

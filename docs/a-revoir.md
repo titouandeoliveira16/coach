@@ -13,7 +13,6 @@ Points décidés ou mis de côté, à reprendre au bon moment.
 3. Phases spécifique et affûtage : attendre les courses vélo 2027.
 4. Point après 4 semaines de données réelles (watts Z2, durées, seuils du feu).
 5. Rappels : revoir le rappel du matin avant l'installation dans Supabase.
-6. Lecture des captures Campus : l'ajuster sur une vraie capture.
 
 ## Plus tard
 - Début décembre (Zwift) : envoi des séances dans Zwift (mode ERG).

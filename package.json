@@ -1,16 +1,14 @@
 {
   "name": "coach",
   "private": true,
-  "version": "0.16.1",
+  "version": "0.17.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "test": "vitest run",
-    "predev": "node scripts/copier-ocr.mjs",
-    "prebuild": "node scripts/copier-ocr.mjs"
+    "test": "vitest run"
   },
   "dependencies": {
     "@garmin/fitsdk": "^21.218.0",
@@ -19,12 +17,10 @@
     "dexie-react-hooks": "^4.4.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "react-router-dom": "^7.18.4",
-    "tesseract.js": "^5.1.1"
+    "react-router-dom": "^7.18.4"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
-    "@tesseract.js-data/fra": "^1.0.0",
     "@types/node": "^24.19.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",

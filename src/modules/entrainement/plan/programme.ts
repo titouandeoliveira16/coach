@@ -125,7 +125,8 @@ export async function genererSemaineVelo(lundi: string) {
   // Anciennes séances à remplacer : séances auto encore à faire, plan importé et propositions de course (anciennes versions)
   for (const p of await db.prevues.where('date').aboveOrEqual(aPartirDe).toArray()) {
     if (p.statut !== 'prevue') continue
-    const ancienne = (p.origine === 'auto' && p.date <= semaine[6]) || (p.sport === 'velo' && p.id.startsWith('plan-')) || (p.origine === 'propose' && p.sport === 'course')
+    // Une séance changée de jour à la main reste où elle est
+    const ancienne = (p.origine === 'auto' && p.date <= semaine[6] && !p.deplacee) || (p.sport === 'velo' && p.id.startsWith('plan-')) || (p.origine === 'propose' && p.sport === 'course')
     if (ancienne) await supprimer(db.prevues, p.id)
   }
 

@@ -185,6 +185,8 @@ export interface SeancePrevue {
   minutesCle?: number
   /** Vélo généré : famille, format, palier, cible */
   velo?: SeanceVelo
+  /** Changée de jour à la main : le recalcul du vélo la laisse où elle est */
+  deplacee?: boolean
   /** Minutes ajoutées pour compenser un imprévu (ex. vélo en panne) */
   compensationMin?: number
   /** Séance d'intensité : blocs tous tenus ou non (fait avancer la progression) */

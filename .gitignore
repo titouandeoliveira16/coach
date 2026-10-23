@@ -22,6 +22,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-# Moteur de lecture des captures, copié depuis node_modules au build
-public/ocr

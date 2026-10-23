@@ -67,6 +67,20 @@ export async function declarerNonFaite(p: SeancePrevue, raison: Raison) {
   return appliquer(replanifier(semaine, [...prevues, p], indispos, [p.id], demain), raison)
 }
 
+/**
+ * Change une séance de jour. Si le jour choisi a déjà des séances à faire, elles prennent sa place : les jours sont échangés.
+ */
+export async function changerDeJour(p: SeancePrevue, vers: string) {
+  if (vers === p.date) return []
+  const la = (await db.prevues.where('date').equals(vers).toArray()).filter((x) => x.statut === 'prevue' && x.id !== p.id)
+  await enregistrer(db.prevues, { ...p, date: vers, deplacee: true })
+  for (const x of la) await enregistrer(db.prevues, { ...x, date: p.date, deplacee: true })
+  const nom = (d: string) => new Date(`${d}T12:00:00`).toLocaleDateString('fr-FR', { weekday: 'long' })
+  return la.length
+    ? [`${p.titre} passe au ${nom(vers)}, ${la.map((x) => x.titre).join(' et ')} au ${nom(p.date)}.`]
+    : [`${p.titre} passe au ${nom(vers)}.`]
+}
+
 export const enregistrerPrevue = (p: SeancePrevue) => enregistrer(db.prevues, p)
 export const supprimerPrevue = (id: string) => supprimer(db.prevues, id)
 
