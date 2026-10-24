@@ -90,7 +90,7 @@ export function ModeEmploi() {
         </Rubrique>
 
         <Rubrique titre="🔔 Rappels">
-          <p>Chaque matin à 8 h 30 pour ton matin, le mardi pour la pesée. Rien n'arrive si c'est déjà fait.</p>
+          <p>Chaque matin à 8 h 30 pour tes 5 notes (les chiffres de ta montre arrivent seuls), le mardi pour la pesée. Rien n'arrive si c'est déjà fait.</p>
           <p>À activer une fois dans <b className="text-texte">Réglages → Rappels</b>, sur l'iPhone.</p>
         </Rubrique>
 

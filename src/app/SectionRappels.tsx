@@ -31,7 +31,7 @@ export function SectionRappels() {
   return (
     <Carte titre="Rappels">
       <ul className="space-y-1 text-sm text-texte-2">
-        <li>☀️ Chaque matin à 8 h 30 : ton matin (FC de repos, VFC, sommeil, notes)</li>
+        <li>☀️ Chaque matin à 8 h 30 : tes 5 notes du matin (VFC, FC de repos et sommeil arrivent seuls de ta montre)</li>
         <li>⚖️ Le mardi à 8 h 30 : la pesée (et samedi 24/10 exceptionnellement)</li>
       </ul>
       <p className="mt-1 text-xs text-texte-3">Pas de rappel si c'est déjà fait.</p>

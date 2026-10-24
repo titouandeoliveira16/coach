@@ -147,7 +147,7 @@ async function envoyerRappels() {
       maj.dernier_matin = t.date
       const matin = await ligne(a.user_id, 'mesures', t.date)
       if (!matin || !NOTES.some((n) => matin[n] !== undefined))
-        messages.push({ titre: '☀️ Ton matin', texte: 'FC de repos, VFC, sommeil et tes 5 notes : 1 minute pour avoir ton feu du jour.', tag: 'matin', url: './#/entrainement/aujourdhui' })
+        messages.push({ titre: '☀️ Ton matin', texte: 'Tes 5 notes du matin : 30 secondes pour avoir ton feu du jour.', tag: 'matin', url: './#/entrainement/aujourdhui' })
     }
     const jourPesee = (a.pesee_jours ?? []).includes(t.jour) || (a.pesee_dates ?? []).includes(t.date)
     if (jourPesee && a.derniere_pesee !== t.date) {
