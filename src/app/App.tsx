@@ -2,7 +2,6 @@ import type { CSSProperties } from 'react'
 import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { BarreNavigation } from './BarreNavigation'
 import { Accueil } from './Accueil'
-import { ModeEmploi } from './ModeEmploi'
 import { MODULES } from './modules'
 import { Reglages } from './Reglages'
 
@@ -16,18 +15,23 @@ function Coquille() {
   const style = { '--accent': moduleActif?.couleur ?? '#f2f4f7' } as CSSProperties
 
   return (
-    <div style={style} className="mx-auto min-h-full max-w-lg pb-28">
+    <div style={style} className={`mx-auto min-h-full max-w-lg ${moduleActif ? 'pb-28' : 'pb-8'}`}>
       <Routes>
         {MODULES.map((m) => (
           <Route key={m.id} path={`${m.chemin}/*`} element={<m.Ecran />} />
         ))}
+        {/* Mode d'emploi et réglages : propres à chaque module */}
+        {MODULES.filter((m) => m.ModeEmploi).map((m) => <Route key={`${m.id}-aide`} path={`${m.chemin}/aide`} element={m.ModeEmploi && <m.ModeEmploi />} />)}
+        {MODULES.filter((m) => m.SectionReglages).map((m) => <Route key={`${m.id}-reglages`} path={`${m.chemin}/reglages`} element={<Reglages module={m} />} />)}
         <Route path="/" element={<Accueil />} />
-        <Route path="/aide" element={<ModeEmploi />} />
-        <Route path="/reglages" element={<Reglages />} />
+        {/* Anciennes adresses (notifications, liens) */}
+        <Route path="/reglages" element={<Navigate to="/entrainement/reglages" replace />} />
+        <Route path="/aide" element={<Navigate to="/entrainement/aide" replace />} />
         {/* Par défaut : l'accueil */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-      <BarreNavigation />
+      {/* Pas de barre sur l'accueil : il sert seulement à choisir un module */}
+      {moduleActif && <BarreNavigation module={moduleActif} />}
     </div>
   )
 }

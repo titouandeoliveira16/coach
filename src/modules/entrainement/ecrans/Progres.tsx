@@ -113,7 +113,7 @@ export function Progres() {
               setDateTest('')
             }}>OK</button>
         </div>
-        <p className="mt-2 text-xs text-texte-3">Conseil : un test toutes les 6 à 8 semaines, frais (après une semaine allégée). Complet = 1 h 50 (le dimanche), court = 1 h 15. Résultat à saisir dans <Link to="/reglages" className="text-accent">Réglages → Vélo</Link>.</p>
+        <p className="mt-2 text-xs text-texte-3">Conseil : un test toutes les 6 à 8 semaines, frais (après une semaine allégée). Complet = 1 h 50 (le dimanche), court = 1 h 15. Résultat à saisir dans <Link to="/entrainement/reglages" className="text-accent">Réglages → Vélo</Link>.</p>
       </Carte>
 
       {familles && familles.length > 0 && (
@@ -150,7 +150,7 @@ export function Progres() {
         {t.a.amorcage ? (
           <p className="text-sm text-texte-2">
             Encore {JOURS_AMORCAGE - t.a.joursHistorique} jours d'historique avant d'afficher ce graphique.{' '}
-            <Link to="/reglages" className="text-accent">Importer 3 mois depuis Intervals ›</Link>
+            <Link to="/entrainement/reglages" className="text-accent">Importer 3 mois depuis Intervals ›</Link>
           </p>
         ) : (
           <>

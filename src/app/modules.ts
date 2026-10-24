@@ -21,8 +21,10 @@ export interface ModuleApp {
   Icone: ComponentType<{ className?: string }>
   /** Écran racine du module (il gère ses propres sous-écrans) */
   Ecran: ComponentType
-  /** Réglages propres au module, affichés dans l'écran Réglages (facultatif) */
+  /** Réglages propres au module : écran Réglages du module, avec compte et rappels (facultatif) */
   SectionReglages?: ComponentType
+  /** Mode d'emploi du module (facultatif) */
+  ModeEmploi?: ComponentType
 }
 
 export const MODULES: ModuleApp[] = [

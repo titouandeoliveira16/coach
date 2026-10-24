@@ -3,7 +3,7 @@ import { Carte } from '../core/ui/Carte'
 import { ChampNombre } from '../core/ui/ChampNombre'
 import { EnTete } from '../core/ui/EnTete'
 import { useProfil } from '../core/profil'
-import { MODULES } from './modules'
+import type { ModuleApp } from './modules'
 import { SectionCompte } from './SectionCompte'
 import { SectionRappels } from './SectionRappels'
 
@@ -17,7 +17,7 @@ function estInstallee() {
 }
 
 /** Réglages : compte, profil, réglages de chaque module et état de l'appli. Tout se sauvegarde sur le serveur. */
-export function Reglages() {
+export function Reglages({ module }: { module: ModuleApp }) {
   const [profil, modifierProfil] = useProfil()
   const installee = estInstallee()
 
@@ -34,11 +34,11 @@ export function Reglages() {
         </Carte>
 
         {/* Chaque module affiche ses réglages avec sa propre couleur d'accent */}
-        {MODULES.filter((m) => m.SectionReglages).map((m) => (
-          <div key={m.id} style={{ '--accent': m.couleur } as CSSProperties} className="space-y-3">
-            {m.SectionReglages && <m.SectionReglages />}
+        {module.SectionReglages && (
+          <div style={{ '--accent': module.couleur } as CSSProperties} className="space-y-3">
+            <module.SectionReglages />
           </div>
-        ))}
+        )}
 
         <Carte titre="État de l'appli">
           <Ligne libelle="Installée sur l'écran d'accueil" valeur={installee ? 'Oui ✓' : 'Non'} ok={installee} />
