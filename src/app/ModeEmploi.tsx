@@ -30,6 +30,7 @@ export function ModeEmploi() {
         <Rubrique titre="L'idée en 30 secondes" ouverte>
           <p>Tu fais ta course avec <b className="text-texte">Campus Coach</b>. L'appli s'occupe de ton <b className="text-texte">vélo</b> : elle le place autour de ta course, et l'adapte chaque matin à ta forme.</p>
           <p>Ton travail : <b className="text-texte">1 minute le matin</b>, <b className="text-texte">5 minutes le dimanche</b>. Le reste se fait tout seul.</p>
+          <p>À l'ouverture, l'<b className="text-texte">Accueil</b> te propose les modules : Entraînement (et bientôt Argent). Le bouton 🏠 en bas y ramène.</p>
         </Rubrique>
 
         <Rubrique titre="☀️ Chaque matin : Aujourd'hui">

@@ -7,6 +7,7 @@ import { SectionReglagesEntrainement } from './reglages/SectionReglages'
 export const moduleEntrainement: ModuleApp = {
   id: 'entrainement',
   nom: 'Entraînement',
+  description: 'Vélo, course, forme du jour',
   chemin: '/entrainement',
   couleur: '#ff8a3d',
   Icone: IconeEntrainement,

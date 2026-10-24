@@ -48,3 +48,22 @@ export function IconeAide({ className }: Props) {
     </svg>
   )
 }
+
+/** Pièce : module Argent */
+export function IconeArgent({ className }: Props) {
+  return (
+    <svg {...base} className={className} aria-hidden>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M15.5 8.6a4 4 0 1 0 0 6.8M7.5 11h5.5M7.5 13h5.5" />
+    </svg>
+  )
+}
+
+/** Maison : accueil */
+export function IconeAccueil({ className }: Props) {
+  return (
+    <svg {...base} className={className} aria-hidden>
+      <path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" />
+    </svg>
+  )
+}

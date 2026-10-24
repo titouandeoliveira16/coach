@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react'
+import { moduleArgent } from '../modules/argent'
 import { moduleEntrainement } from '../modules/entrainement'
 
 /**
@@ -9,6 +10,10 @@ import { moduleEntrainement } from '../modules/entrainement'
 export interface ModuleApp {
   id: string
   nom: string
+  /** Une ligne sous le nom, sur l'accueil */
+  description: string
+  /** Module pas encore construit */
+  bientot?: boolean
   /** Chemin de base, ex. "/entrainement" */
   chemin: string
   /** Couleur d'accent du module (code hexadécimal) */
@@ -22,5 +27,6 @@ export interface ModuleApp {
 
 export const MODULES: ModuleApp[] = [
   moduleEntrainement,
-  // Plus tard : moduleNutrition, moduleApprentissage, moduleArgent
+  moduleArgent,
+  // Plus tard : moduleNutrition, moduleApprentissage
 ]
