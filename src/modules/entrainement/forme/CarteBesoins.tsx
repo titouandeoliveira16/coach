@@ -48,13 +48,7 @@ export function CarteBesoins() {
       <details className="mt-2 text-sm text-texte-2">
         <summary className="cursor-pointer text-xs text-texte-3">D'où vient ce chiffre ?</summary>
         <ul className="mt-1 space-y-0.5">
-          <li>🏠 Vie quotidienne : <b className="text-texte">{formatNombre(b.quotidien - b.marche)} kcal</b></li>
-          <li>🚶 Marche : <b className="text-texte">{formatNombre(b.marche)} kcal</b>{' '}
-            <span className="text-texte-3">{b.pas
-              ? `(${b.pas.aVenir ? `${formatNombre(b.pas.dejaFaits)} pas faits hors course + ~${formatNombre(b.pas.aVenir)} d'ici ce soir` : `${formatNombre(b.pas.valeur)} pas hors course`}${!b.pas.moyenne ? ''
-                : b.pas.enRetard ? `, ta moyenne de la semaine : le total de ta montre (${formatNombre(b.pas.montre)}) n'est pas encore à jour depuis ta course`
-                : ", ta moyenne de la semaine : rien reçu de ta montre aujourd'hui"})`
-              : '(pas encore reçus de la montre)'}</span></li>
+          <li>🏠 Vie quotidienne, marche comprise : <b className="text-texte">{formatNombre(b.quotidien)} kcal</b> <span className="text-texte-3">(métabolisme × 1,4)</span></li>
           {b.detailSeances.map((x, i) => (
             <li key={i}>{x.faite ? '✅' : '🗓️'} {x.titre} : <b className="text-texte">{formatNombre(x.kcal)} kcal</b>{' '}
               <span className="text-texte-3">{x.faite ? '(faite)' : '(prévue : comptée d’avance pour que tu manges de quoi la faire ; si tu ne la fais pas, le chiffre baisse)'}</span></li>
@@ -63,7 +57,7 @@ export function CarteBesoins() {
         </ul>
         <p className="mt-1 text-xs text-texte-3">Poids pris en compte : {formatNombre(b.kg, 1)} kg.</p>
         <p className="mt-1 text-xs text-texte-3">
-          Tes pas suivent le chemin montre → Garmin Connect → Intervals.icu → l'appli : ils peuvent avoir du retard sur ta montre.{' '}
+          Séance pas encore arrivée ?{' '}
           <button type="button" className="underline" onClick={async (e) => {
             const b = e.currentTarget
             b.textContent = 'Actualisation…'

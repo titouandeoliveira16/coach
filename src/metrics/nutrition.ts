@@ -1,10 +1,9 @@
 /**
  * Besoins du jour (estimation, ±10-15 %) : énergie et macronutriments selon les séances.
  *  - Métabolisme de base : Mifflin-St Jeor (Frankenfield 2005 : la plus juste des équations comparées).
- *  - Vie quotidienne hors sport : métabolisme × 1,3 (digestion, posture, petits mouvements), plus la marche,
- *    pas par pas : 0,5 kcal par kg et par km (coût net de la marche, équation de marche de l'ACSM),
- *    foulée = 0,415 × taille. Pas de course retirés (déjà comptés dans la séance). On retrouve les niveaux
- *    FAO/OMS/UNU 2004 : ~1,35 à 4 000 pas, ~1,45 à 10 000, ~1,55 à 15 000.
+ *  - Vie quotidienne hors sport : métabolisme × 1,4 (digestion, posture, petits mouvements et la marche d'un
+ *    étudiant assis une bonne partie de la journée, ~4 000-6 000 pas ; FAO/OMS/UNU 2004 : sédentaire 1,40-1,69).
+ *    Pas de comptage de pas : le maintien mesuré (repas + poids) corrige ensuite le coefficient.
  *  - Séances : vélo 1 kcal par kJ de travail (rendement brut ~24 %) ; course ~1 kcal × kg × km ;
  *    sinon par équivalent métabolique (MET, Compendium d'Ainsworth), hors repos. Jamais les calories de la montre.
  *  - Glucides brûlés en séance : part glucidique de la dépense selon l'intensité, zone par zone, pondérée par
@@ -88,10 +87,6 @@ export interface Besoins {
   plancher: boolean
   proteinesParKg: number
   base: number
-  /** Coefficient de la vie quotidienne (métabolisme × 1,3 + marche), pour information */
-  facteur: number
-  /** Calories de la marche (pas hors course) */
-  marche: number
   /** kcal retirées pour étaler un excès récent */
   reduction: number
   /** kcal de glucides brûlées en séance */
@@ -104,28 +99,18 @@ export interface Besoins {
   lipides: number
 }
 
-/** Vie quotidienne sans la marche : métabolisme × 1,3. */
-export const FACTEUR_SANS_MARCHE = 1.3
-/** Coût net de la marche : 0,5 kcal par kg et par km (ACSM). */
-const KCAL_KG_KM_MARCHE = 0.5
-
-/** Calories de la marche de la journée (pas hors course). */
-export function kcalMarche(pas: number, kg: number, cm: number) {
-  const foulee = 0.415 * (cm / 100)
-  return KCAL_KG_KM_MARCHE * kg * ((pas * foulee) / 1000)
-}
+/** Vie quotidienne (marche comprise) : métabolisme × 1,4. */
+export const FACTEUR_QUOTIDIEN = 1.4
 
 export function besoinsDuJour(o: {
-  kg: number; cm: number; age: number; activites: ActiviteJour[]; objectif?: Objectif; pas?: number
+  kg: number; cm: number; age: number; activites: ActiviteJour[]; objectif?: Objectif
   /** Écart entre ton maintien mesuré (repas + poids) et la formule, en kcal/j */
   correction?: number
   /** Excès d'un jour récent étalé sur ce jour (kcal en moins) */
   reduction?: number
 }): Besoins {
   const base = metabolismeBase(o.kg, o.cm, o.age)
-  const marche = o.pas ? kcalMarche(o.pas, o.kg, o.cm) : 0
-  const quotidien = base * FACTEUR_SANS_MARCHE + marche + (o.correction ?? 0)
-  const facteur = Math.round((quotidien / base) * 100) / 100
+  const quotidien = base * FACTEUR_QUOTIDIEN + (o.correction ?? 0)
   const seances = o.activites.reduce((s, a) => s + kcalActivite(a, o.kg), 0)
   const kcalGlucides = o.activites.reduce((s, a) => s + kcalGlucidesSeance(a, o.kg), 0)
   const maintien = quotidien + seances
@@ -150,7 +135,7 @@ export function besoinsDuJour(o: {
   const r = (n: number) => Math.round(n)
   return {
     kcal: Math.round(kcal / 50) * 50, maintien: Math.round(maintien / 50) * 50, deficit: r(Math.max(0, maintien - energie)), journee,
-    plancher: perte && plancherKcal > maintien - deficitVise, reduction: r(reduction), base: r(base), facteur, marche: r(marche), quotidien: r(quotidien), seances: r(seances),
+    plancher: perte && plancherKcal > maintien - deficitVise, reduction: r(reduction), base: r(base), quotidien: r(quotidien), seances: r(seances),
     glucides: r(glucides), glucidesParKg: gkg, kcalGlucides: r(kcalGlucides), proteines: r(proteines), proteinesParKg, lipides: r(lipides),
   }
 }
