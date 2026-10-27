@@ -6,7 +6,7 @@ import { srpe, trimpDepuisMoyenne } from '../../../metrics/charge'
 import { rtss, vitesseKmh } from '../../../metrics/course'
 import { domaineDepuisFc, type BornesZones } from '../../../metrics/fc'
 import { kjDepuisMoyenne, tss } from '../../../metrics/puissance'
-import type { Intensite, ReglagesEntrainement, Seance } from '../types'
+import type { Intensite, ReglagesEntrainement, Seance, TypeSeance } from '../types'
 
 /** Tout ce qu'il faut pour calculer les métriques d'une séance. */
 export interface Contexte {
@@ -85,7 +85,12 @@ export function chargeDe(s: Seance, c: Pick<Contexte, 'chargeRef'>): number {
 }
 
 /** Domaine d'intensité d'une séance (temps par zone si dispo, sinon FC moyenne, sinon RPE). */
+const TYPES_DURS: TypeSeance[] = ['Test', 'Compétition', 'Fractionné / VMA', 'Seuil']
+
 export function domaineDe(s: Seance, bornes: BornesZones): Intensite {
+  // Effort court à fond (test, course, fractionné) : peu de minutes en zone haute à cause de l'échauffement
+  // et du retard de la FC, mais c'est bien une séance dure. Ton RPE (7 ou plus) ou le type de séance le disent.
+  if ((s.rpe !== undefined && s.rpe >= 7) || (s.type && TYPES_DURS.includes(s.type)) || /\b(test|comp[ée]t|vma)/i.test(s.titre ?? '')) return 'haute'
   if (s.tempsZones) {
     const [b, m, h] = [s.tempsZones[0] + s.tempsZones[1], s.tempsZones[2], s.tempsZones[3] + s.tempsZones[4]]
     return h >= 600 ? 'haute' : m >= 900 ? 'moyenne' : b >= m + h ? 'basse' : m >= h ? 'moyenne' : 'haute'
