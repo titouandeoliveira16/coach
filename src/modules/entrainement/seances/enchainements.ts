@@ -40,6 +40,7 @@ export function fusionnerEnchainement(a: Seance, b: Seance): Seance {
     fcMoy,
     fcMax: Math.max(p.fcMax ?? 0, q.fcMax ?? 0) || undefined,
     kj,
+    pas: somme(p.pas, q.pas),
     puissanceMoyW: kj ? Math.round((kj * 1000) / dureeSec) : undefined,
     puissanceNormW: undefined,
     tempsZones: p.tempsZones && q.tempsZones ? p.tempsZones.map((t, i) => t + (q.tempsZones![i] ?? 0)) : (p.tempsZones ?? q.tempsZones),

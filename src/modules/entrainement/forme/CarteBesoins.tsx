@@ -51,7 +51,10 @@ export function CarteBesoins() {
           <li>🏠 Vie quotidienne : <b className="text-texte">{formatNombre(b.quotidien - b.marche)} kcal</b></li>
           <li>🚶 Marche : <b className="text-texte">{formatNombre(b.marche)} kcal</b>{' '}
             <span className="text-texte-3">{b.pas
-              ? `(${formatNombre(b.pas.valeur)} pas hors course${b.pas.moyenne ? `, ta moyenne de la semaine : ${b.pas.montre ? `ta montre n'en a envoyé que ${formatNombre(b.pas.montre)} pour l'instant, course comprise` : "rien reçu de ta montre aujourd'hui"}` : ''})`
+              ? `(${formatNombre(b.pas.valeur)} pas hors course${!b.pas.moyenne ? ''
+                : b.pas.enRetard ? `, ta moyenne de la semaine : le total de ta montre (${formatNombre(b.pas.montre)}) n'est pas encore à jour depuis ta course`
+                : b.pas.dejaFaits !== undefined ? `, ta moyenne de la semaine, tant que tu en as fait moins : ${formatNombre(b.pas.dejaFaits)} pour l'instant`
+                : ", ta moyenne de la semaine : rien reçu de ta montre aujourd'hui"})`
               : '(pas encore reçus de la montre)'}</span></li>
           {b.detailSeances.map((x, i) => (
             <li key={i}>{x.faite ? '✅' : '🗓️'} {x.titre} : <b className="text-texte">{formatNombre(x.kcal)} kcal</b>{' '}
