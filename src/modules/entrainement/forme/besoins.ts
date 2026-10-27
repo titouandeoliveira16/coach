@@ -2,7 +2,7 @@ import { db } from '../../../core/db'
 import { enregistrer } from '../../../core/stockage'
 import { AGE_DEFAUT, ageAu, PROFIL_DEFAUT, type Profil } from '../../../core/profil'
 import { aujourdhui, decalerJour } from '../../../core/dates'
-import { besoinsDuJour, kcalActivite, reductionsEtalement, tendancePoids, type ActiviteJour } from '../../../metrics/nutrition'
+import { besoinsDuJour, kcalActivite, partGlucides, reductionsEtalement, tendancePoids, type ActiviteJour } from '../../../metrics/nutrition'
 import { chargerContexte, domaineDe } from '../seances/donnees'
 import { peseesValides, poidsAu } from './pesees'
 import type { Intensite } from '../types'
@@ -47,6 +47,8 @@ export async function besoinsDe(jour: string, o: { sansCorrection?: boolean; san
     // Vélo dehors sans capteur : les kJ prévus de la séance qu'elle remplit
     kj: s.kj ?? prevues.find((p) => p.id === s.prevueId)?.kjPrevu,
     distanceKm: s.distanceKm,
+    // Part de glucides d'après le temps passé dans chaque zone (continu : 1 min ou 7 min en Z5 ne coûtent pas pareil)
+    partGlucides: s.tempsZones ? partGlucides(s.tempsZones) : undefined,
   }))
   const aFaire: ActiviteJour[] = prevues
     .filter((p) => p.statut === 'prevue' && !seances.some((s) => s.prevueId === p.id))
@@ -89,11 +91,18 @@ async function pasHorsCourse(jour: string) {
   return pas < course ? undefined : Math.round(pas - course)
 }
 
+/** Part de la journée encore à venir pour marcher (journée éveillée de 7 h à 22 h), de 1 à 0. */
+export function partRestante(maintenant: Date) {
+  const h = maintenant.getHours() + maintenant.getMinutes() / 60
+  return Math.min(1, Math.max(0, (22 - h) / 15))
+}
+
 /**
- * Pas pris en compte pour un jour : ceux du jour s'il est terminé.
- * Aujourd'hui (journée en cours) : le plus grand entre les pas déjà faits et ta moyenne des 7 jours précédents.
+ * Pas pris en compte pour un jour : ceux de la montre (hors course).
+ * Aujourd'hui (journée en cours) : les pas déjà faits + ce qu'il reste probablement à faire d'ici 22 h
+ * (ta moyenne des 7 jours × la part de la journée qui reste). Le soir, c'est presque uniquement tes vrais pas.
  */
-export async function pasDuJour(jour: string): Promise<{ valeur: number; moyenne: boolean; dejaFaits?: number; montre?: number; enRetard?: boolean } | undefined> {
+export async function pasDuJour(jour: string, maintenant = new Date()): Promise<{ valeur: number; moyenne: boolean; dejaFaits?: number; aVenir?: number; montre?: number; enRetard?: boolean } | undefined> {
   const duJour = await pasHorsCourse(jour)
   // Ce qu'affiche la montre (course comprise), pour comparer
   const montre = (await db.mesures.get(jour))?.pas
@@ -105,8 +114,11 @@ export async function pasDuJour(jour: string): Promise<{ valeur: number; moyenne
   }
   const moyenne = valeurs.length >= 3 ? Math.round(valeurs.reduce((a, b) => a + b, 0) / valeurs.length) : undefined
   if (moyenne === undefined && duJour === undefined) return undefined
-  if (moyenne === undefined || (duJour ?? 0) >= moyenne) return { valeur: duJour!, moyenne: false, dejaFaits: duJour, montre }
-  return { valeur: moyenne, moyenne: true, dejaFaits: duJour, montre, enRetard: montre !== undefined && duJour === undefined }
+  if (moyenne === undefined) return { valeur: duJour!, moyenne: false, dejaFaits: duJour, montre }
+  // Total de la montre pas encore à jour (plus petit que la course) ou rien reçu : ta moyenne
+  if (duJour === undefined) return { valeur: moyenne, moyenne: true, montre, enRetard: montre !== undefined }
+  const aVenir = Math.round(moyenne * partRestante(maintenant))
+  return { valeur: duJour + aVenir, moyenne: false, dejaFaits: duJour, aVenir, montre }
 }
 
 /** kcal retirées ce jour-là pour étaler les excès des 7 jours précédents (jours faciles seulement). */

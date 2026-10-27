@@ -7,10 +7,13 @@
  *    FAO/OMS/UNU 2004 : ~1,35 à 4 000 pas, ~1,45 à 10 000, ~1,55 à 15 000.
  *  - Séances : vélo 1 kcal par kJ de travail (rendement brut ~24 %) ; course ~1 kcal × kg × km ;
  *    sinon par équivalent métabolique (MET, Compendium d'Ainsworth), hors repos. Jamais les calories de la montre.
- *  - Glucides selon la charge du jour (consensus ACSM / AND / DC, Thomas 2016 : 3-5 à 8-12 g/kg),
- *    protéines 1,6 g/kg (Morton 2018), lipides le reste, jamais sous 20 % de l'énergie.
- *  - Objectif « perte de gras légère » : déficit selon le jour (−500 repos ou facile, −300 modéré,
- *    −100 intensité ou sortie longue : manger selon le travail prévu, Impey 2018), visée ~0,5 % du poids
+ *  - Glucides brûlés en séance : part glucidique de la dépense selon l'intensité, zone par zone, pondérée par
+ *    l'énergie dépensée dans chaque zone (Z1-Z2 50 %, Z3 70 %, Z4-Z5 90 % ; Romijn 1993, van Loon 2001).
+ *    Glucides du jour = 3 g/kg + 1,5 × glucides brûlés (le facteur couvre la recharge du glycogène),
+ *    entre 3 et 12 g/kg : on retombe dans les fourchettes du consensus ACSM / AND / DC (Thomas 2016).
+ *    Protéines 1,6 g/kg (Morton 2018), lipides le reste, jamais sous 20 % de l'énergie.
+ *  - Objectif « perte de gras légère » : déficit continu, −500 kcal moins 0,6 kcal par kcal de glucides brûlée
+ *    en séance, jamais moins de −100 (manger selon le travail fait, Impey 2018 ; pente : choix d'entraîneur), visée ~0,5 % du poids
  *    par semaine (Garthe 2011), protéines 1,8 g/kg, et jamais sous 30 kcal par kg de masse maigre une fois
  *    le sport déduit (disponibilité énergétique, consensus CIO sur le RED-S 2023).
  */
@@ -30,7 +33,25 @@ export interface ActiviteJour {
   kj?: number
   /** Course : distance (km) */
   distanceKm?: number
+  /** Part glucidique de la dépense (0,5 à 0,9), d'après le temps dans chaque zone ; sinon selon `intensite` */
+  partGlucides?: number
 }
+
+/** Part glucidique de la dépense par zone (Z1 à Z5) et coût relatif d'une minute dans chaque zone. */
+const GLUCIDES_ZONE = [0.5, 0.5, 0.7, 0.9, 0.9]
+const COUT_ZONE = [0.55, 0.7, 0.85, 1, 1.15]
+/** Séance prévue (sans zones) : échauffement et récupération compris. */
+const GLUCIDES_PREVUE: Record<Intensite, number> = { basse: 0.5, moyenne: 0.7, haute: 0.8 }
+
+/** Part glucidique d'une séance d'après son temps dans chaque zone de FC (pondéré par l'énergie de chaque zone). */
+export function partGlucides(tempsZones: number[]) {
+  const poids = tempsZones.map((t, i) => t * COUT_ZONE[i])
+  const total = poids.reduce((a, b) => a + b, 0)
+  return total ? poids.reduce((a, p, i) => a + p * GLUCIDES_ZONE[i], 0) / total : undefined
+}
+
+/** kcal de glucides brûlées par une séance. */
+export const kcalGlucidesSeance = (a: ActiviteJour, kg: number) => kcalActivite(a, kg) * (a.partGlucides ?? GLUCIDES_PREVUE[a.intensite])
 
 /** MET nets (au-dessus du repos) quand on n'a ni kJ ni distance. */
 const MET_NETS: Record<ActiviteJour['sport'], Record<Intensite, number>> = {
@@ -51,13 +72,9 @@ export function kcalActivite(a: ActiviteJour, kg: number) {
   return MET_NETS[a.sport][a.intensite] * kg * (a.dureeMin / 60)
 }
 
-/** Glucides (g/kg) selon la durée totale et l'intensité du jour (tranches d'entraîneur dans les fourchettes de Thomas 2016). */
-export function glucidesParKg(minutes: number, intense: boolean) {
-  if (minutes >= 240) return 10
-  if (minutes >= 90) return intense ? 8 : 7
-  if (minutes >= 45) return intense ? 7 : 6
-  if (minutes > 0) return intense ? 6 : 5
-  return 4
+/** Glucides (g/kg) : 3 g/kg + 1,5 × les glucides brûlés en séance, entre 3 et 12 g/kg. */
+export function glucidesParKg(kcalGlucides: number, kg: number) {
+  return Math.min(12, Math.max(3, 3 + (1.5 * kcalGlucides) / 4 / kg))
 }
 
 export interface Besoins {
@@ -77,6 +94,8 @@ export interface Besoins {
   marche: number
   /** kcal retirées pour étaler un excès récent */
   reduction: number
+  /** kcal de glucides brûlées en séance */
+  kcalGlucides: number
   quotidien: number
   seances: number
   glucides: number
@@ -108,12 +127,11 @@ export function besoinsDuJour(o: {
   const quotidien = base * FACTEUR_SANS_MARCHE + marche + (o.correction ?? 0)
   const facteur = Math.round((quotidien / base) * 100) / 100
   const seances = o.activites.reduce((s, a) => s + kcalActivite(a, o.kg), 0)
-  const minutes = o.activites.reduce((s, a) => s + a.dureeMin, 0)
-  const intense = o.activites.some((a) => a.intensite === 'haute')
+  const kcalGlucides = o.activites.reduce((s, a) => s + kcalGlucidesSeance(a, o.kg), 0)
   const maintien = quotidien + seances
-  const journee = intense || minutes >= 90 ? 'dure' : minutes >= 45 || o.activites.some((a) => a.intensite === 'moyenne') ? 'moderee' : 'facile'
+  const journee = kcalGlucides < 150 ? 'facile' : kcalGlucides < 500 ? 'moderee' : 'dure'
   const perte = o.objectif === 'perte'
-  const deficitVise = perte ? { facile: 500, moderee: 300, dure: 100 }[journee] : 0
+  const deficitVise = perte ? Math.min(500, Math.max(100, 500 - 0.6 * kcalGlucides)) : 0
   const plancherKcal = DISPONIBILITE_MIN * o.kg * PART_MASSE_MAIGRE + seances
   // Le plancher de disponibilité énergétique protège aussi de l'étalement d'un excès
   const energie = Math.max(maintien - deficitVise - (o.reduction ?? 0), perte || o.reduction ? plancherKcal : 0)
@@ -121,7 +139,7 @@ export function besoinsDuJour(o: {
 
   const proteinesParKg = perte ? 1.8 : 1.6
   const proteines = proteinesParKg * o.kg
-  let gkg = glucidesParKg(minutes, intense)
+  let gkg = Math.round(glucidesParKg(kcalGlucides, o.kg) * 10) / 10
   // Lipides au moins 20 % : si l'énergie ne suffit pas, on baisse les glucides (jamais sous 3 g/kg)
   const lipidesMin = (0.2 * energie) / 9
   const glucidesMax = (energie - proteines * 4 - lipidesMin * 9) / 4 / o.kg
@@ -133,7 +151,7 @@ export function besoinsDuJour(o: {
   return {
     kcal: Math.round(kcal / 50) * 50, maintien: Math.round(maintien / 50) * 50, deficit: r(Math.max(0, maintien - energie)), journee,
     plancher: perte && plancherKcal > maintien - deficitVise, reduction: r(reduction), base: r(base), facteur, marche: r(marche), quotidien: r(quotidien), seances: r(seances),
-    glucides: r(glucides), glucidesParKg: gkg, proteines: r(proteines), proteinesParKg, lipides: r(lipides),
+    glucides: r(glucides), glucidesParKg: gkg, kcalGlucides: r(kcalGlucides), proteines: r(proteines), proteinesParKg, lipides: r(lipides),
   }
 }
 

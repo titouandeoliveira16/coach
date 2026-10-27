@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { besoinsDuJour, glucidesParKg, kcalActivite, kcalMarche, metabolismeBase, tendancePoids } from './nutrition'
+import { besoinsDuJour, glucidesParKg, kcalActivite, kcalMarche, metabolismeBase, partGlucides, tendancePoids } from './nutrition'
 import { ageAu } from '../core/profil'
 
 describe('besoins du jour', () => {
@@ -16,10 +16,13 @@ describe('besoins du jour', () => {
   })
 
   it('glucides selon la charge, lipides jamais sous 20 %', () => {
-    expect(glucidesParKg(0, false)).toBe(4)
-    expect(glucidesParKg(60, false)).toBe(6)
-    expect(glucidesParKg(75, true)).toBe(7)
-    expect(glucidesParKg(120, true)).toBe(8)
+    // 3 g/kg + 1,5 × glucides brûlés (Thomas 2016 : léger 3-5, ~1 h 5-7, 1-3 h 6-10, > 4 h 8-12 ; un peu bas en perte de gras)
+    expect(glucidesParKg(0, 77)).toBe(3)
+    expect(glucidesParKg(1200 * 0.5, 77)).toBeCloseTo(5.9, 1)
+    expect(glucidesParKg(5000, 77)).toBe(12)
+    // Part glucidique continue : 1 min ou 7 min en Z5, ce n'est pas la même séance
+    expect(partGlucides([900, 600, 120, 120, 60])!).toBeLessThan(partGlucides([900, 600, 120, 120, 420])!)
+    expect(partGlucides([0, 3600, 0, 0, 0])).toBe(0.5)
     const repos = besoinsDuJour({ kg: 70, cm: 175, age: 25, activites: [], pas: 7000 })
     expect(repos.kcal).toBeGreaterThan(2250)
     expect(repos.kcal).toBeLessThan(2450)
@@ -34,14 +37,18 @@ describe('besoins du jour', () => {
 
 describe('perte de gras légère', () => {
   const p = { kg: 70, cm: 175, age: 25 }
-  it('déficit selon le jour, protéines 1,8 g/kg', () => {
+  it('déficit continu : moins le travail glucidique est grand, plus le déficit est grand ; protéines 1,8 g/kg', () => {
     const repos = besoinsDuJour({ ...p, activites: [], objectif: 'perte', pas: 7000 })
     expect(repos.journee).toBe('facile')
     expect(repos.proteinesParKg).toBe(1.8)
     expect(repos.maintien - repos.kcal).toBeGreaterThanOrEqual(400)
-    const dure = besoinsDuJour({ ...p, activites: [{ sport: 'velo', dureeMin: 60, intensite: 'haute', kj: 650 }], objectif: 'perte' })
-    expect(dure.journee).toBe('dure')
-    expect(dure.deficit).toBe(100)
+    const z2 = besoinsDuJour({ ...p, activites: [{ sport: 'velo', dureeMin: 60, intensite: 'basse', kj: 600, partGlucides: 0.5 }], objectif: 'perte' })
+    expect(z2.deficit).toBe(320)
+    const inter = besoinsDuJour({ ...p, activites: [{ sport: 'velo', dureeMin: 60, intensite: 'haute', kj: 700, partGlucides: 0.8 }], objectif: 'perte' })
+    expect(inter.journee).toBe('dure')
+    expect(inter.deficit).toBe(164)
+    const long = besoinsDuJour({ ...p, activites: [{ sport: 'velo', dureeMin: 120, intensite: 'basse', kj: 1300, partGlucides: 0.5 }], objectif: 'perte' })
+    expect(long.deficit).toBe(110)
   })
   it('jamais sous 30 kcal par kg de masse maigre une fois le sport déduit', () => {
     const b = besoinsDuJour({ kg: 60, cm: 175, age: 25, activites: [], objectif: 'perte' })
