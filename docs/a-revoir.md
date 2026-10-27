@@ -1,0 +1,46 @@
+# À revoir avec Titouan
+
+Points décidés ou mis de côté, à reprendre au bon moment.
+
+## Après le 5 km du 13/12/2026
+- Le vélo repasse en priorité : **4 séances vélo par semaine** au lieu de 3.
+- La course passe de **3 à 2 séances** par semaine.
+- À adapter alors : semaine type (Réglages → Vélo), budget kJ (le plafond actuel de ~2 300 kJ/sem. vient des 3 créneaux), placement des séances dures.
+
+## À reprendre ensuite (dans l'ordre proposé)
+1. Phases spécifique et affûtage : attendre les courses vélo 2027.
+2. Point après 4 semaines de données réelles (watts Z2, durées, seuils du feu). Relecture scientifique du 27/10 :
+   Z2 : ±5 W maintenant après 2 sorties de suite (fait le 27/10). Vérifier aussi le garde-fou course → vélo.
+3. Nutrition « perte de gras légère » (depuis le 26/10/2026) : regarder la tendance du poids (visé ≈ −0,4 kg/sem.) et les performances ; ajuster le déficit si besoin.
+
+## Budget (construit le 26/10/2026 d'un bloc, à revoir ensemble)
+- Faire le tour du module avec Titouan après quelques jours d'utilisation : ce qui manque, ce qui gêne, ce qui est en trop.
+- Fonction serveur « rappels » à redéployer (saisie du soir, bilan le 1er, relevés des placements le 5 à 9 h, pesée du mardi à 7 h).
+- Pas de remise à zéro : livrets et placements remis à leurs valeurs du 1/10 (v0.38.0). Les livrets évoluent avec
+  les virements, les placements avec les relevés du 5. Le 5/11 : premier relevé des placements. Premier bilan complet
+  le 1/12 → vérifier qu'il est utile et lisible.
+
+## Révision CAPEPS (construit le 26/10/2026 d'un bloc, à revoir ensemble)
+- Faire le point après une semaine d'utilisation : journées types, capacités, rappels raté/hésitant.
+- 22/01/2027 : nouveau stage → redéfinir les après-midis (Réglages → Nouveau stage).
+- Choix faits sans validation : raté = la notion repart de zéro ; hésitant = un rappel de plus le lendemain ;
+  minuteur sans notification quand l'appli est fermée ; en vacances, nouvelle notion du lundi au samedi.
+- Option plus tard : notification des rappels du jour, export vers un calendrier.
+
+## Plus tard
+- Étape du Tour 2027 (11/07, Cluses – Les Saisies, 154 km, 4 850 m) : simple idée pour l'instant. Si elle devient
+  l'objectif : phase spécifique après le CAPEPS (montées longues Z3, sorties 4-6 h, 60-90 g/h), affûtage 10-14 j.
+- Musculation : 30 min/sem. au poids du corps (genoux, prévention des blessures), choix de Titouan faute de temps.
+  Musculation lourde (Rønnestad & Mujika 2014) à reproposer après le CAPEPS.
+- Nutrition : la carte « maintien mesuré » apparaît seule après 3 semaines de repas notés et de pesées (vers le
+  16/11/2026) : en parler avec Titouan à ce moment-là (fiabilité de ses saisies, performances, feux).
+- Fonction « intervals » à redéployer (pas du jour pour la marche ; sans ça : métabolisme × 1,3, sans marche).
+- Zwift (repris dès le test du 1/11, ERG désactivé : Titouan suit les watts aux vitesses virtuelles) : envoi possible
+  des séances de l’appli dans Zwift via le calendrier Intervals.icu, à proposer après le test. FTP Zwift = CP.
+- Capteur de puissance dehors : vrais kJ des sorties extérieures.
+- Autres modules : Nutrition (module à part, plus tard).
+- Module course à pied (aujourd'hui saisi depuis Campus Coach) et vélo généré selon les objectifs de saison : à repenser plus tard.
+
+## Fait
+- 27/10/2026 : garde-fou course → vélo, FC max vue dans les séances, reprise après maladie, Z2 sur 2 sorties.
+- Rappels installés et testés le 23/10/2026 (matin 8 h 30, pesée le mardi).
