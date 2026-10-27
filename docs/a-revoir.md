@@ -17,8 +17,7 @@ Points décidés ou mis de côté, à reprendre au bon moment.
 
 ## Budget (construit le 26/10/2026 d'un bloc, à revoir ensemble)
 - Faire le tour du module avec Titouan après quelques jours d'utilisation : ce qui manque, ce qui gêne, ce qui est en trop.
-- Fonction serveur « rappels » à redéployer (v0.42.0 : contrôle du solde le dimanche, pesée reportée au mercredi
-  après un gros lundi soir).
+- Fonction serveur « rappels » à redéployer (v0.42.0 : contrôle du solde le dimanche).
 - Contrôle du solde du courant chaque dimanche (choisi plutôt que le 15) : voir après un mois si la fréquence convient.
 - Pas de remise à zéro : livrets et placements remis à leurs valeurs du 1/10 (v0.38.0). Les livrets évoluent avec
   les virements, les placements avec les relevés du 5. Le 5/11 : premier relevé des placements. Premier bilan complet
@@ -39,7 +38,9 @@ Points décidés ou mis de côté, à reprendre au bon moment.
 - Musculation : 30 min/sem. au poids du corps (genoux, prévention des blessures), choix de Titouan faute de temps.
   Musculation lourde (Rønnestad & Mujika 2014) à reproposer après le CAPEPS.
 - Nutrition : la carte « maintien mesuré » apparaît seule après 3 semaines de repas notés et de pesées (vers le
-  16/11/2026) : en parler avec Titouan à ce moment-là (fiabilité de ses saisies, performances, feux).
+  16/11/2026) : en parler avec Titouan AVANT qu'il l'accepte. Lui demander si ses saisies sont complètes (huile,
+  sauces, grignotages : on oublie souvent 10-20 %, ce qui ferait baisser ses objectifs à tort), regarder performances et feux.
+- Pesée 5 matins par semaine depuis le 27/10 (lun., mar., mer., sam., dim. ; jeudi et vendredi = internat).
 - Nutrition : plus de comptage de pas depuis le 27/10 (v0.44.0) : vie quotidienne = métabolisme × 1,4, marche comprise
   (choix de Titouan). Le maintien mesuré (~16/11) dira si 1,4 est juste.
 - Zwift (repris dès le test du 1/11, ERG désactivé : Titouan suit les watts aux vitesses virtuelles) : envoi possible
@@ -52,6 +53,6 @@ Points décidés ou mis de côté, à reprendre au bon moment.
 
 ## Fait
 - 27/10/2026 (v0.42.0) : lignes d'explication sous le feu, nuit sans montre, case « pas de ceinture », semaine chargée
-  (+ retour après semaines très légères), pesée reportée au mercredi, contrôle du solde le dimanche, règle d'or du Budget.
+  (+ retour après semaines très légères), pesée reportée au mercredi (retirée en v0.45.0 : pesée 5 matins par semaine), contrôle du solde le dimanche, règle d'or du Budget.
 - 27/10/2026 : garde-fou course → vélo, FC max vue dans les séances, reprise après maladie, Z2 sur 2 sorties.
 - Rappels installés et testés le 23/10/2026 (matin 8 h 30, pesée le mardi).

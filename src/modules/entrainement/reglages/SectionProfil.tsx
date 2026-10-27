@@ -44,7 +44,7 @@ export function SectionProfil() {
       <Carte titre="Rappels">
         <ul className="space-y-1 text-sm text-texte-2">
           <li>☀️ Chaque matin à {RAPPELS.heure.replace(':', ' h ')} : tes 5 notes du matin (VFC, FC de repos et sommeil arrivent seuls de ta montre)</li>
-          <li>⚖️ Le mardi à {HEURE_PESEE.replace(':00', ' h')} : la pesée (à jeun, avant le petit-déjeuner)</li>
+          <li>⚖️ Lundi, mardi, mercredi, samedi et dimanche à {HEURE_PESEE.replace(':00', ' h')} : la pesée (à jeun, après les toilettes). L'appli suit la tendance, pas le poids d'un jour</li>
         </ul>
         <p className="mt-1 text-xs text-texte-3">Pas de rappel si c'est déjà fait. Les notifications s'activent une fois pour toute l'appli : <Link to="/reglages" className="underline">Accueil → ⚙️</Link>.</p>
       </Carte>

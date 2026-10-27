@@ -134,13 +134,6 @@ async function ligne(userId: string, table: string, cle: string) {
   return data && !data.supprime ? (data.valeur as Record<string, unknown>) : undefined
 }
 
-/** "AAAA-MM-JJ" du lendemain. */
-function lendemain(date: string) {
-  const d = new Date(`${date}T12:00:00Z`)
-  d.setUTCDate(d.getUTCDate() + 1)
-  return d.toISOString().slice(0, 10)
-}
-
 /** Heure du rappel de pesée (avant le petit-déjeuner). */
 const HEURE_PESEE = '07:00'
 
@@ -181,11 +174,8 @@ async function envoyerRappels() {
       if (!matin || !NOTES.some((n) => matin[n] !== undefined))
         messages.push({ titre: '☀️ Ton matin', texte: 'Tes 5 notes du matin : 30 secondes pour avoir ton feu du jour.', tag: 'matin', url: './#/entrainement/aujourdhui' })
     }
-    // Pesée : les jours choisis, à partir de 7 h (avant le petit-déjeuner), jusqu'à midi.
-    // Gros excès le lundi soir (réglage « pesee-reportee » écrit par l'appli) : la pesée du mardi passe au mercredi.
-    const mardiReporte = ((await ligne(a.user_id, 'reglages', 'pesee-reportee'))?.valeur as { mardi?: string } | undefined)?.mardi
-    const jourPesee = mardiReporte === t.date ? false
-      : (a.pesee_jours ?? []).includes(t.jour) || (a.pesee_dates ?? []).includes(t.date) || (!!mardiReporte && lendemain(mardiReporte) === t.date)
+    // Pesée : les jours choisis, à partir de 7 h (avant le petit-déjeuner), jusqu'à midi
+    const jourPesee = (a.pesee_jours ?? []).includes(t.jour) || (a.pesee_dates ?? []).includes(t.date)
     if (jourPesee && t.heure >= HEURE_PESEE && t.heure < '12:00' && a.derniere_pesee !== t.date) {
       maj.derniere_pesee = t.date
       if (!(await ligne(a.user_id, 'pesees', t.date)))
