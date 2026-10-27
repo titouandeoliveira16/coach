@@ -12,6 +12,8 @@ Points décidés ou mis de côté, à reprendre au bon moment.
 2. Point après 4 semaines de données réelles (watts Z2, durées, seuils du feu). Relecture scientifique du 27/10 :
    Z2 : ±5 W maintenant après 2 sorties de suite (fait le 27/10). Vérifier aussi le garde-fou course → vélo.
 3. Nutrition « perte de gras légère » (depuis le 26/10/2026) : regarder la tendance du poids (visé ≈ −0,4 kg/sem.) et les performances ; ajuster le déficit si besoin.
+   Depuis le 27/10 (v0.43.0) : glucides et déficit continus (3 g/kg + 1,5 × glucides brûlés ; déficit 500 − 0,6 × glucides
+   brûlés, 100 à 500). Les jours de repos passent de 4 à 3 g/kg : vérifier la faim et les performances.
 
 ## Budget (construit le 26/10/2026 d'un bloc, à revoir ensemble)
 - Faire le tour du module avec Titouan après quelques jours d'utilisation : ce qui manque, ce qui gêne, ce qui est en trop.
