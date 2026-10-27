@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { besoinsDuJour, glucidesParKg, kcalActivite, kcalMarche, metabolismeBase, partGlucides, tendancePoids } from './nutrition'
+import { besoinsDuJour, glucidesParKg, kcalActivite, metabolismeBase, partGlucides, tendancePoids } from './nutrition'
 import { ageAu } from '../core/profil'
 
 describe('besoins du jour', () => {
@@ -23,13 +23,11 @@ describe('besoins du jour', () => {
     // Part glucidique continue : 1 min ou 7 min en Z5, ce n'est pas la même séance
     expect(partGlucides([900, 600, 120, 120, 60])!).toBeLessThan(partGlucides([900, 600, 120, 120, 420])!)
     expect(partGlucides([0, 3600, 0, 0, 0])).toBe(0.5)
-    const repos = besoinsDuJour({ kg: 70, cm: 175, age: 25, activites: [], pas: 7000 })
+    const repos = besoinsDuJour({ kg: 70, cm: 175, age: 25, activites: [] })
     expect(repos.kcal).toBeGreaterThan(2250)
     expect(repos.kcal).toBeLessThan(2450)
-    // Sans marche : métabolisme × 1,3 ; chaque pas compte (0,5 kcal/kg/km, foulée 0,415 × taille)
-    expect(besoinsDuJour({ kg: 70, cm: 175, age: 25, activites: [] }).quotidien).toBe(Math.round(1673.75 * 1.3))
-    expect(kcalMarche(10000, 70, 175)).toBeCloseTo(254, 0)
-    expect(besoinsDuJour({ kg: 70, cm: 175, age: 25, activites: [], pas: 10000 }).facteur).toBeCloseTo(1.45, 2)
+    // Vie quotidienne, marche comprise : métabolisme × 1,4
+    expect(repos.quotidien).toBe(Math.round(1673.75 * 1.4))
     const long = besoinsDuJour({ kg: 70, cm: 175, age: 25, activites: [{ sport: 'velo', dureeMin: 240, intensite: 'basse', kj: 2300 }] })
     expect(long.lipides * 9).toBeGreaterThanOrEqual(0.2 * long.kcal - 50)
   })
@@ -38,7 +36,7 @@ describe('besoins du jour', () => {
 describe('perte de gras légère', () => {
   const p = { kg: 70, cm: 175, age: 25 }
   it('déficit continu : moins le travail glucidique est grand, plus le déficit est grand ; protéines 1,8 g/kg', () => {
-    const repos = besoinsDuJour({ ...p, activites: [], objectif: 'perte', pas: 7000 })
+    const repos = besoinsDuJour({ ...p, activites: [], objectif: 'perte' })
     expect(repos.journee).toBe('facile')
     expect(repos.proteinesParKg).toBe(1.8)
     expect(repos.maintien - repos.kcal).toBeGreaterThanOrEqual(400)

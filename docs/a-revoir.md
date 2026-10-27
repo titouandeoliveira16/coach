@@ -40,7 +40,8 @@ Points décidés ou mis de côté, à reprendre au bon moment.
   Musculation lourde (Rønnestad & Mujika 2014) à reproposer après le CAPEPS.
 - Nutrition : la carte « maintien mesuré » apparaît seule après 3 semaines de repas notés et de pesées (vers le
   16/11/2026) : en parler avec Titouan à ce moment-là (fiabilité de ses saisies, performances, feux).
-- Fonction « intervals » à redéployer (pas du jour pour la marche ; sans ça : métabolisme × 1,3, sans marche).
+- Nutrition : plus de comptage de pas depuis le 27/10 (v0.44.0) : vie quotidienne = métabolisme × 1,4, marche comprise
+  (choix de Titouan). Le maintien mesuré (~16/11) dira si 1,4 est juste.
 - Zwift (repris dès le test du 1/11, ERG désactivé : Titouan suit les watts aux vitesses virtuelles) : envoi possible
   des séances de l’appli dans Zwift via le calendrier Intervals.icu, à proposer après le test. FTP Zwift = CP.
 - Capteur de puissance dehors : vrais kJ des sorties extérieures. D'ici là, Titouan ne fait que du home trainer.

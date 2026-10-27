@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import type { Seance } from '../types'
-import { pasActivite } from '../import/intervals'
 import { domaineDe } from './donnees'
 
 const bornes: [number, number, number, number] = [130, 150, 165, 177]
@@ -16,13 +15,5 @@ describe('intensité d’une séance', () => {
   it('un footing reste facile ; sans ceinture, un pic de FC ne compte pas', () => {
     expect(domaineDe(s({ titre: 'Footing', tempsZones: [1500, 900, 0, 0, 0] }), bornes)).toBe('basse')
     expect(domaineDe(s({ fcMoy: 140, fcMax: 185, sansCeinture: true }), bornes)).toBe('basse')
-  })
-})
-
-describe('pas d’une course (montre)', () => {
-  it('cadence × temps, en pas ou en foulées', () => {
-    expect(pasActivite({ type: 'Run', average_cadence: 170, moving_time: 1800 })).toBe(5100)
-    expect(pasActivite({ type: 'Run', average_cadence: 85, moving_time: 1800 })).toBe(5100)
-    expect(pasActivite({ type: 'Ride', average_cadence: 90, moving_time: 1800 })).toBeUndefined()
   })
 })

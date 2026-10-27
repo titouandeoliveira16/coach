@@ -80,16 +80,6 @@ interface Activite {
   max_heartrate?: number
   average_watts?: number
   joules?: number
-  /** Cadence moyenne (course : pas/min, ou foulées/min selon la montre) */
-  average_cadence?: number
-}
-
-/** Pas d'une course, d'après la cadence de la montre × le temps en mouvement. */
-export function pasActivite(a: Pick<Activite, 'type' | 'average_cadence' | 'moving_time'>) {
-  if (sportDepuisType(a.type) !== 'course' || !a.average_cadence || !a.moving_time) return undefined
-  // Certaines montres donnent des foulées (un pied) : 70-100 par min au lieu de 140-200 pas
-  const parMin = a.average_cadence < 120 ? a.average_cadence * 2 : a.average_cadence
-  return Math.round((parMin * a.moving_time) / 60)
 }
 
 interface JourWellness {
@@ -132,22 +122,10 @@ async function importerWellness(depuis: string) {
   return n
 }
 
-/** Courses déjà importées sans leurs pas : on les ajoute (somme des parties pour une séance regroupée). */
-async function completerPas(activites: Activite[]) {
-  const parId = new Map(activites.map((a) => [a.id, pasActivite(a)]))
-  for (const s of await db.seances.toArray()) {
-    if (s.sport !== 'course' || s.pas !== undefined || !s.idExterne) continue
-    const ids = [s.idExterne, ...(s.autresIds ?? [])]
-    if (!ids.every((id) => parId.get(id))) continue
-    await enregistrer(db.seances, { ...s, pas: ids.reduce((t, id) => t + parId.get(id)!, 0) })
-  }
-}
-
 /** Séances Intervals.icu → séances de l'appli (métriques calculées sur les flux). */
 async function importerActivites(depuis: string, surProgression?: (n: number) => void) {
   const { activites, viaStrava } = await appeler<{ activites: Activite[]; viaStrava: number }>('activites', { oldest: depuis })
   const connues = new Set((await db.seances.toArray()).flatMap((s) => [s.idExterne, ...(s.autresIds ?? [])]).filter(Boolean))
-  await completerPas(activites)
   const nouvelles = activites.filter((a) => !connues.has(a.id)).sort((a, b) => a.start_date.localeCompare(b.start_date))
   const c = await chargerContexte()
   let n = 0
@@ -169,8 +147,6 @@ async function importerActivites(depuis: string, surProgression?: (n: number) =>
       // Sans flux : on garde les moyennes calculées par Intervals
       if (!s.fcMoy && a.average_heartrate) s = { ...s, fcMoy: Math.round(a.average_heartrate), fcMax: a.max_heartrate }
       if (!s.kj && a.joules) s = { ...s, kj: Math.round(a.joules / 1000), puissanceMoyW: a.average_watts && Math.round(a.average_watts) }
-      const pas = pasActivite(a)
-      if (pas) s = { ...s, pas }
 
       // Doublon (saisie manuelle, .FIT, ou même sortie vue par la montre et le compteur) :
       // on garde la version la plus riche et ton ressenti

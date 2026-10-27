@@ -171,8 +171,6 @@ export interface Seance {
   tempsFc90?: number
   /** « En réserve ? » après le RPE : ok (facile tenable 1-2 h / 0-1 répétition en réserve), moyen, non */
   reserve?: 'ok' | 'moyen' | 'non'
-  /** Course : pas de la séance d'après la montre (cadence × temps), retirés des pas du jour pour la marche */
-  pas?: number
   /** Pas de ceinture cardio (FC au poignet) : la FC de la séance n'est pas jugée */
   sansCeinture?: boolean
 }
