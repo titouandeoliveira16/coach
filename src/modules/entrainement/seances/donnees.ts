@@ -35,7 +35,7 @@ export async function chargerContexte(): Promise<Contexte> {
   const profil = { fcMax: PROFIL_DEFAUT.fcMax, ...((await db.reglages.get('profil'))?.valeur as Profil | undefined) }
   const r = (await db.reglages.get('entrainement'))?.valeur as Partial<ReglagesEntrainement> | undefined
   const reglages = { zonesVelo: [], seuilCoursePct: 87, chargeRef: 'trimp', vmaKmh: 18.5, ...r } as ReglagesEntrainement
-  const matins = await db.mesures.where('date').between(decalerJour(aujourdhui(), -6), aujourdhui(), true, true).toArray()
+  const matins = (await db.mesures.where('date').between(decalerJour(aujourdhui(), -6), aujourdhui(), true, true).toArray()).filter((m) => !m.sansMontre)
   const fc = matins.map((m) => m.fcRepos).filter((x): x is number => x !== undefined)
   return {
     fcRepos: fc.length ? fc.reduce((a, b) => a + b, 0) / fc.length : FC_REPOS_DEFAUT,

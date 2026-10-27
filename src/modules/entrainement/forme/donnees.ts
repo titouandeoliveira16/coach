@@ -18,6 +18,10 @@ export function scoreRessenti(m: MesureMatin): number | undefined {
   return notes.length ? notes.reduce<number>((a, b) => a + b, 0) / notes.length : undefined
 }
 
+/** Mesure telle que les calculs doivent la voir : sans les données de la nuit si elle est marquée « sans montre ». */
+export const mesureUtile = (m: MesureMatin): MesureMatin =>
+  m.sansMontre ? { ...m, vfcMs: undefined, fcRepos: undefined, sommeilH: undefined } : m
+
 /** Enregistre (ou remplace) la mesure d'un jour. */
 export const enregistrerMesure = (m: Omit<MesureMatin, 'modifieLe'>) =>
   enregistrer(db.mesures, { ...m, modifieLe: new Date().toISOString() })
@@ -34,4 +38,10 @@ export const mesuresRecentes = (n: number) =>
 export function moyenne(mesures: MesureMatin[], cle: 'vfcMs' | 'fcRepos'): { valeur: number; nb: number } | undefined {
   const v = mesures.map((m) => m[cle]).filter((x): x is number => x !== undefined)
   return v.length ? { valeur: v.reduce((a, b) => a + b, 0) / v.length, nb: v.length } : undefined
+}
+
+/** Marque (ou démarque) la nuit d'un jour comme « sans montre ». */
+export async function basculerSansMontre(date: string) {
+  const m = await db.mesures.get(date)
+  await enregistrerMesure({ ...m, date, sansMontre: !m?.sansMontre || undefined })
 }

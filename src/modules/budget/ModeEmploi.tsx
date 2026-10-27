@@ -31,6 +31,19 @@ export function ModeEmploiBudget() {
           <p>Dépense partagée à plusieurs : note seulement <B>ta part</B>.</p>
           <p>Toucher un mouvement permet de le <B>modifier</B>, le <B>supprimer</B> ou le <B>dupliquer</B> (pratique pour un achat qui revient avec un autre montant).</p>
         </Rubrique>
+        <Rubrique titre="🧾 Cas particuliers : la règle d'or">
+          <p><B>Note ta part, le jour où l'argent sort vraiment de ton compte.</B></p>
+          <p><B>Paiement en plusieurs fois (Klarna, 3×, 4×)</B> : une dépense à chaque prélèvement, avec son vrai montant et sa vraie date (pas le total le jour de l'achat).</p>
+          <p><B>Tu avances pour des amis</B> : note seulement ta part en dépense. Quand ils te remboursent, ne note rien : leur part n'a jamais été ta dépense. (Si tu as noté le total, note le remboursement en revenu « Remboursement ».)</p>
+          <p><B>Un ami t'avance</B> : rien le jour même ; ta part en dépense le jour où tu le rembourses.</p>
+          <p><B>Retrait d'espèces</B> : un virement courant → Espèces ; les achats en liquide se notent ensuite depuis « Espèces ».</p>
+          <p><B>Remboursement d'un achat (retour, Sécu)</B> : un revenu, ou supprime la dépense si c'est la même semaine.</p>
+        </Rubrique>
+        <Rubrique titre="🔍 Contrôle du dimanche">
+          <p>Chaque dimanche, une carte te demande le solde affiché par ta banque pour ton compte courant (et une notification à l'heure du rappel du soir).</p>
+          <p>Pile juste : parfait. Un écart : <B>« Saisir l'oubli »</B> ouvre la saisie avec le montant déjà rempli ; si tu ne retrouves pas, écris d'où il vient (frais bancaires, arrondi…) et <B>« Ajuster »</B> remet le solde au niveau de ta banque.</p>
+          <p>Fais-le après avoir noté tes dépenses du jour. Attention aux paiements encore « en cours » à la banque : ils sont parfois déjà retirés du solde affiché, parfois pas.</p>
+        </Rubrique>
         <Rubrique titre="🎯 Plafonds et jauges">
           <p>Dans « Mois », « Modifier les plafonds » : un plafond par catégorie. Change-les quand tu veux : les mois passés ne bougent pas, et le mois suivant reprend les mêmes.</p>
           <p>Jauge <span style={{ color: '#4ade80' }}>verte</span> sous 75 %, <span style={{ color: '#fb923c' }}>orange</span> jusqu'à 100 %, <span style={{ color: '#f87171' }}>rouge</span> au-delà. Un message t'avertit quand une catégorie atteint 90 % puis 100 %.</p>

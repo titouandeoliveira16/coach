@@ -15,7 +15,9 @@ Points décidés ou mis de côté, à reprendre au bon moment.
 
 ## Budget (construit le 26/10/2026 d'un bloc, à revoir ensemble)
 - Faire le tour du module avec Titouan après quelques jours d'utilisation : ce qui manque, ce qui gêne, ce qui est en trop.
-- Fonction serveur « rappels » à redéployer (saisie du soir, bilan le 1er, relevés des placements le 5 à 9 h, pesée du mardi à 7 h).
+- Fonction serveur « rappels » à redéployer (v0.42.0 : contrôle du solde le dimanche, pesée reportée au mercredi
+  après un gros lundi soir).
+- Contrôle du solde du courant chaque dimanche (choisi plutôt que le 15) : voir après un mois si la fréquence convient.
 - Pas de remise à zéro : livrets et placements remis à leurs valeurs du 1/10 (v0.38.0). Les livrets évoluent avec
   les virements, les placements avec les relevés du 5. Le 5/11 : premier relevé des placements. Premier bilan complet
   le 1/12 → vérifier qu'il est utile et lisible.
@@ -26,6 +28,8 @@ Points décidés ou mis de côté, à reprendre au bon moment.
 - Choix faits sans validation : raté = la notion repart de zéro ; hésitant = un rappel de plus le lendemain ;
   minuteur sans notification quand l'appli est fermée ; en vacances, nouvelle notion du lundi au samedi.
 - Option plus tard : notification des rappels du jour, export vers un calendrier.
+- **À retravailler ensemble (demande du 27/10)** : rappels par thème, et des cartes de révision (flash cards) pour
+  les citations, auteurs, dates. Revoir aussi la gestion d'une pile de rappels en retard après une coupure.
 
 ## Plus tard
 - Étape du Tour 2027 (11/07, Cluses – Les Saisies, 154 km, 4 850 m) : simple idée pour l'instant. Si elle devient
@@ -37,10 +41,14 @@ Points décidés ou mis de côté, à reprendre au bon moment.
 - Fonction « intervals » à redéployer (pas du jour pour la marche ; sans ça : métabolisme × 1,3, sans marche).
 - Zwift (repris dès le test du 1/11, ERG désactivé : Titouan suit les watts aux vitesses virtuelles) : envoi possible
   des séances de l’appli dans Zwift via le calendrier Intervals.icu, à proposer après le test. FTP Zwift = CP.
-- Capteur de puissance dehors : vrais kJ des sorties extérieures.
+- Capteur de puissance dehors : vrais kJ des sorties extérieures. D'ici là, Titouan ne fait que du home trainer.
+- Semaine chargée : le relecteur suggérait de la compter comme semaine allégée si celle-ci tombe dans les 2 semaines
+  qui suivent (pas fait, pour rester simple) ; à revoir si les semaines chargées deviennent fréquentes.
 - Autres modules : Nutrition (module à part, plus tard).
 - Module course à pied (aujourd'hui saisi depuis Campus Coach) et vélo généré selon les objectifs de saison : à repenser plus tard.
 
 ## Fait
+- 27/10/2026 (v0.42.0) : lignes d'explication sous le feu, nuit sans montre, case « pas de ceinture », semaine chargée
+  (+ retour après semaines très légères), pesée reportée au mercredi, contrôle du solde le dimanche, règle d'or du Budget.
 - 27/10/2026 : garde-fou course → vélo, FC max vue dans les séances, reprise après maladie, Z2 sur 2 sorties.
 - Rappels installés et testés le 23/10/2026 (matin 8 h 30, pesée le mardi).

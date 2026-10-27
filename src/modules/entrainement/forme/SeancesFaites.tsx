@@ -62,6 +62,7 @@ function SeanceFaite({ s }: { s: Seance }) {
           <button type="button" onClick={() => setEdition(true)} className="ml-2 text-texte-3 underline">modifier</button>
         </p>
       )}
+      {s.fcMoy !== undefined && (s.sport === 'velo' || s.sport === 'course') && <CaseCeinture s={s} />}
       {reserve && s.rpe !== undefined && !edition && (
         <div className="mt-2">
           <p className="text-sm">{reserve.question}</p>
@@ -76,6 +77,17 @@ function SeanceFaite({ s }: { s: Seance }) {
       )}
       <Link to={`/entrainement/seance/${s.id}`} className="mt-1 inline-block text-sm text-accent">Voir la séance ›</Link>
     </div>
+  )
+}
+
+/** « Pas de ceinture cardio » : la FC (au poignet) n'est ni jugée ni gardée comme FC max. */
+function CaseCeinture({ s }: { s: Seance }) {
+  return (
+    <label className="mt-2 flex items-center gap-2 text-sm text-texte-2">
+      <input type="checkbox" checked={!!s.sansCeinture} onChange={(e) => enregistrer(db.seances, { ...s, sansCeinture: e.target.checked || undefined })}
+        className="h-5 w-5 accent-[var(--color-accent)]" />
+      Pas de ceinture cardio (FC au poignet, pas jugée)
+    </label>
   )
 }
 

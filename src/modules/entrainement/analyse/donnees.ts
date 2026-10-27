@@ -3,7 +3,7 @@ import { aujourdhui, decalerJour, ecartJours } from '../../../core/dates'
 import { contrainte, modeleForme, monotonie, ratioPic, type PointForme } from '../../../metrics/charge'
 import { analyserVfc, type AnalyseVfc } from '../../../metrics/vfc'
 import { analyserSommeil, calculerSignal, type Signal } from '../../../metrics/signal'
-import { scoreRessenti } from '../forme/donnees'
+import { mesureUtile, scoreRessenti } from '../forme/donnees'
 import { chargeDe, chargerContexte, type Contexte } from '../seances/donnees'
 import type { MesureMatin, Seance } from '../types'
 
@@ -68,6 +68,7 @@ function signalDu(date: string, a: Omit<Analyse, 'signal' | 'signauxPrecedents' 
     ratioPic: a.joursHistorique >= 35 ? ratioPic(charge7, hebdo) : undefined,
     atlSurCtl: point && point.ctl > 0 ? point.atl / point.ctl : undefined,
     maladeOuDouleur: maladeDates.has(date),
+    sansMontre: matin?.sansMontre,
   })
   return { vfc, signal }
 }
@@ -76,7 +77,7 @@ function signalDu(date: string, a: Omit<Analyse, 'signal' | 'signauxPrecedents' 
 export async function analyser(date = aujourdhui()): Promise<Analyse> {
   const contexte = await chargerContexte()
   const seances = await db.seances.toArray()
-  const mesures = await db.mesures.where('date').between(decalerJour(date, -70), date, true, true).toArray()
+  const mesures = (await db.mesures.where('date').between(decalerJour(date, -70), date, true, true).toArray()).map(mesureUtile)
   const indispos = await db.indispos.toArray()
   const maladeDates = new Set(indispos.filter((i) => i.raison === 'Malade' || i.raison === 'Douleur / blessure').map((i) => i.date))
 

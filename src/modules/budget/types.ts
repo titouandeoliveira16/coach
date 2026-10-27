@@ -66,4 +66,7 @@ export interface Releve {
   compteId: string
   date: string
   valeur: number
+  /** Compte courant : ajustement après le contrôle du solde (écart en centimes = banque − appli) et sa justification */
+  ecart?: number
+  note?: string
 }

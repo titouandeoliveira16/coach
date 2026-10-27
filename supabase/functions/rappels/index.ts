@@ -134,6 +134,13 @@ async function ligne(userId: string, table: string, cle: string) {
   return data && !data.supprime ? (data.valeur as Record<string, unknown>) : undefined
 }
 
+/** "AAAA-MM-JJ" du lendemain. */
+function lendemain(date: string) {
+  const d = new Date(`${date}T12:00:00Z`)
+  d.setUTCDate(d.getUTCDate() + 1)
+  return d.toISOString().slice(0, 10)
+}
+
 /** Heure du rappel de pesée (avant le petit-déjeuner). */
 const HEURE_PESEE = '07:00'
 
@@ -174,8 +181,11 @@ async function envoyerRappels() {
       if (!matin || !NOTES.some((n) => matin[n] !== undefined))
         messages.push({ titre: '☀️ Ton matin', texte: 'Tes 5 notes du matin : 30 secondes pour avoir ton feu du jour.', tag: 'matin', url: './#/entrainement/aujourdhui' })
     }
-    // Pesée : les jours choisis, à partir de 7 h (avant le petit-déjeuner), jusqu'à midi
-    const jourPesee = (a.pesee_jours ?? []).includes(t.jour) || (a.pesee_dates ?? []).includes(t.date)
+    // Pesée : les jours choisis, à partir de 7 h (avant le petit-déjeuner), jusqu'à midi.
+    // Gros excès le lundi soir (réglage « pesee-reportee » écrit par l'appli) : la pesée du mardi passe au mercredi.
+    const mardiReporte = ((await ligne(a.user_id, 'reglages', 'pesee-reportee'))?.valeur as { mardi?: string } | undefined)?.mardi
+    const jourPesee = mardiReporte === t.date ? false
+      : (a.pesee_jours ?? []).includes(t.jour) || (a.pesee_dates ?? []).includes(t.date) || (!!mardiReporte && lendemain(mardiReporte) === t.date)
     if (jourPesee && t.heure >= HEURE_PESEE && t.heure < '12:00' && a.derniere_pesee !== t.date) {
       maj.derniere_pesee = t.date
       if (!(await ligne(a.user_id, 'pesees', t.date)))
@@ -184,10 +194,13 @@ async function envoyerRappels() {
 
     // Budget : rappel de saisie à l'heure choisie dans l'appli (réglage synchronisé « budget »).
     // L'appel a lieu tous les quarts d'heure : le rappel part dans le quart d'heure choisi, donc une seule fois par jour.
-    const budget = (await ligne(a.user_id, 'reglages', 'budget'))?.valeur as { rappelActif?: boolean; rappelHeure?: string; rappelReleves?: boolean } | undefined
+    const budget = (await ligne(a.user_id, 'reglages', 'budget'))?.valeur as { rappelActif?: boolean; rappelHeure?: string; rappelReleves?: boolean; rappelControle?: boolean; dernierControle?: string } | undefined
     // Relevés du mois : le 5 à 9 h (sauf si désactivé dans Budget → Réglages), pour qui utilise le Budget
     if (t.date.endsWith('-05') && dansLeQuart(t.heure, '09:00') && budget?.rappelReleves !== false && (await utiliseBudget(a.user_id)))
       messages.push({ titre: '📈 Relevés du mois', texte: '2 minutes : note la valeur de tes placements (PEA, CTO, Bricks).', tag: 'releves', url: './#/budget/patrimoine' })
+    // Dimanche, à l'heure du rappel du soir : contrôle du solde du compte courant (sauf si déjà fait aujourd'hui)
+    if (t.jour === 0 && budget?.rappelControle !== false && budget?.dernierControle !== t.date && dansLeQuart(t.heure, budget?.rappelHeure ?? '21:00') && (await utiliseBudget(a.user_id)))
+      messages.push({ titre: '🔍 Contrôle de la semaine', texte: "1 minute : compare le solde de ton compte courant avec celui de ta banque.", tag: 'controle', url: './#/budget/mois' })
     if (budget?.rappelActif && dansLeQuart(t.heure, budget.rappelHeure ?? '21:00')) {
       if (t.date.endsWith('-01'))
         messages.push({ titre: '📊 Bilan du mois', texte: 'Ton bilan du mois dernier est prêt. Pense aussi aux relevés de tes placements.', tag: 'bilan', url: './#/budget/mois' })

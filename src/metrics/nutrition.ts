@@ -156,6 +156,8 @@ export function tendancePoids(pesees: { date: string; poidsKg: number }[], jour:
 
 /** Étalement d'un excès : au plus 250 kcal en moins par jour facile, sur les 7 jours qui suivent. */
 export const ETALEMENT_MAX_JOUR = 250
+/** Excès qui compte (kcal au-dessus du besoin) : proposition d'étalement, pesée du mardi reportée */
+export const SEUIL_EXCES = 500
 
 /**
  * Réduction de chaque jour pour étaler des excès : on prend jusqu'à 250 kcal par jour facile

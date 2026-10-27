@@ -4,7 +4,9 @@ import { Link } from 'react-router-dom'
 import { db } from '../../../core/db'
 import { aujourdhui, depuisJour } from '../../../core/dates'
 import { enregistrer, supprimer } from '../../../core/stockage'
+import { Aide } from '../../../core/ui/Aide'
 import { Carte } from '../../../core/ui/Carte'
+import { AIDES } from '../aides'
 import { analyser } from '../analyse/donnees'
 import { adapterDuJour } from '../plan/adaptation'
 import { JOURS_REPRISE, annulerReport, repriseApresMaladie, reporterIntensite } from '../plan/imprevus'
@@ -12,6 +14,7 @@ import { estIntensite } from '../plan/programme'
 import { Deroule } from '../plan/Deroule'
 import { NutritionSeance } from '../plan/NutritionSeance'
 import { iconeSport } from '../sports'
+import { basculerSansMontre } from './donnees'
 import { SeancesFaites } from './SeancesFaites'
 import type { Raison } from '../types'
 
@@ -29,6 +32,7 @@ export function CarteAujourdhui() {
   const indispo = useLiveQuery(() => db.indispos.get(jour), [jour])
   // Séance d'intensité reportée aujourd'hui à cause du feu rouge
   const reportee = useLiveQuery(async () => (await db.prevues.toArray()).find((p) => p.reporteeDu === jour) ?? null, [jour])
+  const mesure = useLiveQuery(() => db.mesures.get(jour), [jour])
   const faites = useLiveQuery(async () => (await db.seances.where('date').equals(jour).count()) > 0, [jour])
 
   // On garde une trace du signal du jour (sans écraser un forçage)
@@ -72,7 +76,17 @@ export function CarteAujourdhui() {
         </div>
       </div>
 
-      <p className="mt-2 text-sm text-texte-2">{signal.raison}</p>
+      <ul className="mt-2 space-y-0.5 text-sm">
+        {signal.details.map((x) => (
+          <li key={x.texte} className={x.etat === 'alerte' ? 'text-[#fb923c]' : x.etat === 'info' ? 'text-texte-3' : 'text-texte-2'}>
+            <span className="mr-1.5">{x.icone}</span>{x.texte}
+          </li>
+        ))}
+      </ul>
+      <button type="button" onClick={() => basculerSansMontre(jour)} className="mt-1.5 text-xs text-texte-3 underline">
+        {mesure?.sansMontre ? '⌚ Annuler « nuit sans montre »' : '⌚ J’ai dormi sans ma montre (ou pas toute la nuit)'}
+      </button>
+      <Aide titre="Nuit sans montre" texte={AIDES.nuitSansMontre} />
       {reprise ? (
         <p className="mt-2 rounded-xl bg-surface-2 p-3 text-sm">
           💪 <b>Reprise après maladie (jour {reprise}/{JOURS_REPRISE})</b> : pas d'intensité, sorties très faciles de 45 min au plus. L'intensité revient ensuite, si le feu est vert.

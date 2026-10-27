@@ -6,8 +6,9 @@ import { Aide } from '../../../core/ui/Aide'
 import { Carte } from '../../../core/ui/Carte'
 import { BarreRepartition, Camembert } from '../../../core/ui/graphiques'
 import { Bilan } from '../Bilan'
+import { CarteControle } from '../CarteControle'
 import {
-  couleurJauge, debutSuivi, decalerMois, depensesParCategorie, dernierJour, moisDe, nomMois, patrimoineAu, plafondDe,
+  controleAFaire, couleurJauge, debutSuivi, decalerMois, depensesParCategorie, dernierJour, moisDe, nomMois, patrimoineAu, plafondDe,
   premierJour, previsionFinDeMois, repartition503020, resumeMois, soldeAu,
 } from '../calculs'
 import { DetailMouvement } from '../DetailMouvement'
@@ -60,6 +61,8 @@ export function Mois() {
           <button type="button" onClick={() => modifierReglages({ bilanVu: precedent })} className="mt-3 w-full rounded-xl bg-surface-2 py-2.5 font-semibold">C'est noté</button>
         </Carte>
       )}
+
+      {enCours && reglages.rappelControle !== false && controleAFaire(reglages.dernierControle, jour) && <CarteControle d={d} />}
 
       {aReleverCeMois.length > 0 && (
         <Link to="/budget/patrimoine" className="block rounded-2xl border border-accent bg-surface p-4 active:scale-[0.98]">

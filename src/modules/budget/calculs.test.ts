@@ -112,3 +112,14 @@ it('format des euros à la française', () => {
   expect(formatEuros(123456).replace(/\s/g, ' ')).toBe('1 234,56 €')
   expect(formatEuros(500, { signe: true })).toMatch(/^\+5,00/)
 })
+
+describe('contrôle du dimanche', () => {
+  it('à faire dès le dimanche, jusqu’à ce qu’il soit fait', async () => {
+    const { controleAFaire } = await import('./calculs')
+    expect(controleAFaire(undefined, '2026-11-01')).toBe(true)
+    expect(controleAFaire('2026-11-01', '2026-11-01')).toBe(false)
+    expect(controleAFaire('2026-11-01', '2026-11-07')).toBe(false)
+    expect(controleAFaire('2026-11-01', '2026-11-08')).toBe(true)
+    expect(controleAFaire('2026-10-25', '2026-11-03')).toBe(true)
+  })
+})

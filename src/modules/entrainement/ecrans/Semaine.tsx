@@ -13,6 +13,7 @@ import { CarteBilan } from '../plan/CarteBilan'
 import { Deroule } from '../plan/Deroule'
 import { NutritionSeance } from '../plan/NutritionSeance'
 import { joursPanneVelo } from '../plan/imprevus'
+import { annulerSemaineChargee, lireSemaineChargee, passerSemaineChargee } from '../plan/semaineChargee'
 import { FormulairePrevue } from '../plan/FormulairePrevue'
 import { changerDeJour, chargesSemaine, declarerNonFaite, joursDe, supprimerPrevue } from '../plan/donnees'
 import { alertesCumul, estIntensite, genererSemaineVelo, lireMeta, noterResultat } from '../plan/programme'
@@ -73,6 +74,8 @@ export function Semaine() {
         </Carte>
       )}
 
+      {decalerJour(lundi, 6) >= aujourdhui() && <CarteChargee lundi={lundi} deps={[prevues]} onMessage={setMessage} />}
+
       <Alertes lundi={lundi} deps={[prevues, seances]} />
 
       {jours.map((d) => {
@@ -124,6 +127,23 @@ export function Semaine() {
       )}
       {choisie && <DetailSeance p={choisie} jours={jours} prevues={prevues} onFermer={() => setChoisie(null)} onMessage={setMessage} />}
     </div>
+  )
+}
+
+/** Semaine chargée : garder le minimum (séance clé + une facile courte), ou annuler. */
+function CarteChargee({ lundi, deps, onMessage }: { lundi: string; deps: unknown[]; onMessage: (m: string[]) => void }) {
+  const chargee = useLiveQuery(async () => (await lireSemaineChargee(lundi)) ?? null, [lundi, ...deps])
+  if (chargee === undefined) return null
+  return chargee ? (
+    <Carte>
+      <p className="text-sm">📚 <b>Semaine chargée</b> : on garde le minimum, sans rattraper.<Aide titre="Semaine chargée" texte={AIDES.semaineChargee} /></p>
+      <button type="button" onClick={() => annulerSemaineChargee(lundi)} className="mt-1 text-sm text-texte-3 underline">Annuler : remettre la semaine normale</button>
+    </Carte>
+  ) : (
+    <button type="button" onClick={async () => onMessage(await passerSemaineChargee(lundi))}
+      className="w-full rounded-2xl border border-dashed border-bordure py-3 text-sm font-semibold text-texte-2">
+      📚 Semaine chargée ? Garder le minimum
+    </button>
   )
 }
 

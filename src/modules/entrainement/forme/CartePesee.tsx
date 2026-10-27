@@ -1,17 +1,19 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
-import { aujourdhui, jourCourt } from '../../../core/dates'
+import { aujourdhui, decalerJour, jourCourt } from '../../../core/dates'
 import { formatNombre } from '../../../core/format'
 import { useProfil } from '../../../core/profil'
 import { Bouton } from '../../../core/ui/Bouton'
 import { Carte } from '../../../core/ui/Carte'
 import { ChampNombre } from '../../../core/ui/ChampNombre'
 import { effacerPesee, enregistrerPesee, peseesValides } from './pesees'
+import { lirePeseeReportee } from './repas'
 
 /** Poids : une ligne avec la dernière pesée ; on se pèse quand on veut (toucher pour saisir ou effacer). */
 export function CartePesee() {
   const [profil] = useProfil()
   const dernieres = useLiveQuery(peseesValides)
+  const reportee = useLiveQuery(lirePeseeReportee)
   const [poids, setPoids] = useState<number>()
   const [ouverte, setOuverte] = useState(false)
 
@@ -22,6 +24,7 @@ export function CartePesee() {
 
   if (!ouverte) {
     return (
+      <>
       <button type="button" onClick={() => setOuverte(true)} className="flex w-full items-center justify-between rounded-2xl border border-bordure bg-surface px-4 py-3">
         <span className="text-texte-2">⚖️ Poids</span>
         <span>
@@ -30,6 +33,9 @@ export function CartePesee() {
           {derniere && <span className="ml-2 text-xs text-texte-3">{jourCourt(derniere.date)}</span>}
         </span>
       </button>
+      {reportee === aujourdhui() && !duJour && <p className="mt-1 px-1 text-xs text-texte-3">⚖️ Gros repas hier soir : pesée reportée à demain matin (le poids d'aujourd'hui serait faussé par l'eau et le sel).</p>}
+      {reportee && decalerJour(reportee, 1) === aujourdhui() && !duJour && <p className="mt-1 px-1 text-xs text-texte-3">⚖️ C'est ce matin, ta pesée de la semaine (reportée d'hier).</p>}
+      </>
     )
   }
 
