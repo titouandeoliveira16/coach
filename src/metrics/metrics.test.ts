@@ -174,6 +174,16 @@ describe('signal', () => {
     expect(s.alertes.some((a) => a.code === 'saturation')).toBe(true)
   })
 
+  it('lignes d’explication sous le feu, sans chiffres', () => {
+    const s = calculerSignal({ vfc: { ...vfcOk, ln7: 3.9 }, ressenti: 4, sommeilH: { nuit: 5.5 } })
+    expect(s.details.find((d) => d.icone === '💓')).toMatchObject({ etat: 'alerte' })
+    expect(s.details.find((d) => d.icone === '😴')?.texte).toBe('Nuit courte')
+    expect(s.details.find((d) => d.icone === '🙂')).toMatchObject({ etat: 'ok' })
+    expect(s.details.some((d) => /\d/.test(d.texte))).toBe(false)
+    const sans = calculerSignal({ vfc: { ...vfcOk, lnJour: undefined }, sansMontre: true })
+    expect(sans.details[0].texte).toMatch(/sans montre/)
+  })
+
   it('calibration signalée tant que la base VFC manque', () => {
     expect(calculerSignal({ vfc: { nBase: 3 } }).calibrationVfc).toBe(true)
   })

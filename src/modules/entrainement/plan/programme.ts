@@ -3,7 +3,7 @@ import { aujourdhui, decalerJour, NOMS_JOURS, depuisJour } from '../../../core/d
 import { enregistrer, supprimer } from '../../../core/stockage'
 import {
   ajustementZ2, budgetSemaine, formatDe, gardeFouCourse, NOMS_FAMILLES, plafondsReprise, projeterSaison, choisirFormat, construireIntervalles, construireTest, construireZ2, estSemaineAllegee, etatProgression,
-  minutesPourKj, NOMS_PHASES, palierPossible, phaseDe, placer, SPRINTS, type BilanSemaine, type Famille, type HistoIntensite,
+  minutesPourKj, NOMS_PHASES, palierPossible, phaseDe, placer, retourDeCoupure, semainesChamboulees, SPRINTS, type BilanSemaine, type Famille, type HistoIntensite,
   type SeanceConstruite,
 } from '../../../metrics/programme'
 import { programmeDe } from '../reglagesEntrainement'
@@ -14,6 +14,7 @@ import { chargesHebdo } from '../analyse/donnees'
 import { hausseCharge } from '../../../metrics/planif'
 import { ratioPic } from '../../../metrics/charge'
 import { joursPanneVelo } from './imprevus'
+import { lireSemaineChargee, passerSemaineChargee } from './semaineChargee'
 
 /** Familles de séances d'intensité (hors Z2 et test). */
 const INTENSITES: Famille[] = ['vo2-courts', 'vo2-longs', 'seuil', 'seuil-variable', 'sweet-spot', 'tempo']
@@ -73,7 +74,7 @@ export async function z2Actuel() {
   // Chaque sortie Z2 donne un signal (+1 facile et stable, −1 trop dur) ; on ne bouge de ±5 W
   // que lorsque 2 sorties de suite vont dans le même sens (une sortie isolée est trop bruitée)
   const signaux = seances.sort((a, b) => a.date.localeCompare(b.date)).flatMap((s) => {
-    if (s.decouplage === undefined || s.rpe === undefined) return []
+    if (s.decouplage === undefined || s.rpe === undefined || s.sansCeinture) return []
     if (s.decouplage < 5 && s.rpe <= 3) return [1]
     if (s.decouplage > 5 || s.rpe > 3) return [-1]
     return []
@@ -87,7 +88,21 @@ export async function z2Actuel() {
 
 /** Bilan de la semaine précédente (si elle a été générée). */
 async function bilanPrecedent(lundi: string): Promise<BilanSemaine | undefined> {
-  const precedent = decalerJour(lundi, -7)
+  return bilanDe(decalerJour(lundi, -7))
+}
+
+/** Part du budget kJ réalisée, semaine par semaine, en remontant depuis la semaine d'avant `lundi` (6 au plus). */
+async function partsRealisees(lundi: string) {
+  const parts: (number | undefined)[] = []
+  for (let i = 1; i <= 6; i++) {
+    const l = decalerJour(lundi, -7 * i)
+    const [meta, b] = [await lireMeta(l), await bilanDe(l)]
+    parts.push(meta && b && meta.budget ? b.kjRealises / meta.budget : undefined)
+  }
+  return parts
+}
+
+async function bilanDe(precedent: string): Promise<BilanSemaine | undefined> {
   const meta = await lireMeta(precedent)
   if (!meta) return undefined
   const fin = decalerJour(precedent, 6)
@@ -102,6 +117,7 @@ async function bilanPrecedent(lundi: string): Promise<BilanSemaine | undefined> 
     rouges: decisions.filter((d) => d.couleur === 'rouge').length,
     oranges: decisions.filter((d) => d.couleur === 'orange').length,
     allegee: meta.allegee,
+    chargee: !!(await lireSemaineChargee(precedent)),
   }
 }
 
@@ -172,8 +188,10 @@ export async function genererSemaineVelo(lundi: string) {
   const raisonAllegee = course ? `semaine de ta course (${course.nom})` : 'semaine allégée (1 sur 4)'
   const { w: z2W } = await z2Actuel()
   const maxDuJour = (d: string) => (roles[semaine.indexOf(d)] === 'velo-long' ? prog.maxLongMin : prog.maxSemaineMin)
-  // Reprise progressive : durées des séances Z2 plafonnées les premières semaines
-  const cap = plafondsReprise(phase.type === 'reprise' ? nSemaine : undefined, prog.maxSemaineMin, prog.maxLongMin)
+  // Reprise progressive : durées des séances Z2 plafonnées les premières semaines (phase de reprise, ou retour après 3 semaines très légères)
+  const parts = await partsRealisees(lundi)
+  const coupure = retourDeCoupure(semainesChamboulees(parts), semainesChamboulees(parts.slice(1)))
+  const cap = plafondsReprise(phase.type === 'reprise' ? nSemaine : coupure.semaineReprise, prog.maxSemaineMin, prog.maxLongMin)
   const phrases: string[] = []
 
   // Séance d'intensité
@@ -203,7 +221,7 @@ export async function genererSemaineVelo(lundi: string) {
   const kjIntensite = intensite?.kj ?? 0
   const nominal = kjIntensite + construireZ2(Math.min(60, cap.z2), z2W).kj + construireZ2(Math.min(100, cap.long), z2W).kj
   const plafond = kjIntensite + roles.filter((x) => x === 'velo-z2').length * construireZ2(cap.z2, z2W).kj + construireZ2(cap.long, z2W).kj
-  const b = await avecGardeFou(budgetSemaine(await bilanPrecedent(lundi), nominal, plafond, allegee, raisonAllegee), lundi)
+  const b = await avecGardeFou(avecCoupure(budgetSemaine(await bilanPrecedent(lundi), nominal, plafond, allegee, raisonAllegee), coupure), lundi)
 
   // Répartition du reste du budget en Z2 : 60 % pour la sortie longue
   const kjFaits = seances.filter((s) => s.sport === 'velo' && dansSemaine(s.date)).reduce((a, s) => a + (s.kj ?? 0), 0)
@@ -237,6 +255,8 @@ export async function genererSemaineVelo(lundi: string) {
     semaineDansPhase: nSemaine + 1, z2W, genereeLe: new Date().toISOString(),
   }
   await enregistrer(db.reglages, { id: cleSemaine(lundi), valeur: meta })
+  // Semaine chargée déjà déclarée : on garde le minimum, même après un recalcul
+  if (await lireSemaineChargee(lundi)) await passerSemaineChargee(lundi)
 
   const total = kjFaits + kjAutresPrevus + aCreer.reduce((a, [, s]) => a + s.kj, 0)
   phrases.unshift(
@@ -438,7 +458,7 @@ export async function bilanDimanche(lundi: string) {
 async function signauxFc(seances: Seance[]) {
   const c = await chargerContexte()
   const faciles = seances.filter((s) => (s.sport === 'velo' || s.sport === 'course') && domaineDe(s, c.bornes) === 'basse')
-  const derive = faciles.filter((s) => (s.decouplage ?? 0) > 5).length
+  const derive = faciles.filter((s) => !s.sansCeinture && (s.decouplage ?? 0) > 5).length
   const dures = faciles.filter((s) => s.reserve === 'non').length
   const r: string[] = []
   if (derive >= 2) r.push(`❤️ ${derive} sorties faciles avec une FC qui dérive (> 5 %) : fatigue, chaleur ou hydratation ? À croiser avec ta VFC`)
@@ -451,6 +471,12 @@ async function signauxFc(seances: Seance[]) {
  * précédentes, et pic de charge totale sur les 7 derniers jours. Il faut 35 jours d'historique.
  * Seul le budget de la semaine baisse (pas la base) : la semaine d'après repart normalement.
  */
+/** Retour après des semaines chamboulées : budget −10 % (la référence aussi, pour repartir plus bas). */
+function avecCoupure<B extends { budgetRef: number; budget: number; raison: string }>(b: B, c: ReturnType<typeof retourDeCoupure>): B {
+  if (!c.raison) return b
+  return { ...b, budgetRef: Math.round(b.budgetRef * c.facteur), budget: Math.round(b.budget * c.facteur), raison: `${b.raison} · ${c.raison}` }
+}
+
 async function avecGardeFou<B extends { budget: number; raison: string }>(b: B, lundi: string): Promise<B> {
   const c = await chargerContexte()
   const seances = await db.seances.toArray()

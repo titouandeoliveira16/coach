@@ -67,6 +67,8 @@ export interface EntreeSignal {
   /** ATL / CTL (bloc chargé si > 1,1) */
   atlSurCtl?: number
   maladeOuDouleur?: boolean
+  /** Nuit marquée « sans montre » : VFC, FC de repos et sommeil de la nuit ignorés */
+  sansMontre?: boolean
 }
 
 export interface Alerte {
@@ -74,6 +76,13 @@ export interface Alerte {
   texte: string
   /** false = information seulement (ne compte pas dans le nombre d'indicateurs) */
   compte: boolean
+}
+
+/** Une ligne d'explication sous le feu, en mots simples. */
+export interface Detail {
+  icone: string
+  texte: string
+  etat: 'ok' | 'alerte' | 'info'
 }
 
 export interface Signal {
@@ -84,6 +93,8 @@ export interface Signal {
   calibrationVfc: boolean
   /** Phrase de synthèse */
   raison: string
+  /** Une ligne par indicateur, sans chiffres */
+  details: Detail[]
 }
 
 const f1 = (n: number) => n.toLocaleString('fr-FR', { maximumFractionDigits: 1 })
@@ -144,7 +155,50 @@ export function calculerSignal(e: EntreeSignal, s: Seuils = SEUILS_DEFAUT): Sign
         : 'Tous tes indicateurs sont dans ta zone normale.'
       : alertes.map((a) => a.texte).join(' · ')
 
-  return { couleur, recommandation, alertes, calibrationVfc, raison }
+  return { couleur, recommandation, alertes, calibrationVfc, raison, details: detailsSignal(e, alertes, calibrationVfc, s) }
+}
+
+/** Lignes d'explication du feu : chaque indicateur, ce qu'il dit, en mots simples. */
+function detailsSignal(e: EntreeSignal, alertes: Alerte[], calibration: boolean, s: Seuils): Detail[] {
+  const a = (code: Alerte['code']) => alertes.some((x) => x.code === code)
+  const d: Detail[] = []
+  const ok = (icone: string, texte: string) => d.push({ icone, texte, etat: 'ok' })
+  const alerte = (icone: string, texte: string) => d.push({ icone, texte, etat: 'alerte' })
+  const info = (icone: string, texte: string) => d.push({ icone, texte, etat: 'info' })
+
+  if (a('malade')) alerte('🤒', 'Malade ou douleur signalée : le corps passe avant le plan')
+
+  // Récupération (VFC)
+  if (e.sansMontre) info('⌚', 'Nuit sans montre : on se fie aux nuits d’avant')
+  else if (e.vfc.lnJour === undefined) info('⌚', 'Mesure de la nuit pas (encore) arrivée : on se fie aux nuits d’avant')
+  if (a('vfc')) alerte('💓', 'Récupération plus basse que d’habitude sur la semaine')
+  else if (calibration) info('💓', 'Récupération : l’appli apprend encore ta normale')
+  else if (e.vfc.ln7 !== undefined) ok('💓', 'Récupération normale')
+  if (a('cv')) info('〰️', 'Récupération irrégulière cette semaine (pour info)')
+  if (a('saturation')) info('🔋', 'Récupération très haute en plein bloc chargé : écoute tes sensations')
+
+  // Pouls au repos
+  if (a('fc-repos')) alerte('❤️', 'Pouls au repos plus haut que d’habitude')
+  else if (e.vfc.fcRepos7 !== undefined && e.vfc.fcReposBase !== undefined) ok('❤️', 'Pouls au repos normal')
+
+  // Sommeil
+  const h = e.sommeilH
+  const dette = h?.moyenne7 !== undefined && (h.moyenne7 < s.moyenne7MinH || (h.moyenne30 !== undefined && h.moyenne7 < h.moyenne30 - s.ecartPersoH))
+  if (h?.nuit !== undefined && h.nuit < s.nuitMinH) alerte('😴', dette ? 'Nuit courte, et manque de sommeil sur la semaine' : 'Nuit courte')
+  else if (dette) alerte('😴', 'Manque de sommeil accumulé sur la semaine')
+  else if (e.sommeil !== undefined && e.sommeil <= s.sommeilMax) alerte('😴', 'Mauvaise nuit d’après toi')
+  else if (h?.nuit !== undefined || h?.moyenne7 !== undefined) ok('😴', 'Sommeil suffisant')
+
+  // Ressenti du matin
+  if (e.ressenti === undefined) info('🙂', 'Ressenti du matin pas encore noté')
+  else if (e.ressenti < s.ressentiMin) alerte('🙂', 'Ressenti en baisse ce matin')
+  else ok('🙂', 'Bon ressenti ce matin')
+
+  // Charge d'entraînement
+  if (a('pic')) alerte('🏋️', 'Hausse brutale de ta charge d’entraînement')
+  if (a('tsb')) alerte('🏋️', 'Fatigue d’entraînement accumulée')
+  if (!a('pic') && !a('tsb') && (e.tsb !== undefined || e.ratioPic !== undefined)) ok('🏋️', 'Charge d’entraînement bien dosée')
+  return d
 }
 
 /** Ce qu'il faut faire de la séance prévue selon le signal. */

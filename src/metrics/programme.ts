@@ -390,6 +390,8 @@ export interface BilanSemaine {
   rouges: number
   oranges: number
   allegee: boolean
+  /** Semaine passée en « semaine chargée » : on ne rattrape pas, le budget reste stable */
+  chargee?: boolean
 }
 
 /**
@@ -411,6 +413,9 @@ export function budgetSemaine(prec: BilanSemaine | undefined, nominal: number, p
     if (prec.rouges >= 2) {
       ref = prec.budgetRef * 0.85
       raison = `−15 % : ${prec.rouges} jours rouges la semaine dernière`
+    } else if (prec.chargee) {
+      ref = prec.budgetRef
+      raison = 'Stable : semaine chargée la semaine dernière, on ne rattrape pas'
     } else if (part < 0.9) {
       ref = prec.budgetRef
       raison = `Stable : budget de la semaine dernière réalisé à ${Math.round(part * 100)} % (validé à partir de 90 %)`
@@ -436,6 +441,33 @@ export function budgetSemaine(prec: BilanSemaine | undefined, nominal: number, p
 export function plafondsReprise(n: number | undefined, maxSemaine: number, maxLong: number) {
   if (n === undefined) return { z2: maxSemaine, long: maxLong }
   return { z2: Math.min(maxSemaine, 50 + 5 * n), long: Math.min(maxLong, 75 + 10 * n) }
+}
+
+/** Semaine « chamboulée » : moins de la moitié du budget kJ réalisé. */
+export const SEUIL_CHAMBOULEE = 0.5
+
+/** Nombre de semaines chamboulées de suite, en partant de la plus récente (`parts` : réalisé / budget, la plus récente en premier). */
+export function semainesChamboulees(parts: (number | undefined)[]) {
+  let n = 0
+  for (const x of parts) {
+    if (x === undefined || x >= SEUIL_CHAMBOULEE) break
+    n++
+  }
+  return n
+}
+
+/**
+ * Retour après des semaines chamboulées (choix d'entraîneur, relu le 27/10/2026) :
+ *  - 1 semaine : rien de plus (budget stable, déjà prévu) ;
+ *  - 2 semaines de suite : budget −10 % pour éviter un pic de charge à la reprise ;
+ *  - 3 semaines ou plus : durées des Z2 plafonnées comme en reprise (semaines 1 et 2), sans relancer toute la phase.
+ * `n` : semaines chamboulées juste avant cette semaine ; `nAvant` : celles juste avant la semaine dernière.
+ */
+export function retourDeCoupure(n: number, nAvant: number): { facteur: number; semaineReprise?: number; raison?: string } {
+  if (n >= 3) return { facteur: 1, semaineReprise: 0, raison: `${n} semaines très légères de suite : reprise en douceur (1/2)` }
+  if (n === 0 && nAvant >= 3) return { facteur: 1, semaineReprise: 1, raison: 'reprise en douceur (2/2)' }
+  if (n === 2) return { facteur: 0.9, raison: '−10 % : 2 semaines très légères de suite, on repart un peu plus bas' }
+  return { facteur: 1 }
 }
 
 /** Minutes de Z2 pour produire un travail donné. */

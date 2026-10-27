@@ -31,6 +31,7 @@ export function categorieDe(s: Seance, prevue: SeancePrevue | undefined, domaine
 }
 
 export function controleFc(s: Seance, categorie: Categorie, fcMax: number): Verdict | undefined {
+  if (s.sansCeinture) return { couleur: 'gris', texte: 'Sans ceinture cardio : FC non jugée, verdict sur ton ressenti.' }
   const sansFc = !s.fcMoy
   if (categorie === 'facile') {
     if (sansFc) return { couleur: 'gris', texte: 'Pas de FC sur cette séance : verdict sur ton ressenti.' }

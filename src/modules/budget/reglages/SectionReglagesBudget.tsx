@@ -45,6 +45,10 @@ export function SectionReglagesBudget() {
           <span className="text-texte-2">Relevés des placements le 5 du mois à 9 h</span>
           <input type="checkbox" checked={r.rappelReleves !== false} onChange={(e) => modifier({ rappelReleves: e.target.checked })} className="h-6 w-6 accent-[#facc15]" />
         </label>
+        <label className="flex items-center justify-between py-1.5">
+          <span className="text-texte-2">Contrôle du solde du compte courant le dimanche</span>
+          <input type="checkbox" checked={r.rappelControle !== false} onChange={(e) => modifier({ rappelControle: e.target.checked })} className="h-6 w-6 shrink-0 accent-[#facc15]" />
+        </label>
         <p className="text-xs text-texte-3">Pas de rappel si tu as déjà saisi quelque chose ce jour-là. Le 1er du mois, tu reçois aussi l'annonce de ton bilan. Les notifications doivent être activées une fois pour toute l'appli : Accueil → ⚙️.</p>
       </Carte>
 

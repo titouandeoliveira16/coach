@@ -9,6 +9,7 @@ import { DUREES_CP } from '../../../metrics/puissance'
 import { programmeDe } from '../reglagesEntrainement'
 import type { ReglagesEntrainement } from '../types'
 import { analyser, chargesParJour } from './donnees'
+import { mesureUtile } from '../forme/donnees'
 
 const somme = (x: number[]) => x.reduce((a, b) => a + b, 0)
 
@@ -65,7 +66,7 @@ export async function donneesProgres() {
   const forme = modeleForme(chargesParJour(seances, c, debut, jour)).filter((p) => p.date > decalerJour(jour, -90))
 
   // VFC et FC de repos sur 60 jours
-  const mesures = await db.mesures.where('date').between(decalerJour(jour, -130), jour, true, true).toArray()
+  const mesures = (await db.mesures.where('date').between(decalerJour(jour, -130), jour, true, true).toArray()).map(mesureUtile)
   const parDate = new Map(mesures.map((m) => [m.date, m]))
   const jv = mesures.map((m) => ({ date: m.date, rmssd: m.vfcMs, fcRepos: m.fcRepos }))
   const physio = Array.from({ length: 60 }, (_, i) => decalerJour(jour, -59 + i)).map((d) => {

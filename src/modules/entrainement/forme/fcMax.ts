@@ -11,7 +11,7 @@ const FC_IMPOSSIBLE = 225
 export async function fcMaxObservee() {
   const depuis = decalerJour(aujourdhui(), -365)
   const l = (await db.seances.where('date').above(depuis).toArray())
-    .filter((s) => (s.sport === 'velo' || s.sport === 'course') && s.fcMax && s.fcMax < FC_IMPOSSIBLE)
+    .filter((s) => (s.sport === 'velo' || s.sport === 'course') && !s.sansCeinture && s.fcMax && s.fcMax < FC_IMPOSSIBLE)
     .sort((a, b) => b.fcMax! - a.fcMax!)
   if (!l.length) return undefined
   const [premiere, deuxieme] = l

@@ -27,6 +27,10 @@ export interface ReglagesBudget {
   rappelHeure: string
   /** Rappel des relevés le 5 du mois (par défaut : oui) */
   rappelReleves?: boolean
+  /** Contrôle du solde du compte courant chaque dimanche (par défaut : oui) */
+  rappelControle?: boolean
+  /** Jour du dernier contrôle du solde fait */
+  dernierControle?: string
   /** Dernier bilan mensuel fermé ("2026-10") */
   bilanVu?: string
   /** Mises à jour uniques déjà faites */
@@ -128,6 +132,6 @@ export const enregistrerCategorie = (c: Categorie) => enregistrer(db.categories,
 export const fixerPlafond = (categorieId: string, mois: string, montant: number | null) =>
   enregistrer(db.plafonds, { id: `${categorieId}|${mois}`, categorieId, mois, montant } satisfies Plafond)
 
-export const enregistrerReleve = (compteId: string, date: string, valeur: number) =>
-  enregistrer(db.releves, { id: `${compteId}|${date}`, compteId, date, valeur } satisfies Releve)
+export const enregistrerReleve = (compteId: string, date: string, valeur: number, ajustement?: Pick<Releve, 'ecart' | 'note'>) =>
+  enregistrer(db.releves, { id: `${compteId}|${date}`, compteId, date, valeur, ...ajustement } satisfies Releve)
 export const supprimerReleve = (id: string) => supprimer(db.releves, id)

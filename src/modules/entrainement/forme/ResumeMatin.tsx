@@ -8,7 +8,7 @@ import { AIDES } from '../aides'
 import { COULEURS_NOTE } from '../../../core/ui/ChoixNote'
 import { formatNombre } from '../../../core/format'
 import type { MesureMatin } from '../types'
-import { QUESTIONS } from './donnees'
+import { mesureUtile, QUESTIONS } from './donnees'
 
 /** Résumé de la mesure du jour, une fois enregistrée. */
 export function ResumeMatin({ mesure, onModifier }: { mesure: MesureMatin; onModifier: () => void }) {
@@ -58,7 +58,7 @@ function Chiffre({ libelle, valeur, unite, decimales = 0 }: { libelle: string; v
 /** Sommeil : moyenne 7 jours, comparée au repère (8 h, ou ta moyenne habituelle si elle est plus haute). */
 function LigneSommeil({ date }: { date: string }) {
   const s = useLiveQuery(async () => {
-    const m = await db.mesures.where('date').between(decalerJour(date, -40), date, true, true).toArray()
+    const m = (await db.mesures.where('date').between(decalerJour(date, -40), date, true, true).toArray()).map(mesureUtile)
     return analyserSommeil(m.map((x) => ({ date: x.date, h: x.sommeilH })), date)
   }, [date])
   if (!s?.moyenne7) return null

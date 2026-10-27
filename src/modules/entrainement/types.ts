@@ -36,6 +36,8 @@ export interface MesureMatin {
   motivation?: Note
   /** 5 = serein, 1 = très stressé */
   serenite?: Note
+  /** Nuit sans montre (ou portée en partie) : VFC, FC de repos et sommeil de cette nuit sont ignorés */
+  sansMontre?: boolean
   modifieLe: string
 }
 
@@ -114,7 +116,7 @@ export const TYPES_COURSE = {
 export type TypeCourse = keyof typeof TYPES_COURSE
 
 /** Raisons d'indisponibilité ou de séance non faite. */
-export const RAISONS = ['Boulot', 'Cours / fac', 'Stage', 'Fatigue', 'Malade', 'Douleur / blessure', 'Matériel', 'Météo', 'Perso'] as const
+export const RAISONS = ['Boulot', 'Cours / fac', 'Stage', 'Fatigue', 'Malade', 'Douleur / blessure', 'Matériel', 'Météo', 'Perso', 'Semaine chargée'] as const
 export type Raison = (typeof RAISONS)[number]
 
 /** Une séance réalisée (saisie, importée d'un .FIT ou d'Intervals.icu). */
@@ -169,6 +171,8 @@ export interface Seance {
   tempsFc90?: number
   /** « En réserve ? » après le RPE : ok (facile tenable 1-2 h / 0-1 répétition en réserve), moyen, non */
   reserve?: 'ok' | 'moyen' | 'non'
+  /** Pas de ceinture cardio (FC au poignet) : la FC de la séance n'est pas jugée */
+  sansCeinture?: boolean
 }
 
 /** Une séance prévue dans le plan de la semaine. */

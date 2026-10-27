@@ -267,3 +267,14 @@ export const ageReleve = (compteId: string, releves: Releve[], jour: string) => 
 }
 
 export const aujourdhuiMois = () => moisDe(versJour(new Date()))
+
+/**
+ * Contrôle du solde du compte courant, chaque dimanche : à faire si le dernier contrôle
+ * date d'avant le dernier dimanche (la carte reste jusqu'à ce qu'il soit fait).
+ */
+export function controleAFaire(dernierControle: string | undefined, jour: string) {
+  const d = new Date(`${jour}T12:00:00Z`)
+  d.setUTCDate(d.getUTCDate() - d.getUTCDay())
+  const dimanche = d.toISOString().slice(0, 10)
+  return !dernierControle || dernierControle < dimanche
+}

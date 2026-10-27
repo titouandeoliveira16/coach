@@ -6,7 +6,7 @@ import { Bouton } from '../../../core/ui/Bouton'
 import { Carte } from '../../../core/ui/Carte'
 import type { JournalRepas } from '../../../core/db'
 import { besoinsDe, lireReglagesNutrition, modifierReglagesNutrition } from './besoins'
-import { ETALEMENT_MAX_JOUR } from '../../../metrics/nutrition'
+import { ETALEMENT_MAX_JOUR, SEUIL_EXCES } from '../../../metrics/nutrition'
 import { enregistrerRepas, jourARemplir, kcalDesMacros } from './repas'
 
 const CHAMPS = [
@@ -43,7 +43,7 @@ export function CarteRepas() {
             </p>
           </>
         )}
-        {besoins && nutrition && !r.nonRenseigne && r.kcal !== undefined && r.kcal - besoins.kcal >= 500 &&
+        {besoins && nutrition && !r.nonRenseigne && r.kcal !== undefined && r.kcal - besoins.kcal >= SEUIL_EXCES &&
           !nutrition.etalements?.some((e) => e.date === cible.jour) && !nutrition.etalementsRefuses?.includes(cible.jour) && (
           <div className="mt-3 rounded-xl bg-surface-2 p-3 text-sm">
             <p>
