@@ -114,7 +114,7 @@ Deno.serve(async (req) => {
           id: String(a.id), nom: a.name, type: a.type, start_date: a.start_date ?? a.start_date_local,
           moving_time: a.moving_time, distance: a.distance, total_elevation_gain: a.total_elevation_gain, trainer: a.trainer,
           average_heartrate: a.average_heartrate, max_heartrate: a.max_heartrate, average_watts: a.icu_average_watts,
-          joules: a.icu_joules,
+          joules: a.icu_joules, average_cadence: a.average_cadence,
         }))
       return json({ activites, viaStrava })
     }

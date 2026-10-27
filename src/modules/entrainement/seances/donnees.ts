@@ -89,8 +89,10 @@ const TYPES_DURS: TypeSeance[] = ['Test', 'Compétition', 'Fractionné / VMA', '
 
 export function domaineDe(s: Seance, bornes: BornesZones): Intensite {
   // Effort court à fond (test, course, fractionné) : peu de minutes en zone haute à cause de l'échauffement
-  // et du retard de la FC, mais c'est bien une séance dure. Ton RPE (7 ou plus) ou le type de séance le disent.
-  if ((s.rpe !== undefined && s.rpe >= 7) || (s.type && TYPES_DURS.includes(s.type)) || /\b(test|comp[ée]t|vma)/i.test(s.titre ?? '')) return 'haute'
+  // et du retard de la FC, mais c'est bien une séance dure. Le disent : ta FC qui est montée en zone 5
+  // (au moins 1 min, ou un pic en Z5 sans le détail des zones ; ceinture cardio), ton RPE (7 ou plus), le type ou le nom.
+  const z5 = !s.sansCeinture && (s.tempsZones ? s.tempsZones[4] >= 60 : !!s.fcMax && s.fcMax >= bornes[3])
+  if (z5 || (s.rpe !== undefined && s.rpe >= 7) || (s.type && TYPES_DURS.includes(s.type)) || /\b(test|comp[ée]t|vma)/i.test(s.titre ?? '')) return 'haute'
   if (s.tempsZones) {
     const [b, m, h] = [s.tempsZones[0] + s.tempsZones[1], s.tempsZones[2], s.tempsZones[3] + s.tempsZones[4]]
     return h >= 600 ? 'haute' : m >= 900 ? 'moyenne' : b >= m + h ? 'basse' : m >= h ? 'moyenne' : 'haute'

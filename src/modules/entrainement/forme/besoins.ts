@@ -71,25 +71,29 @@ export async function besoinsDe(jour: string, o: { sansCorrection?: boolean; san
   return { ...b, detailSeances, pas, correction: o.sansCorrection ? undefined : n.correction, etalementDu: b.reduction ? n.etalements?.filter((e) => e.date < jour).at(-1)?.date : undefined, kg, objectif: profil.objectif ?? 'maintien', tendance, nbFaites: faites.length, nbAFaire: aFaire.length, demain: demain?.titre }
 }
 
-/** Pas courus, déjà comptés dans les calories de la course : la distance / une foulée de course de ~1,2 m,
- * sinon la durée × 165 pas/min (sans distance). La distance évite de compter les pauses et la marche de récupération. */
+/** Pas courus, déjà comptés dans les calories de la course : ceux de la montre (cadence × temps de la séance) ;
+ * à défaut, la distance / une foulée de ~1,2 m, sinon la durée × 165 pas/min. */
 const PAS_PAR_MIN_COURSE = 165
 const FOULEE_COURSE_M = 1.2
 
-/** Pas d'un jour, hors course (undefined si la montre ne les a pas donnés). */
+/**
+ * Pas d'un jour, hors course : total de la montre − pas des courses.
+ * undefined si la montre ne les a pas donnés, ou si son total est plus petit que les pas de la course :
+ * le total du jour n'est alors pas encore à jour (il arrive souvent après la séance).
+ */
 async function pasHorsCourse(jour: string) {
   const pas = (await db.mesures.get(jour))?.pas
   if (pas === undefined) return undefined
   const course = (await db.seances.where('date').equals(jour).toArray()).filter((s) => s.sport === 'course')
-    .reduce((a, s) => a + (s.distanceKm ? (s.distanceKm * 1000) / FOULEE_COURSE_M : PAS_PAR_MIN_COURSE * (s.dureeSec / 60)), 0)
-  return Math.max(0, Math.round(pas - course))
+    .reduce((a, s) => a + (s.pas ?? (s.distanceKm ? (s.distanceKm * 1000) / FOULEE_COURSE_M : PAS_PAR_MIN_COURSE * (s.dureeSec / 60))), 0)
+  return pas < course ? undefined : Math.round(pas - course)
 }
 
 /**
  * Pas pris en compte pour un jour : ceux du jour s'il est terminé.
  * Aujourd'hui (journée en cours) : le plus grand entre les pas déjà faits et ta moyenne des 7 jours précédents.
  */
-export async function pasDuJour(jour: string): Promise<{ valeur: number; moyenne: boolean; dejaFaits?: number; montre?: number } | undefined> {
+export async function pasDuJour(jour: string): Promise<{ valeur: number; moyenne: boolean; dejaFaits?: number; montre?: number; enRetard?: boolean } | undefined> {
   const duJour = await pasHorsCourse(jour)
   // Ce qu'affiche la montre (course comprise), pour comparer
   const montre = (await db.mesures.get(jour))?.pas
@@ -102,7 +106,7 @@ export async function pasDuJour(jour: string): Promise<{ valeur: number; moyenne
   const moyenne = valeurs.length >= 3 ? Math.round(valeurs.reduce((a, b) => a + b, 0) / valeurs.length) : undefined
   if (moyenne === undefined && duJour === undefined) return undefined
   if (moyenne === undefined || (duJour ?? 0) >= moyenne) return { valeur: duJour!, moyenne: false, dejaFaits: duJour, montre }
-  return { valeur: moyenne, moyenne: true, dejaFaits: duJour, montre }
+  return { valeur: moyenne, moyenne: true, dejaFaits: duJour, montre, enRetard: montre !== undefined && duJour === undefined }
 }
 
 /** kcal retirées ce jour-là pour étaler les excès des 7 jours précédents (jours faciles seulement). */
