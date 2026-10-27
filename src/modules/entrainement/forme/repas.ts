@@ -1,7 +1,7 @@
-import { aujourdhui, decalerJour, depuisJour, ecartJours } from '../../../core/dates'
+import { aujourdhui, decalerJour, ecartJours } from '../../../core/dates'
 import { db, type JournalRepas } from '../../../core/db'
 import { enregistrer } from '../../../core/stockage'
-import { maintienMesure, SEUIL_EXCES, tendancePoids } from '../../../metrics/nutrition'
+import { maintienMesure, tendancePoids } from '../../../metrics/nutrition'
 import { besoinsDe, lireReglagesNutrition } from './besoins'
 import { peseesValides } from './pesees'
 
@@ -14,28 +14,7 @@ export const kcalDesMacros = (r: Pick<JournalRepas, 'proteines' | 'glucides' | '
     ? Math.round(4 * r.proteines + 4 * r.glucides + 9 * r.lipides)
     : undefined
 
-export async function enregistrerRepas(r: JournalRepas) {
-  await enregistrer(db.repas, r)
-  await majPeseeReportee(r.date)
-}
-
-/** Réglage synchronisé (lu aussi par le serveur de rappels) : mardi dont la pesée passe au mercredi. */
-export const CLE_PESEE_REPORTEE = 'pesee-reportee'
-export const lirePeseeReportee = async () => ((await db.reglages.get(CLE_PESEE_REPORTEE))?.valeur as { mardi?: string } | undefined)?.mardi
-
-/**
- * Gros excès le lundi soir (au moins 500 kcal au-dessus du besoin) : la pesée du mardi passe au mercredi matin,
- * le temps que l'eau et le sel du repas s'évacuent (sinon le poids du mardi fausse la tendance).
- */
-async function majPeseeReportee(jour: string) {
-  if (depuisJour(jour).getDay() !== 1) return
-  const r = await db.repas.get(jour)
-  const exces = !!r && !r.nonRenseigne && r.kcal !== undefined && r.kcal - (await besoinsDe(jour)).kcal >= SEUIL_EXCES
-  const mardi = decalerJour(jour, 1)
-  const actuel = await lirePeseeReportee()
-  if (exces && actuel !== mardi) await enregistrer(db.reglages, { id: CLE_PESEE_REPORTEE, valeur: { mardi } })
-  else if (!exces && actuel === mardi) await enregistrer(db.reglages, { id: CLE_PESEE_REPORTEE, valeur: {} })
-}
+export const enregistrerRepas = (r: JournalRepas) => enregistrer(db.repas, r)
 
 /**
  * Jour à remplir : aujourd'hui à partir de 18 h ; sinon hier s'il a été oublié.

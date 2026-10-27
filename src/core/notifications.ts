@@ -5,8 +5,13 @@ import { CLE_PUBLIQUE, URL_SUPABASE, supabase } from './supabase'
  * Sur iPhone : seulement dans l'appli installée sur l'écran d'accueil (iOS 16.4 ou plus).
  */
 
-/** Rappels de Titouan : chaque matin à 8 h 30 ; pesée le mardi à 7 h (heure fixée dans la fonction « rappels »). */
-export const RAPPELS = { heure: '08:30', peseeJours: [2], peseeDates: [] as string[] }
+/**
+ * Rappels de Titouan : chaque matin à 8 h 30 ; pesée à 7 h (heure fixée dans la fonction « rappels »)
+ * les lundi, mardi, mercredi, samedi et dimanche (pas les matins d'internat). 0 = dimanche.
+ */
+export const RAPPELS = { heure: '08:30', peseeJours: [1, 2, 3, 6, 0], peseeDates: [] as string[] }
+/** À changer quand RAPPELS change : l'appareil renvoie alors ses réglages au serveur tout seul. */
+const VERSION_RAPPELS = '2'
 export const HEURE_PESEE = '07:00'
 
 export const notificationsPossibles = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window
@@ -49,6 +54,7 @@ export async function activerRappels() {
   const abonnement = (await reg.pushManager.getSubscription()) ??
     (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: versOctets(cle) }))
   await appeler('abonner', { abonnement: abonnement.toJSON(), fuseau: Intl.DateTimeFormat().resolvedOptions().timeZone, ...RAPPELS })
+  try { localStorage.setItem('rappels-version', VERSION_RAPPELS) } catch { /* stockage indisponible */ }
 }
 
 export async function desactiverRappels() {
@@ -56,6 +62,20 @@ export async function desactiverRappels() {
   if (!abonnement) return
   await appeler('desabonner', { endpoint: abonnement.endpoint }).catch(() => {})
   await abonnement.unsubscribe()
+}
+
+/** Au démarrage : si les réglages des rappels ont changé depuis l'abonnement de cet appareil, on les renvoie. */
+export async function synchroniserRappels() {
+  const cle = 'rappels-version'
+  try {
+    if (localStorage.getItem(cle) === VERSION_RAPPELS || Notification.permission !== 'granted') return
+    const abonnement = await abonnementActuel()
+    if (!abonnement) return
+    await appeler('abonner', { abonnement: abonnement.toJSON(), fuseau: Intl.DateTimeFormat().resolvedOptions().timeZone, ...RAPPELS })
+    localStorage.setItem(cle, VERSION_RAPPELS)
+  } catch {
+    // Pas connecté, pas de réseau ou stockage indisponible : on réessaiera au prochain démarrage
+  }
 }
 
 export const testerRappels = () => appeler<{ envoyes: number }>('tester')

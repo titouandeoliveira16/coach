@@ -5,9 +5,12 @@ import App from './app/App.tsx'
 import { demanderStockagePersistant } from './core/db'
 import { registerSW } from 'virtual:pwa-register'
 import { demarrerSynchro } from './core/synchro'
+import { synchroniserRappels } from './core/notifications'
 
 demanderStockagePersistant()
 demarrerSynchro()
+// Laisse le temps à la session du compte de se restaurer
+setTimeout(() => synchroniserRappels(), 5000)
 
 // Mises à jour : on vérifie s'il existe une nouvelle version à chaque retour
 // sur l'appli (iPhone : l'appli est souvent « réveillée » plutôt que relancée)
