@@ -116,8 +116,12 @@ async function recevoir(userId: string, curseurs: Curseurs) {
   }
 }
 
-/** Envoie les lignes modifiées (ou supprimées) localement depuis le dernier envoi. */
-async function envoyer(userId: string, curseurs: Curseurs) {
+/**
+ * Envoie les lignes modifiées (ou supprimées) localement depuis le dernier envoi.
+ * `tout` : renvoie aussi les lignes reçues du serveur, pour reconstruire la copie en ligne
+ * (ex. compte supprimé puis recréé : le serveur est vide, l'appareil a tout).
+ */
+async function envoyer(userId: string, curseurs: Curseurs, tout: boolean) {
   const aEnvoyer: Omit<LigneServeur, 'synchro_le'>[] = []
   const depuis = curseurs.envoye ?? ''
 
@@ -128,7 +132,7 @@ async function envoyer(userId: string, curseurs: Curseurs) {
         ligne._modifie = new Date().toISOString()
         await table.put(ligne)
       }
-      if (ligne._recu || ligne._modifie <= depuis) continue
+      if (!tout && (ligne._recu || ligne._modifie <= depuis)) continue
       const { _modifie, _recu, ...valeur } = ligne
       aEnvoyer.push({ table_nom: table.name, cle: cleDe(table, ligne), valeur, supprime: false, modifie_le: _modifie })
     }
@@ -181,8 +185,10 @@ export async function synchroniser(): Promise<void> {
   enCours = (async () => {
     try {
       const curseurs = lireCurseurs(userId)
+      // Première synchro de ce compte sur cet appareil : on envoie tout ce qu'il contient
+      const premiere = !curseurs.recu && !curseurs.envoye
       await recevoir(userId, curseurs)
-      await envoyer(userId, curseurs)
+      await envoyer(userId, curseurs, premiere)
       majEtat({ statut: 'ok', derniereSynchro: new Date().toISOString() })
     } catch (e) {
       const message = (e as Error).message ?? String(e)
