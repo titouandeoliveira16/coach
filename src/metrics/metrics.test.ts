@@ -223,6 +223,9 @@ describe('planification', () => {
   it('charge prévue et hausse', () => {
     expect(trimpPrevu('haute', 60)).toBeGreaterThan(trimpPrevu('basse', 60))
     expect(hausseCharge(575, [500, 500, 500, 500])).toBeCloseTo(15, 5)
+    // Reprise : moins de 3 semaines de course sur les 4 → pas de comparaison ; les semaines vides ne comptent pas
+    expect(hausseCharge(400, [0, 0, 0, 45])).toBeUndefined()
+    expect(hausseCharge(400, [0, 200, 200, 200])).toBeCloseTo(100, 5)
   })
 })
 

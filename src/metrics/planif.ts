@@ -90,10 +90,16 @@ const RESERVE_TYPIQUE: Record<Intensite, number> = { basse: 0.55, moyenne: 0.75,
 /** TRIMP estimé d'une séance prévue (même unité que la charge réalisée). */
 export const trimpPrevu = (intensite: Intensite, dureeMin: number) => dureeMin * trimpParMinute(RESERVE_TYPIQUE[intensite])
 
-/** Hausse de la charge prévue par rapport à la moyenne des 4 semaines précédentes (en %). */
+/** Semaines avec de la charge nécessaires sur les 4 précédentes : juste après une reprise, une hausse en % ne veut rien dire. */
+export const SEMAINES_HISTORIQUE_MIN = 3
+
+/**
+ * Hausse de la charge prévue par rapport à la moyenne des 4 semaines précédentes (en %),
+ * calculée sur les semaines où il y a eu de la charge ; undefined tant que l'historique est trop court (reprise).
+ */
 export function hausseCharge(prevue: number, quatreSemaines: number[]) {
   const valides = quatreSemaines.filter((c) => c > 0)
-  if (!valides.length) return undefined
+  if (valides.length < SEMAINES_HISTORIQUE_MIN) return undefined
   const moy = valides.reduce((a, b) => a + b, 0) / valides.length
   return ((prevue - moy) / moy) * 100
 }
