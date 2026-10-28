@@ -85,6 +85,7 @@ async function noterVersion(version: number) {
  * ils viennent de l'écran de départ ou de l'import de données personnelles (Accueil → ⚙️).
  */
 export async function mettreAJour() {
+  await alignerDepartsSurReleves()
   const r = (await db.reglages.get('budget'))?.valeur as Partial<ReglagesBudget> | undefined
   if ((r?.version ?? 0) >= 3 || !(await db.comptes.count())) return
   if ((r?.version ?? 0) < 2) {
@@ -132,6 +133,21 @@ export const enregistrerCategorie = (c: Categorie) => enregistrer(db.categories,
 export const fixerPlafond = (categorieId: string, mois: string, montant: number | null) =>
   enregistrer(db.plafonds, { id: `${categorieId}|${mois}`, categorieId, mois, montant } satisfies Plafond)
 
-export const enregistrerReleve = (compteId: string, date: string, valeur: number, ajustement?: Pick<Releve, 'ecart' | 'note'>) =>
-  enregistrer(db.releves, { id: `${compteId}|${date}`, compteId, date, valeur, ...ajustement } satisfies Releve)
+export async function enregistrerReleve(compteId: string, date: string, valeur: number, ajustement?: Pick<Releve, 'ecart' | 'note'>) {
+  await enregistrer(db.releves, { id: `${compteId}|${date}`, compteId, date, valeur, ...ajustement } satisfies Releve)
+  await alignerDepartsSurReleves()
+}
+
+/**
+ * Un relevé daté d'avant le départ d'un compte devient son point de départ (date et solde) :
+ * sinon il serait ignoré. Ex. comptes démarrés le 1/11 avec des relevés au 1/10 → départ au 1/10.
+ * Les relevés suivants (ex. celui du 5/11) prennent ensuite le relais.
+ */
+export async function alignerDepartsSurReleves() {
+  const releves = await db.releves.toArray()
+  for (const c of await db.comptes.toArray()) {
+    const premier = releves.filter((r) => r.compteId === c.id && r.date < c.dateDepart).sort((a, b) => a.date.localeCompare(b.date))[0]
+    if (premier) await enregistrer(db.comptes, { ...c, dateDepart: premier.date, soldeInitial: premier.valeur })
+  }
+}
 export const supprimerReleve = (id: string) => supprimer(db.releves, id)

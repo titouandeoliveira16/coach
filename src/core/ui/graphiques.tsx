@@ -68,12 +68,14 @@ function Bulle({ x, largeur, children }: { x: number; largeur: number; children:
  * `bande` : zone colorée entre deux valeurs (ex. zone normale de la VFC).
  */
 export function GraphiqueLignes({
-  etiquettes, series, bande, format: formatDonne, zero = false,
+  etiquettes, series, bande, format: formatDonne, formatAxe: formatAxeDonne, zero = false,
 }: {
   etiquettes: string[]
   series: Serie[]
   bande?: { bas: (number | undefined)[]; haut: (number | undefined)[]; nom: string }
   format?: (n: number) => string
+  /** Graduations de l'axe (plus courtes) ; par défaut `format` */
+  formatAxe?: (n: number) => string
   zero?: boolean
 }) {
   const { ref, largeur } = useLargeur()
@@ -84,6 +86,7 @@ export function GraphiqueLignes({
   const e = echelle(Math.min(...toutes, ...(zero ? [0] : [])), Math.max(...toutes, ...(zero ? [0] : [])))
   // Par défaut : entiers, ou 1 décimale si les graduations sont plus fines que 1
   const format = formatDonne ?? ((v: number) => (e.pas < 1 ? v.toFixed(1).replace('.', ',') : String(Math.round(v))))
+  const formatAxe = formatAxeDonne ?? format
   const lp = largeur - MARGE.gauche - MARGE.droite
   const hp = H - MARGE.haut - MARGE.bas
   const x = (i: number) => MARGE.gauche + (n === 1 ? lp / 2 : (i / (n - 1)) * lp)
@@ -105,7 +108,7 @@ export function GraphiqueLignes({
         {graduations.map((g) => (
           <g key={g}>
             <line x1={MARGE.gauche} x2={largeur - MARGE.droite} y1={y(g)} y2={y(g)} stroke="var(--color-bordure)" strokeWidth={g === 0 && zero ? 1.5 : 1} />
-            <text x={MARGE.gauche - 4} y={y(g) + 3} textAnchor="end" fontSize="10" fill="var(--color-texte-3)">{format(g)}</text>
+            <text x={MARGE.gauche - 4} y={y(g) + 3} textAnchor="end" fontSize="10" fill="var(--color-texte-3)">{formatAxe(g)}</text>
           </g>
         ))}
         {reperes.map((i) => (
@@ -148,13 +151,16 @@ export function GraphiqueLignes({
 
 /** Barres empilées (ex. charge hebdo vélo + course), avec repère optionnel (ex. charge prévue). */
 export function GraphiqueBarres({
-  etiquettes, series, repere, format = (n) => String(Math.round(n)),
+  etiquettes, series, repere, format = (n) => String(Math.round(n)), formatAxe: formatAxeDonne,
 }: {
   etiquettes: string[]
   series: { nom: string; couleur: string; valeurs: number[] }[]
   repere?: { nom: string; valeurs: (number | undefined)[] }
   format?: (n: number) => string
+  /** Graduations de l'axe (plus courtes) ; par défaut `format` */
+  formatAxe?: (n: number) => string
 }) {
+  const formatAxe = formatAxeDonne ?? format
   const { ref, largeur } = useLargeur()
   const [survol, setSurvol] = useState<number>()
   const n = etiquettes.length
@@ -176,7 +182,7 @@ export function GraphiqueBarres({
         {graduations.map((g) => (
           <g key={g}>
             <line x1={MARGE.gauche} x2={largeur - MARGE.droite} y1={y(g)} y2={y(g)} stroke="var(--color-bordure)" />
-            <text x={MARGE.gauche - 4} y={y(g) + 3} textAnchor="end" fontSize="10" fill="var(--color-texte-3)">{format(g)}</text>
+            <text x={MARGE.gauche - 4} y={y(g) + 3} textAnchor="end" fontSize="10" fill="var(--color-texte-3)">{formatAxe(g)}</text>
           </g>
         ))}
         {etiquettes.map((et, i) => {
