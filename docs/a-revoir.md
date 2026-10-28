@@ -40,6 +40,12 @@ Points décidés ou mis de côté, à reprendre au bon moment.
 - Quand il s'y met : choisir le jour (le mercredi avec le renfo genoux ?) et vérifier la durée (~35 min).
 
 ## Plus tard
+- Repère pour l'avenir (infographie montrée par Titouan le 28/10, « on reste comme ça ») : répartition pyramidale par mois
+  ~12 sorties Z1-Z2 (45′-2 h 30), 4 sorties longues 3-6 h avec effort en fin de sortie, 3-4 intervalles Z3 (20-60 min),
+  2 intervalles Z4-Z5 (10-25 min), muscu lourde des jambes l'hiver 4-8×/mois. Pistes : effort en fin de sortie longue
+  (durabilité), sortie longue dehors quand il aura un capteur, programme jambes dans Muscu (le développé couché n'aide pas le vélo).
+- Banques de séances repérées (28/10) : bibliothèque Intervals.icu (déjà relié à l'appli), TrainerDay (communauté, export .zwo),
+  WhatsOnZwift (séances Zwift). Idée : importer des séances .zwo dans l'appli ou envoyer les nôtres vers Zwift via Intervals.
 - Étape du Tour 2027 (11/07, Cluses – Les Saisies, 154 km, 4 850 m) : simple idée pour l'instant. Si elle devient
   l'objectif : phase spécifique après le CAPEPS (montées longues Z3, sorties 4-6 h, 60-90 g/h), affûtage 10-14 j.
 - Musculation : 30 min/sem. au poids du corps (genoux, prévention des blessures), choix de Titouan faute de temps.
