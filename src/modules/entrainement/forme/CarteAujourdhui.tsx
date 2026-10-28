@@ -11,6 +11,7 @@ import { analyser } from '../analyse/donnees'
 import { adapterDuJour } from '../plan/adaptation'
 import { JOURS_REPRISE, annulerReport, repriseApresMaladie, reporterIntensite } from '../plan/imprevus'
 import { estIntensite } from '../plan/programme'
+import { BoutonsEnvoi } from '../plan/BoutonsEnvoi'
 import { Deroule } from '../plan/Deroule'
 import { NutritionSeance } from '../plan/NutritionSeance'
 import { iconeSport } from '../sports'
@@ -105,6 +106,7 @@ export function CarteAujourdhui() {
               {decision?.force ? '✋ Tu as choisi de maintenir ta séance.' : adaptation!.texte}
             </p>
             {(decision?.force ? prevue.velo?.etapes : adaptation!.etapes) && <Deroule etapes={(decision?.force ? prevue.velo?.etapes : adaptation!.etapes)!} />}
+            {prevue.sport === 'velo' && (decision?.force ? prevue.velo?.etapes : adaptation!.etapes) && <BoutonsEnvoi p={prevue} etapes={(decision?.force ? prevue.velo?.etapes : adaptation!.etapes)!} />}
             {!(adaptation?.modifiee && !decision?.force && signal.couleur === 'rouge') && <NutritionSeance p={prevue} />}
           </>
         ) : faites ? null : (

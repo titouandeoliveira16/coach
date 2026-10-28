@@ -10,6 +10,7 @@ import { Feuille } from '../../../core/ui/Feuille'
 import { Puces } from '../../../core/ui/Puces'
 import { AIDES } from '../aides'
 import { CarteBilan } from '../plan/CarteBilan'
+import { BoutonsEnvoi } from '../plan/BoutonsEnvoi'
 import { Deroule } from '../plan/Deroule'
 import { NutritionSeance } from '../plan/NutritionSeance'
 import { joursPanneVelo } from '../plan/imprevus'
@@ -229,6 +230,7 @@ function DetailSeance({ p, jours, prevues, onFermer, onMessage }: {
       <p className="text-sm text-texte-2">{p.dureeMin} min{p.kjPrevu ? ` · ${p.kjPrevu} kJ` : ''}</p>
       {p.detail && <p className="mt-2 text-sm">{p.detail}</p>}
       {p.velo?.etapes && <Deroule etapes={p.velo.etapes} />}
+      {p.velo?.etapes && p.statut === 'prevue' && p.date >= aujourdhui() && <BoutonsEnvoi p={p} etapes={p.velo.etapes} />}
       <NutritionSeance p={p} />
       {p.velo?.pourquoi && <p className="mt-2 text-xs text-texte-3">Pourquoi cette séance : {p.velo.pourquoi}</p>}
       {mode === 'actions' ? (

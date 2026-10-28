@@ -8,6 +8,9 @@
 //   /intervals/activites    { oldest } → liste des activités depuis cette date (sans flux)
 //   /intervals/flux         { ids } → flux temps / FC / puissance / vitesse (jamais de GPS), 10 activités max
 //   /intervals/wellness     { oldest } → VFC, FC de repos, sommeil, poids par jour
+//   /intervals/planifier    { id?, date, nom, description, dureeSec, indoor } → crée (ou met à jour) une séance prévue
+//                           dans le calendrier Intervals ; Intervals l'envoie ensuite à Garmin, et à Zwift si « indoor »
+//   /intervals/retirer      { id } → supprime cette séance prévue du calendrier Intervals
 //
 // Aucun secret à ajouter : la clé de chiffrement est dérivée de la clé « service role » du projet.
 
@@ -59,6 +62,19 @@ async function intervals(chemin: string, cleApi: string) {
   if (r.status === 429) throw new Error('LIMITE')
   if (!r.ok) throw new Error(`Intervals.icu ${r.status}`)
   return r.json()
+}
+
+/** Écriture dans Intervals.icu (calendrier). */
+async function intervalsEcrire(chemin: string, cleApi: string, methode: 'POST' | 'PUT' | 'DELETE', corps?: unknown) {
+  const r = await fetch(`${API}${chemin}`, {
+    method: methode,
+    headers: { ...entete(cleApi), 'Content-Type': 'application/json' },
+    body: corps === undefined ? undefined : JSON.stringify(corps),
+  })
+  if (r.status === 401 || r.status === 403) throw new Error('CLE')
+  if (r.status === 429) throw new Error('LIMITE')
+  if (!r.ok) throw new Error(`Intervals.icu ${r.status} : ${(await r.text()).slice(0, 200)}`)
+  return r.status === 204 ? {} : r.json().catch(() => ({}))
 }
 
 async function compte(userId: string) {
@@ -136,6 +152,23 @@ Deno.serve(async (req) => {
       return json({
         jours: jours.map((j) => ({ date: j.id, hrv: j.hrv, restingHR: j.restingHR, sleepSecs: j.sleepSecs, weight: j.weight, steps: j.steps })),
       })
+    }
+
+    if (route === 'planifier') {
+      // Séance structurée (texte au format du « workout builder » d'Intervals), sans ERG côté Zwift
+      const evenement = {
+        category: 'WORKOUT', type: 'Ride', start_date_local: `${corps.date}T00:00:00`, name: corps.nom,
+        description: corps.description, moving_time: corps.dureeSec, indoor: !!corps.indoor,
+      }
+      const e = (corps.id
+        ? await intervalsEcrire(`/athlete/${c.athlete}/events/${corps.id}`, c.cle, 'PUT', evenement)
+        : await intervalsEcrire(`/athlete/${c.athlete}/events`, c.cle, 'POST', evenement)) as { id?: number | string }
+      return json({ id: e.id !== undefined ? String(e.id) : corps.id })
+    }
+
+    if (route === 'retirer') {
+      await intervalsEcrire(`/athlete/${c.athlete}/events/${corps.id}`, c.cle, 'DELETE')
+      return json({ ok: true })
     }
 
     return json({ erreur: 'Route inconnue' }, 404)

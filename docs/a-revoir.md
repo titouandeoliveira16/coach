@@ -44,9 +44,10 @@ Points décidés ou mis de côté, à reprendre au bon moment.
   ~12 sorties Z1-Z2 (45′-2 h 30), 4 sorties longues 3-6 h avec effort en fin de sortie, 3-4 intervalles Z3 (20-60 min),
   2 intervalles Z4-Z5 (10-25 min), muscu lourde des jambes l'hiver 4-8×/mois. Pistes : effort en fin de sortie longue
   (durabilité), sortie longue dehors quand il aura un capteur, programme jambes dans Muscu (le développé couché n'aide pas le vélo).
-- **Prochaine étape demandée (28/10)** : envoyer les séances vélo de Coach vers Zwift via le calendrier Intervals.icu
-  (API events + connexion Zwift dans Intervals, 7 jours glissants, mot-clé Indoor), toujours SANS ERG. Titouan connecte Zwift
-  dans Intervals et redéploie la fonction « intervals ».
+- Envoi vers Garmin / Zwift (v0.52.0, 28/10) : boutons dans le détail d'une séance vélo → calendrier Intervals.icu
+  (POST/PUT /athlete/{id}/events, champ `indoor` pour Zwift, watts absolus, « freeride » pour les efforts à fond, sans ERG).
+  NON TESTÉ contre la vraie API au moment du code : vérifier au premier envoi (Z2 du vendredi 30/10). Limites : une séance
+  déplacée de jour change d'identifiant (ancienne version à retirer à la main dans Intervals) ; pas d'envoi automatique.
 - Catalogue scientifique (73 séances, `catalogue/`, module Catalogue) : à brancher plus tard sur le programme (choix des
   séances selon la qualité à travailler, progression). Certains PMID restent à vérifier (PubMed bloqué pendant la relecture).
 - Banques de séances repérées (28/10) : bibliothèque Intervals.icu (déjà relié à l'appli), TrainerDay (communauté, export .zwo),
