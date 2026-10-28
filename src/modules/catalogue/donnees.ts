@@ -1,4 +1,5 @@
 import brut from '../../../catalogue/seances.json'
+import { COULEUR_A_FOND, couleurPctCP, couleurPctVMA } from '../../core/zones'
 
 /** Catalogue scientifique de séances (catalogue/seances.json, voir catalogue/README.md). Pas encore relié au reste de l'appli. */
 export interface Etape {
@@ -46,13 +47,11 @@ export const NOMS_FAMILLES: Record<string, string> = {
 export const PREUVES = ['prouvé', 'plausible', 'mitigé', 'pratique', 'faible'] as const
 export const COULEUR_PREUVE: Record<string, string> = { 'prouvé': '#4ade80', plausible: '#7cb4f0', 'mitigé': '#fb923c', pratique: '#a3a8ab', faible: '#7d8183' }
 
-/** Couleur de zone d'une étape (vélo en %CP, course en %VMA). */
+/** Couleur de zone d'une étape (vélo en %CP, course en %VMA), comme sur Zwift. */
 export function couleurZone(e: Etape, unite?: string) {
-  if (e.max) return '#b56be0'
+  if (e.max) return COULEUR_A_FOND
   const v = ((e.intensite?.[0] ?? 0) + (e.intensite?.[1] ?? 0)) / 2
-  const seuils = unite === '%VMA' ? [0, 72, 85, 92, 110] : [55, 76, 91, 106, 121]
-  const couleurs = ['#6f7774', '#5aa7e8', '#45c178', '#f2b93a', '#fb8a3c', '#f0605b']
-  return couleurs[seuils.filter((s) => v >= s).length]
+  return unite === '%VMA' ? couleurPctVMA(v) : couleurPctCP(v)
 }
 
 /** Étapes à plat (répétitions déroulées), pour dessiner le profil. */

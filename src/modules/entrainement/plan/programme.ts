@@ -21,7 +21,7 @@ const INTENSITES: Famille[] = ['vo2-courts', 'vo2-longs', 'seuil', 'seuil-variab
 export const estIntensite = (p: SeancePrevue) => !!p.velo && (INTENSITES as string[]).includes(p.velo.famille)
 
 /** CP par défaut tant qu'aucun test n'est saisi (CP provisoire de la prépa). */
-const CP_DEFAUT = 260
+export const CP_DEFAUT = 260
 
 /** Bilan enregistré pour chaque semaine générée (réglage « semaine-AAAA-MM-JJ »). */
 export interface MetaSemaine {
