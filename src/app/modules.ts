@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react'
 import { moduleBudget } from '../modules/budget'
+import { moduleCatalogue } from '../modules/catalogue'
 import { moduleEntrainement } from '../modules/entrainement'
 import { moduleMuscu } from '../modules/muscu'
 import { moduleRevision } from '../modules/revision'
@@ -34,5 +35,6 @@ export const MODULES: ModuleApp[] = [
   moduleRevision,
   moduleBudget,
   moduleMuscu,
+  moduleCatalogue,
   // Plus tard : moduleNutrition
 ]
