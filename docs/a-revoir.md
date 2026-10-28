@@ -46,7 +46,7 @@ Points décidés ou mis de côté, à reprendre au bon moment.
   (durabilité), sortie longue dehors quand il aura un capteur, programme jambes dans Muscu (le développé couché n'aide pas le vélo).
 - Envoi vers Garmin / Zwift (v0.52.0, 28/10) : boutons dans le détail d'une séance vélo → calendrier Intervals.icu
   (POST/PUT /athlete/{id}/events, champ `indoor` pour Zwift, watts absolus, « freeride » pour les efforts à fond, sans ERG).
-  NON TESTÉ contre la vraie API au moment du code : vérifier au premier envoi (Z2 du vendredi 30/10). Limites : une séance
+  Testé avec succès par Titouan le 28/10 (l'envoi passe) ; reste à vérifier l'affichage sur la montre et dans Zwift. Limites : une séance
   déplacée de jour change d'identifiant (ancienne version à retirer à la main dans Intervals) ; pas d'envoi automatique.
 - Catalogue scientifique (73 séances, `catalogue/`, module Catalogue) : à brancher plus tard sur le programme (choix des
   séances selon la qualité à travailler, progression). Certains PMID restent à vérifier (PubMed bloqué pendant la relecture).
