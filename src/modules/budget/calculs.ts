@@ -144,8 +144,6 @@ export interface ResumeMois {
   depenses: number
   /** Charges fixes encore prévues ce mois-ci (plafond − déjà payé) */
   fixesRestantes: number
-  /** Revenus − dépenses − charges fixes encore prévues */
-  resteAVivre: number
   /** Versé sur les comptes d'investissement */
   investi: number
   /** Mis sur les comptes épargne (net des retraits) */
@@ -163,7 +161,21 @@ export function resumeMois(d: Donnees, mois: string): ResumeMois {
     somme((m) => m.type === 'virement' && typeDe(m.versCompteId) === 'epargne' && typeDe(m.compteId) !== 'epargne') -
     somme((m) => m.type === 'virement' && typeDe(m.compteId) === 'epargne' && typeDe(m.versCompteId) !== 'epargne')
   const fixesRestantes = fixesRestantesDuMois(d, mois)
-  return { revenus, depenses, fixesRestantes, resteAVivre: revenus - depenses - fixesRestantes, investi, epargne }
+  return { revenus, depenses, fixesRestantes, investi, epargne }
+}
+
+/**
+ * Reste à vivre (mois en cours) : l'argent disponible aujourd'hui, compte(s) courant(s) + espèces,
+ * moins les charges fixes encore à payer ce mois-ci. Part de ce que tu as vraiment, comme ta banque.
+ */
+export function resteAVivre(d: Donnees, jour: string) {
+  const solde = (type: Compte['type']) => d.comptes
+    .filter((c) => c.type === type && !c.archive && c.dateDepart <= jour)
+    .reduce((s, c) => s + soldeAu(c, d.mouvements, d.releves, jour), 0)
+  const courant = solde('courant')
+  const especes = solde('especes')
+  const fixesRestantes = fixesRestantesDuMois(d, moisDe(jour))
+  return { courant, especes, fixesRestantes, reste: courant + especes - fixesRestantes }
 }
 
 function fixesRestantesDuMois(d: Donnees, mois: string) {

@@ -48,7 +48,7 @@ export function ModeEmploiBudget() {
           <p>Dans « Mois », « Modifier les plafonds » : un plafond par catégorie. Change-les quand tu veux : les mois passés ne bougent pas, et le mois suivant reprend les mêmes.</p>
           <p>Jauge <span style={{ color: '#4ade80' }}>verte</span> sous 75 %, <span style={{ color: '#fb923c' }}>orange</span> jusqu'à 100 %, <span style={{ color: '#f87171' }}>rouge</span> au-delà. Un message t'avertit quand une catégorie atteint 90 % puis 100 %.</p>
           <p>Chaque catégorie est un <B>besoin</B> ou un <B>loisir</B> : la barre « Besoins · loisirs · épargne » et le bilan te situent par rapport au repère 50/30/20 (50 % besoins, 30 % loisirs, 20 % épargne).</p>
-          <p>Les <B>charges fixes</B> (loyer, abonnements) pas encore payées sont retirées d'avance de ton reste à vivre.</p>
+          <p><B>Reste à vivre</B> = l'argent que tu as vraiment (compte courant + espèces), moins les <B>charges fixes</B> (loyer, abonnements) pas encore payées ce mois-ci.</p>
         </Rubrique>
         <Rubrique titre="🛟 Livrets">
           <p>Quand tu mets de côté, note un <B>virement</B> (ex. courant → Livret A) : le solde du livret se met à jour tout seul. Pas de relevé à faire.</p>
