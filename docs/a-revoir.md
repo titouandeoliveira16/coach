@@ -32,6 +32,13 @@ Points décidés ou mis de côté, à reprendre au bon moment.
 - **À retravailler ensemble (demande du 27/10)** : rappels par thème, et des cartes de révision (flash cards) pour
   les citations, auteurs, dates. Revoir aussi la gestion d'une pile de rappels en retard après une coupure.
 
+## Muscu (construit le 28/10/2026, pas encore utilisé)
+- Développé couché en 5/3/1 adapté (référence 85 % du max en perte, 90 % en maintien ; série « + » à 1 rep en réserve ;
+  5×5 complémentaire ; progression selon la série à 95 %). Relu par le relecteur scientifique.
+- Plus tard (demande de Titouan) : relier les séances muscu à la nutrition et au module Entraînement
+  (jour de la séance dans la semaine, charge, besoins du jour). Pas pour l'instant.
+- Quand il s'y met : choisir le jour (le mercredi avec le renfo genoux ?) et vérifier la durée (~35 min).
+
 ## Plus tard
 - Étape du Tour 2027 (11/07, Cluses – Les Saisies, 154 km, 4 850 m) : simple idée pour l'instant. Si elle devient
   l'objectif : phase spécifique après le CAPEPS (montées longues Z3, sorties 4-6 h, 60-90 g/h), affûtage 10-14 j.

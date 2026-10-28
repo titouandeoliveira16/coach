@@ -2,7 +2,8 @@
 
 PWA en français (iPhone d'abord, thème sombre) : un accueil, puis des modules. **Entraînement** est construit
 (vélo + course, système kJ, CP, feu du jour par VFC) ; **Budget** est construit (saisie manuelle, plafonds, patrimoine) ;
-**Révision CAPEPS** est construit (41 notions, rappels J+1…J+90 en feuille blanche, sujets ; concours le 2/03/2027).
+**Révision CAPEPS** est construit (41 notions, rappels J+1…J+90 en feuille blanche, sujets ; concours le 2/03/2027) ;
+**Muscu** est construit (développé couché 5/3/1 adapté, pas encore relié à l'Entraînement ni à la nutrition).
 En ligne : https://titouandeoliveira16.github.io/coach/ (GitHub Pages, déployé à chaque push sur `main`).
 
 ## Façon de travailler avec Titouan
@@ -38,6 +39,7 @@ En ligne : https://titouandeoliveira16.github.io/coach/ (GitHub Pages, déployé
   testés (`calculs.ts`, montants en centimes), plafonds par mois (`plafonds`, repris les mois suivants), relevés d'investissement.
 - `src/modules/revision/` : écrans Aujourd'hui · Notions · Semaine · Sujets ; planification pure et testée
   (`programme.ts` : périodes, capacités de rappels, journées types, placement, projection) ; paramètres dans `reglages|revision`.
+- `src/modules/muscu/` : écrans Séance · Progrès ; règles pures et testées (`programme.ts`) ; tout l'état dans le réglage `muscu`.
 - Séances : activités enchaînées regroupées (`seances/enchainements.ts`), watts par bloc vs cible (`plan/blocs.ts`),
   contrôle FC et question « en réserve » selon le type de séance (`plan/controleFc.ts`, repères d'entraîneur).
 - Journal des repas du soir (Entraînement) : table `repas`, carte `forme/CarteRepas.tsx`, suivi dans Progrès.
