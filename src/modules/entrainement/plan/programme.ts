@@ -312,12 +312,14 @@ export async function alertesCumul(lundi: string) {
 
   // Course : hausse de charge > 30 % par rapport aux 4 semaines précédentes (Nielsen 2014, coureurs en reprise)
   const chargeCourse = (du: string, au: string) => seances.filter((s) => s.sport === 'course' && s.date >= du && s.date <= au).reduce((a, s) => a + chargeDe(s, c), 0)
-  const moy4 = [1, 2, 3, 4].reduce((a, n) => a + chargeCourse(decalerJour(lundi, -7 * n), decalerJour(lundi, -7 * n + 6)), 0) / 4
+  const quatre = [1, 2, 3, 4].map((n) => chargeCourse(decalerJour(lundi, -7 * n), decalerJour(lundi, -7 * n + 6)))
   const faitesSemaine = seances.filter((s) => s.sport === 'course' && s.date >= lundi)
   const resteCourse = prevues.filter((p) => p.sport === 'course' && p.statut === 'prevue' && p.date >= lundi && !faitesSemaine.some((s) => s.prevueId === p.id))
   const prevueCourse = chargeCourse(lundi, fin) + resteCourse.reduce((a, p) => a + chargePrevue(p, c.chargeRef), 0)
-  if (moy4 > 0 && prevueCourse > moy4 * 1.3)
-    alertes.push(`Course : charge prévue +${Math.round((prevueCourse / moy4 - 1) * 100)} % par rapport à tes 4 dernières semaines. Au-delà de +30 %, le risque de blessure augmente en reprise (Nielsen 2014).`)
+  // Pas d'alerte juste après une reprise (moins de 3 semaines de course sur les 4) : la comparaison n'a pas de sens
+  const hausse = hausseCharge(prevueCourse, quatre)
+  if (hausse !== undefined && hausse > 30)
+    alertes.push(`Course : charge prévue +${Math.round(hausse)} % par rapport à tes dernières semaines. Au-delà de +30 %, le risque de blessure augmente (Nielsen 2014).`)
 
   return alertes
 }
