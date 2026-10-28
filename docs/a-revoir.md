@@ -44,6 +44,11 @@ Points décidés ou mis de côté, à reprendre au bon moment.
   ~12 sorties Z1-Z2 (45′-2 h 30), 4 sorties longues 3-6 h avec effort en fin de sortie, 3-4 intervalles Z3 (20-60 min),
   2 intervalles Z4-Z5 (10-25 min), muscu lourde des jambes l'hiver 4-8×/mois. Pistes : effort en fin de sortie longue
   (durabilité), sortie longue dehors quand il aura un capteur, programme jambes dans Muscu (le développé couché n'aide pas le vélo).
+- **Prochaine étape demandée (28/10)** : envoyer les séances vélo de Coach vers Zwift via le calendrier Intervals.icu
+  (API events + connexion Zwift dans Intervals, 7 jours glissants, mot-clé Indoor), toujours SANS ERG. Titouan connecte Zwift
+  dans Intervals et redéploie la fonction « intervals ».
+- Catalogue scientifique (73 séances, `catalogue/`, module Catalogue) : à brancher plus tard sur le programme (choix des
+  séances selon la qualité à travailler, progression). Certains PMID restent à vérifier (PubMed bloqué pendant la relecture).
 - Banques de séances repérées (28/10) : bibliothèque Intervals.icu (déjà relié à l'appli), TrainerDay (communauté, export .zwo),
   WhatsOnZwift (séances Zwift). Idée : importer des séances .zwo dans l'appli ou envoyer les nôtres vers Zwift via Intervals.
 - Étape du Tour 2027 (11/07, Cluses – Les Saisies, 154 km, 4 850 m) : simple idée pour l'instant. Si elle devient
