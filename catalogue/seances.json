@@ -1,5 +1,5 @@
 {
- "version": 1,
+ "version": 2,
  "majLe": "2026-10-28",
  "description": "Catalogue scientifique de séances (vélo, course à pied, renforcement, tests, méthodes). Voir catalogue/README.md.",
  "unites": {
@@ -49,13 +49,14 @@
    ],
    "preuve": {
     "niveau": "faible",
-    "resultat": "Peu d'effet démontré de la récupération active sur la performance du lendemain par rapport au repos ; utile surtout pour bouger sans charge.",
+    "resultat": "La récupération active n'améliore presque pas la performance du jour même ou du lendemain par rapport au repos, sans effet négatif démontré ; utile surtout pour bouger sans charge. Aucune étude sur une sortie de récupération un autre jour.",
     "references": [
      {
-      "auteurs": "Seiler S",
-      "annee": 2010,
-      "titre": "What is best practice for training intensity and duration distribution in endurance athletes?",
-      "revue": "Int J Sports Physiol Perform"
+      "auteurs": "Van Hooren B, Peake JM",
+      "annee": 2018,
+      "titre": "Do we need a cool-down after exercise? A narrative review of the psychophysiological effects and the effects on performance, injuries and the long-term adaptive response",
+      "revue": "Sports Med",
+      "pmid": "29663142"
      }
     ]
    }
@@ -113,30 +114,39 @@
     "recuperation": "< 24 h"
    },
    "conseils": [
-    "Test de la parole : tu dois pouvoir parler en phrases.",
-    "Dérive de FC < 5 % = endurance solide."
+    "Test de la parole : tu dois pouvoir parler confortablement en phrases (= sous le premier seuil).",
+    "Repère d'entraîneur : dérive de FC < 5 % = endurance solide."
    ],
    "preuve": {
     "niveau": "prouvé",
-    "resultat": "La grande majorité du volume des athlètes d'endurance se fait sous le premier seuil (≈ 80 % des séances) ; c'est la base sur laquelle l'intensité agit.",
+    "resultat": "Les athlètes d'endurance font ≈ 75-80 % de leurs séances sous le premier seuil (études descriptives). Dans les essais, les programmes qui gardent cette base facile (polarisés ou pyramidaux) progressent autant ou plus que ceux centrés sur le seuil.",
     "references": [
      {
       "auteurs": "Seiler S",
       "annee": 2010,
       "titre": "What is best practice for training intensity and duration distribution in endurance athletes?",
-      "revue": "Int J Sports Physiol Perform"
-     },
-     {
-      "auteurs": "Stöggl T, Sperlich B",
-      "annee": 2014,
-      "titre": "Polarized training has greater impact on key endurance variables than threshold, high intensity, or high volume training",
-      "revue": "Front Physiol"
+      "revue": "Int J Sports Physiol Perform",
+      "pmid": "20861519"
      },
      {
       "auteurs": "Rosenblat MA, Perrotta AS, Vicenzino B",
       "annee": 2019,
       "titre": "Polarized vs. threshold training intensity distribution on endurance sport performance: a systematic review and meta-analysis of randomized controlled trials",
-      "revue": "J Strength Cond Res"
+      "revue": "J Strength Cond Res",
+      "pmid": "29863593"
+     },
+     {
+      "auteurs": "Rosenblat MA, et al.",
+      "annee": 2025,
+      "titre": "Which training intensity distribution intervention will produce the greatest improvements in maximal oxygen uptake and time-trial performance in endurance athletes?",
+      "revue": "Sports Med"
+     },
+     {
+      "auteurs": "Persinger R, Foster C, Gibson M, Fater DC, Porcari JP",
+      "annee": 2004,
+      "titre": "Consistency of the talk test for exercise prescription",
+      "revue": "Med Sci Sports Exerc",
+      "pmid": "15354048"
      }
     ]
    }
@@ -196,24 +206,32 @@
     "recuperation": "24-48 h"
    },
    "conseils": [
-    "Glucides : 30-60 g/h au-delà de 1 h 15, 60-90 g/h au-delà de 2 h 30.",
+    "Glucides : 30-60 g/h au-delà de 1 h 15, 60-90 g/h au-delà de 2 h 30 (consensus ACSM).",
     "Bois selon la soif, davantage en intérieur."
    ],
    "preuve": {
-    "niveau": "prouvé",
-    "resultat": "Le volume en basse intensité est associé au niveau de performance chez les athlètes d'endurance ; la durée d'effort conditionne la « durabilité ».",
+    "niveau": "plausible",
+    "resultat": "Le volume facile est la base des athlètes d'endurance. La tenue à la fatigue (durabilité) sépare les meilleurs pros en course ; la sortie longue l'entraîne logiquement, sans essai qui compare sorties longues et courtes à volume égal.",
     "references": [
      {
       "auteurs": "Seiler S",
       "annee": 2010,
       "titre": "What is best practice for training intensity and duration distribution in endurance athletes?",
-      "revue": "Int J Sports Physiol Perform"
+      "revue": "Int J Sports Physiol Perform",
+      "pmid": "20861519"
+     },
+     {
+      "auteurs": "van Erp T, Sanders D, Lamberts RP",
+      "annee": 2021,
+      "titre": "Maintaining power output with accumulating levels of work done is a key determinant for success in professional cycling",
+      "revue": "Med Sci Sports Exerc"
      },
      {
       "auteurs": "Maunder E, Seiler S, Mildenhall MJ, Kilding AE, Plews DJ",
       "annee": 2021,
       "titre": "The importance of 'durability' in the physiological profiling of endurance athletes",
-      "revue": "Sports Med"
+      "revue": "Sports Med",
+      "pmid": "33886100"
      }
     ]
    }
@@ -223,8 +241,8 @@
    "sport": "velo",
    "famille": "endurance",
    "nom": "Endurance + sprints",
-   "objectif": "Garder la puissance neuromusculaire pendant les blocs d'endurance",
-   "resume": "Z2 avec 6 à 10 sprints de 8-10 s espacés de 10 min.",
+   "objectif": "Garder la puissance de sprint pendant les blocs d'endurance",
+   "resume": "Z2 avec quelques sprints répartis dans la sortie.",
    "unite": "%CP",
    "zone": "Z2 + Z7",
    "rpe": "3 (sprints 9)",
@@ -279,9 +297,8 @@
     }
    ],
    "variantes": [
-    "6 sprints",
-    "8 sprints",
-    "10 sprints, dont 2 départs arrêtés"
+    "6-10 sprints de 8-10 s (version courte)",
+    "3 × 3 sprints de 30 s à fond (format des études), 2 min facile entre les sprints"
    ],
    "quand": {
     "phases": [
@@ -296,14 +313,15 @@
     "Sans ERG : choisis ton braquet avant chaque effort (un ou deux pignons plus dur), lance les 5 premières secondes un peu au-dessus de la cible puis stabilise."
    ],
    "preuve": {
-    "niveau": "pratique",
-    "resultat": "Choix d'entraîneur : courts sprints répartis dans une sortie facile, faible coût de fatigue. Pas d'étude dédiée trouvée.",
+    "niveau": "plausible",
+    "resultat": "Chez 16 cyclistes élites, des sprints de 30 s ajoutés à une sortie facile par semaine (3 semaines) ont amélioré le sprint de 30 s par rapport au groupe sans sprints (+8 ± 11 %), avec la puissance sur 20 min maintenue. Format de l'étude : sprints de 30 s, pas de 10 s.",
     "references": [
      {
-      "auteurs": "Allen H, Coggan A",
-      "annee": 2019,
-      "titre": "Training and Racing with a Power Meter (3e éd.)",
-      "revue": "VeloPress (livre)"
+      "auteurs": "Almquist NW, et al.",
+      "annee": 2020,
+      "titre": "Effects of including sprints in one weekly low-intensity training session during the transition period of elite cyclists",
+      "revue": "Front Physiol",
+      "pmid": "33041839"
      }
     ]
    }
@@ -389,19 +407,33 @@
    ],
    "preuve": {
     "niveau": "plausible",
-    "resultat": "La baisse de puissance après plusieurs heures (durabilité) distingue les meilleurs cyclistes ; l'entraîner par des efforts en fin de sortie est logique mais peu testé directement.",
+    "resultat": "La baisse de puissance après un gros travail sépare les vainqueurs des autres chez les pros ; un travail préalable intense fatigue plus qu'un travail facile. Seul essai d'entraînement : la musculation lourde a amélioré un 5 min à fond fait après 185 min de vélo. Aucun essai sur l'effort final lui-même.",
     "references": [
+     {
+      "auteurs": "van Erp T, Sanders D, Lamberts RP",
+      "annee": 2021,
+      "titre": "Maintaining power output with accumulating levels of work done is a key determinant for success in professional cycling",
+      "revue": "Med Sci Sports Exerc"
+     },
+     {
+      "auteurs": "Spragg J, Leo P, Giorgi A, Gonzalez BM, Swart J",
+      "annee": 2024,
+      "titre": "The intensity rather than the quantity of prior work determines the subsequent downward shift in the power duration relationship in professional cyclists",
+      "revue": "Eur J Sport Sci"
+     },
+     {
+      "auteurs": "Rønnestad BR, Hansen EA, Raastad T",
+      "annee": 2011,
+      "titre": "Strength training improves 5-min all-out performance following 185 min of cycling",
+      "revue": "Scand J Med Sci Sports",
+      "pmid": "19903319"
+     },
      {
       "auteurs": "Maunder E, Seiler S, Mildenhall MJ, Kilding AE, Plews DJ",
       "annee": 2021,
       "titre": "The importance of 'durability' in the physiological profiling of endurance athletes",
-      "revue": "Sports Med"
-     },
-     {
-      "auteurs": "Spragg J, Leo P, Swart J",
-      "annee": 2023,
-      "titre": "The relationship between physiological characteristics and durability in male professional cyclists",
-      "revue": "Med Sci Sports Exerc"
+      "revue": "Sports Med",
+      "pmid": "33886100"
      }
     ]
    }
@@ -479,13 +511,21 @@
    ],
    "preuve": {
     "niveau": "pratique",
-    "resultat": "Zone dite « grise » : efficace pour accumuler du travail aérobie, mais pas meilleure que le modèle polarisé dans les comparaisons.",
+    "resultat": "Permet d'accumuler du travail aérobie. Chez des cyclistes entraînés, un programme centré sur cette zone a moins progressé qu'un programme polarisé (Neal 2013 ; méta-analyse de 3 essais).",
     "references": [
+     {
+      "auteurs": "Neal CM, Hunter AM, Brennan L, et al.",
+      "annee": 2013,
+      "titre": "Six weeks of a polarized training-intensity distribution leads to greater physiological and performance adaptations than a threshold model in trained cyclists",
+      "revue": "J Appl Physiol",
+      "pmid": "23264537"
+     },
      {
       "auteurs": "Rosenblat MA, Perrotta AS, Vicenzino B",
       "annee": 2019,
       "titre": "Polarized vs. threshold training intensity distribution on endurance sport performance: a systematic review and meta-analysis of randomized controlled trials",
-      "revue": "J Strength Cond Res"
+      "revue": "J Strength Cond Res",
+      "pmid": "29863593"
      },
      {
       "auteurs": "Allen H, Coggan A",
@@ -570,13 +610,20 @@
    ],
    "preuve": {
     "niveau": "pratique",
-    "resultat": "Concept d'entraîneur (rapport efficacité / fatigue) ; pas d'essai contrôlé qui le compare directement au seuil ou au polarisé.",
+    "resultat": "Concept d'entraîneur (rapport travail / fatigue) ; aucun essai contrôlé sur le sweet spot. Repère indirect : centrer l'entraînement sur le seuil fait moins bien que le polarisé.",
     "references": [
      {
       "auteurs": "Allen H, Coggan A",
       "annee": 2019,
       "titre": "Training and Racing with a Power Meter (3e éd.)",
       "revue": "VeloPress (livre)"
+     },
+     {
+      "auteurs": "Neal CM, Hunter AM, Brennan L, et al.",
+      "annee": 2013,
+      "titre": "Six weeks of a polarized training-intensity distribution leads to greater physiological and performance adaptations than a threshold model in trained cyclists",
+      "revue": "J Appl Physiol",
+      "pmid": "23264537"
      }
     ]
    }
@@ -653,7 +700,7 @@
    ],
    "preuve": {
     "niveau": "pratique",
-    "resultat": "Pratique d'entraîneur pour les épreuves longues et les cols.",
+    "resultat": "Pratique d'entraîneur pour les épreuves longues et les cols ; pas d'essai contrôlé.",
     "references": [
      {
       "auteurs": "Allen H, Coggan A",
@@ -734,7 +781,7 @@
     "recuperation": "48 h"
    },
    "conseils": [
-    "La FC doit se stabiliser après 5-6 min ; si elle monte sans arrêt, tu es au-dessus de ta CP.",
+    "La FC monte un peu même sous ta CP. Tu es au-dessus seulement si elle grimpe de plus de 8 % dans le bloc et finit vers 95 % de ta FC max.",
     "Sans ERG : choisis ton braquet avant chaque effort (un ou deux pignons plus dur), lance les 5 premières secondes un peu au-dessus de la cible puis stabilise."
    ],
    "preuve": {
@@ -834,18 +881,18 @@
    }
   },
   {
-   "id": "velo-seuil-4x8-seiler",
+   "id": "velo-seuil-4x16",
    "sport": "velo",
    "famille": "seuil",
-   "nom": "4 × 8 min (Seiler)",
-   "objectif": "VO2max et seuil : le meilleur compromis intensité-durée de l'étude",
-   "resume": "4 × 8 min à l'effort maximal tenable (≈ 100-105 % de la CP, ~90 % FC max), récupération 2 min.",
+   "nom": "4 × 16 min (Seiler, Sylta)",
+   "objectif": "Endurance au seuil, gros volume d'intensité modérée",
+   "resume": "4 × 16 min à l'effort maximal tenable (~88 % FC max, ≈ 90-95 % de la CP), récupération 2 min.",
    "unite": "%CP",
-   "zone": "Z4-Z5",
-   "rpe": "8",
-   "niveau": "intermédiaire",
-   "dureeMin": 65,
-   "travailMin": 32.0,
+   "zone": "Z3-Z4",
+   "rpe": "7",
+   "niveau": "confirmé",
+   "dureeMin": 97,
+   "travailMin": 64.0,
    "deroule": [
     {
      "type": "echauffement",
@@ -861,11 +908,12 @@
      "etapes": [
       {
        "type": "effort",
-       "duree": 480,
+       "duree": 960,
        "intensite": [
-        100,
-        105
-       ]
+        90,
+        95
+       ],
+       "note": "effort maximal tenable sur les 4 répétitions"
       },
       {
        "type": "recup",
@@ -887,31 +935,37 @@
     }
    ],
    "variantes": [
-    "3 × 8",
-    "4 × 8",
-    "5 × 8"
+    "3 × 16",
+    "4 × 16"
    ],
    "quand": {
     "phases": [
-     "construction",
-     "spécifique"
+     "base",
+     "construction"
     ],
-    "parSemaine": "1-2",
+    "parSemaine": "1",
     "recuperation": "48 h"
    },
    "conseils": [
-    "Rythme réparti : la dernière répétition doit être la plus forte.",
+    "Le %CP est une estimation : les études règlent l'intensité à l'effort, pas en watts.",
     "Sans ERG : choisis ton braquet avant chaque effort (un ou deux pignons plus dur), lance les 5 premières secondes un peu au-dessus de la cible puis stabilise."
    ],
    "preuve": {
     "niveau": "prouvé",
-    "resultat": "Chez des amateurs entraînés (7 semaines), 4 × 8 min a donné de plus grands progrès que 4 × 16 min et 4 × 4 min à l'effort maximal tenable.",
+    "resultat": "Chez des amateurs, 4 × 16 min a moins progressé que 4 × 8 min sur 7 semaines. Sur 12 semaines (63 cyclistes), alterner 4 × 16, 4 × 8 et 4 × 4 a donné +5 à 10 % de puissance sur 40 min, quel que soit l'ordre.",
     "references": [
      {
       "auteurs": "Seiler S, Jøranson K, Olesen BV, Hetlelid KJ",
       "annee": 2013,
       "titre": "Adaptations to aerobic interval training: interactive effects of exercise intensity and total work duration",
-      "revue": "Scand J Med Sci Sports"
+      "revue": "Scand J Med Sci Sports",
+      "pmid": "21812820"
+     },
+     {
+      "auteurs": "Sylta Ø, Tønnessen E, Hammarström D, et al.",
+      "annee": 2016,
+      "titre": "The effect of different high-intensity periodization models on endurance adaptations",
+      "revue": "Med Sci Sports Exerc"
      }
     ]
    }
@@ -1080,6 +1134,97 @@
    }
   },
   {
+   "id": "velo-vo2-4x8-seiler",
+   "sport": "velo",
+   "famille": "vo2max",
+   "nom": "4 × 8 min (Seiler)",
+   "objectif": "VO2max et seuil : le meilleur compromis intensité-durée de l'étude",
+   "resume": "4 × 8 min à l'effort maximal tenable (~90 % FC max, ≈ 100-105 % de la CP), récupération 2 min.",
+   "unite": "%CP",
+   "zone": "Z4-Z5",
+   "rpe": "8",
+   "niveau": "intermédiaire",
+   "dureeMin": 65,
+   "travailMin": 32.0,
+   "deroule": [
+    {
+     "type": "echauffement",
+     "duree": 900,
+     "intensite": [
+      50,
+      75
+     ]
+    },
+    {
+     "type": "repetition",
+     "fois": 4,
+     "etapes": [
+      {
+       "type": "effort",
+       "duree": 480,
+       "intensite": [
+        100,
+        105
+       ]
+      },
+      {
+       "type": "recup",
+       "duree": 120,
+       "intensite": [
+        45,
+        55
+       ]
+      }
+     ]
+    },
+    {
+     "type": "retour",
+     "duree": 600,
+     "intensite": [
+      45,
+      55
+     ]
+    }
+   ],
+   "variantes": [
+    "3 × 8",
+    "4 × 8",
+    "5 × 8"
+   ],
+   "quand": {
+    "phases": [
+     "construction",
+     "spécifique"
+    ],
+    "parSemaine": "1-2",
+    "recuperation": "48 h"
+   },
+   "conseils": [
+    "Le %CP est une estimation : l'étude règle l'intensité à l'effort.",
+    "Rythme réparti : la dernière répétition doit être la plus forte.",
+    "Sans ERG : choisis ton braquet avant chaque effort (un ou deux pignons plus dur), lance les 5 premières secondes un peu au-dessus de la cible puis stabilise."
+   ],
+   "preuve": {
+    "niveau": "prouvé",
+    "resultat": "Petite étude (35 cyclistes amateurs en 4 groupes, 7 semaines) : 4 × 8 min à l'effort maximal tenable a donné de plus grands progrès que 4 × 16 min et 4 × 4 min.",
+    "references": [
+     {
+      "auteurs": "Seiler S, Jøranson K, Olesen BV, Hetlelid KJ",
+      "annee": 2013,
+      "titre": "Adaptations to aerobic interval training: interactive effects of exercise intensity and total work duration",
+      "revue": "Scand J Med Sci Sports",
+      "pmid": "21812820"
+     },
+     {
+      "auteurs": "Sylta Ø, Tønnessen E, Hammarström D, et al.",
+      "annee": 2016,
+      "titre": "The effect of different high-intensity periodization models on endurance adaptations",
+      "revue": "Med Sci Sports Exerc"
+     }
+    ]
+   }
+  },
+  {
    "id": "velo-vo2-30-15-ronnestad",
    "sport": "velo",
    "famille": "vo2max",
@@ -1162,12 +1307,12 @@
     "recuperation": "48 h"
    },
    "conseils": [
-    "Dans l'étude : effort maximal tenable sur toute la série, pas un sprint.",
+    "Dans l'étude : effort maximal tenable sur toute la série, pas un sprint. Le %CP est une estimation.",
     "Sans ERG : choisis ton braquet avant chaque effort (un ou deux pignons plus dur), lance les 5 premières secondes un peu au-dessus de la cible puis stabilise. Sur les 30 s, reste sur le même braquet et monte la cadence."
    ],
    "preuve": {
     "niveau": "prouvé",
-    "resultat": "Chez des cyclistes entraînés puis élites, les 30/15 ont donné plus de progrès (VO2max, puissance aérobie maximale, puissance au seuil) que 4 × 5 min à effort égal.",
+    "resultat": "Cyclistes bien entraînés, 10 semaines : VO2max +8,7 % contre +2,6 % avec 4 × 5 min. Élites, 3 semaines : puissance sur 20 min +4,7 % contre −1,4 %, sans différence de VO2max. Petits groupes (7-9), même laboratoire.",
     "references": [
      {
       "auteurs": "Rønnestad BR, Hansen J, Vegge G, Tønnessen E, Slettaløkken G",
@@ -1179,7 +1324,208 @@
       "auteurs": "Rønnestad BR, Hansen J, Nygaard H, Lundby C",
       "annee": 2020,
       "titre": "Superior performance improvements in elite cyclists following short-interval vs effort-matched long-interval training",
-      "revue": "Scand J Med Sci Sports"
+      "revue": "Scand J Med Sci Sports",
+      "pmid": "31977120"
+     }
+    ]
+   }
+  },
+  {
+   "id": "velo-vo2-15-15",
+   "sport": "velo",
+   "famille": "vo2max",
+   "nom": "15/15",
+   "objectif": "VO2max avec très peu de fatigue par répétition",
+   "resume": "2 à 3 séries de 10-12 × (15 s à ~130-140 % / 15 s facile), récupération 3 min.",
+   "unite": "%CP",
+   "zone": "Z5-Z6",
+   "rpe": "8",
+   "niveau": "intermédiaire",
+   "dureeMin": 49,
+   "travailMin": 7.5,
+   "deroule": [
+    {
+     "type": "echauffement",
+     "duree": 900,
+     "intensite": [
+      50,
+      75
+     ]
+    },
+    {
+     "type": "repetition",
+     "fois": 3,
+     "etapes": [
+      {
+       "type": "repetition",
+       "fois": 10,
+       "etapes": [
+        {
+         "type": "effort",
+         "duree": 15,
+         "intensite": [
+          130,
+          140
+         ]
+        },
+        {
+         "type": "recup",
+         "duree": 15,
+         "intensite": [
+          50,
+          50
+         ]
+        }
+       ]
+      },
+      {
+       "type": "recup",
+       "duree": 180,
+       "intensite": [
+        45,
+        55
+       ]
+      }
+     ]
+    },
+    {
+     "type": "retour",
+     "duree": 600,
+     "intensite": [
+      45,
+      55
+     ]
+    }
+   ],
+   "variantes": [
+    "2 × 10",
+    "2 × 12",
+    "3 × 10",
+    "3 × 12"
+   ],
+   "quand": {
+    "phases": [
+     "base",
+     "construction"
+    ],
+    "parSemaine": "1",
+    "recuperation": "36-48 h"
+   },
+   "conseils": [
+    "Sans ERG : choisis ton braquet avant chaque effort (un ou deux pignons plus dur), lance les 5 premières secondes un peu au-dessus de la cible puis stabilise."
+   ],
+   "preuve": {
+    "niveau": "plausible",
+    "resultat": "Les intervalles très courts accumulent du temps près de la VO2max avec peu de fatigue ; pas d'étude d'entraînement dédiée au 15/15 à vélo.",
+    "references": [
+     {
+      "auteurs": "Buchheit M, Laursen PB",
+      "annee": 2013,
+      "titre": "High-intensity interval training, solutions to the programming puzzle. Part I: cardiopulmonary emphasis",
+      "revue": "Sports Med"
+     }
+    ]
+   }
+  },
+  {
+   "id": "velo-vo2-20-40",
+   "sport": "velo",
+   "famille": "vo2max",
+   "nom": "20/40",
+   "objectif": "VO2max, efforts courts et intenses avec récupération longue",
+   "resume": "2 à 3 séries de 8-10 × (20 s à ~135-145 % / 40 s facile), récupération 3 min.",
+   "unite": "%CP",
+   "zone": "Z6",
+   "rpe": "8",
+   "niveau": "intermédiaire",
+   "dureeMin": 58,
+   "travailMin": 8.0,
+   "deroule": [
+    {
+     "type": "echauffement",
+     "duree": 900,
+     "intensite": [
+      50,
+      75
+     ]
+    },
+    {
+     "type": "repetition",
+     "fois": 3,
+     "etapes": [
+      {
+       "type": "repetition",
+       "fois": 8,
+       "etapes": [
+        {
+         "type": "effort",
+         "duree": 20,
+         "intensite": [
+          135,
+          145
+         ]
+        },
+        {
+         "type": "recup",
+         "duree": 40,
+         "intensite": [
+          50,
+          50
+         ]
+        }
+       ]
+      },
+      {
+       "type": "recup",
+       "duree": 180,
+       "intensite": [
+        45,
+        55
+       ]
+      }
+     ]
+    },
+    {
+     "type": "retour",
+     "duree": 600,
+     "intensite": [
+      45,
+      55
+     ]
+    }
+   ],
+   "variantes": [
+    "2 × 8",
+    "2 × 10",
+    "3 × 8",
+    "3 × 10"
+   ],
+   "quand": {
+    "phases": [
+     "base",
+     "construction"
+    ],
+    "parSemaine": "1",
+    "recuperation": "36-48 h"
+   },
+   "conseils": [
+    "Sans ERG : choisis ton braquet avant chaque effort (un ou deux pignons plus dur), lance les 5 premières secondes un peu au-dessus de la cible puis stabilise."
+   ],
+   "preuve": {
+    "niveau": "plausible",
+    "resultat": "En aigu, des répétitions de 30 s donnent plus de temps au-dessus de 90 % de la VO2max que des efforts continus ; aucune étude ne compare 20/40 et 30/15.",
+    "references": [
+     {
+      "auteurs": "Rønnestad BR, Hansen J",
+      "annee": 2016,
+      "titre": "Optimizing interval training at power output associated with peak oxygen uptake in well-trained cyclists",
+      "revue": "J Strength Cond Res"
+     },
+     {
+      "auteurs": "Buchheit M, Laursen PB",
+      "annee": 2013,
+      "titre": "High-intensity interval training, solutions to the programming puzzle. Part I: cardiopulmonary emphasis",
+      "revue": "Sports Med"
      }
     ]
    }
@@ -1190,12 +1536,12 @@
    "famille": "vo2max",
    "nom": "VO2 longs 4 × 5 min",
    "objectif": "Temps passé près de la VO2max",
-   "resume": "4 à 5 × 5 min à 106-115 % de la CP, récupération 2 min 30 à 4 min.",
+   "resume": "4 à 5 × 5 min à 106-115 % de la CP, récupération 2 min 30.",
    "unite": "%CP",
    "zone": "Z5",
    "rpe": "8-9",
    "niveau": "intermédiaire",
-   "dureeMin": 57,
+   "dureeMin": 55,
    "travailMin": 20.0,
    "deroule": [
     {
@@ -1220,7 +1566,7 @@
       },
       {
        "type": "recup",
-       "duree": 180,
+       "duree": 150,
        "intensite": [
         45,
         55
@@ -1257,7 +1603,7 @@
    ],
    "preuve": {
     "niveau": "prouvé",
-    "resultat": "Les intervalles longs proches de la VO2max augmentent la VO2max ; ils ont servi de comparaison aux 30/15 dans les études de Rønnestad.",
+    "resultat": "Les intervalles longs proches de la VO2max augmentent la VO2max ; ce format a servi de comparaison aux 30/15 dans les études de Rønnestad (où il a moins progressé).",
     "references": [
      {
       "auteurs": "Buchheit M, Laursen PB",
@@ -1270,6 +1616,185 @@
       "annee": 2015,
       "titre": "Short intervals induce superior training adaptations compared with long intervals in cyclists – an effort-matched approach",
       "revue": "Scand J Med Sci Sports"
+     }
+    ]
+   }
+  },
+  {
+   "id": "velo-vo2-8x4-stepto",
+   "sport": "velo",
+   "famille": "vo2max",
+   "nom": "8 × 4 min (Stepto)",
+   "objectif": "Puissance aérobie, contre-la-montre",
+   "resume": "8 × 4 min à ~85 % de la PMA (≈ 105-110 % de la CP), récupération ~1 min 30.",
+   "unite": "%CP",
+   "zone": "Z5",
+   "rpe": "8",
+   "niveau": "confirmé",
+   "dureeMin": 69,
+   "travailMin": 32.0,
+   "deroule": [
+    {
+     "type": "echauffement",
+     "duree": 900,
+     "intensite": [
+      50,
+      75
+     ]
+    },
+    {
+     "type": "repetition",
+     "fois": 8,
+     "etapes": [
+      {
+       "type": "effort",
+       "duree": 240,
+       "intensite": [
+        105,
+        110
+       ]
+      },
+      {
+       "type": "recup",
+       "duree": 90,
+       "intensite": [
+        45,
+        55
+       ]
+      }
+     ]
+    },
+    {
+     "type": "retour",
+     "duree": 600,
+     "intensite": [
+      45,
+      55
+     ]
+    }
+   ],
+   "variantes": [
+    "6 × 4",
+    "8 × 4"
+   ],
+   "quand": {
+    "phases": [
+     "spécifique"
+    ],
+    "parSemaine": "1-2",
+    "recuperation": "48 h"
+   },
+   "conseils": [
+    "Conversion PMA → CP approximative ; récupération exacte de l'étude non vérifiée."
+   ],
+   "preuve": {
+    "niveau": "plausible",
+    "resultat": "Contre-la-montre de 40 km +2,8 % en 3 semaines (6 séances) chez des cyclistes entraînés ; très petits groupes.",
+    "references": [
+     {
+      "auteurs": "Stepto NK, Hawley JA, Dennis SC, Hopkins WG",
+      "annee": 1999,
+      "titre": "Effects of different interval-training programs on cycling time-trial performance",
+      "revue": "Med Sci Sports Exerc",
+      "pmid": "10331896"
+     }
+    ]
+   }
+  },
+  {
+   "id": "velo-vo2-puissance-variee",
+   "sport": "velo",
+   "famille": "vo2max",
+   "nom": "Intervalles à puissance variée (Bossi)",
+   "objectif": "Passer plus de temps près de la VO2max à travail égal",
+   "resume": "6 × 5 min : 3 × (30 s à 125-130 % puis 70 s à 95-100 %), récupération 2 min 30.",
+   "unite": "%CP",
+   "zone": "Z5",
+   "rpe": "8-9",
+   "niveau": "confirmé",
+   "dureeMin": 70,
+   "travailMin": 30.0,
+   "deroule": [
+    {
+     "type": "echauffement",
+     "duree": 900,
+     "intensite": [
+      50,
+      75
+     ]
+    },
+    {
+     "type": "repetition",
+     "fois": 6,
+     "etapes": [
+      {
+       "type": "repetition",
+       "fois": 3,
+       "etapes": [
+        {
+         "type": "effort",
+         "duree": 30,
+         "intensite": [
+          125,
+          130
+         ]
+        },
+        {
+         "type": "effort",
+         "duree": 70,
+         "intensite": [
+          95,
+          100
+         ]
+        }
+       ]
+      },
+      {
+       "type": "recup",
+       "duree": 150,
+       "intensite": [
+        30,
+        45
+       ]
+      }
+     ]
+    },
+    {
+     "type": "retour",
+     "duree": 600,
+     "intensite": [
+      45,
+      55
+     ]
+    }
+   ],
+   "variantes": [
+    "4 répétitions",
+    "5 répétitions",
+    "6 répétitions"
+   ],
+   "quand": {
+    "phases": [
+     "spécifique"
+    ],
+    "parSemaine": "1",
+    "recuperation": "48 h"
+   },
+   "conseils": [
+    "Dans l'étude : 30 s à 100 % de la PMA intercalés avec 77 % de la PMA ; conversion en %CP estimée.",
+    "Ce sont les accélérations répétées qui comptent : un seul départ rapide ne change rien à travail égal (Miller 2023).",
+    "Sans ERG : choisis ton braquet avant chaque effort (un ou deux pignons plus dur), lance les 5 premières secondes un peu au-dessus de la cible puis stabilise."
+   ],
+   "preuve": {
+    "niveau": "plausible",
+    "resultat": "En aigu, faire varier la puissance (accélérations répétées) augmente le temps passé près de la VO2max par rapport à une puissance constante ; pas encore d'étude d'entraînement sur plusieurs semaines.",
+    "references": [
+     {
+      "auteurs": "Bossi AH, Mesquida C, Passfield L, Rønnestad BR, Hopker JG",
+      "annee": 2020,
+      "titre": "Optimizing interval training through power-output variation within the work intervals",
+      "revue": "Int J Sports Physiol Perform",
+      "pmid": "32244222"
      }
     ]
    }
@@ -1342,17 +1867,19 @@
     "recuperation": "48 h"
    },
    "conseils": [
-    "Guidée par la FC dans l'étude : la FC met 1-2 min à monter, le début peut être un peu plus fort."
+    "Guidée par la FC : elle met 1-2 min à monter, le début peut être un peu plus fort.",
+    "Conversion en %CP : estimation d'entraîneur."
    ],
    "preuve": {
     "niveau": "prouvé",
-    "resultat": "4 × 4 min à 90-95 % FC max a augmenté la VO2max plus que l'entraînement modéré (étude en course à pied, sujets modérément entraînés).",
+    "resultat": "Étude en course à pied : hommes modérément entraînés, 3 séances par semaine pendant 8 semaines ; la VO2max a augmenté plus qu'avec l'entraînement modéré (le 15/15 a fait des progrès proches).",
     "references": [
      {
       "auteurs": "Helgerud J, Høydal K, Wang E, et al.",
       "annee": 2007,
       "titre": "Aerobic high-intensity intervals improve VO2max more than moderate training",
-      "revue": "Med Sci Sports Exerc"
+      "revue": "Med Sci Sports Exerc",
+      "pmid": "17414804"
      }
     ]
    }
@@ -1443,13 +1970,14 @@
    ],
    "preuve": {
     "niveau": "plausible",
-    "resultat": "Les intervalles courts maintiennent longtemps la VO2 élevée (travaux de Billat en course) ; transposés au vélo par les entraîneurs.",
+    "resultat": "Les intervalles courts maintiennent longtemps la VO2 élevée (travaux de Billat en course à pied) ; transposés au vélo par les entraîneurs.",
     "references": [
      {
-      "auteurs": "Billat LV",
-      "annee": 2001,
-      "titre": "Interval training for performance: a scientific and empirical practice. Part I: aerobic interval training",
-      "revue": "Sports Med"
+      "auteurs": "Billat VL, Slawinski J, Bocquet V, et al.",
+      "annee": 2000,
+      "titre": "Intermittent runs at the velocity associated with maximal oxygen uptake enables subjects to remain at maximal oxygen uptake for a longer time than intense but submaximal runs",
+      "revue": "Eur J Appl Physiol",
+      "pmid": "10638376"
      },
      {
       "auteurs": "Buchheit M, Laursen PB",
@@ -1543,104 +2071,14 @@
     "Sans ERG : choisis ton braquet avant chaque effort (un ou deux pignons plus dur), lance les 5 premières secondes un peu au-dessus de la cible puis stabilise."
    ],
    "preuve": {
-    "niveau": "plausible",
-    "resultat": "Récupérations courtes = VO2 qui reste haute ; pratique d'entraîneur appuyée sur la logique des intervalles courts.",
+    "niveau": "pratique",
+    "resultat": "Aucune étude d'entraînement dédiée au 40/20 ; logique des intervalles courts (récupérations courtes, VO2 qui reste haute).",
     "references": [
      {
       "auteurs": "Buchheit M, Laursen PB",
       "annee": 2013,
       "titre": "High-intensity interval training, solutions to the programming puzzle. Part I: cardiopulmonary emphasis",
       "revue": "Sports Med"
-     }
-    ]
-   }
-  },
-  {
-   "id": "velo-vo2-depart-rapide",
-   "sport": "velo",
-   "famille": "vo2max",
-   "nom": "Intervalles à départ rapide",
-   "objectif": "Atteindre plus vite et plus longtemps la VO2max",
-   "resume": "5 × 5 min : 1 min 30 à 120 % puis 3 min 30 à ~105 %, récupération 2 min 30.",
-   "unite": "%CP",
-   "zone": "Z5",
-   "rpe": "9",
-   "niveau": "confirmé",
-   "dureeMin": 63,
-   "travailMin": 25.0,
-   "deroule": [
-    {
-     "type": "echauffement",
-     "duree": 900,
-     "intensite": [
-      50,
-      75
-     ]
-    },
-    {
-     "type": "repetition",
-     "fois": 5,
-     "etapes": [
-      {
-       "type": "effort",
-       "duree": 90,
-       "intensite": [
-        118,
-        125
-       ]
-      },
-      {
-       "type": "effort",
-       "duree": 210,
-       "intensite": [
-        102,
-        108
-       ]
-      },
-      {
-       "type": "recup",
-       "duree": 150,
-       "intensite": [
-        45,
-        55
-       ]
-      }
-     ]
-    },
-    {
-     "type": "retour",
-     "duree": 600,
-     "intensite": [
-      45,
-      55
-     ]
-    }
-   ],
-   "variantes": [
-    "3 répétitions",
-    "4 répétitions",
-    "5 répétitions"
-   ],
-   "quand": {
-    "phases": [
-     "spécifique"
-    ],
-    "parSemaine": "1",
-    "recuperation": "48 h"
-   },
-   "conseils": [
-    "Le départ fort fait monter la VO2 tout de suite ; la suite la maintient sans exploser.",
-    "Sans ERG : choisis ton braquet avant chaque effort (un ou deux pignons plus dur), lance les 5 premières secondes un peu au-dessus de la cible puis stabilise."
-   ],
-   "preuve": {
-    "niveau": "plausible",
-    "resultat": "En aigu, faire varier la puissance (départ rapide) augmente le temps passé près de la VO2max à travail égal ; effet à long terme encore peu étudié.",
-    "references": [
-     {
-      "auteurs": "Bossi AH, Mesquida C, Passfield L, Rønnestad BR, Hopker JG",
-      "annee": 2020,
-      "titre": "Optimizing interval training through power-output variation within the work intervals",
-      "revue": "Int J Sports Physiol Perform"
      }
     ]
    }
@@ -1715,13 +2153,20 @@
    ],
    "preuve": {
     "niveau": "pratique",
-    "resultat": "Pratique d'entraîneur pour la capacité anaérobie.",
+    "resultat": "Pratique d'entraîneur. Repère : 12 × 60 s à ~100 % de la PMA n'a pas amélioré significativement le contre-la-montre de 40 km.",
     "references": [
      {
       "auteurs": "Allen H, Coggan A",
       "annee": 2019,
       "titre": "Training and Racing with a Power Meter (3e éd.)",
       "revue": "VeloPress (livre)"
+     },
+     {
+      "auteurs": "Stepto NK, Hawley JA, Dennis SC, Hopkins WG",
+      "annee": 1999,
+      "titre": "Effects of different interval-training programs on cycling time-trial performance",
+      "revue": "Med Sci Sports Exerc",
+      "pmid": "10331896"
      }
     ]
    }
@@ -1794,13 +2239,181 @@
    ],
    "preuve": {
     "niveau": "prouvé",
-    "resultat": "Chez des sujets actifs, 2 semaines de 4-6 × 30 s à fond ont donné des adaptations musculaires et des progrès comparables à l'endurance classique, pour bien moins de temps.",
+    "resultat": "Chez des hommes actifs non entraînés en endurance (8 par groupe), 2 semaines de 4-6 × 30 s à fond ont donné des adaptations comparables à l'endurance classique, pour bien moins de temps.",
     "references": [
      {
       "auteurs": "Gibala MJ, Little JP, van Essen M, et al.",
       "annee": 2006,
       "titre": "Short-term sprint interval versus traditional endurance training: similar initial adaptations in human skeletal muscle and exercise performance",
-      "revue": "J Physiol"
+      "revue": "J Physiol",
+      "pmid": "16825308"
+     }
+    ]
+   }
+  },
+  {
+   "id": "velo-sit-supramax-laursen",
+   "sport": "velo",
+   "famille": "anaerobie",
+   "nom": "12 × 30 s supramaximaux (Laursen)",
+   "objectif": "Contre-la-montre chez des cyclistes très entraînés",
+   "resume": "12 × 30 s à ~175 % de la PMA (≈ 220 % de la CP), récupération 4 min 30.",
+   "unite": "%CP",
+   "zone": "Z7",
+   "rpe": "10",
+   "niveau": "confirmé",
+   "dureeMin": 90,
+   "travailMin": 6.0,
+   "deroule": [
+    {
+     "type": "echauffement",
+     "duree": 1200,
+     "intensite": [
+      50,
+      75
+     ]
+    },
+    {
+     "type": "repetition",
+     "fois": 12,
+     "etapes": [
+      {
+       "type": "effort",
+       "duree": 30,
+       "intensite": [
+        210,
+        230
+       ]
+      },
+      {
+       "type": "recup",
+       "duree": 270,
+       "intensite": [
+        40,
+        50
+       ]
+      }
+     ]
+    },
+    {
+     "type": "retour",
+     "duree": 600,
+     "intensite": [
+      45,
+      55
+     ]
+    }
+   ],
+   "variantes": [
+    "8 répétitions",
+    "10",
+    "12"
+   ],
+   "quand": {
+    "phases": [
+     "spécifique"
+    ],
+    "parSemaine": "1-2",
+    "recuperation": "72 h"
+   },
+   "conseils": [
+    "Conversion PMA → CP estimée. Sans ERG : quasiment un sprint, choisis un gros braquet."
+   ],
+   "preuve": {
+    "niveau": "prouvé",
+    "resultat": "Chez des cyclistes très entraînés, ce format a amélioré le contre-la-montre de 40 km de 4,4 à 5,8 %.",
+    "references": [
+     {
+      "auteurs": "Laursen PB, Shing CM, Peake JM, Coombes JS, Jenkins DG",
+      "annee": 2002,
+      "titre": "Interval training program optimization in highly trained endurance cyclists",
+      "revue": "Med Sci Sports Exerc",
+      "pmid": "12439086"
+     }
+    ]
+   }
+  },
+  {
+   "id": "velo-sit-10s",
+   "sport": "velo",
+   "famille": "anaerobie",
+   "nom": "Sprints de 10 s (SIT court)",
+   "objectif": "VO2max et performance avec un minimum de temps",
+   "resume": "4 à 6 × 10 s à fond, récupération 4 min ; version mini : 2 × 20 s.",
+   "unite": "%CP",
+   "zone": "Z7",
+   "rpe": "9",
+   "niveau": "tous",
+   "dureeMin": 46,
+   "travailMin": 0.8,
+   "deroule": [
+    {
+     "type": "echauffement",
+     "duree": 900,
+     "intensite": [
+      50,
+      75
+     ]
+    },
+    {
+     "type": "repetition",
+     "fois": 5,
+     "etapes": [
+      {
+       "type": "effort",
+       "duree": 10,
+       "max": true
+      },
+      {
+       "type": "recup",
+       "duree": 240,
+       "intensite": [
+        40,
+        50
+       ]
+      }
+     ]
+    },
+    {
+     "type": "retour",
+     "duree": 600,
+     "intensite": [
+      45,
+      55
+     ]
+    }
+   ],
+   "variantes": [
+    "2 × 20 s (version mini)",
+    "4 × 10 s",
+    "6 × 10 s"
+   ],
+   "quand": {
+    "phases": [
+     "toutes"
+    ],
+    "parSemaine": "2-3",
+    "recuperation": "24-48 h"
+   },
+   "conseils": [
+    "Faire plus de sprints n'augmente pas le gain de VO2max."
+   ],
+   "preuve": {
+    "niveau": "prouvé",
+    "resultat": "Chez des sujets actifs, des sprints de 10 s (récupération 4 min, 2 semaines) ont amélioré VO2max (+9,2 %) et contre-la-montre (+3,5 %) ; méta-analyse : plus de sprints par séance n'apporte pas plus. Effet non démontré chez des cyclistes entraînés.",
+    "references": [
+     {
+      "auteurs": "Hazell TJ, Macpherson RE, Gravelle BM, Lemon PW",
+      "annee": 2010,
+      "titre": "10 or 30-s sprint interval training bouts enhance both aerobic and anaerobic performance",
+      "revue": "Eur J Appl Physiol"
+     },
+     {
+      "auteurs": "Vollaard NBJ, Metcalfe RS, Williams S",
+      "annee": 2017,
+      "titre": "Effect of number of sprints in an SIT session on change in VO2max: a meta-analysis",
+      "revue": "Med Sci Sports Exerc",
+      "pmid": "28079707"
      }
     ]
    }
@@ -1811,7 +2424,7 @@
    "famille": "anaerobie",
    "nom": "Tabata 20/10",
    "objectif": "VO2max et capacité anaérobie",
-   "resume": "7 à 8 × (20 s à ~170 % de la VO2max / 10 s de repos) : à l'épuisement.",
+   "resume": "7 à 8 × (20 s à ~170 % de la puissance à VO2max / 10 s de repos) : à l'épuisement.",
    "unite": "%CP",
    "zone": "Z7",
    "rpe": "10",
@@ -1834,10 +2447,8 @@
       {
        "type": "effort",
        "duree": 20,
-       "intensite": [
-        150,
-        170
-       ]
+       "max": true,
+       "note": "≈ 170 % de la puissance à VO2max"
       },
       {
        "type": "recup",
@@ -1874,14 +2485,15 @@
     "Protocole de laboratoire très dur ; la plupart des « tabata » des applis sont bien moins intenses."
    ],
    "preuve": {
-    "niveau": "prouvé",
-    "resultat": "6 semaines de ce protocole ont augmenté à la fois la VO2max et la capacité anaérobie (sujets actifs).",
+    "niveau": "plausible",
+    "resultat": "Une seule petite étude (7 jeunes hommes actifs) : 6 semaines, 4-5 jours par semaine ; VO2max en hausse et capacité anaérobie +28 %.",
     "references": [
      {
       "auteurs": "Tabata I, Nishimura K, Kouzaki M, et al.",
       "annee": 1996,
       "titre": "Effects of moderate-intensity endurance and high-intensity intermittent training on anaerobic capacity and VO2max",
-      "revue": "Med Sci Sports Exerc"
+      "revue": "Med Sci Sports Exerc",
+      "pmid": "8897392"
      }
     ]
    }
@@ -1954,14 +2566,114 @@
     "Sans ERG : choisis ton braquet avant chaque effort (un ou deux pignons plus dur), lance les 5 premières secondes un peu au-dessus de la cible puis stabilise."
    ],
    "preuve": {
-    "niveau": "plausible",
-    "resultat": "Chez des cyclistes entraînés, 4 semaines de sprints ajoutées à l'endurance ont amélioré la puissance de sprint.",
+    "niveau": "pratique",
+    "resultat": "Pour la puissance maximale de cyclistes entraînés, pratique d'entraîneur. Chez des sujets actifs, des sprints de 10 s ont aussi amélioré la VO2max.",
     "references": [
      {
-      "auteurs": "Creer AR, Ricard MD, Conlee RK, Hoyt GL, Parcell AC",
-      "annee": 2004,
-      "titre": "Neural, metabolic, and performance adaptations to four weeks of high intensity sprint-interval training in trained cyclists",
-      "revue": "Int J Sports Med"
+      "auteurs": "Allen H, Coggan A",
+      "annee": 2019,
+      "titre": "Training and Racing with a Power Meter (3e éd.)",
+      "revue": "VeloPress (livre)"
+     },
+     {
+      "auteurs": "Hazell TJ, Macpherson RE, Gravelle BM, Lemon PW",
+      "annee": 2010,
+      "titre": "10 or 30-s sprint interval training bouts enhance both aerobic and anaerobic performance",
+      "revue": "Eur J Appl Physiol"
+     }
+    ]
+   }
+  },
+  {
+   "id": "velo-sprints-force-paton",
+   "sport": "velo",
+   "famille": "sprint",
+   "nom": "Sprints en force (Paton & Hopkins)",
+   "objectif": "Puissance et contre-la-montre court, en période de compétition",
+   "resume": "3 séries de 5 × 30 s à fond à 60-70 tr/min (récupération 30 s), en alternance avec 20 sauts sur une jambe ; 3-5 min entre les séries.",
+   "unite": "%CP",
+   "zone": "Z7",
+   "rpe": "9",
+   "niveau": "confirmé",
+   "dureeMin": 57,
+   "travailMin": 7.5,
+   "deroule": [
+    {
+     "type": "echauffement",
+     "duree": 1200,
+     "intensite": [
+      50,
+      75
+     ]
+    },
+    {
+     "type": "repetition",
+     "fois": 3,
+     "etapes": [
+      {
+       "type": "repetition",
+       "fois": 5,
+       "etapes": [
+        {
+         "type": "effort",
+         "duree": 30,
+         "max": true,
+         "cadence": "60-70"
+        },
+        {
+         "type": "recup",
+         "duree": 30,
+         "intensite": [
+          40,
+          50
+         ]
+        }
+       ]
+      },
+      {
+       "type": "recup",
+       "duree": 240,
+       "intensite": [
+        45,
+        55
+       ],
+       "note": "+ 20 sauts sur une jambe, par jambe"
+      }
+     ]
+    },
+    {
+     "type": "retour",
+     "duree": 600,
+     "intensite": [
+      45,
+      55
+     ]
+    }
+   ],
+   "variantes": [
+    "2 séries",
+    "3 séries"
+   ],
+   "quand": {
+    "phases": [
+     "spécifique"
+    ],
+    "parSemaine": "2-3 (12 séances en 4-5 semaines)",
+    "recuperation": "48 h"
+   },
+   "conseils": [
+    "Gros braquet, cadence basse imposée ; sans ERG, c'est le braquet qui fait la résistance."
+   ],
+   "preuve": {
+    "niveau": "plausible",
+    "resultat": "Chez des cyclistes de compétition (12 séances en 4-5 semaines) : puissance sur 1 km +8,7 %, sur 4 km +8,1 %, puissance de pointe +6,8 %.",
+    "references": [
+     {
+      "auteurs": "Paton CD, Hopkins WG",
+      "annee": 2005,
+      "titre": "Combining explosive and high-resistance training improves performance in competitive cyclists",
+      "revue": "J Strength Cond Res",
+      "pmid": "16287351"
      }
     ]
    }
@@ -2034,14 +2746,14 @@
     "En côte légère dehors ; sur home trainer, mets le braquet le plus dur avant de démarrer."
    ],
    "preuve": {
-    "niveau": "plausible",
-    "resultat": "Les efforts explosifs à haute résistance, ajoutés à l'endurance, ont amélioré la performance de cyclistes de compétition.",
+    "niveau": "pratique",
+    "resultat": "Méthode d'entraîneur ; pas d'étude dédiée.",
     "references": [
      {
-      "auteurs": "Paton CD, Hopkins WG",
-      "annee": 2005,
-      "titre": "Combining explosive and high-resistance training improves performance in competitive cyclists",
-      "revue": "J Strength Cond Res"
+      "auteurs": "Allen H, Coggan A",
+      "annee": 2019,
+      "titre": "Training and Racing with a Power Meter (3e éd.)",
+      "revue": "VeloPress (livre)"
      }
     ]
    }
@@ -2134,13 +2846,13 @@
    "famille": "force",
    "nom": "Basse cadence (force sur le vélo)",
    "objectif": "Force-endurance, recrutement des fibres",
-   "resume": "4 à 5 × 6-8 min à 85-95 % de la CP à 50-60 tr/min, récupération 4 min.",
+   "resume": "6 × 5 min autour de la CP à 60 tr/min, récupération 3-4 min (protocole Nimmerichter).",
    "unite": "%CP",
-   "zone": "Z3-Z4",
-   "rpe": "6-7",
+   "zone": "Z4",
+   "rpe": "7",
    "niveau": "intermédiaire",
-   "dureeMin": 69,
-   "travailMin": 28.0,
+   "dureeMin": 76,
+   "travailMin": 30.0,
    "deroule": [
     {
      "type": "echauffement",
@@ -2152,20 +2864,20 @@
     },
     {
      "type": "repetition",
-     "fois": 4,
+     "fois": 6,
      "etapes": [
       {
        "type": "effort",
-       "duree": 420,
+       "duree": 300,
        "intensite": [
-        85,
-        95
+        95,
+        100
        ],
-       "cadence": "50-60"
+       "cadence": "60"
       },
       {
        "type": "recup",
-       "duree": 240,
+       "duree": 210,
        "intensite": [
         50,
         60
@@ -2184,16 +2896,16 @@
     }
    ],
    "variantes": [
-    "3 × 6",
-    "4 × 7",
-    "5 × 8"
+    "4 × 5",
+    "6 × 5",
+    "5 × 6 à 40 tr/min (format Kristoffersen)"
    ],
    "quand": {
     "phases": [
      "base",
      "construction"
     ],
-    "parSemaine": "0-1",
+    "parSemaine": "0-2",
     "recuperation": "36-48 h"
    },
    "conseils": [
@@ -2201,13 +2913,14 @@
    ],
    "preuve": {
     "niveau": "mitigé",
-    "resultat": "Une étude trouve un avantage à la basse cadence, une autre aucun chez des cyclistes très entraînés : ne remplace pas la musculation lourde.",
+    "resultat": "6 × 5 min à 60 tr/min (2 fois par semaine, 4 semaines) a un peu amélioré le contre-la-montre en côte, mais le groupe contrôle aussi. 5 × 6 min à 40 tr/min pendant 12 semaines n'a rien apporté chez des vétérans très entraînés. La musculation lourde a de meilleures preuves.",
     "references": [
      {
-      "auteurs": "Paton CD, Hopkins WG, Cook C",
-      "annee": 2009,
-      "titre": "Effects of low- vs. high-cadence interval training on cycling performance",
-      "revue": "J Strength Cond Res"
+      "auteurs": "Nimmerichter A, Eston R, Bachl N, Williams C",
+      "annee": 2012,
+      "titre": "Effects of low and high cadence interval training on power output in flat and uphill cycling time-trials",
+      "revue": "Eur J Appl Physiol",
+      "pmid": "21479957"
      },
      {
       "auteurs": "Kristoffersen M, Gundersen H, Leirdal S, Iversen VV",
@@ -2223,8 +2936,8 @@
    "sport": "velo",
    "famille": "test",
    "nom": "Test CP 3/7/12 min",
-   "objectif": "Mesurer ta CP (puissance critique) et ta réserve W′",
-   "resume": "3 efforts à fond de 12, 7 et 3 min (dans l'ordre que tu préfères), 30 min de récupération facile entre chaque.",
+   "objectif": "Mesurer ta CP (puissance critique) ; W′ seulement approximatif",
+   "resume": "3 efforts à fond, dans l'ordre 12, 7 puis 3 min, avec 30 min de récupération facile entre chaque.",
    "unite": "%CP",
    "zone": "test",
    "rpe": "10",
@@ -2285,7 +2998,8 @@
     }
    ],
    "variantes": [
-    "Version courte 3 + 12 min (voir test CP 2 points)"
+    "Efforts sur 3 jours séparés (plus juste pour W′)",
+    "Version courte 3 + 12 min (test CP 2 points)"
    ],
    "quand": {
     "phases": [
@@ -2300,13 +3014,21 @@
    ],
    "preuve": {
     "niveau": "prouvé",
-    "resultat": "Tests de terrain valides et fiables pour la CP quand les efforts sont maximaux ; 30 min de récupération entre les efforts conviennent.",
+    "resultat": "Tests de terrain valides et fiables pour la CP quand les efforts sont maximaux. Avec 30 min de récupération entre les efforts, l'erreur moyenne est de 3,7 % sur la CP mais de 33 % sur W′.",
     "references": [
      {
       "auteurs": "Karsten B, Jobson SA, Hopker J, Stevens L, Beedie C",
       "annee": 2015,
       "titre": "Validity and reliability of critical power field testing",
-      "revue": "Eur J Appl Physiol"
+      "revue": "Eur J Appl Physiol",
+      "pmid": "25260244"
+     },
+     {
+      "auteurs": "Karsten B, Hopker J, Jobson SA, et al.",
+      "annee": 2017,
+      "titre": "Comparison of inter-trial recovery times for the determination of critical power and W′ in cycling",
+      "revue": "J Sports Sci",
+      "pmid": "27531664"
      }
     ]
    }
@@ -2316,7 +3038,7 @@
    "sport": "velo",
    "famille": "test",
    "nom": "Test CP 2 points (3 + 12 min)",
-   "objectif": "CP et W′ en moins de temps",
+   "objectif": "CP en moins de temps",
    "resume": "3 min puis 12 min à fond, 30 min de récupération entre les deux.",
    "unite": "%CP",
    "zone": "test",
@@ -2373,7 +3095,7 @@
    ],
    "preuve": {
     "niveau": "plausible",
-    "resultat": "Deux efforts maximaux donnent une CP proche de celle obtenue avec trois.",
+    "resultat": "Deux efforts maximaux donnent une CP quasi identique à celle obtenue avec trois (283 contre 282 W dans l'étude).",
     "references": [
      {
       "auteurs": "Simpson LP, Kordi M",
@@ -2434,9 +3156,7 @@
      ]
     }
    ],
-   "variantes": [
-    "Sans les 5 min préalables : retirer plutôt 7-8 %"
-   ],
+   "variantes": [],
    "quand": {
     "phases": [
      "début de phase"
@@ -2445,23 +3165,31 @@
     "recuperation": "48 h"
    },
    "conseils": [
-    "Le coefficient 0,95 est une moyenne : il varie d'un cycliste à l'autre."
+    "Le coefficient 0,95 est une moyenne : il varie d'un cycliste à l'autre.",
+    "L'appli raisonne en CP : préfère le test CP."
    ],
    "preuve": {
     "niveau": "pratique",
-    "resultat": "Test de terrain très répandu ; le coefficient de 95 % n'est pas valable pour tout le monde.",
+    "resultat": "La FTP (95 % des 20 min) se tient en moyenne 51 ± 16 min avec de gros écarts entre cyclistes ; elle surestime l'état stable lactique (≈ 93 % de la FTP). La CP est en moyenne un peu plus haute (+7 W), mais les deux ne sont pas interchangeables.",
     "references": [
-     {
-      "auteurs": "Allen H, Coggan A",
-      "annee": 2019,
-      "titre": "Training and Racing with a Power Meter (3e éd.)",
-      "revue": "VeloPress (livre)"
-     },
      {
       "auteurs": "Borszcz FK, Tramontin AF, Bossi AH, Carminatti LJ, Costa VP",
       "annee": 2018,
       "titre": "Functional threshold power in cyclists: validity of the concept and physiological responses",
       "revue": "Int J Sports Med"
+     },
+     {
+      "auteurs": "Inglis EC, Iannetta D, Passfield L, Murias JM",
+      "annee": 2020,
+      "titre": "Maximal lactate steady state versus the 20-minute functional threshold power test in well-trained individuals: 'watts' the big deal?",
+      "revue": "Int J Sports Physiol Perform",
+      "pmid": "31689684"
+     },
+     {
+      "auteurs": "Karsten B, Petrigna L, Klose A, et al.",
+      "annee": 2021,
+      "titre": "Relationship between the critical power test and a 20-min functional threshold power test in cycling",
+      "revue": "Front Physiol"
      }
     ]
    }
@@ -2471,7 +3199,7 @@
    "sport": "velo",
    "famille": "test",
    "nom": "Test rampe (PMA)",
-   "objectif": "Puissance maximale aérobie (PMA) et estimation du seuil",
+   "objectif": "Puissance maximale aérobie (PMA)",
    "resume": "Paliers de 1 min augmentant de 20-25 W jusqu'à l'épuisement.",
    "unite": "%CP",
    "zone": "test",
@@ -2512,7 +3240,8 @@
     "recuperation": "24-48 h"
    },
    "conseils": [
-    "Seuil estimé ≈ 75 % de la meilleure minute : estimation grossière.",
+    "« Seuil ≈ 75 % de la meilleure minute » est une convention des applis (Zwift, TrainerRoad), pas un résultat d'étude.",
+    "La PMA dépend de la pente de la rampe : garde toujours la même.",
     "Sans ERG : monte d'une dent toutes les minutes en gardant la cadence."
    ],
    "preuve": {
@@ -2524,6 +3253,143 @@
       "annee": 2019,
       "titre": "Training and Racing with a Power Meter (3e éd.)",
       "revue": "VeloPress (livre)"
+     }
+    ]
+   }
+  },
+  {
+   "id": "velo-test-5min",
+   "sport": "velo",
+   "famille": "test",
+   "nom": "Test 5 min",
+   "objectif": "Estimer la VO2max (et suivre ta puissance aérobie)",
+   "resume": "5 min à fond après un bon échauffement.",
+   "unite": "%CP",
+   "zone": "test",
+   "rpe": "10",
+   "niveau": "tous",
+   "dureeMin": 35,
+   "travailMin": 5.0,
+   "deroule": [
+    {
+     "type": "echauffement",
+     "duree": 1200,
+     "intensite": [
+      50,
+      75
+     ]
+    },
+    {
+     "type": "effort",
+     "duree": 300,
+     "max": true
+    },
+    {
+     "type": "retour",
+     "duree": 600,
+     "intensite": [
+      45,
+      55
+     ]
+    }
+   ],
+   "variantes": [],
+   "quand": {
+    "phases": [
+     "début de phase"
+    ],
+    "parSemaine": "toutes les 6-8 semaines",
+    "recuperation": "24-48 h"
+   },
+   "conseils": [
+    "La puissance sur 5 min est un bon repère de suivi en soi, même sans formule."
+   ],
+   "preuve": {
+    "niveau": "plausible",
+    "resultat": "Formule de prédiction de la VO2max à partir des 5 min ; une étude sur un autre groupe de cyclistes la trouve un peu basse.",
+    "references": [
+     {
+      "auteurs": "Sitko S, Cirer-Sastre R, Corbi F, López-Laval I",
+      "annee": 2022,
+      "titre": "Five-minute power-based test to predict maximal oxygen consumption in road cycling",
+      "revue": "Int J Sports Physiol Perform"
+     }
+    ]
+   }
+  },
+  {
+   "id": "velo-test-durabilite",
+   "sport": "velo",
+   "famille": "test",
+   "nom": "Test de durabilité",
+   "objectif": "Mesurer combien tu perds quand tu es fatigué",
+   "resume": "Un jour : 5 min à fond frais. Un autre jour : 5 min à fond après 2 h 30 à intensité modérée. Compare l'écart en %.",
+   "unite": "%CP",
+   "zone": "test",
+   "rpe": "10",
+   "niveau": "confirmé",
+   "dureeMin": 180,
+   "travailMin": 5.0,
+   "deroule": [
+    {
+     "type": "echauffement",
+     "duree": 900,
+     "intensite": [
+      50,
+      65
+     ]
+    },
+    {
+     "type": "effort",
+     "duree": 9000,
+     "intensite": [
+      60,
+      70
+     ]
+    },
+    {
+     "type": "effort",
+     "duree": 300,
+     "max": true,
+     "note": "5 min à fond fatigué"
+    },
+    {
+     "type": "retour",
+     "duree": 600,
+     "intensite": [
+      45,
+      55
+     ]
+    }
+   ],
+   "variantes": [
+    "Variante : ≈ 2 000 kJ sous 70 % de la CP puis 12 min à fond"
+   ],
+   "quand": {
+    "phases": [
+     "construction"
+    ],
+    "parSemaine": "1-2 fois par saison",
+    "recuperation": "72 h"
+   },
+   "conseils": [
+    "Mange comme en course pendant la partie modérée."
+   ],
+   "preuve": {
+    "niveau": "plausible",
+    "resultat": "Protocoles de recherche, pas encore validés comme test de suivi ; la baisse de puissance après un gros travail distingue les meilleurs pros.",
+    "references": [
+     {
+      "auteurs": "Spragg J, Leo P, Giorgi A, Gonzalez BM, Swart J",
+      "annee": 2024,
+      "titre": "The intensity rather than the quantity of prior work determines the subsequent downward shift in the power duration relationship in professional cyclists",
+      "revue": "Eur J Sport Sci"
+     },
+     {
+      "auteurs": "van Erp T, Sanders D, Lamberts RP",
+      "annee": 2021,
+      "titre": "Maintaining power output with accumulating levels of work done is a key determinant for success in professional cycling",
+      "revue": "Med Sci Sports Exerc"
      }
     ]
    }
@@ -2611,7 +3477,7 @@
    "famille": "test",
    "nom": "Test de dérive cardiaque",
    "objectif": "Solidité de l'endurance (découplage puissance / FC)",
-   "resume": "60 à 90 min à puissance constante en Z2, au frais, bien hydraté.",
+   "resume": "60 à 90 min à puissance constante à tes watts Z2, au frais, bien hydraté.",
    "unite": "%CP",
    "zone": "Z2",
    "rpe": "3",
@@ -2656,11 +3522,12 @@
     "recuperation": "< 24 h"
    },
    "conseils": [
-    "On ignore les 10 premières minutes. Dérive < 5 % : endurance solide ; > 10 % : trop dur ou fatigue."
+    "On ignore les 10 premières minutes. Dérive < 5 % : endurance solide ; > 10 % : trop dur ou fatigue.",
+    "L'appli le mesure déjà sur chaque sortie Z2."
    ],
    "preuve": {
     "niveau": "pratique",
-    "resultat": "Indicateur d'entraîneur de la durabilité aérobie ; à lire en tendance.",
+    "resultat": "Indicateur d'entraîneur de la solidité aérobie ; à lire en tendance.",
     "references": [
      {
       "auteurs": "Friel J",
@@ -2672,7 +3539,8 @@
       "auteurs": "Maunder E, Seiler S, Mildenhall MJ, Kilding AE, Plews DJ",
       "annee": 2021,
       "titre": "The importance of 'durability' in the physiological profiling of endurance athletes",
-      "revue": "Sports Med"
+      "revue": "Sports Med",
+      "pmid": "33886100"
      }
     ]
    }
@@ -2717,19 +3585,28 @@
    ],
    "preuve": {
     "niveau": "prouvé",
-    "resultat": "Base du volume des coureurs d'endurance (≈ 80 % du temps sous le premier seuil).",
+    "resultat": "Base du volume des coureurs d'endurance (≈ 80 % du temps sous le premier seuil) ; les programmes qui gardent cette base progressent autant ou plus.",
     "references": [
      {
       "auteurs": "Seiler S",
       "annee": 2010,
       "titre": "What is best practice for training intensity and duration distribution in endurance athletes?",
-      "revue": "Int J Sports Physiol Perform"
+      "revue": "Int J Sports Physiol Perform",
+      "pmid": "20861519"
      },
      {
       "auteurs": "Stöggl T, Sperlich B",
       "annee": 2014,
       "titre": "Polarized training has greater impact on key endurance variables than threshold, high intensity, or high volume training",
-      "revue": "Front Physiol"
+      "revue": "Front Physiol",
+      "pmid": "24550842"
+     },
+     {
+      "auteurs": "Persinger R, Foster C, Gibson M, Fater DC, Porcari JP",
+      "annee": 2004,
+      "titre": "Consistency of the talk test for exercise prescription",
+      "revue": "Med Sci Sports Exerc",
+      "pmid": "15354048"
      }
     ]
    }
@@ -2772,17 +3649,18 @@
     "recuperation": "24-48 h"
    },
    "conseils": [
-    "Ne dépasse pas ~25-30 % de ton volume hebdomadaire."
+    "Repère d'entraîneur : ne dépasse pas ~25-30 % de ton volume hebdomadaire."
    ],
    "preuve": {
-    "niveau": "prouvé",
-    "resultat": "Volume en basse intensité associé à la performance en endurance.",
+    "niveau": "plausible",
+    "resultat": "Le volume en basse intensité est associé à la performance ; l'intérêt propre d'une sortie longue (par rapport au même volume réparti) n'est pas isolé.",
     "references": [
      {
       "auteurs": "Seiler S",
       "annee": 2010,
       "titre": "What is best practice for training intensity and duration distribution in endurance athletes?",
-      "revue": "Int J Sports Physiol Perform"
+      "revue": "Int J Sports Physiol Perform",
+      "pmid": "20861519"
      }
     ]
    }
@@ -2793,7 +3671,7 @@
    "famille": "sprint",
    "nom": "Lignes droites (accélérations)",
    "objectif": "Foulée, économie, vitesse sans fatigue",
-   "resume": "Après un footing : 6 à 10 × 15-20 s en accélération progressive jusqu'à ~90 % de ta vitesse max, retour en marchant.",
+   "resume": "Après un footing : 6 à 10 × 15-20 s en accélération progressive jusqu'à ton allure 1 500 m, relâché, retour en marchant.",
    "unite": "%VMA",
    "zone": "Z2 + vitesse",
    "rpe": "4",
@@ -2817,8 +3695,8 @@
        "type": "effort",
        "duree": 20,
        "intensite": [
-        120,
-        140
+        105,
+        115
        ],
        "note": "relâché, pas un sprint"
       },
@@ -2854,8 +3732,8 @@
     "references": [
      {
       "auteurs": "Daniels J",
-      "annee": 2014,
-      "titre": "Daniels' Running Formula (3e éd.)",
+      "annee": 2021,
+      "titre": "Daniels' Running Formula (4e éd.)",
       "revue": "Human Kinetics (livre)"
      }
     ]
@@ -2866,8 +3744,8 @@
    "sport": "course",
    "famille": "tempo",
    "nom": "Tempo continu",
-   "objectif": "Seuil lactique, endurance à allure soutenue",
-   "resume": "20 à 30 min à allure « confortablement difficile » (80-88 % VMA).",
+   "objectif": "Seuil, endurance à allure soutenue",
+   "resume": "20 à 30 min à allure « confortablement difficile » (85-88 % VMA, allure T).",
    "unite": "%VMA",
    "zone": "Z3",
    "rpe": "6",
@@ -2887,7 +3765,7 @@
      "type": "effort",
      "duree": 1500,
      "intensite": [
-      80,
+      85,
       88
      ]
     },
@@ -2918,12 +3796,12 @@
    ],
    "preuve": {
     "niveau": "pratique",
-    "resultat": "Allure « T » de Daniels, largement utilisée.",
+    "resultat": "Allure « T » de Daniels (≈ seuil), largement utilisée.",
     "references": [
      {
       "auteurs": "Daniels J",
-      "annee": 2014,
-      "titre": "Daniels' Running Formula (3e éd.)",
+      "annee": 2021,
+      "titre": "Daniels' Running Formula (4e éd.)",
       "revue": "Human Kinetics (livre)"
      }
     ]
@@ -2987,6 +3865,7 @@
     "4 × 5",
     "5 × 5",
     "6 × 5",
+    "3 × 10 min (récup 2 min)",
     "3 × 2 km"
    ],
    "quand": {
@@ -3006,15 +3885,16 @@
     "references": [
      {
       "auteurs": "Daniels J",
-      "annee": 2014,
-      "titre": "Daniels' Running Formula (3e éd.)",
+      "annee": 2021,
+      "titre": "Daniels' Running Formula (4e éd.)",
       "revue": "Human Kinetics (livre)"
      },
      {
       "auteurs": "Casado A, Foster C, Bakken M, Tjelta LI",
       "annee": 2023,
       "titre": "Does lactate-guided threshold interval training within a high-volume low-intensity approach represent the 'next step' in the evolution of distance running training?",
-      "revue": "Int J Environ Res Public Health"
+      "revue": "Int J Environ Res Public Health",
+      "pmid": "36900796"
      }
     ]
    }
@@ -3025,7 +3905,7 @@
    "famille": "seuil",
    "nom": "Double seuil (modèle norvégien)",
    "objectif": "Beaucoup de volume au seuil, contrôlé",
-   "resume": "Matin : 5 × 6 min au seuil ; soir : 10 × 1 000 m au seuil. Récupérations 1 min.",
+   "resume": "Matin : 5 × 6 min au seuil ; soir : 10 × 1 000 m au seuil ; récupérations 1 min (déroulé = séance du matin).",
    "unite": "%VMA",
    "zone": "Z3-Z4",
    "rpe": "6-7",
@@ -3084,7 +3964,7 @@
     "recuperation": "48 h"
    },
    "conseils": [
-    "Réservé à un gros volume d'entraînement ; intensité contrôlée (lactate ~2-4 mmol/L)."
+    "Réservé à un gros volume (dans les descriptions : 3-4 séances de ce type par semaine pour 150-180 km) ; intensité contrôlée (lactate 2 à 4,5 mmol/L)."
    ],
    "preuve": {
     "niveau": "plausible",
@@ -3094,7 +3974,8 @@
       "auteurs": "Casado A, Foster C, Bakken M, Tjelta LI",
       "annee": 2023,
       "titre": "Does lactate-guided threshold interval training within a high-volume low-intensity approach represent the 'next step' in the evolution of distance running training?",
-      "revue": "Int J Environ Res Public Health"
+      "revue": "Int J Environ Res Public Health",
+      "pmid": "36900796"
      }
     ]
    }
@@ -3105,7 +3986,7 @@
    "famille": "vo2max",
    "nom": "VMA courte 30/30",
    "objectif": "VO2max, vitesse maximale aérobie",
-   "resume": "2 séries de 8 à 12 × (30 s à 100-105 % VMA / 30 s trot), récupération 3-5 min.",
+   "resume": "2 séries de 8 à 12 × (30 s à 100-105 % VMA / 30 s trot à 50 %), récupération 3-5 min.",
    "unite": "%VMA",
    "zone": "Z5",
    "rpe": "8",
@@ -3184,20 +4065,22 @@
     "La récupération est trottinée, pas marchée."
    ],
    "preuve": {
-    "niveau": "prouvé",
-    "resultat": "Le 30/30 à la VMA permet de rester longtemps près de la VO2max (Billat) ; séance de référence en France.",
+    "niveau": "plausible",
+    "resultat": "À 100 % VMA avec 30 s de récupération à 50 %, on reste plus longtemps à VO2max qu'en courant en continu (étude d'une séance, 8 coureurs). L'effet propre du 30/30 sur plusieurs semaines est peu étudié.",
     "references": [
+     {
+      "auteurs": "Billat VL, Slawinski J, Bocquet V, et al.",
+      "annee": 2000,
+      "titre": "Intermittent runs at the velocity associated with maximal oxygen uptake enables subjects to remain at maximal oxygen uptake for a longer time than intense but submaximal runs",
+      "revue": "Eur J Appl Physiol",
+      "pmid": "10638376"
+     },
      {
       "auteurs": "Billat LV",
       "annee": 2001,
-      "titre": "Interval training for performance: a scientific and empirical practice. Part I: aerobic interval training",
-      "revue": "Sports Med"
-     },
-     {
-      "auteurs": "Buchheit M, Laursen PB",
-      "annee": 2013,
-      "titre": "High-intensity interval training, solutions to the programming puzzle. Part I: cardiopulmonary emphasis",
-      "revue": "Sports Med"
+      "titre": "Interval training for performance: a scientific and empirical practice. Special recommendations for middle- and long-distance running. Part I: aerobic interval training",
+      "revue": "Sports Med",
+      "pmid": "11219499"
      }
     ]
    }
@@ -3259,7 +4142,8 @@
     "4 × 1 000",
     "5 × 1 000",
     "6 × 1 000",
-    "4 × 1 200"
+    "4 × 1 200",
+    "Durée = 50-60 % de ton temps limite à VMA, récupération égale (Billat)"
    ],
    "quand": {
     "phases": [
@@ -3272,13 +4156,20 @@
    "conseils": [],
    "preuve": {
     "niveau": "prouvé",
-    "resultat": "Les intervalles de 2-5 min proches de la VMA augmentent la VO2max.",
+    "resultat": "Les intervalles de 2-5 min proches de la VMA augmentent la VO2max. Coureurs entraînés : une séance par semaine à la VMA (durée = 50 % du temps limite) pendant 4 semaines a amélioré la vitesse à VO2max ; coureurs modérément entraînés : des répétitions à 60 % du temps limite ont amélioré VO2max et 3 000 m.",
     "references": [
      {
-      "auteurs": "Billat LV",
-      "annee": 2001,
-      "titre": "Interval training for performance: a scientific and empirical practice. Part I: aerobic interval training",
-      "revue": "Sports Med"
+      "auteurs": "Billat VL, Flechet B, Petit B, Muriaux G, Koralsztein JP",
+      "annee": 1999,
+      "titre": "Interval training at VO2max: effects on aerobic performance and overtraining markers",
+      "revue": "Med Sci Sports Exerc",
+      "pmid": "9927024"
+     },
+     {
+      "auteurs": "Esfarjani F, Laursen PB",
+      "annee": 2007,
+      "titre": "Manipulating high-intensity interval training: effects on VO2max, the lactate threshold and 3000 m running performance in moderately trained males",
+      "revue": "J Sci Med Sport"
      },
      {
       "auteurs": "Buchheit M, Laursen PB",
@@ -3295,7 +4186,7 @@
    "famille": "vo2max",
    "nom": "4 × 4 min (Helgerud)",
    "objectif": "VO2max",
-   "resume": "4 × 4 min à 90-95 % de la FC max, récupération 3 min en trottinant.",
+   "resume": "4 × 4 min à 90-95 % de la FC max, récupération 3 min en trottinant (~70 % FC max).",
    "unite": "%VMA",
    "zone": "Z5",
    "rpe": "8-9",
@@ -3319,8 +4210,8 @@
        "type": "effort",
        "duree": 240,
        "intensite": [
-        92,
-        98
+        90,
+        95
        ],
        "note": "cible réelle : 90-95 % de la FC max"
       },
@@ -3352,19 +4243,205 @@
      "base",
      "construction"
     ],
-    "parSemaine": "1-2",
+    "parSemaine": "1-2 (3 dans l'étude)",
     "recuperation": "48 h"
    },
    "conseils": [],
    "preuve": {
     "niveau": "prouvé",
-    "resultat": "A augmenté la VO2max plus que l'entraînement modéré, à travail égal.",
+    "resultat": "+7,2 % de VO2max en 8 semaines (3 séances par semaine, 40 hommes modérément entraînés), plus que l'entraînement modéré à dépense égale.",
     "references": [
      {
       "auteurs": "Helgerud J, Høydal K, Wang E, et al.",
       "annee": 2007,
       "titre": "Aerobic high-intensity intervals improve VO2max more than moderate training",
-      "revue": "Med Sci Sports Exerc"
+      "revue": "Med Sci Sports Exerc",
+      "pmid": "17414804"
+     }
+    ]
+   }
+  },
+  {
+   "id": "course-10-20-30",
+   "sport": "course",
+   "famille": "vo2max",
+   "nom": "10-20-30 (Bangsbo)",
+   "objectif": "VO2max et performance avec moins de volume",
+   "resume": "3-4 blocs de 5 min : chaque minute = 30 s lent, 20 s modéré, 10 s presque à fond ; 2 min de récupération entre les blocs.",
+   "unite": "%VMA",
+   "zone": "Z2-Z6",
+   "rpe": "8",
+   "niveau": "tous",
+   "dureeMin": 46,
+   "travailMin": 2.5,
+   "deroule": [
+    {
+     "type": "echauffement",
+     "duree": 900,
+     "intensite": [
+      60,
+      72
+     ]
+    },
+    {
+     "type": "repetition",
+     "fois": 3,
+     "etapes": [
+      {
+       "type": "repetition",
+       "fois": 5,
+       "etapes": [
+        {
+         "type": "effort",
+         "duree": 30,
+         "intensite": [
+          55,
+          65
+         ]
+        },
+        {
+         "type": "effort",
+         "duree": 20,
+         "intensite": [
+          75,
+          85
+         ]
+        },
+        {
+         "type": "effort",
+         "duree": 10,
+         "intensite": [
+          115,
+          130
+         ]
+        }
+       ]
+      },
+      {
+       "type": "recup",
+       "duree": 120,
+       "intensite": [
+        0,
+        50
+       ]
+      }
+     ]
+    },
+    {
+     "type": "retour",
+     "duree": 600,
+     "intensite": [
+      60,
+      70
+     ]
+    }
+   ],
+   "variantes": [
+    "2 blocs",
+    "3 blocs",
+    "4 blocs"
+   ],
+   "quand": {
+    "phases": [
+     "base",
+     "construction"
+    ],
+    "parSemaine": "2-3",
+    "recuperation": "36-48 h"
+   },
+   "conseils": [
+    "Les %VMA de chaque partie sont estimés : dans l'étude, lent / modéré / presque à fond."
+   ],
+   "preuve": {
+    "niveau": "plausible",
+    "resultat": "En 7 semaines et avec 54 % de volume en moins, VO2max +4 % et 5 km −48 s (18 coureurs modérément entraînés).",
+    "references": [
+     {
+      "auteurs": "Gunnarsson TP, Bangsbo J",
+      "annee": 2012,
+      "titre": "The 10-20-30 training concept improves performance and health profile in moderately trained runners",
+      "revue": "J Appl Physiol",
+      "pmid": "22556401"
+     }
+    ]
+   }
+  },
+  {
+   "id": "course-sprints-30s",
+   "sport": "course",
+   "famille": "anaerobie",
+   "nom": "Sprints de 30 s",
+   "objectif": "Capacité anaérobie, vitesse",
+   "resume": "8 à 12 × 30 s à ~130 % VMA, récupération 4 min 30.",
+   "unite": "%VMA",
+   "zone": "Z6",
+   "rpe": "9",
+   "niveau": "confirmé",
+   "dureeMin": 70,
+   "travailMin": 4.0,
+   "deroule": [
+    {
+     "type": "echauffement",
+     "duree": 1200,
+     "intensite": [
+      60,
+      72
+     ]
+    },
+    {
+     "type": "repetition",
+     "fois": 8,
+     "etapes": [
+      {
+       "type": "effort",
+       "duree": 30,
+       "intensite": [
+        125,
+        135
+       ]
+      },
+      {
+       "type": "recup",
+       "duree": 270,
+       "intensite": [
+        0,
+        50
+       ]
+      }
+     ]
+    },
+    {
+     "type": "retour",
+     "duree": 600,
+     "intensite": [
+      60,
+      70
+     ]
+    }
+   ],
+   "variantes": [
+    "6",
+    "8",
+    "10",
+    "12 répétitions"
+   ],
+   "quand": {
+    "phases": [
+     "spécifique"
+    ],
+    "parSemaine": "0-1",
+    "recuperation": "48-72 h"
+   },
+   "conseils": [],
+   "preuve": {
+    "niveau": "plausible",
+    "resultat": "A amélioré le 3 000 m dans l'étude, mais moins que les intervalles à la VMA.",
+    "references": [
+     {
+      "auteurs": "Esfarjani F, Laursen PB",
+      "annee": 2007,
+      "titre": "Manipulating high-intensity interval training: effects on VO2max, the lactate threshold and 3000 m running performance in moderately trained males",
+      "revue": "J Sci Med Sport"
      }
     ]
    }
@@ -3440,12 +4517,93 @@
    ],
    "preuve": {
     "niveau": "pratique",
-    "resultat": "Allure « I » de Daniels, spécifique au 5 km.",
+    "resultat": "Proche de l'allure « I » de Daniels, un peu plus lente ; principe de spécificité.",
     "references": [
      {
       "auteurs": "Daniels J",
-      "annee": 2014,
-      "titre": "Daniels' Running Formula (3e éd.)",
+      "annee": 2021,
+      "titre": "Daniels' Running Formula (4e éd.)",
+      "revue": "Human Kinetics (livre)"
+     }
+    ]
+   }
+  },
+  {
+   "id": "course-allure-10km",
+   "sport": "course",
+   "famille": "specifique",
+   "nom": "Allure 10 km / semi",
+   "objectif": "Spécifique 10 km ou semi-marathon",
+   "resume": "3 × 3 km ou 5 × 2 km à allure 10 km, récupération 2 min ; semi : 2 × 5 km à allure semi.",
+   "unite": "%VMA",
+   "zone": "Z4",
+   "rpe": "7",
+   "niveau": "intermédiaire",
+   "dureeMin": 72,
+   "travailMin": 36.0,
+   "deroule": [
+    {
+     "type": "echauffement",
+     "duree": 1200,
+     "intensite": [
+      60,
+      72
+     ]
+    },
+    {
+     "type": "repetition",
+     "fois": 3,
+     "etapes": [
+      {
+       "type": "effort",
+       "duree": 720,
+       "intensite": [
+        88,
+        92
+       ]
+      },
+      {
+       "type": "recup",
+       "duree": 120,
+       "intensite": [
+        45,
+        55
+       ]
+      }
+     ]
+    },
+    {
+     "type": "retour",
+     "duree": 600,
+     "intensite": [
+      60,
+      70
+     ]
+    }
+   ],
+   "variantes": [
+    "5 × 2 km (10 km)",
+    "3 × 3 km (10 km)",
+    "2 × 5 km (semi)"
+   ],
+   "quand": {
+    "phases": [
+     "spécifique"
+    ],
+    "parSemaine": "1",
+    "recuperation": "48-72 h"
+   },
+   "conseils": [
+    "Le %VMA de l'allure 10 km (≈ 88-92 %) est un repère, pas une valeur vérifiée."
+   ],
+   "preuve": {
+    "niveau": "pratique",
+    "resultat": "Principe de spécificité, choix d'entraîneur.",
+    "references": [
+     {
+      "auteurs": "Daniels J",
+      "annee": 2021,
+      "titre": "Daniels' Running Formula (4e éd.)",
       "revue": "Human Kinetics (livre)"
      }
     ]
@@ -3509,16 +4667,16 @@
     "recuperation": "24-48 h"
    },
    "conseils": [
-    "Peu de risque de blessure : la pente limite la vitesse."
+    "Conseil d'entraîneur : la pente limite la vitesse et l'impact."
    ],
    "preuve": {
     "niveau": "pratique",
-    "resultat": "Pratique d'entraîneur (force spécifique, faible impact).",
+    "resultat": "Pratique d'entraîneur (force spécifique).",
     "references": [
      {
       "auteurs": "Daniels J",
-      "annee": 2014,
-      "titre": "Daniels' Running Formula (3e éd.)",
+      "annee": 2021,
+      "titre": "Daniels' Running Formula (4e éd.)",
       "revue": "Human Kinetics (livre)"
      }
     ]
@@ -3595,13 +4753,14 @@
    "conseils": [],
    "preuve": {
     "niveau": "plausible",
-    "resultat": "Différents formats de côtes ont amélioré l'économie et la performance de coureurs entraînés ; les côtes à intensité proche de la VO2max semblaient les plus efficaces.",
+    "resultat": "20 coureurs entraînés, 6 semaines, 5 formats de côtes : tous ont amélioré le 5 km (≈ 2 %). Selon les auteurs, n'importe quel format de côtes à haute intensité est utile.",
     "references": [
      {
       "auteurs": "Barnes KR, Hopkins WG, McGuigan MR, Kilding AE",
       "annee": 2013,
       "titre": "Effects of different uphill interval-training programs on running economy and performance",
-      "revue": "Int J Sports Physiol Perform"
+      "revue": "Int J Sports Physiol Perform",
+      "pmid": "23538293"
      }
     ]
    }
@@ -3679,8 +4838,8 @@
     "references": [
      {
       "auteurs": "Daniels J",
-      "annee": 2014,
-      "titre": "Daniels' Running Formula (3e éd.)",
+      "annee": 2021,
+      "titre": "Daniels' Running Formula (4e éd.)",
       "revue": "Human Kinetics (livre)"
      }
     ]
@@ -3724,7 +4883,7 @@
     }
    ],
    "variantes": [
-    "Demi-Cooper (6 min) : VMA (km/h) = distance (m) / 100"
+    "Demi-Cooper (6 min) : VMA (km/h) = distance (m) / 100 — pratique sans source"
    ],
    "quand": {
     "phases": [
@@ -3738,7 +4897,7 @@
    ],
    "preuve": {
     "niveau": "prouvé",
-    "resultat": "Un test de 5 min sur piste estime correctement la vitesse maximale aérobie.",
+    "resultat": "Sur 48 hommes, la vitesse moyenne sur 5 min est très liée à la VMA mesurée sur tapis (r = 0,94). Le test estime mal la VO2max.",
     "references": [
      {
       "auteurs": "Berthon P, Fellmann N, Bedu M, et al.",
@@ -3753,9 +4912,9 @@
    "id": "course-test-vameval",
    "sport": "course",
    "famille": "test",
-   "nom": "Test VAMEVAL / Léger-Boucher",
+   "nom": "Test par paliers (Léger-Boucher / VAMEVAL)",
    "objectif": "VMA par paliers",
-   "resume": "Vitesse qui augmente de 0,5 à 1 km/h par palier, rythmée par des bips, jusqu'à l'arrêt.",
+   "resume": "Vitesse qui augmente par paliers, rythmée par des bips, jusqu'à l'arrêt (Léger-Boucher : paliers de 2 min ; VAMEVAL : +0,5 km/h par minute).",
    "unite": "%VMA",
    "zone": "test",
    "rpe": "10",
@@ -3795,17 +4954,18 @@
     "recuperation": "48 h"
    },
    "conseils": [
-    "Besoin d'une piste balisée et de la bande-son."
+    "Besoin d'une piste balisée et de la bande-son. Le VAMEVAL (Cazorla & Léger 1993) vient d'un ouvrage français, hors PubMed."
    ],
    "preuve": {
     "niveau": "prouvé",
-    "resultat": "Test de terrain par paliers validé pour estimer la VO2max et la VMA.",
+    "resultat": "Léger-Boucher : prédit la VO2max (r = 0,96, 25 adultes), fiable d'un test à l'autre (r = 0,97).",
     "references": [
      {
       "auteurs": "Léger LA, Boucher R",
       "annee": 1980,
       "titre": "An indirect continuous running multistage field test: the Université de Montréal track test",
-      "revue": "Can J Appl Sport Sci"
+      "revue": "Can J Appl Sport Sci",
+      "pmid": "7389053"
      }
     ]
    }
@@ -3816,16 +4976,16 @@
    "famille": "force-lourde",
    "nom": "Force lourde des jambes (cycliste)",
    "objectif": "Économie et puissance à vélo, tenue en fin d'effort",
-   "resume": "Demi-squat, presse inclinée, step-up et mollets : 3 séries de 4 à 10 reps lourdes, 2 fois par semaine pendant 10-12 semaines, puis 1 fois pour entretenir.",
+   "resume": "Demi-squat, presse une jambe, flexion de hanche une jambe et mollets : 3 séries lourdes, 2 fois par semaine pendant 12 semaines, puis 1 fois pour entretenir.",
    "unite": "%1RM",
    "zone": "force",
-   "rpe": "7-8",
+   "rpe": "8-9",
    "niveau": "intermédiaire",
    "exercices": [
     {
      "nom": "Demi-squat (barre)",
      "series": 3,
-     "reps": "10RM → 6RM → 4RM sur 12 semaines",
+     "reps": "sem. 1-3 : 10RM / 6RM ; 4-6 : 8RM / 5RM ; 7-12 : 6RM / 4RM",
      "repos": 180
     },
     {
@@ -3835,13 +4995,13 @@
      "repos": 120
     },
     {
-     "nom": "Step-up une jambe avec haltères",
+     "nom": "Flexion de hanche une jambe (poulie)",
      "series": 3,
      "reps": "idem",
      "repos": 120
     },
     {
-     "nom": "Mollets debout",
+     "nom": "Mollets (flexion plantaire)",
      "series": 3,
      "reps": "idem",
      "repos": 90
@@ -3862,23 +5022,86 @@
    },
    "conseils": [
     "Montée explosive, descente contrôlée.",
-    "Garde 1-2 reps en réserve ; pas d'échec."
+    "L'étude faisait des séries RM (à l'échec ou presque) ; garder 1-2 reps en réserve est une adaptation d'entraîneur.",
+    "Découpage des RM par semaines : repris des études du même groupe, à confirmer pour 2010."
    ],
    "preuve": {
     "niveau": "prouvé",
-    "resultat": "Ajoutée à l'endurance, la musculation lourde améliore l'économie de pédalage et la performance des cyclistes entraînés, sans prise de masse gênante ; 1 séance/semaine suffit à entretenir les gains en saison.",
+    "resultat": "Ajoutée à l'endurance, la musculation lourde améliore l'économie de pédalage et la performance des cyclistes entraînés ; 1 séance par semaine en saison maintient les gains (et améliore la performance).",
     "references": [
      {
       "auteurs": "Rønnestad BR, Hansen EA, Raastad T",
       "annee": 2010,
       "titre": "In-season strength maintenance training increases well-trained cyclists' performance",
-      "revue": "Eur J Appl Physiol"
+      "revue": "Eur J Appl Physiol",
+      "pmid": "20799042"
      },
      {
       "auteurs": "Rønnestad BR, Mujika I",
       "annee": 2014,
       "titre": "Optimizing strength training for running and cycling endurance performance: a review",
-      "revue": "Scand J Med Sci Sports"
+      "revue": "Scand J Med Sci Sports",
+      "pmid": "23914932"
+     },
+     {
+      "auteurs": "Rønnestad BR, Hansen EA, Raastad T",
+      "annee": 2011,
+      "titre": "Strength training improves 5-min all-out performance following 185 min of cycling",
+      "revue": "Scand J Med Sci Sports",
+      "pmid": "19903319"
+     }
+    ]
+   }
+  },
+  {
+   "id": "force-maxi-coureur",
+   "sport": "force",
+   "famille": "force-lourde",
+   "nom": "Force maximale (coureur)",
+   "objectif": "Économie de course",
+   "resume": "Demi-squat 4 × 4RM, 3 fois par semaine pendant 8 semaines, montée la plus rapide possible.",
+   "unite": "%1RM",
+   "zone": "force",
+   "rpe": "8-9",
+   "niveau": "intermédiaire",
+   "exercices": [
+    {
+     "nom": "Demi-squat (barre)",
+     "series": 4,
+     "reps": "4RM, montée explosive",
+     "repos": 180
+    }
+   ],
+   "dureeMin": 30,
+   "variantes": [
+    "2 fois par semaine en saison"
+   ],
+   "quand": {
+    "phases": [
+     "base"
+    ],
+    "parSemaine": "3 (étude)",
+    "recuperation": "48 h"
+   },
+   "conseils": [
+    "Repos de 3 min : choix d'entraîneur."
+   ],
+   "preuve": {
+    "niveau": "prouvé",
+    "resultat": "17 coureurs : économie de course +5 %, temps limite à la VMA +21 %, sans changement de VO2max ni de poids. Les méta-analyses récentes confirment l'effet de la force sur l'économie.",
+    "references": [
+     {
+      "auteurs": "Støren Ø, Helgerud J, Støa EM, Hoff J",
+      "annee": 2008,
+      "titre": "Maximal strength training improves running economy in distance runners",
+      "revue": "Med Sci Sports Exerc",
+      "pmid": "18460997"
+     },
+     {
+      "auteurs": "Llanos-Lagos C, Ramirez-Campillo R, Moran J, Sáez de Villarreal E",
+      "annee": 2024,
+      "titre": "Effect of strength training programs in middle- and long-distance runners' economy at different running speeds: a systematic review with meta-analysis",
+      "revue": "Sports Med"
      }
     ]
    }
@@ -3938,19 +5161,20 @@
    ],
    "preuve": {
     "niveau": "prouvé",
-    "resultat": "Chez des coureurs entraînés, la force (lourde ou pliométrique) améliore l'économie de course.",
+    "resultat": "Méta-analyses : la pliométrie, la force lourde et surtout leur combinaison améliorent l'économie de course (effet petit à modéré) ; la pliométrie seule agit surtout aux allures lentes (≤ 12 km/h).",
     "references": [
+     {
+      "auteurs": "Llanos-Lagos C, Ramirez-Campillo R, Moran J, Sáez de Villarreal E",
+      "annee": 2024,
+      "titre": "Effect of strength training programs in middle- and long-distance runners' economy at different running speeds: a systematic review with meta-analysis",
+      "revue": "Sports Med"
+     },
      {
       "auteurs": "Balsalobre-Fernández C, Santos-Concejero J, Grivas GV",
       "annee": 2016,
       "titre": "Effects of strength training on running economy in highly trained runners: a systematic review with meta-analysis of controlled trials",
-      "revue": "J Strength Cond Res"
-     },
-     {
-      "auteurs": "Rønnestad BR, Mujika I",
-      "annee": 2014,
-      "titre": "Optimizing strength training for running and cycling endurance performance: a review",
-      "revue": "Scand J Med Sci Sports"
+      "revue": "J Strength Cond Res",
+      "pmid": "26694507"
      }
     ]
    }
@@ -3959,7 +5183,7 @@
    "id": "force-prevention-genoux",
    "sport": "force",
    "famille": "prevention",
-   "nom": "Prévention des blessures (genoux, ischios)",
+   "nom": "Prévention des blessures (renfo général + ischios)",
    "objectif": "Réduire le risque de blessure",
    "resume": "Squat, fentes, nordic hamstring, gainage, mollets au poids du corps : 30 min, 2 fois par semaine.",
    "unite": "%1RM",
@@ -4017,23 +5241,33 @@
     "recuperation": "24 h"
    },
    "conseils": [
-    "La régularité compte plus que la charge."
+    "La régularité compte plus que la charge.",
+    "Nordic : progression sur 10 semaines, puis 1 fois par semaine (protocole de Petersen)."
    ],
    "preuve": {
-    "niveau": "prouvé",
-    "resultat": "Le renforcement musculaire réduit d'environ deux tiers les blessures sportives dans les essais contrôlés ; le nordic hamstring réduit les blessures des ischios.",
+    "niveau": "plausible",
+    "resultat": "Dans les essais contrôlés (surtout sports collectifs et militaires), le renforcement a divisé le risque de blessure par environ 3 (RR 0,32). Chez les coureurs, une méta-analyse de 2024 ne trouve pas d'effet global, seulement avec des séances encadrées. Le nordic a réduit les blessures aiguës des ischios d'environ 70 % chez des footballeurs.",
     "references": [
      {
       "auteurs": "Lauersen JB, Bertelsen DM, Andersen LB",
       "annee": 2014,
       "titre": "The effectiveness of exercise interventions to prevent sports injuries: a systematic review and meta-analysis of randomised controlled trials",
-      "revue": "Br J Sports Med"
+      "revue": "Br J Sports Med",
+      "pmid": "24100287"
+     },
+     {
+      "auteurs": "Wu H, Brooke-Wavell K, Fong DTP, Paquette MR, Blagrove RC",
+      "annee": 2024,
+      "titre": "Do exercise-based prevention programs reduce injury in endurance runners? A systematic review and meta-analysis",
+      "revue": "Sports Med",
+      "pmid": "38261240"
      },
      {
       "auteurs": "Petersen J, Thorborg K, Nielsen MB, Budtz-Jørgensen E, Hölmich P",
       "annee": 2011,
       "titre": "Preventive effect of eccentric training on acute hamstring injuries in men's soccer: a cluster-randomized controlled trial",
-      "revue": "Am J Sports Med"
+      "revue": "Am J Sports Med",
+      "pmid": "21825112"
      }
     ]
    }
@@ -4044,14 +5278,14 @@
    "famille": "prevention",
    "nom": "Isométrie pour tendon rotulien douloureux",
    "objectif": "Calmer une douleur de tendon rotulien",
-   "resume": "Chaise ou extension de jambe en isométrie : 5 × 45 s à ~70 % de l'effort max, 2 min de repos.",
+   "resume": "Extension de jambe en isométrie : 5 × 45 s à ~70 % de l'effort max, 2 min de repos.",
    "unite": "%1RM",
    "zone": "force",
    "rpe": "6",
    "niveau": "tous",
    "exercices": [
     {
-     "nom": "Chaise au mur ou extension de jambe isométrique",
+     "nom": "Extension de jambe isométrique (ou chaise au mur, adaptation non étudiée)",
      "series": 5,
      "reps": "45 s",
      "repos": 120
@@ -4071,13 +5305,73 @@
    ],
    "preuve": {
     "niveau": "mitigé",
-    "resultat": "Effet antidouleur immédiat dans une petite étude ; les études suivantes sont moins nettes.",
+    "resultat": "Effet antidouleur immédiat dans une étude de 6 volleyeurs (une seule séance) ; une méta-analyse de 2020 conclut que l'isométrie ne fait pas mieux que les exercices avec charge classiques.",
     "references": [
      {
       "auteurs": "Rio E, Kidgell D, Purdam C, et al.",
       "annee": 2015,
       "titre": "Isometric exercise induces analgesia and reduces inhibition in patellar tendinopathy",
-      "revue": "Br J Sports Med"
+      "revue": "Br J Sports Med",
+      "pmid": "25979840"
+     },
+     {
+      "auteurs": "Clifford C, Challoumas D, Paul L, Syme G, Millar NL",
+      "annee": 2020,
+      "titre": "Effectiveness of isometric exercise in the management of tendinopathy: a systematic review and meta-analysis of randomised trials",
+      "revue": "BMJ Open Sport Exerc Med",
+      "pmid": "32818059"
+     }
+    ]
+   }
+  },
+  {
+   "id": "force-mollets-achille",
+   "sport": "force",
+   "famille": "prevention",
+   "nom": "Excentrique des mollets (tendon d'Achille)",
+   "objectif": "Soigner une tendinopathie d'Achille chronique",
+   "resume": "Descentes lentes sur la pointe des pieds, jambe tendue puis genou fléchi : 3 × 15, deux fois par jour, 12 semaines.",
+   "unite": "%1RM",
+   "zone": "force",
+   "rpe": "5-7",
+   "niveau": "tous",
+   "exercices": [
+    {
+     "nom": "Descente excentrique jambe tendue",
+     "series": 3,
+     "reps": "15",
+     "repos": 60
+    },
+    {
+     "nom": "Descente excentrique genou fléchi",
+     "series": 3,
+     "reps": "15",
+     "repos": 60
+    }
+   ],
+   "dureeMin": 10,
+   "variantes": [],
+   "quand": {
+    "phases": [
+     "si douleur"
+    ],
+    "parSemaine": "14 (2 par jour)",
+    "recuperation": "aucune"
+   },
+   "conseils": [
+    "Seulement en cas de douleur au tendon ; dosage vu en source secondaire, à confirmer.",
+    "Avis d'un kiné conseillé."
+   ],
+   "preuve": {
+    "niveau": "mitigé",
+    "resultat": "15 coureurs de loisir sont revenus à la course ; petite étude, groupe de comparaison non tiré au sort.",
+    "references": [
+     {
+      "auteurs": "Alfredson H, Pietilä T, Jonsson P, Lorentzon R",
+      "annee": 1998,
+      "titre": "Heavy-load eccentric calf muscle training for the treatment of chronic Achilles tendinosis",
+      "revue": "Am J Sports Med",
+      "pmid": "9617396"
      }
     ]
    }
@@ -4136,6 +5430,12 @@
       "annee": 2016,
       "titre": "Application of the repetitions in reserve-based rating of perceived exertion scale for resistance training",
       "revue": "Strength Cond J"
+     },
+     {
+      "auteurs": "Wendler J",
+      "annee": 2011,
+      "titre": "5/3/1: The Simplest and Most Effective Training System to Increase Raw Strength (2e éd.)",
+      "revue": "Jim Wendler LLC (livre)"
      }
     ]
    }
@@ -4160,26 +5460,34 @@
    },
    "conseils": [],
    "preuve": {
-    "niveau": "prouvé",
-    "resultat": "Chez des athlètes entraînés, le polarisé donne des progrès au moins égaux, souvent supérieurs, aux répartitions centrées sur le seuil.",
+    "niveau": "plausible",
+    "resultat": "Au moins aussi efficace que les autres répartitions ; méta-analyse 2024 (17 études) : léger avantage sur la VO2max seulement (athlètes très entraînés, moins de 12 semaines), pas sur les contre-la-montre.",
     "references": [
      {
-      "auteurs": "Stöggl T, Sperlich B",
-      "annee": 2014,
-      "titre": "Polarized training has greater impact on key endurance variables than threshold, high intensity, or high volume training",
-      "revue": "Front Physiol"
+      "auteurs": "Silva Oliveira P, Boppre G, Fonseca H",
+      "annee": 2024,
+      "titre": "Comparison of polarized versus other types of endurance training intensity distribution on athletes' endurance performance: a systematic review with meta-analysis",
+      "revue": "Sports Med"
      },
      {
       "auteurs": "Rosenblat MA, Perrotta AS, Vicenzino B",
       "annee": 2019,
       "titre": "Polarized vs. threshold training intensity distribution on endurance sport performance: a systematic review and meta-analysis of randomized controlled trials",
-      "revue": "J Strength Cond Res"
+      "revue": "J Strength Cond Res",
+      "pmid": "29863593"
      },
      {
-      "auteurs": "Seiler S",
-      "annee": 2010,
-      "titre": "What is best practice for training intensity and duration distribution in endurance athletes?",
-      "revue": "Int J Sports Physiol Perform"
+      "auteurs": "Stöggl T, Sperlich B",
+      "annee": 2014,
+      "titre": "Polarized training has greater impact on key endurance variables than threshold, high intensity, or high volume training",
+      "revue": "Front Physiol",
+      "pmid": "24550842"
+     },
+     {
+      "auteurs": "Rosenblat MA, et al.",
+      "annee": 2025,
+      "titre": "Which training intensity distribution intervention will produce the greatest improvements in maximal oxygen uptake and time-trial performance in endurance athletes?",
+      "revue": "Sports Med"
      }
     ]
    }
@@ -4205,19 +5513,19 @@
    "conseils": [],
    "preuve": {
     "niveau": "plausible",
-    "resultat": "Répartition fréquente chez les élites, surtout en période de base ; pas de supériorité démontrée face au polarisé.",
+    "resultat": "Répartition fréquente chez les élites, surtout en période de base ; elle fait jeu égal avec le polarisé dans les comparaisons récentes.",
     "references": [
      {
-      "auteurs": "Rosenblat MA, Perrotta AS, Vicenzino B",
-      "annee": 2019,
-      "titre": "Polarized vs. threshold training intensity distribution on endurance sport performance: a systematic review and meta-analysis of randomized controlled trials",
-      "revue": "J Strength Cond Res"
+      "auteurs": "Silva Oliveira P, Boppre G, Fonseca H",
+      "annee": 2024,
+      "titre": "Comparison of polarized versus other types of endurance training intensity distribution on athletes' endurance performance: a systematic review with meta-analysis",
+      "revue": "Sports Med"
      },
      {
-      "auteurs": "Casado A, Foster C, Bakken M, Tjelta LI",
-      "annee": 2023,
-      "titre": "Does lactate-guided threshold interval training within a high-volume low-intensity approach represent the 'next step' in the evolution of distance running training?",
-      "revue": "Int J Environ Res Public Health"
+      "auteurs": "Rosenblat MA, et al.",
+      "annee": 2025,
+      "titre": "Which training intensity distribution intervention will produce the greatest improvements in maximal oxygen uptake and time-trial performance in endurance athletes?",
+      "revue": "Sports Med"
      }
     ]
    }
@@ -4244,14 +5552,60 @@
     "Seulement avec une bonne récupération (feu vert) et un volume d'endurance déjà solide."
    ],
    "preuve": {
-    "niveau": "prouvé",
-    "resultat": "Chez des cyclistes entraînés, ce bloc a donné de meilleurs progrès que la même quantité d'intensité répartie régulièrement.",
+    "niveau": "mitigé",
+    "resultat": "Un petit essai favorable (VO2max +4,6 %) et une méta-analyse avec un petit effet de faible certitude ; mais sur 12 semaines à charge égale, aucune différence de performance.",
     "references": [
      {
       "auteurs": "Rønnestad BR, Hansen J, Ellefsen S",
       "annee": 2014,
       "titre": "Block periodization of high-intensity aerobic intervals provides superior training effects in trained cyclists",
-      "revue": "Scand J Med Sci Sports"
+      "revue": "Scand J Med Sci Sports",
+      "pmid": "22646668"
+     },
+     {
+      "auteurs": "Mølmen KS, Øfsteng SJ, Rønnestad BR",
+      "annee": 2019,
+      "titre": "Block periodization of endurance training – a systematic review and meta-analysis",
+      "revue": "Open Access J Sports Med"
+     },
+     {
+      "auteurs": "Almquist NW, Eriksen HB, Wilhelmsen M, et al.",
+      "annee": 2022,
+      "titre": "No differences between 12 weeks of block- vs. traditional-periodized training in performance adaptations in trained cyclists",
+      "revue": "Front Physiol",
+      "pmid": "35299664"
+     }
+    ]
+   }
+  },
+  {
+   "id": "methode-ordre-intervalles",
+   "sport": "methode",
+   "famille": "organisation",
+   "nom": "Ordre des formats d'intervalles",
+   "objectif": "Enchaîner les séances dures sur plusieurs semaines",
+   "resume": "Alterner intervalles longs (4 × 16), moyens (4 × 8) et courts (4 × 4), dans n'importe quel ordre, à charge égale.",
+   "zone": "—",
+   "rpe": "—",
+   "niveau": "—",
+   "variantes": [],
+   "quand": {
+    "phases": [
+     "toutes"
+    ],
+    "parSemaine": "",
+    "recuperation": ""
+   },
+   "conseils": [],
+   "preuve": {
+    "niveau": "prouvé",
+    "resultat": "Sur 12 semaines (63 cyclistes), longs puis courts, l'inverse ou un mélange : +5 à 10 % pour tous les groupes ; l'ordre change peu.",
+    "references": [
+     {
+      "auteurs": "Sylta Ø, Tønnessen E, Hammarström D, et al.",
+      "annee": 2016,
+      "titre": "The effect of different high-intensity periodization models on endurance adaptations",
+      "revue": "Med Sci Sports Exerc"
      }
     ]
    }
@@ -4262,7 +5616,7 @@
    "famille": "organisation",
    "nom": "Affûtage avant l'objectif",
    "objectif": "Arriver frais et en forme le jour J",
-   "resume": "Sur 1 à 3 semaines : baisser le volume de 40 à 60 %, garder l'intensité et la fréquence des séances.",
+   "resume": "Sur 8 à 14 jours (jusqu'à 21) : baisser le volume de 40 à 60 % (en exponentielle), garder l'intensité et la fréquence des séances.",
    "zone": "—",
    "rpe": "—",
    "niveau": "—",
@@ -4277,13 +5631,21 @@
    "conseils": [],
    "preuve": {
     "niveau": "prouvé",
-    "resultat": "Méta-analyse : une baisse de volume de 41-60 % sur ~2 semaines, en gardant l'intensité, donne le meilleur effet.",
+    "resultat": "Méta-analyses : une baisse de volume de 41-60 % sur ~2 semaines, en gardant l'intensité, donne le meilleur effet ; confirmé chez les athlètes d'endurance.",
     "references": [
      {
       "auteurs": "Bosquet L, Montpetit J, Arvisais D, Mujika I",
       "annee": 2007,
       "titre": "Effects of tapering on performance: a meta-analysis",
-      "revue": "Med Sci Sports Exerc"
+      "revue": "Med Sci Sports Exerc",
+      "pmid": "17762369"
+     },
+     {
+      "auteurs": "Wang Z, Wang YT, Gao W, Zhong Y",
+      "annee": 2023,
+      "titre": "Effects of tapering on performance in endurance athletes: a systematic review and meta-analysis",
+      "revue": "PLoS One",
+      "pmid": "37163550"
      }
     ]
    }
@@ -4326,7 +5688,7 @@
    "famille": "organisation",
    "nom": "« Sleep low » (glucides périodisés)",
    "objectif": "Stimuler les adaptations aérobies",
-   "resume": "Séance intense le soir, dîner pauvre en glucides, puis séance facile à jeun le lendemain matin, 3 fois par semaine.",
+   "resume": "Séance intense le soir, dîner pauvre en glucides, puis séance facile à jeun le lendemain matin.",
    "zone": "—",
    "rpe": "—",
    "niveau": "—",
@@ -4342,14 +5704,36 @@
     "Pas compatible avec une perte de poids en cours."
    ],
    "preuve": {
-    "niveau": "plausible",
-    "resultat": "A amélioré la performance en triathlon (+ ~3 % sur 20 km de vélo) dans un essai de 3 semaines ; à éviter en déficit calorique (risque de RED-S).",
+    "niveau": "mitigé",
+    "resultat": "Triathlètes (3 semaines) : 10 km de course −2,9 % de temps ; cyclistes (1 semaine) : +3,2 % sur 20 km. Mais aucun effet chez des élites, et une méta-analyse de 9 études ne trouve pas d'effet global. À éviter en déficit calorique (risque de RED-S).",
     "references": [
      {
       "auteurs": "Marquet LA, Brisswalter J, Louis J, et al.",
       "annee": 2016,
       "titre": "Enhanced endurance performance by periodization of carbohydrate intake: 'sleep low' strategy",
-      "revue": "Med Sci Sports Exerc"
+      "revue": "Med Sci Sports Exerc",
+      "pmid": "26741119"
+     },
+     {
+      "auteurs": "Marquet LA, Hausswirth C, Molle O, et al.",
+      "annee": 2016,
+      "titre": "Periodization of carbohydrate intake: short-term effect on performance",
+      "revue": "Nutrients",
+      "pmid": "27897989"
+     },
+     {
+      "auteurs": "Gejl KD, Thams LB, Hansen M, et al.",
+      "annee": 2017,
+      "titre": "No superior adaptations to carbohydrate periodization in elite endurance athletes",
+      "revue": "Med Sci Sports Exerc",
+      "pmid": "28723843"
+     },
+     {
+      "auteurs": "Gejl KD, Nybo L",
+      "annee": 2021,
+      "titre": "Performance effects of periodized carbohydrate restriction in endurance trained athletes – a systematic review and meta-analysis",
+      "revue": "J Int Soc Sports Nutr",
+      "pmid": "34001184"
      }
     ]
    }
