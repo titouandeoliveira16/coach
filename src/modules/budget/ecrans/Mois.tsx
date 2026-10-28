@@ -9,7 +9,7 @@ import { Bilan } from '../Bilan'
 import { CarteControle } from '../CarteControle'
 import {
   controleAFaire, couleurJauge, debutSuivi, decalerMois, depensesParCategorie, dernierJour, moisDe, nomMois, patrimoineAu, plafondDe,
-  premierJour, previsionFinDeMois, repartition503020, resumeMois, soldeAu,
+  premierJour, previsionFinDeMois, repartition503020, resteAVivre, resumeMois, soldeAu,
 } from '../calculs'
 import { DetailMouvement } from '../DetailMouvement'
 import { useBudget, useReglagesBudget } from '../donnees'
@@ -29,6 +29,7 @@ export function Mois() {
   const enCours = mois === actuel
   const r = resumeMois(d, mois)
   const prevision = enCours ? previsionFinDeMois(d, jour) : undefined
+  const reste = enCours ? resteAVivre(d, jour) : undefined
   const soldeCourantFin = d.comptes.filter((c) => c.type === 'courant' && c.dateDepart <= dernierJour(mois))
     .reduce((s, c) => s + soldeAu(c, d.mouvements, d.releves, dernierJour(mois)), 0)
   const parCat = depensesParCategorie(d.mouvements, d.categories, mois)
@@ -71,17 +72,25 @@ export function Mois() {
         </Link>
       )}
 
-      <Carte>
-        <p className="text-sm text-texte-2">
-          Reste à vivre {enCours ? 'ce mois-ci' : ''}
-          <Aide titre="Reste à vivre" texte="Revenus du mois − dépenses déjà faites − charges fixes encore prévues (plafond des catégories « charge fixe » pas encore payé). C'est ce qu'il te reste pour vivre jusqu'à la fin du mois." />
-        </p>
-        <p className="text-5xl font-bold tabular-nums" style={{ color: r.resteAVivre < 0 ? ETAT.rouge : undefined }}>{formatEuros(r.resteAVivre)}</p>
-        <p className="mt-1 text-sm text-texte-3">
-          {formatEuros(r.revenus)} de revenus − {formatEuros(r.depenses)} dépensés
-          {r.fixesRestantes > 0 && ` − ${formatEuros(r.fixesRestantes)} de charges fixes à venir`}
-        </p>
-      </Carte>
+      {reste ? (
+        <Carte>
+          <p className="text-sm text-texte-2">
+            Reste à vivre ce mois-ci
+            <Aide titre="Reste à vivre" texte="L'argent que tu as vraiment aujourd'hui (compte courant + espèces), moins les charges fixes encore à payer ce mois-ci (plafond des catégories « charge fixe » pas encore payé). Ce que tu mets de côté sur un livret sort tout de suite de ton compte, donc du reste à vivre. Le contrôle du dimanche le recale sur ta banque." />
+          </p>
+          <p className="text-5xl font-bold tabular-nums" style={{ color: reste.reste < 0 ? ETAT.rouge : undefined }}>{formatEuros(reste.reste)}</p>
+          <p className="mt-1 text-sm text-texte-3">
+            {formatEuros(reste.courant)} sur ton compte{reste.especes ? ` + ${formatEuros(reste.especes)} en espèces` : ''}
+            {reste.fixesRestantes > 0 && ` − ${formatEuros(reste.fixesRestantes)} de charges fixes à venir`}
+          </p>
+        </Carte>
+      ) : (
+        <Carte>
+          <p className="text-sm text-texte-2">Revenus − dépenses du mois</p>
+          <p className="text-5xl font-bold tabular-nums" style={{ color: r.revenus - r.depenses < 0 ? ETAT.rouge : undefined }}>{formatEuros(r.revenus - r.depenses, { signe: true })}</p>
+          <p className="mt-1 text-sm text-texte-3">{formatEuros(r.revenus)} de revenus − {formatEuros(r.depenses)} dépensés</p>
+        </Carte>
+      )}
 
       <Carte>
         {prevision ? (

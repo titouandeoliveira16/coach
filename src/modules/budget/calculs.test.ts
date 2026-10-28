@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { formatEuros } from '../../core/format'
 import {
   bilanMois, categoriesParUsage, couleurJauge, decalerMois, dernierJour, patrimoineAu, plafondDe, previsionFinDeMois,
-  resumeMois, seuilFranchi, soldeAu, verseAu, type Donnees,
+  resteAVivre, resumeMois, seuilFranchi, soldeAu, verseAu, type Donnees,
 } from './calculs'
 import type { Categorie, Compte, Mouvement } from './types'
 
@@ -90,9 +90,11 @@ describe('budget', () => {
       mvt({ type: 'virement', montant: 30000, date: '2026-10-10', compteId: 'courant', versCompteId: 'livret' }),
     ],
   }
-  it('reste à vivre = revenus − dépenses − charges fixes encore prévues', () => {
+  it('résumé du mois ; reste à vivre = argent disponible (courant + espèces) − charges fixes encore prévues', () => {
     const r = resumeMois(d, '2026-10')
-    expect(r).toMatchObject({ revenus: 120000, depenses: 30000, fixesRestantes: 40000, resteAVivre: 50000, epargne: 30000, investi: 0 })
+    expect(r).toMatchObject({ revenus: 120000, depenses: 30000, fixesRestantes: 40000, epargne: 30000, investi: 0 })
+    // 100 000 au départ + 120 000 − 30 000 − 30 000 (mis sur le livret) = 160 000 ; − 40 000 de charges fixes
+    expect(resteAVivre(d, '2026-10-10')).toMatchObject({ courant: 160000, especes: 0, reste: 120000 })
   })
   it('prévision fin de mois au rythme actuel', () => {
     const p = previsionFinDeMois(d, '2026-10-10')
