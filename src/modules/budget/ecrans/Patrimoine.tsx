@@ -39,19 +39,20 @@ export function Patrimoine() {
     <div className="space-y-3 pt-2">
       <Carte>
         <p className="text-sm text-texte-2">Patrimoine total<Aide titre="Patrimoine" texte="Somme de tous tes comptes : solde calculé pour le courant, les livrets et les espèces ; dernière valeur connue (relevé + versements depuis) pour les investissements." /></p>
-        <p className="text-5xl font-bold tabular-nums">{formatEuros(total, { ronds: true })}</p>
+        <p className="text-5xl font-bold tabular-nums">{formatEuros(total)}</p>
         {premier >= 0 && mois.length - premier >= 2 && (
           <div className="mt-3">
             <GraphiqueLignes etiquettes={mois.slice(premier).map(moisCourt)} zero
               series={[{ nom: 'Patrimoine', couleur: '#facc15', valeurs: serie.slice(premier).map((v) => (v === undefined ? undefined : v / 100)) }]}
-              format={(n) => (n >= 1000 ? `${(n / 1000).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} k€` : `${Math.round(n)} €`)} />
+              format={(n) => formatEuros(Math.round(n * 100))}
+              formatAxe={(n) => (n >= 1000 ? `${(n / 1000).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} k€` : `${Math.round(n)} €`)} />
           </div>
         )}
       </Carte>
 
       <Carte>
         <p className="text-sm text-texte-2">🛟 Épargne de précaution<Aide titre="Épargne de précaution" texte="Total disponible tout de suite sur tes livrets (Livret A + Livret Jeune) : ton coussin en cas d'imprévu." /></p>
-        <p className="text-3xl font-bold tabular-nums">{formatEuros(precaution, { ronds: true })}</p>
+        <p className="text-3xl font-bold tabular-nums">{formatEuros(precaution)}</p>
       </Carte>
 
       {GROUPES.map((g) => {
@@ -139,7 +140,7 @@ function FicheCompte({ c, d, onFermer }: { c: Compte; d: Donnees; onFermer: () =
       <p className="text-3xl font-bold tabular-nums">{formatEuros(valeur)}</p>
       {invest && (
         <p className="mt-1 text-sm text-texte-2">
-          Argent versé {formatEuros(verse, { ronds: true })}
+          Argent versé {formatEuros(verse)}
           {valeur !== verse && <> · <span style={{ color: valeur > verse ? ETAT.vert : ETAT.rouge }}>{valeur > verse ? 'plus-value' : 'moins-value'} {formatEuros(valeur - verse, { signe: true })}</span></>}
         </p>
       )}

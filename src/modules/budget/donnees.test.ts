@@ -34,3 +34,17 @@ it('remise à zéro : comptes et mouvements effacés, catégories gardées', asy
   expect(await db.comptes.get('livret-a')).toMatchObject({ soldeInitial: 50000, dateDepart: '2026-10-01' })
   expect(await db.comptes.get('pea')).toMatchObject({ soldeInitial: 0, nom: 'PEA (Trade Republic)' })
 })
+
+it('un relevé daté d’avant le départ d’un compte devient son point de départ', async () => {
+  const { alignerDepartsSurReleves } = await import('./donnees')
+  const { soldeAu } = await import('./calculs')
+  await enregistrer(db.comptes, { id: 'livret-a', nom: 'Livret A', type: 'epargne', soldeInitial: 0, dateDepart: '2026-11-01', ordre: 1 })
+  await enregistrer(db.releves, { id: 'livret-a|2026-10-01', compteId: 'livret-a', date: '2026-10-01', valeur: 98400 })
+  await alignerDepartsSurReleves()
+  const c = (await db.comptes.get('livret-a'))!
+  expect(c).toMatchObject({ dateDepart: '2026-10-01', soldeInitial: 98400 })
+  // Le relevé suivant (ex. le 5/11) prend le relais
+  const releves = [...(await db.releves.toArray()), { id: 'livret-a|2026-11-05', compteId: 'livret-a', date: '2026-11-05', valeur: 99000 }]
+  expect(soldeAu(c, [], releves, '2026-10-28')).toBe(98400)
+  expect(soldeAu(c, [], releves, '2026-11-06')).toBe(99000)
+})

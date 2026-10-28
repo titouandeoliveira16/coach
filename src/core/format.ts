@@ -30,11 +30,11 @@ export function depuis(dateIso: string): string {
 }
 
 const EUROS = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' })
-const EUROS_RONDS = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
 
-/** Centimes → "1 234,56 €" (`ronds` : sans centimes ; `signe` : "+" devant les montants positifs) */
-export function formatEuros(centimes: number, { ronds = false, signe = false } = {}): string {
-  const t = (ronds ? EUROS_RONDS : EUROS).format(centimes / 100)
+/** Centimes → "1 234,56 €" (`signe` : "+" devant les montants positifs) */
+/** Montant au centime près, toujours 2 chiffres après la virgule (pas d'arrondi). */
+export function formatEuros(centimes: number, { signe = false } = {}): string {
+  const t = EUROS.format(centimes / 100)
   return signe && centimes > 0 ? `+${t}` : t
 }
 

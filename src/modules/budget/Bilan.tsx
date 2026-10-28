@@ -45,14 +45,14 @@ export function Bilan({ d, mois, rituel = false }: { d: Donnees; mois: string; r
       <div>
         <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-texte-3">Plafonds</p>
         {b.depassees.length === 0 ? <p className="text-texte-2">✅ Aucun plafond dépassé.</p> : b.depassees.map((x) => (
-          <p key={x.categorieId} className="flex justify-between"><span>🔴 {nom(x.categorieId)}</span><span>{formatEuros(x.depense, { ronds: true })} / {formatEuros(x.plafond, { ronds: true })}</span></p>
+          <p key={x.categorieId} className="flex justify-between"><span>🔴 {nom(x.categorieId)}</span><span>{formatEuros(x.depense)} / {formatEuros(x.plafond)}</span></p>
         ))}
       </div>
 
       <div>
         <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-texte-3">Patrimoine</p>
-        <p className="flex justify-between"><span className="text-texte-2">Fin du mois</span><span className="font-semibold">{formatEuros(b.patrimoineFin, { ronds: true })}</span></p>
-        {evolution !== undefined && <p className="flex justify-between"><span className="text-texte-2">Sur le mois</span><span className="font-semibold" style={{ color: evolution >= 0 ? '#4ade80' : '#f87171' }}>{formatEuros(evolution, { ronds: true, signe: true })}</span></p>}
+        <p className="flex justify-between"><span className="text-texte-2">Fin du mois</span><span className="font-semibold">{formatEuros(b.patrimoineFin)}</span></p>
+        {evolution !== undefined && <p className="flex justify-between"><span className="text-texte-2">Sur le mois</span><span className="font-semibold" style={{ color: evolution >= 0 ? '#4ade80' : '#f87171' }}>{formatEuros(evolution, { signe: true })}</span></p>}
       </div>
 
       {rituel && (

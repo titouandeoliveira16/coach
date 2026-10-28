@@ -33,7 +33,7 @@ export function Plafonds() {
           Chaque nouveau mois reprend ceux du mois précédent.
         </p>
         {groupes.map((g) => (
-          <Carte key={g.titre} titre={`${g.titre} · ${formatEuros(total(g.liste), { ronds: true })}`}>
+          <Carte key={g.titre} titre={`${g.titre} · ${formatEuros(total(g.liste))}`}>
             {g.liste.length === 0 && <p className="text-sm text-texte-3">Aucune.</p>}
             {g.liste.map((c) => (
               <div key={c.id}>
@@ -47,7 +47,7 @@ export function Plafonds() {
             ))}
           </Carte>
         ))}
-        <p className="text-center text-sm text-texte-2">Total des plafonds : <b className="text-texte">{formatEuros(total(principales), { ronds: true })}</b></p>
+        <p className="text-center text-sm text-texte-2">Total des plafonds : <b className="text-texte">{formatEuros(total(principales))}</b></p>
         <Link to="/budget/mois" className="block py-2 text-center text-sm text-accent">‹ Retour</Link>
       </div>
     </>

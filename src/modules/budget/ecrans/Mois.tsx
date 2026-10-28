@@ -76,10 +76,10 @@ export function Mois() {
           Reste à vivre {enCours ? 'ce mois-ci' : ''}
           <Aide titre="Reste à vivre" texte="Revenus du mois − dépenses déjà faites − charges fixes encore prévues (plafond des catégories « charge fixe » pas encore payé). C'est ce qu'il te reste pour vivre jusqu'à la fin du mois." />
         </p>
-        <p className="text-5xl font-bold tabular-nums" style={{ color: r.resteAVivre < 0 ? ETAT.rouge : undefined }}>{formatEuros(r.resteAVivre, { ronds: true })}</p>
+        <p className="text-5xl font-bold tabular-nums" style={{ color: r.resteAVivre < 0 ? ETAT.rouge : undefined }}>{formatEuros(r.resteAVivre)}</p>
         <p className="mt-1 text-sm text-texte-3">
-          {formatEuros(r.revenus, { ronds: true })} de revenus − {formatEuros(r.depenses, { ronds: true })} dépensés
-          {r.fixesRestantes > 0 && ` − ${formatEuros(r.fixesRestantes, { ronds: true })} de charges fixes à venir`}
+          {formatEuros(r.revenus)} de revenus − {formatEuros(r.depenses)} dépensés
+          {r.fixesRestantes > 0 && ` − ${formatEuros(r.fixesRestantes)} de charges fixes à venir`}
         </p>
       </Carte>
 
@@ -90,15 +90,15 @@ export function Mois() {
               Compte courant fin {nomMois(mois).split(' ')[0]} (prévision)
               <Aide titre="Prévision du compte courant" texte="Solde d'aujourd'hui − charges fixes encore prévues − tes dépenses variables au rythme actuel (moyenne par jour depuis le début du mois ; les 7 premiers jours, le rythme du mois précédent) × jours restants. Les revenus à venir ne sont pas comptés." />
             </p>
-            <p className="text-3xl font-bold tabular-nums" style={{ color: prevision.prevision < 0 ? ETAT.rouge : undefined }}>{formatEuros(prevision.prevision, { ronds: true })}</p>
+            <p className="text-3xl font-bold tabular-nums" style={{ color: prevision.prevision < 0 ? ETAT.rouge : undefined }}>{formatEuros(prevision.prevision)}</p>
             <p className="mt-1 text-sm text-texte-3">
-              Aujourd'hui {formatEuros(prevision.solde, { ronds: true })} · environ {formatEuros(prevision.rythme, { ronds: true })} par jour · {prevision.restants} j restants
+              Aujourd'hui {formatEuros(prevision.solde)} · environ {formatEuros(prevision.rythme)} par jour · {prevision.restants} j restants
             </p>
           </>
         ) : (
           <>
             <p className="text-sm text-texte-2">Compte courant fin {nomMois(mois).split(' ')[0]}</p>
-            <p className="text-3xl font-bold tabular-nums">{formatEuros(soldeCourantFin, { ronds: true })}</p>
+            <p className="text-3xl font-bold tabular-nums">{formatEuros(soldeCourantFin)}</p>
           </>
         )}
       </Carte>
@@ -113,15 +113,15 @@ export function Mois() {
                 <div className="flex items-baseline justify-between gap-2 text-sm">
                   <span className="truncate font-medium">{c.emoji} {c.nom}{c.fixe && <span className="ml-1 text-xs text-texte-3">fixe</span>}</span>
                   <span className="shrink-0 tabular-nums">
-                    <b>{formatEuros(depense, { ronds: true })}</b>
-                    {plafond ? <span className="text-texte-3"> / {formatEuros(plafond, { ronds: true })}</span> : <span className="text-texte-3"> · pas de plafond</span>}
+                    <b>{formatEuros(depense)}</b>
+                    {plafond ? <span className="text-texte-3"> / {formatEuros(plafond)}</span> : <span className="text-texte-3"> · pas de plafond</span>}
                   </span>
                 </div>
                 {plafond ? (
                   <>
                     <div className="mt-1"><Jauge part={depense / plafond} couleur={ETAT[etat!]} /></div>
                     <p className="mt-0.5 text-xs" style={{ color: etat === 'rouge' ? ETAT.rouge : 'var(--color-texte-3)' }}>
-                      {depense > plafond ? `Dépassé de ${formatEuros(depense - plafond, { ronds: true })}` : `Reste ${formatEuros(plafond - depense, { ronds: true })}`}
+                      {depense > plafond ? `Dépassé de ${formatEuros(depense - plafond)}` : `Reste ${formatEuros(plafond - depense)}`}
                     </p>
                   </>
                 ) : null}
@@ -133,7 +133,7 @@ export function Mois() {
       </Carte>
 
       <Carte titre="Répartition des dépenses">
-        <Camembert format={(n) => formatEuros(n, { ronds: true })}
+        <Camembert format={(n) => formatEuros(n)}
           parts={[...parCat.entries()].map(([id, valeur]) => {
             const c = d.categories.find((x) => x.id === id)
             return { nom: c ? `${c.emoji} ${c.nom}` : 'Sans catégorie', couleur: c?.couleur ?? '#94a3b8', valeur }
@@ -157,7 +157,7 @@ export function Mois() {
       <div className="grid grid-cols-2 gap-3">
         <Link to="/budget/patrimoine" className="rounded-2xl border border-bordure bg-surface p-4 active:scale-[0.98]">
           <p className="text-xs font-semibold uppercase tracking-wider text-texte-3">Patrimoine</p>
-          <p className="mt-1 text-xl font-bold tabular-nums">{formatEuros(patrimoine, { ronds: true })}</p>
+          <p className="mt-1 text-xl font-bold tabular-nums">{formatEuros(patrimoine)}</p>
         </Link>
         <Link to="/budget/analyses" className="rounded-2xl border border-bordure bg-surface p-4 active:scale-[0.98]">
           <p className="text-xs font-semibold uppercase tracking-wider text-texte-3">Historique</p>

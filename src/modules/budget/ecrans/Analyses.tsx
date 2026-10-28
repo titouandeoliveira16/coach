@@ -13,6 +13,8 @@ const PERIODES = ['6 mois', '12 mois'] as const
 /** Montants courts pour les axes : "850 €", "1,2 k€", "13 k€" */
 const euros = (n: number) =>
   Math.abs(n) >= 1000 ? `${(n / 1000).toLocaleString('fr-FR', { maximumFractionDigits: Math.abs(n) >= 10000 ? 0 : 1 })} k€` : `${Math.round(n)} €`
+/** Valeurs touchées : au centime près */
+const eurosExacts = (n: number) => formatEuros(Math.round(n * 100))
 
 /** Graphiques sur 6 ou 12 mois et bilans des mois passés. */
 export function Analyses() {
@@ -50,7 +52,7 @@ export function Analyses() {
 
       <Carte titre="Revenus et dépenses">
         {courbes ? (
-          <GraphiqueLignes etiquettes={etiquettes} zero format={euros} series={[
+          <GraphiqueLignes etiquettes={etiquettes} zero format={eurosExacts} formatAxe={euros} series={[
             { nom: 'Revenus', couleur: '#199e70', valeurs: resumes.map((r) => r.revenus / 100) },
             { nom: 'Dépenses', couleur: '#d95926', valeurs: resumes.map((r) => r.depenses / 100) },
           ]} />
@@ -60,16 +62,16 @@ export function Analyses() {
       </Carte>
 
       <Carte titre="Dépenses par catégorie">
-        <GraphiqueBarres etiquettes={etiquettes} series={seriesCat} format={euros} />
+        <GraphiqueBarres etiquettes={etiquettes} series={seriesCat} format={eurosExacts} formatAxe={euros} />
       </Carte>
 
       <Carte titre="Patrimoine">
-        {!courbes ? attente : <GraphiqueLignes etiquettes={etiquettes} format={euros}
+        {!courbes ? attente : <GraphiqueLignes etiquettes={etiquettes} format={eurosExacts} formatAxe={euros}
           series={[{ nom: 'Patrimoine', couleur: '#facc15', valeurs: patrimoineParMois(d, mois, jour).map((v) => (v === undefined ? undefined : v / 100)) }]} />}
       </Carte>
 
       <Carte titre="Investi chaque mois">
-        <GraphiqueBarres etiquettes={etiquettes} format={euros} series={[{ nom: 'Investi', couleur: '#3987e5', valeurs: resumes.map((r) => r.investi / 100) }]} />
+        <GraphiqueBarres etiquettes={etiquettes} format={eurosExacts} formatAxe={euros} series={[{ nom: 'Investi', couleur: '#3987e5', valeurs: resumes.map((r) => r.investi / 100) }]} />
       </Carte>
 
       <Carte titre="Bilans mensuels">
@@ -79,7 +81,7 @@ export function Analyses() {
           return (
             <button key={m} type="button" onClick={() => setBilan(m)} className="flex w-full items-center justify-between py-2 text-left active:opacity-60">
               <span className="capitalize">{nomMois(m)}</span>
-              <span className="text-sm text-texte-2">{formatEuros(r.revenus - r.depenses, { ronds: true, signe: true })} ›</span>
+              <span className="text-sm text-texte-2">{formatEuros(r.revenus - r.depenses, { signe: true })} ›</span>
             </button>
           )
         })}

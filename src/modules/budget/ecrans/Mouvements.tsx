@@ -69,8 +69,8 @@ export function Mouvements() {
       </div>
 
       <div className="flex justify-between rounded-xl bg-surface px-4 py-2.5 text-sm">
-        <span className="text-texte-2">Dépenses <b className="text-texte">{formatEuros(total('depense'), { ronds: true })}</b></span>
-        <span className="text-texte-2">Revenus <b className="text-[#4ade80]">{formatEuros(total('revenu'), { ronds: true })}</b></span>
+        <span className="text-texte-2">Dépenses <b className="text-texte">{formatEuros(total('depense'))}</b></span>
+        <span className="text-texte-2">Revenus <b className="text-[#4ade80]">{formatEuros(total('revenu'))}</b></span>
       </div>
 
       {liste.length === 0 && <p className="py-8 text-center text-texte-3">Aucun mouvement.</p>}
