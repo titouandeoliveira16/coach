@@ -163,7 +163,8 @@ export async function genererSemaineVelo(lundi: string) {
   // Jours occupés (une séance par jour) et séances dures (pour ne pas enchaîner deux jours durs)
   const occupations = [
     ...prevues.filter((p) => p.sport !== 'natation').map((p) => ({ date: p.date, dure: p.intensite === 'haute' })),
-    ...seances.filter((s) => s.sport !== 'natation').map((s) => ({ date: s.date, dure: domaineDe(s, c.bornes) === 'haute' })),
+    // Le renfo occupe son jour mais n'en fait jamais un jour dur
+    ...seances.filter((s) => s.sport !== 'natation').map((s) => ({ date: s.date, dure: s.sport !== 'renfo' && domaineDe(s, c.bornes) === 'haute' })),
   ].filter((o) => dansSemaine(o.date) || o.dure)
 
   // Ce qui est déjà fait (ou prévu à la main) cette semaine

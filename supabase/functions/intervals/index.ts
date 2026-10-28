@@ -66,7 +66,9 @@ async function compte(userId: string) {
   return data ? { athlete: data.athlete_id as string, cle: await dechiffrer(data.cle_chiffre) } : null
 }
 
-const SPORTS = new Set(['Ride', 'VirtualRide', 'GravelRide', 'MountainBikeRide', 'Run', 'TrailRun', 'VirtualRun'])
+const SPORTS = new Set(['Ride', 'VirtualRide', 'GravelRide', 'MountainBikeRide', 'Run', 'TrailRun', 'VirtualRun',
+  // Renfo : remonte pour cocher la séance prévue et compter dans les calories (pas dans la charge)
+  'WeightTraining', 'Workout', 'Crossfit', 'Pilates', 'Yoga'])
 const aujourdhui = () => new Date().toISOString().slice(0, 10)
 
 Deno.serve(async (req) => {

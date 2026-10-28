@@ -21,13 +21,15 @@ export type Verdict = { couleur: 'vert' | 'orange' | 'rouge' | 'gris'; texte: st
 
 /** Type de séance pour le contrôle FC et la question « en réserve ». */
 export function categorieDe(s: Seance, prevue: SeancePrevue | undefined, domaine: Intensite): Categorie {
+  // Seulement le vélo et la course : la FC d'une séance de renfo ne se juge pas ainsi
+  if (s.sport !== 'velo' && s.sport !== 'course') return 'sans'
   const f = prevue?.velo?.famille
   if (f === 'z2' || f === 'z2-long') return 'facile'
   if (f === 'seuil' || f === 'sweet-spot' || f === 'tempo') return 'plateau'
   if (f === 'vo2-longs') return 'vo2'
   if (f) return 'sans'
   if (prevue) return prevue.intensite === 'basse' ? 'facile' : 'sans'
-  return domaine === 'basse' && s.sport !== 'natation' ? 'facile' : 'sans'
+  return domaine === 'basse' ? 'facile' : 'sans'
 }
 
 export function controleFc(s: Seance, categorie: Categorie, fcMax: number): Verdict | undefined {

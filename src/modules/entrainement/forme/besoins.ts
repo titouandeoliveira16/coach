@@ -48,7 +48,8 @@ export async function besoinsDe(jour: string, o: { sansCorrection?: boolean; san
     kj: s.kj ?? prevues.find((p) => p.id === s.prevueId)?.kjPrevu,
     distanceKm: s.distanceKm,
     // Part de glucides d'après le temps passé dans chaque zone (continu : 1 min ou 7 min en Z5 ne coûtent pas pareil)
-    partGlucides: s.tempsZones ? partGlucides(s.tempsZones) : undefined,
+    // (pas pour le renfo : la FC d'une séance de muscu ne dit rien de la part de glucides)
+    partGlucides: s.tempsZones && s.sport !== 'renfo' ? partGlucides(s.tempsZones) : undefined,
   }))
   const aFaire: ActiviteJour[] = prevues
     .filter((p) => p.statut === 'prevue' && !seances.some((s) => s.prevueId === p.id))
