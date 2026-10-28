@@ -34,7 +34,7 @@ const JOURS_HISTORIQUE = 90
 /** On relit toujours les 3 derniers jours (synchronisations tardives de la montre). */
 const MARGE_JOURS = 3
 
-async function appeler<T>(route: string, corps?: unknown): Promise<T> {
+export async function appeler<T>(route: string, corps?: unknown): Promise<T> {
   const { data } = await supabase.auth.getSession()
   if (!data.session) throw new Error('Connecte-toi d’abord à ton compte (Accueil → ⚙️).')
   const r = await fetch(`${URL_SUPABASE}/functions/v1/intervals/${route}`, {
