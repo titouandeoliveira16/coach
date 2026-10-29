@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Seance } from '../types'
-import { domaineDe } from './donnees'
+import { chargeDe, domaineDe } from './donnees'
 
 const bornes: [number, number, number, number] = [130, 150, 165, 177]
 const s = (c: Partial<Seance>): Seance => ({ id: 'x', date: '2026-10-27', sport: 'course', dureeSec: 2400, source: 'manuel', ...c } as Seance)
@@ -16,4 +16,11 @@ describe('intensité d’une séance', () => {
     expect(domaineDe(s({ titre: 'Footing', tempsZones: [1500, 900, 0, 0, 0] }), bornes)).toBe('basse')
     expect(domaineDe(s({ fcMoy: 140, fcMax: 185, sansCeinture: true }), bornes)).toBe('basse')
   })
+})
+
+it('foot entre amis (« autre ») : aucune charge d’entraînement, mais son intensité sert aux calories', () => {
+  const foot = s({ sport: 'autre', titre: 'Football', dureeSec: 5400, rpe: 7, tempsZones: [1200, 1800, 1200, 900, 300] })
+  expect(chargeDe(foot, { chargeRef: 'trimp' })).toBe(0)
+  expect(chargeDe(foot, { chargeRef: 'srpe' })).toBe(0)
+  expect(domaineDe(foot, bornes)).toBe('haute')
 })
