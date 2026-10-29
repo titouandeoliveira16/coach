@@ -2,7 +2,7 @@ import { db } from '../../../core/db'
 import { enregistrer } from '../../../core/stockage'
 import { AGE_DEFAUT, ageAu, PROFIL_DEFAUT, type Profil } from '../../../core/profil'
 import { decalerJour } from '../../../core/dates'
-import { besoinsDuJour, kcalActivite, partGlucides, reductionsEtalement, tendancePoids, type ActiviteJour } from '../../../metrics/nutrition'
+import { besoinsDuJour, DEFICIT_BASE, kcalActivite, partGlucides, reductionsEtalement, tendancePoids, type ActiviteJour, type BilanNutrition } from '../../../metrics/nutrition'
 import { chargerContexte, domaineDe } from '../seances/donnees'
 import { peseesValides, poidsAu } from './pesees'
 import type { Intensite } from '../types'
@@ -12,12 +12,23 @@ export interface ReglagesNutrition {
   /** Écart maintien mesuré − formule (kcal/j), et jour où il a été validé */
   correction?: number
   correctionLe?: string
+  /** Correction validée sur 14 jours seulement : à confirmer à 3 semaines */
+  correctionProvisoire?: boolean
   /** Ne pas reproposer la calibration avant ce jour */
   calibrationPlusTard?: string
   /** Excès à étaler (jour, kcal) */
   etalements?: { date: string; kcal: number }[]
   /** Jours où l'étalement a été refusé (pour ne pas redemander) */
   etalementsRefuses?: string[]
+  /** Bilans du dimanche (faim, énergie, tour de taille) */
+  bilans?: BilanNutrition[]
+  /** Déficit de base en perte de gras (500 par défaut), et jour du dernier ajustement */
+  deficitBase?: number
+  deficitLe?: string
+  /** Pause au maintien jusqu'à ce jour inclus */
+  pauseJusquau?: string
+  /** Proposition du bilan écartée (dimanche concerné) */
+  propositionVue?: string
 }
 export const lireReglagesNutrition = async () => ((await db.reglages.get('nutrition'))?.valeur as ReglagesNutrition | undefined) ?? {}
 export const modifierReglagesNutrition = async (c: Partial<ReglagesNutrition>) =>
@@ -62,15 +73,18 @@ export async function besoinsDe(jour: string, o: { sansCorrection?: boolean; san
     ...seances.map((s, i) => ({ titre: s.titre ?? nomSport(s.sport), kcal: Math.round(kcalActivite(faites[i], kg)), faite: true })),
     ...pasFaites.map((p, i) => ({ titre: p.titre, kcal: Math.round(kcalActivite(aFaire[i], kg)), faite: false })),
   ]
+  // Pause au maintien (bilan du dimanche) : pas de déficit jusqu'à la fin de la pause
+  const pause = profil.objectif === 'perte' && !!n.pauseJusquau && jour <= n.pauseJusquau
   const b = besoinsDuJour({
-    kg, cm: profil.tailleCm ?? PROFIL_DEFAUT.tailleCm!, age: profil.naissance ? ageAu(profil.naissance, jour) : AGE_DEFAUT, activites: [...faites, ...aFaire], objectif: profil.objectif,
+    kg, cm: profil.tailleCm ?? PROFIL_DEFAUT.tailleCm!, age: profil.naissance ? ageAu(profil.naissance, jour) : AGE_DEFAUT, activites: [...faites, ...aFaire],
+    objectif: pause ? 'maintien' : profil.objectif, deficitBase: n.deficitBase ?? DEFICIT_BASE,
     correction: o.sansCorrection ? 0 : n.correction,
     reduction: o.sansEtalement ? 0 : await reductionDuJour(jour, n),
   })
   const tendance = tendancePoids(await peseesValides(), jour)
   const demain = (await db.prevues.where('date').equals(decalerJour(jour, 1)).toArray())
     .find((p) => p.statut === 'prevue' && (p.intensite === 'haute' || p.dureeMin >= 90))
-  return { ...b, detailSeances, correction: o.sansCorrection ? undefined : n.correction, etalementDu: b.reduction ? n.etalements?.filter((e) => e.date < jour).at(-1)?.date : undefined, kg, objectif: profil.objectif ?? 'maintien', tendance, nbFaites: faites.length, nbAFaire: aFaire.length, demain: demain?.titre }
+  return { ...b, detailSeances, correction: o.sansCorrection ? undefined : n.correction, etalementDu: b.reduction ? n.etalements?.filter((e) => e.date < jour).at(-1)?.date : undefined, kg, objectif: profil.objectif ?? 'maintien', pauseJusquau: pause ? n.pauseJusquau : undefined, tendance, nbFaites: faites.length, nbAFaire: aFaire.length, demain: demain?.titre }
 }
 
 /** kcal retirées ce jour-là pour étaler les excès des 7 jours précédents (jours faciles seulement). */

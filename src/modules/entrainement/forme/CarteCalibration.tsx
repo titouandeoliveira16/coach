@@ -19,9 +19,14 @@ export function CarteCalibration() {
         Ton maintien réel ≈ <b>{formatNombre(c.mesure)} kcal</b> (la formule disait {formatNombre(c.formule)}).
         Ajuster tes besoins de <b>{c.ecart > 0 ? '+' : ''}{c.ecart} kcal/j</b> ?
       </p>
-      <p className="mt-1 text-xs text-texte-3">Plus fiable qu'une formule, à condition d'avoir noté presque tous tes repas. 1 kg ≈ 7 700 kcal ; écart limité à ±500.</p>
+      <p className="mt-1 text-xs text-texte-3">
+        {c.provisoire
+          ? 'Estimation provisoire sur 2 semaines (écart limité à ±250), confirmée à 3 semaines.'
+          : 'Plus fiable qu\'une formule, à condition d\'avoir noté presque tous tes repas. 1 kg ≈ 7 700 kcal ; écart limité à ±500.'}
+        {' '}Avant d'ajuster : tes repas notés sont-ils complets (huile, sauces, grignotages) ?
+      </p>
       <div className="mt-3 grid grid-cols-2 gap-2">
-        <button type="button" onClick={() => modifierReglagesNutrition({ correction: c.ecart, correctionLe: aujourdhui() })} className="rounded-xl bg-accent py-2.5 font-semibold text-fond">Ajuster</button>
+        <button type="button" onClick={() => modifierReglagesNutrition({ correction: c.ecart, correctionLe: aujourdhui(), correctionProvisoire: c.provisoire })} className="rounded-xl bg-accent py-2.5 font-semibold text-fond">Ajuster</button>
         <button type="button" onClick={() => modifierReglagesNutrition({ calibrationPlusTard: decalerJour(aujourdhui(), 7) })} className="rounded-xl border border-bordure py-2.5 font-semibold text-texte-2">Plus tard</button>
       </div>
     </Carte>

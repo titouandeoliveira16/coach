@@ -99,6 +99,11 @@ export interface Besoins {
   lipides: number
 }
 
+/** Déficit de base en perte de gras (kcal), et ses bornes une fois ajusté par le bilan du dimanche */
+export const DEFICIT_BASE = 500
+export const DEFICIT_MIN = 200
+export const DEFICIT_MAX = 600
+
 /** Vie quotidienne (marche comprise) : métabolisme × 1,4. */
 export const FACTEUR_QUOTIDIEN = 1.4
 
@@ -108,6 +113,8 @@ export function besoinsDuJour(o: {
   correction?: number
   /** Excès d'un jour récent étalé sur ce jour (kcal en moins) */
   reduction?: number
+  /** Déficit de base en perte de gras (500 par défaut, ajusté par le bilan du dimanche, 200 à 600) */
+  deficitBase?: number
 }): Besoins {
   const base = metabolismeBase(o.kg, o.cm, o.age)
   const quotidien = base * FACTEUR_QUOTIDIEN + (o.correction ?? 0)
@@ -116,7 +123,9 @@ export function besoinsDuJour(o: {
   const maintien = quotidien + seances
   const journee = kcalGlucides < 150 ? 'facile' : kcalGlucides < 500 ? 'moderee' : 'dure'
   const perte = o.objectif === 'perte'
-  const deficitVise = perte ? Math.min(500, Math.max(100, 500 - 0.6 * kcalGlucides)) : 0
+  const deficitBase = o.deficitBase ?? DEFICIT_BASE
+  // Les jours de grosse séance restent bien alimentés : le déficit y descend à 100 kcal, quel que soit le réglage
+  const deficitVise = perte ? Math.min(deficitBase, Math.max(100, deficitBase - 0.6 * kcalGlucides)) : 0
   const plancherKcal = DISPONIBILITE_MIN * o.kg * PART_MASSE_MAIGRE + seances
   // Le plancher de disponibilité énergétique protège aussi de l'étalement d'un excès
   const energie = Math.max(maintien - deficitVise - (o.reduction ?? 0), perte || o.reduction ? plancherKcal : 0)
@@ -141,15 +150,15 @@ export function besoinsDuJour(o: {
 }
 
 /**
- * Évolution du poids (kg par semaine) : pente des pesées des 28 derniers jours (moindres carrés).
- * Il faut au moins 3 pesées étalées sur 14 jours.
+ * Évolution du poids (kg par semaine) : pente des pesées des `fenetre` derniers jours (28 par défaut, moindres carrés).
+ * Il faut au moins `minPesees` pesées étalées sur `etalement` jours (3 pesées sur 14 jours par défaut).
  */
-export function tendancePoids(pesees: { date: string; poidsKg: number }[], jour: string) {
+export function tendancePoids(pesees: { date: string; poidsKg: number }[], jour: string, fenetre = 28, etalement = 14, minPesees = 3) {
   const jours = (d: string) => (Date.parse(d) - Date.parse(jour)) / 86_400_000
-  const p = pesees.filter((x) => jours(x.date) <= 0 && jours(x.date) > -28)
-  if (p.length < 3) return undefined
+  const p = pesees.filter((x) => jours(x.date) <= 0 && jours(x.date) > -fenetre)
+  if (p.length < minPesees) return undefined
   const x = p.map((v) => jours(v.date))
-  if (Math.max(...x) - Math.min(...x) < 14) return undefined
+  if (Math.max(...x) - Math.min(...x) < etalement) return undefined
   const mx = x.reduce((a, b) => a + b, 0) / x.length
   const my = p.reduce((a, v) => a + v.poidsKg, 0) / p.length
   const sxy = x.reduce((a, xi, i) => a + (xi - mx) * (p[i].poidsKg - my), 0)
@@ -187,8 +196,96 @@ export function reductionsEtalement(excès: { date: string; kcal: number }[], jo
  * Maintien mesuré : ce que tu as mangé en moyenne, corrigé de ce qu'a fait ton poids
  * (1 kg ≈ 7 700 kcal). Renvoie aussi l'écart avec la formule, arrondi à 50 kcal et limité à ±500.
  */
-export function maintienMesure(o: { kcalMoyen: number; formuleMoyenne: number; tendanceKgSemaine: number }) {
+export function maintienMesure(o: { kcalMoyen: number; formuleMoyenne: number; tendanceKgSemaine: number; borne?: number }) {
   const mesure = o.kcalMoyen - (o.tendanceKgSemaine * 7700) / 7
-  const ecart = Math.max(-500, Math.min(500, Math.round((mesure - o.formuleMoyenne) / 50) * 50))
+  const borne = o.borne ?? 500
+  const ecart = Math.max(-borne, Math.min(borne, Math.round((mesure - o.formuleMoyenne) / 50) * 50))
   return { mesure: Math.round(mesure / 10) * 10, ecart }
 }
+
+// ——— Bilan du dimanche (relecture du 29/10 : Garthe 2011, Mountjoy 2023 ; pas et seuils = choix d'entraîneur) ———
+
+export type Faim = 'ok' | 'un-peu' | 'souvent'
+export type Energie = 'bien' | 'moyen' | 'mauvais'
+export interface BilanNutrition {
+  /** Dimanche du bilan */
+  date: string
+  faim: Faim
+  energie: Energie
+  /** Tour de taille (cm, moyenne de 2 mesures), facultatif */
+  tailleCm?: number
+}
+
+/** Écart de tour de taille qui compte (erreur de mesure ~1-2 cm, Barrios 2016) */
+export const SEUIL_TAILLE_CM = 1.5
+/** Pause au maintien quand les signaux d'alerte s'allument (jours) */
+export const DUREE_PAUSE = 7
+/** Délai minimal entre deux ajustements du déficit (jours) */
+export const DELAI_AJUSTEMENT = 14
+
+export type Proposition =
+  | { type: 'garder'; raison: string }
+  | { type: 'ajuster'; delta: number; raison: string }
+  | { type: 'pause'; raison: string; medecin: boolean }
+
+/**
+ * Proposition après le bilan du dimanche (l'utilisateur valide toujours) :
+ *  - alerte (faim « souvent » ou énergie « mauvaise » 2 semaines de suite, ou perte ≥ 1 %/sem avec faim ou fatigue) :
+ *    7 jours au maintien ; si l'alerte revient après une pause récente, en parler à un médecin (CIO, REDs 2023) ;
+ *  - perte ≥ 1 %/sem : déficit −200 ; 0,7 à 1 %/sem, ou faim et fatigue : −100 ;
+ *  - moins de 0,25 %/sem sur 3 semaines, sans faim ni fatigue : +100 (plafond 600) ;
+ *  - sinon on garde. Au plus un ajustement tous les 14 jours ; rien avant 14 jours de pesées
+ *    (une perte rapide au début, c'est surtout de l'eau et du glycogène).
+ */
+export function propositionNutrition(o: {
+  /** Pente du poids sur 14 jours et sur 21 jours (kg/sem, négatif = perte) */
+  tendance14?: number
+  tendance21?: number
+  kg: number
+  /** Bilans du plus récent au plus ancien */
+  bilans: BilanNutrition[]
+  deficitBase: number
+  /** Jours depuis le dernier ajustement (undefined : jamais) */
+  joursDepuisAjustement?: number
+  /** Une pause au maintien s'est terminée il y a moins de 21 jours */
+  pauseRecente?: boolean
+}): Proposition {
+  const [b0, b1] = o.bilans
+  const pct = (t?: number) => (t === undefined ? undefined : (-t / o.kg) * 100)
+  const p14 = pct(o.tendance14)
+  const p21 = pct(o.tendance21)
+  const deuxSemaines = (f: (b: BilanNutrition) => boolean) => !!b0 && !!b1 && f(b0) && f(b1)
+  const malCetteSemaine = !!b0 && b0.faim !== 'ok' && b0.energie !== 'bien'
+  const alerte = deuxSemaines((b) => b.faim === 'souvent') || deuxSemaines((b) => b.energie === 'mauvais') ||
+    (p14 !== undefined && p14 >= 1 && malCetteSemaine)
+  if (alerte) {
+    return {
+      type: 'pause', medecin: !!o.pauseRecente,
+      raison: o.pauseRecente
+        ? 'Les signaux d’alerte reviennent après une pause : passe au maintien et parles-en à un médecin (ou un diététicien du sport).'
+        : 'Faim ou fatigue qui durent : 7 jours au maintien pour récupérer, puis on reprend.',
+    }
+  }
+  if (p14 === undefined) return { type: 'garder', raison: 'Pas encore 14 jours de pesées : on attend avant de toucher au déficit.' }
+  if (o.joursDepuisAjustement !== undefined && o.joursDepuisAjustement < DELAI_AJUSTEMENT)
+    return { type: 'garder', raison: 'Déficit ajusté il y a moins de 2 semaines : on laisse le temps de voir l’effet.' }
+  const borne = (d: number) => Math.max(DEFICIT_MIN, Math.min(DEFICIT_MAX, o.deficitBase + d)) - o.deficitBase
+  const ajuster = (d: number, raison: string): Proposition => (borne(d) ? { type: 'ajuster', delta: borne(d), raison } : { type: 'garder', raison: `${raison} Le déficit est déjà à sa limite.` })
+  if (p14 >= 1) return ajuster(-200, 'Tu perds 1 % ou plus par semaine : trop vite, tu risques de perdre du muscle et de la forme.')
+  if (p14 >= 0.7 || malCetteSemaine) return ajuster(-100, p14 >= 0.7 ? 'Tu perds un peu vite (0,7 à 1 % par semaine).' : 'Faim et fatigue cette semaine : on desserre un peu.')
+  const bienPartout = o.bilans.slice(0, 2).every((b) => b.faim === 'ok' && b.energie !== 'mauvais')
+  if (p21 !== undefined && p21 < 0.25 && p14 < 0.25 && bienPartout)
+    return ajuster(100, 'Le poids ne baisse presque plus depuis 3 semaines, sans faim ni fatigue : un peu plus de déficit.')
+  return { type: 'garder', raison: 'Rythme dans la cible (0,25 à 0,7 % par semaine) : on garde.' }
+}
+
+/** Évolution du tour de taille : dernière mesure comparée à celle d'au moins 14 jours avant. Undefined si pas assez de mesures. */
+export function evolutionTaille(bilans: BilanNutrition[]) {
+  const m = bilans.filter((b) => b.tailleCm).sort((a, b) => b.date.localeCompare(a.date))
+  const der = m[0]
+  const avant = der && m.find((b) => (Date.parse(der.date) - Date.parse(b.date)) / 86_400_000 >= 14)
+  if (!der || !avant) return undefined
+  const ecart = der.tailleCm! - avant.tailleCm!
+  return { ecart: Math.round(ecart * 10) / 10, significatif: Math.abs(ecart) >= SEUIL_TAILLE_CM, depuis: avant.date }
+}
+

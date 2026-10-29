@@ -199,7 +199,10 @@ async function envoyerRappels() {
     if (jourPesee && t.heure >= HEURE_PESEE && t.heure < '12:00' && a.derniere_pesee !== t.date) {
       maj.derniere_pesee = t.date
       if (!(await ligne(a.user_id, 'pesees', t.date)))
-        messages.push({ titre: '⚖️ Pesée', texte: 'Le matin, à jeun, après être passé aux toilettes.', tag: 'pesee', url: './#/entrainement/aujourdhui' })
+        // Le dimanche : tour de taille et photo en même temps (bilan nutrition de la semaine)
+        messages.push(t.jour === 0
+          ? { titre: '⚖️ Pesée + 📏 tour de taille + 📸 photo', texte: 'À jeun, après les toilettes : poids, tour de taille au nombril (2 mesures) et ta photo. Bilan de la semaine dans l’appli.', tag: 'pesee', url: './#/entrainement/aujourdhui' }
+          : { titre: '⚖️ Pesée', texte: 'Le matin, à jeun, après être passé aux toilettes.', tag: 'pesee', url: './#/entrainement/aujourdhui' })
     }
 
     // Le lendemain d'un test CP enregistré dans l'appli (réglage « entrainement »), à 9 h : mettre la FTP Zwift à jour

@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { db } from '../../../core/db'
 import { formatDate } from '../../../core/format'
-import { aujourdhui, decalerJour } from '../../../core/dates'
+import { aujourdhui, decalerJour, jourCourt } from '../../../core/dates'
 import { formatNombre } from '../../../core/format'
 import { Aide } from '../../../core/ui/Aide'
 import { Carte } from '../../../core/ui/Carte'
@@ -27,7 +27,10 @@ export function CarteBesoins() {
         <Macro nom="Protéines" g={b.proteines} sous={`${formatNombre(b.proteinesParKg, 1)} g/kg`} />
         <Macro nom="Lipides" g={b.lipides} sous={`${Math.round(((b.lipides * 9) / b.kcal) * 100)} % de l'énergie`} />
       </div>
-      {b.objectif === 'perte' && (
+      {b.pauseJusquau && (
+        <p className="mt-2 text-sm text-texte-2">⏸️ Pause au maintien jusqu'au {jourCourt(b.pauseJusquau)} (bilan du dimanche) : pas de déficit.</p>
+      )}
+      {b.objectif === 'perte' && !b.pauseJusquau && (
         <p className="mt-2 text-sm text-texte-2">
           🎯 Perte de gras légère : <b className="text-texte">−{b.deficit} kcal</b> aujourd'hui
           ({b.kcalGlucides ? `séances : ~${formatNombre(b.kcalGlucides)} kcal de glucides brûlées : plus tes séances en brûlent, plus le déficit est petit` : 'pas de séance'})

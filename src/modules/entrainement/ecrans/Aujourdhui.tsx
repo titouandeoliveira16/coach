@@ -7,6 +7,7 @@ import { CarteAujourdhui } from '../forme/CarteAujourdhui'
 import { CarteBesoins } from '../forme/CarteBesoins'
 import { CarteRepas } from '../forme/CarteRepas'
 import { CarteCalibration } from '../forme/CarteCalibration'
+import { CarteBilanNutrition } from '../forme/CarteBilanNutrition'
 import { CarteFcMax } from '../forme/CarteFcMax'
 import { CartePanne } from '../forme/CartePanne'
 import { CartePesee } from '../forme/CartePesee'
@@ -48,6 +49,7 @@ export function Aujourdhui() {
         <SaisieMatin key={duJour?.modifieLe} existante={duJour} onTermine={() => setEdition(false)} />
       )}
       <CarteRepas />
+      <CarteBilanNutrition />
       <CarteBesoins />
       <CarteCalibration />
       <CartePanne />
