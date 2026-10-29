@@ -166,7 +166,8 @@ export interface Seance {
   /** Nombre d'activités enchaînées regroupées dans cette séance (ex. échauffement, test, retour au calme) */
   parties?: number
   /** Watts moyens de chaque bloc de travail, comparés à la cible de la séance prévue (et montée de FC dans chaque bloc, %) */
-  blocs?: { cibleW: number; dureeSec: number; w: number[]; deriveFc?: number[]; fcFin?: number[] }
+  /** Plage visée : minW (absent : 97 % de la cible) et maxW (seuil, sweet spot, tempo seulement) */
+  blocs?: { cibleW: number; minW?: number; maxW?: number; dureeSec: number; w: number[]; deriveFc?: number[]; fcFin?: number[] }
   /** Intervalles VO2 : secondes à 90 % ou plus de la FC max */
   tempsFc90?: number
   /** « En réserve ? » après le RPE : ok (facile tenable 1-2 h / 0-1 répétition en réserve), moyen, non */

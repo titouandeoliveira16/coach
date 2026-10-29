@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { construireTest, construireZ2 } from '../../../metrics/programme'
+import { construireIntervalles, construireTest, construireZ2, formatDe } from '../../../metrics/programme'
 import { dureeIntervals, texteIntervals } from './envoi'
 
 describe('envoi vers Intervals.icu', () => {
@@ -19,5 +19,10 @@ describe('envoi vers Intervals.icu', () => {
     const test = texteIntervals(construireTest(260).velo.etapes!)
     expect(test).toMatch(/12m freeride/)
     expect(test).not.toMatch(/\d+'/)
+  })
+  it('repère de cadence envoyé sur les efforts, pas sur la Z2', () => {
+    const ss = texteIntervals(construireIntervalles(formatDe('sweet-spot')!, 0, 260, 0).velo.etapes!)
+    expect(ss).toMatch(/15m 235w 85-95rpm/)
+    expect(texteIntervals(construireZ2(60, 180).velo.etapes!)).not.toMatch(/rpm/)
   })
 })

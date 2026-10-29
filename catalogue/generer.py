@@ -145,6 +145,14 @@ ALFREDSON_1998 = ref("Alfredson H, Pietilä T, Jonsson P, Lorentzon R", 1998, "H
 GRGIC_2022 = ref("Grgic J, Schoenfeld BJ, Orazem J, Sabol F", 2022, "Effects of resistance training performed to repetition failure or non-failure on muscular strength and hypertrophy: a systematic review and meta-analysis", "J Sport Health Sci")
 HELMS_2016 = ref("Helms ER, Cronin J, Storey A, Zourdos MC", 2016, "Application of the repetitions in reserve-based rating of perceived exertion scale for resistance training", "Strength Cond J")
 WENDLER = ref("Wendler J", 2011, "5/3/1: The Simplest and Most Effective Training System to Increase Raw Strength (2e éd.)", "Jim Wendler LLC (livre)")
+LIEDL_1999 = ref("Liedl MA, Swain DP, Branch JD", 1999, "Physiological effects of constant versus variable power during endurance cycling", "Med Sci Sports Exerc")
+LUCIA_2004 = ref("Lucía A, San Juan AF, Montilla M, et al.", 2004, "In professional road cyclists, low pedaling cadences are less efficient", "Med Sci Sports Exerc")
+HANSEN_RONNESTAD_2017 = ref("Hansen EA, Rønnestad BR", 2017, "Effects of cycling training at imposed low cadences: a systematic review", "Int J Sports Physiol Perform", "28095074")
+LLANOS_LAGOS_2025 = ref("Llanos-Lagos C, Ramirez-Campillo R, Sáez de Villarreal E", 2025, "Effect of strength training on cycling performance: a systematic review with meta-analysis", "Eur J Appl Physiol")
+VIKMOEN_2016 = ref("Vikmoen O, Ellefsen S, Trøen Ø, et al.", 2016, "Strength training improves cycling performance, fractional utilization of VO2max and cycling economy in female cyclists", "Scand J Med Sci Sports", "25892654")
+SCHUMANN_2022 = ref("Schumann M, Feuerbacher JF, Sünkeler M, et al.", 2022, "Compatibility of concurrent aerobic and strength training for skeletal muscle size and function: an updated systematic review and meta-analysis", "Sports Med", "34757594")
+BAILEY_2009 = ref("Bailey SJ, Vanhatalo A, Wilkerson DP, DiMenna FJ, Jones AM", 2009, "Optimizing the 'priming' effect: influence of prior exercise intensity and recovery duration on O2 uptake kinetics and severe-intensity exercise tolerance", "J Appl Physiol", "19797685")
+BURNLEY_2005 = ref("Burnley M, Doust JH, Jones AM", 2005, "Effects of prior warm-up regime on severe-intensity cycling performance", "Med Sci Sports Exerc")
 ALLEN_COGGAN = ref("Allen H, Coggan A", 2019, "Training and Racing with a Power Meter (3e éd.)", "VeloPress (livre)")
 FRIEL = ref("Friel J", 2018, "The Cyclist's Training Bible (5e éd.)", "VeloPress (livre)")
 
@@ -283,6 +291,18 @@ seance("velo-vo2-4x5", famille="vo2max", nom="VO2 longs 4 × 5 min",
        recuperation="48 h", conseils=["Vise ≥ 90 % de ta FC max pendant au moins 2-3 min de chaque répétition.", SANS_ERG],
        preuve=P("prouvé", "Les intervalles longs proches de la VO2max augmentent la VO2max ; ce format a servi de comparaison aux 30/15 dans les études de Rønnestad (où il a moins progressé).", BUCHHEIT_2013, RONNESTAD_2015), **V)
 
+seance("velo-vo2-3min", famille="vo2max", nom="Intervalles de 3 min",
+       objectif="VO2max, intervalles longs courts", resume="4 à 7 × 3 min à ~115 % de la CP, récupération 3 min.",
+       zone="Z5", rpe="8-9", niveau="intermédiaire", deroule=[ECH(20), X(5, E(3, 112, 118), R(3, 45, 55)), CALME(10)],
+       variantes=["4 × 3", "5 × 3", "6 × 3", "7 × 3"], phases=["construction"], parSemaine="1", recuperation="48 h", conseils=[SANS_ERG],
+       preuve=P("plausible", "Les intervalles de 2 à 4 min proches de la PMA font passer du temps près de la VO2max ; pas d'essai dédié à ce format exact à vélo.", BUCHHEIT_2013), **V)
+
+seance("velo-vo2-6min", famille="vo2max", nom="Intervalles de 6 min",
+       objectif="VO2max et tenue d'un effort long au-dessus du seuil", resume="2 à 5 × 6 min à ~106 % de la CP, récupération 2 min 30.",
+       zone="Z5", rpe="8", niveau="intermédiaire", deroule=[ECH(20), X(4, E(6, 104, 108), R(2.5, 45, 55)), CALME(10)],
+       variantes=["2 × 6", "3 × 6", "4 × 6", "5 × 6"], phases=["construction", "spécifique"], parSemaine="1", recuperation="48 h", conseils=[SANS_ERG],
+       preuve=P("plausible", "Intervalles longs proches de la PMA (Buchheit & Laursen 2013) ; format intermédiaire entre 5 et 8 min, sans essai dédié.", BUCHHEIT_2013, SEILER_2013), **V)
+
 seance("velo-vo2-8x4-stepto", famille="vo2max", nom="8 × 4 min (Stepto)",
        objectif="Puissance aérobie, contre-la-montre", resume="8 × 4 min à ~85 % de la PMA (≈ 105-110 % de la CP), récupération ~1 min 30.",
        zone="Z5", rpe="8", niveau="confirmé", deroule=[ECH(15), X(8, E(4, 105, 110), R(1.5, 45, 55)), CALME(10)],
@@ -385,7 +405,7 @@ seance("velo-force-basse-cadence", famille="force", nom="Basse cadence (force su
        zone="Z4", rpe="7", niveau="intermédiaire", deroule=[ECH(15), X(6, E(5, 95, 100, cad="60"), R(3.5, 50, 60, note="cadence libre")), CALME(10)],
        variantes=["4 × 5", "6 × 5", "5 × 6 à 40 tr/min (format Kristoffersen)"], phases=["base", "construction"], parSemaine="0-2", recuperation="36-48 h",
        conseils=["Arrête si tes genoux tirent : la basse cadence charge l'articulation."],
-       preuve=P("mitigé", "6 × 5 min à 60 tr/min (2 fois par semaine, 4 semaines) a un peu amélioré le contre-la-montre en côte, mais le groupe contrôle aussi. 5 × 6 min à 40 tr/min pendant 12 semaines n'a rien apporté chez des vétérans très entraînés. La musculation lourde a de meilleures preuves.", NIMMERICHTER_2012, KRISTOFFERSEN_2014), **V)
+       preuve=P("mitigé", "6 × 5 min à 60 tr/min (2 fois par semaine, 4 semaines) a un peu amélioré le contre-la-montre en côte, mais le groupe contrôle aussi. 5 × 6 min à 40 tr/min pendant 12 semaines n'a rien apporté chez des vétérans très entraînés. Revue de 7 études : pas de preuve solide qu'imposer une basse cadence fasse progresser. La musculation lourde a de meilleures preuves.", NIMMERICHTER_2012, KRISTOFFERSEN_2014, HANSEN_RONNESTAD_2017), **V)
 
 # ——— Tests vélo ———
 seance("velo-test-cp-3-7-12", famille="test", nom="Test CP 3/7/12 min",
@@ -577,8 +597,11 @@ seance("force-lourde-jambes-cycliste", famille="force-lourde", nom="Force lourde
        ],
        variantes=["Hiver : 2 séances/semaine", "Saison : 1 séance/semaine (entretien)"], phases=["base (hiver)", "entretien en saison"],
        parSemaine="2 puis 1", recuperation="48 h (pas la veille d'une séance dure)",
-       conseils=["Montée explosive, descente contrôlée.", "L'étude faisait des séries RM (à l'échec ou presque) ; garder 1-2 reps en réserve est une adaptation d'entraîneur.", "Découpage des RM par semaines : repris des études du même groupe, à confirmer pour 2010."],
-       preuve=P("prouvé", "Ajoutée à l'endurance, la musculation lourde améliore l'économie de pédalage et la performance des cyclistes entraînés ; 1 séance par semaine en saison maintient les gains (et améliore la performance).", RONNESTAD_2010, RONNESTAD_MUJIKA_2014, RONNESTAD_2011), **F)
+       conseils=["Placement : le même jour qu'une séance dure, au moins 3 h après (ou 2 jours avant la suivante) ; ce jour compte comme dur pour les jambes.",
+                 "Commence léger (10RM, loin de l'échec) : les courbatures pèsent sur le vélo les premières semaines.",
+                 "Faire de l'endurance en même temps ne freine pas la force ; seule l'explosivité baisse un peu, surtout dans la même séance (Schumann 2022).",
+                 "Montée explosive, descente contrôlée.", "L'étude faisait des séries RM (à l'échec ou presque) ; garder 1-2 reps en réserve est une adaptation d'entraîneur.", "Découpage des RM par semaines : repris des études du même groupe, à confirmer pour 2010."],
+       preuve=P("prouvé", "Ajoutée à l'endurance, la musculation lourde améliore l'économie de pédalage et la performance des cyclistes entraînés ; 1 séance par semaine en saison maintient les gains (et améliore la performance). Méta-analyse 2025 (17 études, 262 cyclistes, charges ≥ 80 % du max) : meilleure économie, puissance et performance, sans effet sur la VO2max.", LLANOS_LAGOS_2025, VIKMOEN_2016, RONNESTAD_2010, RONNESTAD_MUJIKA_2014, RONNESTAD_2011, SCHUMANN_2022), **F)
 
 seance("force-maxi-coureur", famille="force-lourde", nom="Force maximale (coureur)",
        objectif="Économie de course", resume="Demi-squat 4 × 4RM, 3 fois par semaine pendant 8 semaines, montée la plus rapide possible.",
@@ -665,6 +688,16 @@ methode("methode-ordre-intervalles", "Ordre des formats d'intervalles", "Enchaî
 methode("methode-affutage", "Affûtage avant l'objectif", "Arriver frais et en forme le jour J",
         "Sur 8 à 14 jours (jusqu'à 21) : baisser le volume de 40 à 60 % (en exponentielle), garder l'intensité et la fréquence des séances.",
         P("prouvé", "Méta-analyses : une baisse de volume de 41-60 % sur ~2 semaines, en gardant l'intensité, donne le meilleur effet ; confirmé chez les athlètes d'endurance.", BOSQUET_2007, WANG_2023), phases=["affûtage"])
+methode("methode-plages-watts", "Plage de watts plutôt qu'une valeur", "Juger un intervalle sans ERG",
+        "Viser une plage (ex. seuil 95-100 % de la CP) et juger chaque répétition sur sa puissance moyenne, pas seconde par seconde.",
+        P("plausible", "Faire varier la puissance de ±5 % pendant 1 h ne change ni la FC, ni le lactate, ni l'effort perçu ; en VO2, une puissance variable donne même plus de temps près de la VO2max. Les largeurs de plage sont un choix d'entraîneur.", LIEDL_1999, BOSSI_2020), phases=["toutes"],
+        conseils=["Z2 ±5 % · tempo et sweet spot ±3 % · seuil −2 / +3 % sans dépasser la CP · VO2 −3 / +5 % · sprints à fond."])
+methode("methode-cadence", "Cadence : un repère, pas une consigne", "Choisir sa cadence de pédalage",
+        "Cadence libre en endurance ; plus haute sur les efforts durs (85-95 tr/min au seuil, 90-105 en VO2, 100-120 en sprint).",
+        P("plausible", "Imposer une basse cadence n'a pas montré de bénéfice solide (revue de 7 études). À forte puissance, le rendement est meilleur vers 100 tr/min qu'à 60 chez des pros. Les plages sont des repères d'entraîneur.", HANSEN_RONNESTAD_2017, LUCIA_2004), phases=["toutes"])
+methode("methode-echauffement", "Échauffement selon la séance", "Préparer une séance d'intensité",
+        "Seuil : 15 min progressives avec 1 min au seuil. VO2 : 20 min avec 3 × 30 s à ~110 % puis 5 min faciles avant la 1re répétition. Retour au calme dégressif 7-10 min.",
+        P("plausible", "Un échauffement assez intense améliore de 2-3 % un effort sévère, à condition de récupérer au moins ~9 min (moins de 3 min : la tenue baisse). Le retour au calme change peu la récupération du lendemain.", BAILEY_2009, BURNLEY_2005, VAN_HOOREN_2018), phases=["toutes"])
 methode("methode-semaine-allegee", "Semaine allégée", "Assimiler la charge",
         "1 semaine sur 3 ou 4 avec ~30-40 % de volume en moins, sans supprimer toute l'intensité.",
         PRATIQUE("Principe d'entraîneur (surcompensation) ; durée et ampleur exactes non établies par des essais.", FRIEL), phases=["toutes"])
@@ -673,12 +706,67 @@ methode("methode-sleep-low", "« Sleep low » (glucides périodisés)", "Stimule
         P("mitigé", "Triathlètes (3 semaines) : 10 km de course −2,9 % de temps ; cyclistes (1 semaine) : +3,2 % sur 20 km. Mais aucun effet chez des élites, et une méta-analyse de 9 études ne trouve pas d'effet global. À éviter en déficit calorique (risque de RED-S).", MARQUET_2016, MARQUET_2016B, GEJL_2017, GEJL_2021), phases=["base"],
         conseils=["Pas compatible avec une perte de poids en cours."])
 
+# ════════════════════════ PROGRAMME (séances que l'Entraînement pioche) ════════════════════════
+# id du format (gardé : l'historique s'y réfère), famille du programme, travail (s), % CP, récup (s), % CP récup,
+# récup entre séries (s), over-unders continus, 4 paliers (séries, répétitions[, durée du travail en s]), preuve, source.
+def prog(cid, id, famille, nom, travailSec, pct, recupSec, pctRecup, paliers, preuve, source, recupSerieSec=None, continu=False):
+    s = next(x for x in S if x["id"] == cid)
+    d = {"id": id, "famille": famille, "nom": nom, "travailSec": travailSec, "pct": pct, "recupSec": recupSec, "pctRecup": pctRecup}
+    if recupSerieSec is not None: d["recupSerieSec"] = recupSerieSec
+    if continu: d["continu"] = True
+    d.update({"paliers": [list(p) for p in paliers], "preuve": preuve, "source": source, "ordre": sum(1 for x in S if "programme" in x)})
+    s["programme"] = d
+
+prog("velo-vo2-30-15-ronnestad", "30-15", "vo2-courts", "30/15", 30, 120, 15, 50, [(2, 10), (2, 13), (3, 10), (3, 13)], "forte",
+     "Rønnestad et al. 2015, 2020 : meilleurs gains de VO2max et de puissance que 4 × 5 min chez des cyclistes entraînés.", recupSerieSec=180)
+prog("velo-vo2-30-30", "30-30", "vo2-courts", "30/30", 30, 125, 30, 50, [(2, 8), (2, 10), (3, 8), (3, 10)], "correcte",
+     "Billat 2000-2001 : le 30/30 permet de passer beaucoup de temps près de la VO2max.", recupSerieSec=180)
+prog("velo-vo2-15-15", "15-15", "vo2-courts", "15/15", 15, 135, 15, 50, [(2, 10), (2, 12), (3, 10), (3, 12)], "correcte",
+     "Buchheit & Laursen 2013 : les intervalles très courts accumulent du temps près de la VO2max avec peu de fatigue.", recupSerieSec=180)
+prog("velo-vo2-40-20", "40-20", "vo2-courts", "40/20", 40, 115, 20, 50, [(2, 6), (2, 8), (3, 6), (3, 8)], "correcte",
+     "Buchheit & Laursen 2013 : même logique que le 30/15, avec un ratio travail/récup de 2:1.", recupSerieSec=180)
+prog("velo-vo2-20-40", "20-40", "vo2-courts", "20/40", 20, 140, 40, 50, [(2, 8), (2, 10), (3, 8), (3, 10)], "correcte",
+     "Buchheit & Laursen 2013 : efforts courts plus intenses, récupération longue.", recupSerieSec=180)
+prog("velo-vo2-3min", "3min", "vo2-longs", "intervalles de 3'", 180, 115, 180, 50, [(1, 4), (1, 5), (1, 6), (1, 7)], "correcte",
+     "Buchheit & Laursen 2013 : intervalles longs de 2-4 min à la PMA.")
+prog("velo-vo2-4x4-helgerud", "4min", "vo2-longs", "intervalles de 4'", 240, 110, 180, 50, [(1, 3), (1, 4), (1, 5), (1, 6)], "correcte",
+     "Helgerud et al. 2007 : 4 × 4 min, gains de VO2max (étudié surtout en course à pied).")
+prog("velo-vo2-4x5", "5min", "vo2-longs", "intervalles de 5'", 300, 107, 150, 50, [(1, 3), (1, 4), (1, 5), (1, 6)], "bonne",
+     "Rønnestad et al. 2015 : 4 × 5 min, groupe contrôle qui progresse aussi.")
+prog("velo-vo2-6min", "6min", "vo2-longs", "intervalles de 6'", 360, 106, 150, 50, [(1, 2), (1, 3), (1, 4), (1, 5)], "correcte",
+     "Buchheit & Laursen 2013 : intervalles longs proches de la PMA.")
+prog("velo-vo2-4x8-seiler", "8min", "vo2-longs", "intervalles de 8'", 480, 104, 120, 50, [(1, 2), (1, 3), (1, 4), (1, 5)], "forte",
+     "Seiler et al. 2013 : 4 × 8 min a donné plus de gains que 4 × 4 et 4 × 16 min.")
+prog("velo-seuil-4x10", "seuil-8-10", "seuil", "seuil en blocs de 8-10'", 480, 97, 180, 50, [(1, 3), (1, 3, 600), (1, 4), (1, 4, 600)], "bonne",
+     "Sylta et al. 2016 : intervalles longs au seuil, progrès comparables aux formats VO2 à charge égale.")
+prog("velo-seuil-4x16", "seuil-12-20", "seuil", "seuil en blocs de 12-20'", 720, 97, 240, 50, [(1, 2), (1, 2, 900), (1, 3), (1, 2, 1200)], "bonne",
+     "Sylta et al. 2016 : intervalles longs (jusqu’à 16 min), +5 à 10 % de puissance sur 40 min.")
+prog("velo-seuil-continu", "seuil-continu", "seuil", "seuil continu", 1200, 95, 0, 50, [(1, 1), (1, 1, 1500), (1, 1, 1800), (1, 1, 2100)], "bonne",
+     "Travail continu juste sous la CP (état stable lactique maximal).")
+prog("velo-over-unders", "over-under", "seuil-variable", "over-unders", 60, 105, 120, 95, [(2, 3), (2, 4), (3, 3), (3, 4)], "plus faible",
+     "Pratique d’entraîneurs, peu étudiée : gardée pour varier le travail au seuil.", recupSerieSec=240, continu=True)
+prog("velo-sweet-spot-3x15", "sweet-spot", "sweet-spot", "sweet spot", 900, 91, 240, 50, [(1, 2), (1, 3, 720), (1, 2, 1200), (1, 3, 840)], "plus faible",
+     "Peu étudié : utile en reprise pour accumuler du travail sous le seuil.")
+prog("velo-tempo-2x20", "tempo", "tempo", "tempo", 900, 83, 300, 50, [(1, 2), (1, 2, 1080), (1, 2, 1200), (1, 1, 2700)], "plus faible",
+     "Zone 3 (« moyenne ») : utile en reprise, à doser (modèle pyramidal).")
+
+# ——— Repère de cadence (pas une consigne) sur les efforts vélo qui n'en ont pas ———
+def cadence_repere(etapes):
+    for e in etapes:
+        if e["type"] == "repetition": cadence_repere(e["etapes"]); continue
+        if e["type"] != "effort" or "cadence" in e: continue
+        if e.get("max"): e["cadence"] = "100-120"
+        elif e["intensite"][0] >= 100: e["cadence"] = "90-105"
+        elif e["intensite"][0] >= 76: e["cadence"] = "85-95"
+for x in S:
+    if x["sport"] == "velo" and x.get("deroule"): cadence_repere(x["deroule"])
+
 # ——— Contrôle et écriture ———
 ids = [s["id"] for s in S]
 assert len(ids) == len(set(ids)), "identifiants en double"
 data = {
-    "version": 2,
-    "majLe": "2026-10-28",
+    "version": 3,
+    "majLe": "2026-10-29",
     "description": "Catalogue scientifique de séances (vélo, course à pied, renforcement, tests, méthodes). Voir catalogue/README.md.",
     "unites": {"%CP": "pourcentage de la puissance critique (≈ FTP)", "%VMA": "pourcentage de la vitesse maximale aérobie", "%1RM": "pourcentage du maximum sur 1 répétition"},
     "seances": S,

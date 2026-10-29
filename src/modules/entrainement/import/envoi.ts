@@ -31,11 +31,12 @@ const libelle = (t: string) => t.split(':')[0]
   .replace(/\bZ([1-5])\b/g, (z) => NOMS_ZONES[z])
   .replace(/[0-9'"%×+/()]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 35)
 
-/** Texte de la séance au format du « workout builder » d'Intervals.icu : une ligne par étape, watts absolus. */
+/** Texte de la séance au format du « workout builder » d'Intervals.icu : une ligne par étape, watts absolus (milieu de la plage),
+ *  repère de cadence quand il y en a un. */
 export function texteIntervals(etapes: Etape[]) {
   return etapes
     .filter((e) => e.dureeSec > 0)
-    .map((e) => `- ${libelle(e.libelle)} ${dureeIntervals(e.dureeSec)} ${e.w ? `${e.w}w` : 'freeride'}`.replace(/\s+/g, ' '))
+    .map((e) => `- ${libelle(e.libelle)} ${dureeIntervals(e.dureeSec)} ${e.w ? `${e.w}w` : 'freeride'}${e.cadence ? ` ${e.cadence}rpm` : ''}`.replace(/\s+/g, ' '))
     .join('\n')
 }
 

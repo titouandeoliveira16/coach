@@ -12,6 +12,7 @@ import { AIDES } from '../aides'
 import { CarteBilan } from '../plan/CarteBilan'
 import { BoutonsEnvoi } from '../plan/BoutonsEnvoi'
 import { Deroule } from '../plan/Deroule'
+import { FicheSeance } from '../plan/FicheSeance'
 import { NutritionSeance } from '../plan/NutritionSeance'
 import { joursPanneVelo } from '../plan/imprevus'
 import { annulerSemaineChargee, lireSemaineChargee, passerSemaineChargee } from '../plan/semaineChargee'
@@ -233,6 +234,7 @@ function DetailSeance({ p, jours, prevues, onFermer, onMessage }: {
       {p.velo?.etapes && p.statut === 'prevue' && p.date >= aujourdhui() && <BoutonsEnvoi p={p} etapes={p.velo.etapes} />}
       <NutritionSeance p={p} />
       {p.velo?.pourquoi && <p className="mt-2 text-xs text-texte-3">Pourquoi cette séance : {p.velo.pourquoi}</p>}
+      <FicheSeance velo={p.velo} />
       {mode === 'actions' ? (
         <div className="mt-4 space-y-2">
           {p.statut === 'prevue' && (
