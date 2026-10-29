@@ -91,7 +91,7 @@ export function FormulaireSeance() {
 
       <div className="space-y-3">
         {/* ① Sport */}
-        <div className="grid grid-cols-5 gap-1.5">
+        <div className="grid grid-cols-4 gap-2">
           {SPORTS.map((sp) => (
             <button key={sp} type="button" onClick={() => changer({ sport: sp })}
               className={`rounded-2xl border py-2.5 text-sm font-bold ${s.sport === sp ? 'border-accent bg-accent text-fond' : 'border-bordure bg-surface text-texte-2'}`}>

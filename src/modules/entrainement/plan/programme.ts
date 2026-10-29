@@ -163,8 +163,8 @@ export async function genererSemaineVelo(lundi: string) {
   // Jours occupés (une séance par jour) et séances dures (pour ne pas enchaîner deux jours durs)
   const occupations = [
     ...prevues.filter((p) => p.sport !== 'natation').map((p) => ({ date: p.date, dure: p.intensite === 'haute' })),
-    // Le renfo occupe son jour mais n'en fait jamais un jour dur ; les autres activités (foot…) n'occupent rien
-    ...seances.filter((s) => s.sport !== 'natation' && s.sport !== 'autre').map((s) => ({ date: s.date, dure: s.sport !== 'renfo' && domaineDe(s, c.bornes) === 'haute' })),
+    // Le renfo occupe son jour mais n'en fait jamais un jour dur
+    ...seances.filter((s) => s.sport !== 'natation').map((s) => ({ date: s.date, dure: s.sport !== 'renfo' && domaineDe(s, c.bornes) === 'haute' })),
   ].filter((o) => dansSemaine(o.date) || o.dure)
 
   // Ce qui est déjà fait (ou prévu à la main) cette semaine
@@ -294,7 +294,7 @@ export async function alertesCumul(lundi: string) {
 
   const dur = new Set([
     ...prevues.filter((p) => p.intensite === 'haute').map((p) => p.date),
-    ...seances.filter((s) => s.date >= decalerJour(lundi, -1) && s.sport !== 'autre' && domaineDe(s, c.bornes) === 'haute').map((s) => s.date),
+    ...seances.filter((s) => s.date >= decalerJour(lundi, -1) && domaineDe(s, c.bornes) === 'haute').map((s) => s.date),
   ])
   for (const d of [decalerJour(lundi, -1), ...semaine.slice(0, 6)]) {
     const lendemain = decalerJour(d, 1)
@@ -305,7 +305,7 @@ export async function alertesCumul(lundi: string) {
 
   // Deux séances le même jour (hors natation) : la séance faite remplace sa séance prévue
   for (const d of semaine) {
-    const faites = seances.filter((s) => s.date === d && s.sport !== 'natation' && s.sport !== 'autre')
+    const faites = seances.filter((s) => s.date === d && s.sport !== 'natation')
     const reste = prevues.filter((p) => p.date === d && p.sport !== 'natation' && p.statut === 'prevue' && !faites.some((s) => s.prevueId === p.id))
     if (faites.length + reste.length >= 2) alertes.push(`Deux séances le ${nomJour(d)} : tu préfères une seule séance par jour.`)
   }

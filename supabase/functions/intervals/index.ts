@@ -84,11 +84,7 @@ async function compte(userId: string) {
 
 const SPORTS = new Set(['Ride', 'VirtualRide', 'GravelRide', 'MountainBikeRide', 'Run', 'TrailRun', 'VirtualRun',
   // Renfo : remonte pour cocher la séance prévue et compter dans les calories (pas dans la charge)
-  'WeightTraining', 'Workout', 'Crossfit', 'Pilates', 'Yoga',
-  // Autres activités (foot, sports de raquette…) : comptées dans les calories seulement, jamais dans l'entraînement.
-  // Pas la marche ni la randonnée : déjà comprises dans la vie quotidienne (métabolisme × 1,4).
-  'Soccer', 'Football', 'Basketball', 'Handball', 'Rugby', 'Volleyball', 'Hockey', 'Tennis', 'Padel', 'Badminton',
-  'Squash', 'TableTennis', 'Pickleball', 'RockClimbing'])
+  'WeightTraining', 'Workout', 'Crossfit', 'Pilates', 'Yoga'])
 const aujourdhui = () => new Date().toISOString().slice(0, 10)
 
 Deno.serve(async (req) => {

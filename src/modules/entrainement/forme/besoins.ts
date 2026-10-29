@@ -56,7 +56,7 @@ export async function besoinsDe(jour: string, o: { sansCorrection?: boolean; san
     .map((p) => ({ sport: p.sport, dureeMin: p.dureeMin, intensite: p.intensite, kj: p.kjPrevu }))
 
   // Détail lisible : chaque séance (faite ou encore prévue) et ce qu'elle coûte
-  const nomSport = (sport: string) => (sport === 'velo' ? 'Vélo' : sport === 'course' ? 'Course' : sport === 'natation' ? 'Natation' : sport === 'autre' ? 'Activité' : 'Séance')
+  const nomSport = (sport: string) => (sport === 'velo' ? 'Vélo' : sport === 'course' ? 'Course' : sport === 'natation' ? 'Natation' : 'Séance')
   const pasFaites = prevues.filter((p) => p.statut === 'prevue' && !seances.some((s) => s.prevueId === p.id))
   const detailSeances = [
     ...seances.map((s, i) => ({ titre: s.titre ?? nomSport(s.sport), kcal: Math.round(kcalActivite(faites[i], kg)), faite: true })),
