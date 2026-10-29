@@ -17,7 +17,7 @@ Points décidés ou mis de côté, à reprendre au bon moment.
 
 ## Budget (construit le 26/10/2026 d'un bloc, à revoir ensemble)
 - Faire le tour du module avec Titouan après quelques jours d'utilisation : ce qui manque, ce qui gêne, ce qui est en trop.
-- Fonction serveur « rappels » à redéployer (v0.42.0 : contrôle du solde le dimanche).
+- Abonnements (v0.53.0, 29/10) : 4 créés par Titouan ; vérifier au 1er prélèvement que la notification et la carte « à vérifier » arrivent.
 - Contrôle du solde du courant chaque dimanche (choisi plutôt que le 15) : voir après un mois si la fréquence convient.
 - Pas de remise à zéro : livrets et placements remis à leurs valeurs du 1/10 (v0.38.0). Les livrets évoluent avec
   les virements, les placements avec les relevés du 5. Le 5/11 : premier relevé des placements. Premier bilan complet
@@ -65,8 +65,14 @@ Points décidés ou mis de côté, à reprendre au bon moment.
 - Pesée 5 matins par semaine depuis le 27/10 (lun., mar., mer., sam., dim. ; jeudi et vendredi = internat).
 - Nutrition : plus de comptage de pas depuis le 27/10 (v0.44.0) : vie quotidienne = métabolisme × 1,4, marche comprise
   (choix de Titouan). Le maintien mesuré (~16/11) dira si 1,4 est juste.
-- Zwift (repris dès le test du 1/11, ERG désactivé : Titouan suit les watts aux vitesses virtuelles) : envoi possible
-  des séances de l’appli dans Zwift via le calendrier Intervals.icu, à proposer après le test. FTP Zwift = CP.
+- Zwift (repris dès le test du 1/11, ERG désactivé) : FTP Zwift = CP après chaque test (notification le lendemain à 9 h).
+- Format « 1 h chrono » (Methodic Cycling, 29/10) : 10-15′ d'échauffement, 30-35′ de corps de séance à récupérations
+  courtes, 6-10′ de retour au calme. Pour les créneaux d'1 h et les semaines chargées. L'échauffement adapté et le retour
+  au calme dégressif sont faits (v0.54.0).
+- SV1 / SV2 (29/10) : la CP ≈ SV2 ; SV1 n'est pas mesuré (Z2 calée par découplage + RPE). Plus tard : estimer SV1 avec
+  la ceinture (DFA α1 ≈ 0,75, Rogers 2021 ; calculé par Intervals.icu) pour caler la Z2.
+- Règles chiffrées de progression (4 paliers, +2,5 % / −5 % de watts) : règles d'entraîneur (PDF kJ), sans essai dédié.
+  Proposé le 29/10 de les faire relire ; à refaire si les tests CP ne progressent pas.
 - Capteur de puissance dehors : vrais kJ des sorties extérieures. D'ici là, Titouan ne fait que du home trainer.
 - Semaine chargée : le relecteur suggérait de la compter comme semaine allégée si celle-ci tombe dans les 2 semaines
   qui suivent (pas fait, pour rester simple) ; à revoir si les semaines chargées deviennent fréquentes.
@@ -74,6 +80,8 @@ Points décidés ou mis de côté, à reprendre au bon moment.
 - Module course à pied (aujourd'hui saisi depuis Campus Coach) et vélo généré selon les objectifs de saison : à repenser plus tard.
 
 ## Fait
+- 29/10/2026 (v0.54.0) : échauffement selon la séance (seuil 15′, VO2 20′ avec 5′ de souffle), retour au calme dégressif.
+- 29/10/2026 (v0.53.0) : abonnements dans le Budget, FTP estimée, rappel FTP Zwift ; fonction « rappels » redéployée par Titouan.
 - 27/10/2026 (v0.42.0) : lignes d'explication sous le feu, nuit sans montre, case « pas de ceinture », semaine chargée
   (+ retour après semaines très légères), pesée reportée au mercredi (retirée en v0.45.0 : pesée 5 matins par semaine), contrôle du solde le dimanche, règle d'or du Budget.
 - 27/10/2026 : garde-fou course → vélo, FC max vue dans les séances, reprise après maladie, Z2 sur 2 sorties.
