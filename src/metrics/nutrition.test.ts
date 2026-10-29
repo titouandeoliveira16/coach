@@ -24,10 +24,10 @@ describe('besoins du jour', () => {
     expect(partGlucides([900, 600, 120, 120, 60])!).toBeLessThan(partGlucides([900, 600, 120, 120, 420])!)
     expect(partGlucides([0, 3600, 0, 0, 0])).toBe(0.5)
     const repos = besoinsDuJour({ kg: 70, cm: 175, age: 25, activites: [] })
-    expect(repos.kcal).toBeGreaterThan(2250)
-    expect(repos.kcal).toBeLessThan(2450)
-    // Vie quotidienne, marche comprise : métabolisme × 1,4
-    expect(repos.quotidien).toBe(Math.round(1673.75 * 1.4))
+    expect(repos.kcal).toBeGreaterThan(2400)
+    expect(repos.kcal).toBeLessThan(2600)
+    // Vie quotidienne, marche comprise : métabolisme × 1,5
+    expect(repos.quotidien).toBe(Math.round(1673.75 * 1.5))
     const long = besoinsDuJour({ kg: 70, cm: 175, age: 25, activites: [{ sport: 'velo', dureeMin: 240, intensite: 'basse', kj: 2300 }] })
     expect(long.lipides * 9).toBeGreaterThanOrEqual(0.2 * long.kcal - 50)
   })

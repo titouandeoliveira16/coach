@@ -48,7 +48,7 @@ export function CarteBesoins() {
       <details className="mt-2 text-sm text-texte-2">
         <summary className="cursor-pointer text-xs text-texte-3">D'où vient ce chiffre ?</summary>
         <ul className="mt-1 space-y-0.5">
-          <li>🏠 Vie quotidienne, marche comprise : <b className="text-texte">{formatNombre(b.quotidien)} kcal</b> <span className="text-texte-3">(métabolisme × 1,4)</span></li>
+          <li>🏠 Vie quotidienne, marche comprise : <b className="text-texte">{formatNombre(b.quotidien)} kcal</b> <span className="text-texte-3">(métabolisme × 1,5)</span></li>
           {b.detailSeances.map((x, i) => (
             <li key={i}>{x.faite ? '✅' : '🗓️'} {x.titre} : <b className="text-texte">{formatNombre(x.kcal)} kcal</b>{' '}
               <span className="text-texte-3">{x.faite ? '(faite)' : '(prévue : comptée d’avance pour que tu manges de quoi la faire ; si tu ne la fais pas, le chiffre baisse)'}</span></li>
