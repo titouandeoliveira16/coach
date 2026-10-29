@@ -45,7 +45,7 @@ export function SectionVelo() {
             await modifier({ cpW, wPrimeKj, zonesVelo, tests: [...reglages.tests, { date: aujourdhui(), type: 'cp', valeur: cpW, poidsKg }] })
             setCalculateur(false)
             await recalculerApresTest()
-            setMessage(`CP ${cpW} W enregistrée : zones et watts de tes séances à venir recalculés.`)
+            setMessage(`CP ${cpW} W enregistrée : zones et watts de tes séances à venir recalculés. Pense à mettre ta FTP Zwift à ${cpW} W (Zwift → Menu → Paramètres → FTP) et à renvoyer tes séances déjà envoyées.`)
           }}
         />
       )}

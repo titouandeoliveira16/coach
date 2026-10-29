@@ -96,6 +96,25 @@ describe('budget', () => {
     // 100 000 au départ + 120 000 − 30 000 − 30 000 (mis sur le livret) = 160 000 ; − 40 000 de charges fixes
     expect(resteAVivre(d, '2026-10-10')).toMatchObject({ courant: 160000, especes: 0, reste: 120000 })
   })
+  it('abonnements : comptés d’avance, à vérifier dès le jour du prélèvement, sortis du système « charge fixe »', async () => {
+    const { abonnementsAVenir, abonnementsAVerifier } = await import('./calculs')
+    const spotify = { id: 'sp', nom: 'Spotify', montant: 1099, categorieId: 'courses', compteId: 'courant', jour: 15, actif: true, depuis: '2026-10-01' }
+    const avec: Donnees = { ...d, abonnements: [spotify], etatsAbonnements: {} }
+    expect(abonnementsAVenir(avec, '2026-10-10')).toHaveLength(1)
+    expect(abonnementsAVerifier(avec, '2026-10-10')).toHaveLength(0)
+    expect(abonnementsAVerifier(avec, '2026-10-15')).toHaveLength(1)
+    // Courses (plafond fixe ? non) : seul l'abonnement est retiré en plus
+    expect(resteAVivre(avec, '2026-10-10').abonnements).toBe(1099)
+    expect(previsionFinDeMois(avec, '2026-10-10').abonnements).toBe(1099)
+    // Payé, sauté ou remis à demain
+    expect(abonnementsAVenir({ ...avec, etatsAbonnements: { 'sp|2026-10': { statut: 'paye' } } }, '2026-10-16')).toHaveLength(0)
+    expect(abonnementsAVerifier({ ...avec, etatsAbonnements: { 'sp|2026-10': { relance: '2026-10-17' } } }, '2026-10-16')).toHaveLength(0)
+    // Créé après l'échéance du mois : rien pour ce mois-là
+    expect(abonnementsAVenir({ ...avec, abonnements: [{ ...spotify, depuis: '2026-10-20' }] }, '2026-10-25')).toHaveLength(0)
+    // Mois court : le 31 devient le 30
+    expect(abonnementsAVerifier({ ...avec, abonnements: [{ ...spotify, jour: 31 }] }, '2026-11-30')).toHaveLength(1)
+  })
+
   it('prévision fin de mois au rythme actuel', () => {
     const p = previsionFinDeMois(d, '2026-10-10')
     // 100 000 + 120 000 − 30 000 − 30 000 = 160 000 ; rythme 30 000 / 10 j = 3 000/j ; 21 j restants

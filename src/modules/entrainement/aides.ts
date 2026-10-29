@@ -56,4 +56,6 @@ export const AIDES = {
     "Semaine chargée (examens, stage, voyage) : l'appli garde ta séance clé (vélo et course) et une séance facile courte (vélo 1 h, course 30 min), et enlève le reste. Garder un peu d'intensité suffit à conserver ta forme plusieurs semaines, même avec 2 séances (Hickson ; revue de Spiering 2021). On ne rattrape jamais. Après 2 semaines très légères de suite (moins de la moitié du budget), le budget repart 10 % plus bas ; après 3 semaines ou plus, 2 semaines de reprise en douceur, pour éviter un pic de charge.",
   nuitSansMontre:
     "Nuit sans montre (ou portée en partie) : touche « J'ai dormi sans ma montre ». La VFC, le pouls au repos et le sommeil de cette nuit sont ignorés, et le feu se fie à tes nuits d'avant (il juge la moyenne sur 7 jours, une nuit manquante ne change presque rien).",
+  ftp:
+    "La CP (puissance critique) est la puissance que tu peux tenir longtemps sans t'épuiser ; la FTP, celle d'environ une heure (estimée à 95 % de ton meilleur 20 min). En moyenne, la CP est un peu au-dessus (~7 W, Karsten 2021), mais elles ne sont pas interchangeables : l'appli raisonne en CP, la FTP n'est qu'un repère (≈ 97 % de ta CP). Sur Zwift, mets ta FTP égale à ta CP pour que les séances envoyées tombent juste.",
 } as const

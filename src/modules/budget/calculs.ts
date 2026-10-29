@@ -1,5 +1,5 @@
 import { decalerJour, depuisJour, ecartJours, versJour } from '../../core/dates'
-import type { Categorie, Compte, Mouvement, Plafond, Releve } from './types'
+import type { Abonnement, Categorie, Compte, EtatAbonnement, Mouvement, Plafond, Releve } from './types'
 
 /**
  * Calculs du module Budget (fonctions pures, testées). Montants en centimes.
@@ -137,7 +137,34 @@ export interface Donnees {
   categories: Categorie[]
   plafonds: Plafond[]
   releves: Releve[]
+  abonnements?: Abonnement[]
+  etatsAbonnements?: Record<string, EtatAbonnement>
 }
+
+// ---------- Abonnements ----------
+
+/** Jour d'échéance d'un abonnement pour un mois ("2026-11-05"), ramené au dernier jour pour les mois courts. */
+export const echeance = (a: Abonnement, mois: string) => `${mois}-${String(Math.min(a.jour, joursDansMois(mois))).padStart(2, '0')}`
+
+/** Abonnements du mois de `jour` pas encore payés ni sautés (y compris ceux en retard) : comptés d'avance. */
+export function abonnementsAVenir(d: Donnees, jour: string) {
+  const mois = moisDe(jour)
+  return (d.abonnements ?? []).filter((a) => a.actif && echeance(a, mois) >= a.depuis && !d.etatsAbonnements?.[`${a.id}|${mois}`]?.statut)
+}
+
+/** Abonnements à faire confirmer aujourd'hui : échéance passée, pas encore traités, pas remis à plus tard. */
+export function abonnementsAVerifier(d: Donnees, jour: string) {
+  const mois = moisDe(jour)
+  return abonnementsAVenir(d, jour).filter((a) => {
+    const relance = d.etatsAbonnements?.[`${a.id}|${mois}`]?.relance
+    return echeance(a, mois) <= jour && (!relance || relance <= jour)
+  })
+}
+
+const sommeAbonnements = (l: Abonnement[]) => l.reduce((s, a) => s + a.montant, 0)
+
+/** Catégories (racines) suivies par un abonnement actif : elles ne passent plus par le système « charge fixe ». */
+const categoriesAbonnees = (d: Donnees) => new Set((d.abonnements ?? []).filter((a) => a.actif).map((a) => racine(a.categorieId, d.categories)))
 
 export interface ResumeMois {
   revenus: number
@@ -166,7 +193,7 @@ export function resumeMois(d: Donnees, mois: string): ResumeMois {
 
 /**
  * Reste à vivre (mois en cours) : l'argent disponible aujourd'hui, compte(s) courant(s) + espèces,
- * moins les charges fixes encore à payer ce mois-ci. Part de ce que tu as vraiment, comme ta banque.
+ * moins les charges fixes et les abonnements encore à payer ce mois-ci. Part de ce que tu as vraiment, comme ta banque.
  */
 export function resteAVivre(d: Donnees, jour: string) {
   const solde = (type: Compte['type']) => d.comptes
@@ -175,13 +202,15 @@ export function resteAVivre(d: Donnees, jour: string) {
   const courant = solde('courant')
   const especes = solde('especes')
   const fixesRestantes = fixesRestantesDuMois(d, moisDe(jour))
-  return { courant, especes, fixesRestantes, reste: courant + especes - fixesRestantes }
+  const abonnements = sommeAbonnements(abonnementsAVenir(d, jour))
+  return { courant, especes, fixesRestantes, abonnements, reste: courant + especes - fixesRestantes - abonnements }
 }
 
 function fixesRestantesDuMois(d: Donnees, mois: string) {
   const parCat = depensesParCategorie(d.mouvements, d.categories, mois)
+  const abonnees = categoriesAbonnees(d)
   return d.categories
-    .filter((c) => c.genre === 'depense' && !c.parentId && c.fixe && !c.archive)
+    .filter((c) => c.genre === 'depense' && !c.parentId && c.fixe && !c.archive && !abonnees.has(c.id))
     .reduce((s, c) => s + Math.max(0, (plafondDe(c.id, mois, d.plafonds) ?? 0) - (parCat.get(c.id) ?? 0)), 0)
 }
 
@@ -199,7 +228,7 @@ export function previsionFinDeMois(d: Donnees, jour: string) {
   const fixe = (m: Mouvement) => d.categories.find((c) => c.id === racine(m.categorieId, d.categories))?.fixe
   const variables = (m2: string, jusqua: string) =>
     d.mouvements
-      .filter((m) => m.type === 'depense' && moisDe(m.date) === m2 && m.date <= jusqua && estCourant.has(m.compteId) && !fixe(m))
+      .filter((m) => m.type === 'depense' && moisDe(m.date) === m2 && m.date <= jusqua && estCourant.has(m.compteId) && !fixe(m) && !m.abonnementId)
       .reduce((s, m) => s + m.montant, 0)
 
   const ecoules = Number(jour.slice(8))
@@ -210,7 +239,9 @@ export function previsionFinDeMois(d: Donnees, jour: string) {
   if (ecoules < 7 && debut && debut <= premierJour(precedent)) rythme = variables(precedent, dernierJour(precedent)) / joursDansMois(precedent)
 
   const fixesRestantes = fixesRestantesDuMois(d, mois)
-  return { solde, fixesRestantes, rythme: Math.round(rythme), restants, prevision: Math.round(solde - fixesRestantes - rythme * restants) }
+  // Abonnements pas encore passés, prélevés sur un compte courant
+  const abonnements = sommeAbonnements(abonnementsAVenir(d, jour).filter((a) => estCourant.has(a.compteId)))
+  return { solde, fixesRestantes, abonnements, rythme: Math.round(rythme), restants, prevision: Math.round(solde - fixesRestantes - abonnements - rythme * restants) }
 }
 
 /**

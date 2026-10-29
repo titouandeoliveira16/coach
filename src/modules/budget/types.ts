@@ -31,6 +31,29 @@ export interface Mouvement {
   /** Dépense : catégorie ou sous-catégorie. Revenu : catégorie de revenu. */
   categorieId?: string
   note?: string
+  /** Mouvement créé en confirmant un abonnement */
+  abonnementId?: string
+}
+
+/** Abonnement qui revient chaque mois (Spotify, téléphone…), confirmé à la main le jour où il passe. */
+export interface Abonnement {
+  id: string
+  nom: string
+  /** Centimes */
+  montant: number
+  categorieId: string
+  compteId: string
+  /** Jour du mois du prélèvement (1-31 ; ramené au dernier jour pour les mois courts) */
+  jour: number
+  actif: boolean
+  /** Jour de création : pas d'échéance avant */
+  depuis: string
+}
+
+/** État d'un abonnement pour un mois, clé "abonnementId|2026-11" : payé, sauté, ou à redemander à partir d'un jour. */
+export interface EtatAbonnement {
+  statut?: 'paye' | 'saute'
+  relance?: string
 }
 
 export interface Categorie {

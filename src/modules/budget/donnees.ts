@@ -1,12 +1,12 @@
 import type { Table } from 'dexie'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { aujourdhui } from '../../core/dates'
+import { aujourdhui, decalerJour } from '../../core/dates'
 import { db } from '../../core/db'
 import { useReglage } from '../../core/reglages'
 import { enregistrer, supprimer } from '../../core/stockage'
-import { depensesParCategorie, moisDe, plafondDe, racine, seuilFranchi, type Donnees } from './calculs'
+import { depensesParCategorie, echeance, moisDe, plafondDe, racine, seuilFranchi, type Donnees } from './calculs'
 import { installerCategories } from './categoriesDepart'
-import type { Categorie, Compte, Mouvement, Plafond, Releve, TypeCompte } from './types'
+import type { Abonnement, Categorie, Compte, EtatAbonnement, Mouvement, Plafond, Releve, TypeCompte } from './types'
 
 /** Toutes les données du module, tenues à jour (undefined pendant le chargement). */
 export function useBudget(): Donnees | undefined {
@@ -16,8 +16,47 @@ export function useBudget(): Donnees | undefined {
     categories: (await db.categories.toArray()).sort((a, b) => a.ordre - b.ordre),
     plafonds: await db.plafonds.toArray(),
     releves: await db.releves.toArray(),
+    ...(await lireAbonnements()),
   }))
 }
+
+// ---------- Abonnements (réglage synchronisé « abonnements ») ----------
+
+const CLE_ABONNEMENTS = 'abonnements'
+interface ReglageAbonnements { abonnements: Abonnement[]; etatsAbonnements: Record<string, EtatAbonnement> }
+async function lireAbonnements(): Promise<ReglageAbonnements> {
+  const v = (await db.reglages.get(CLE_ABONNEMENTS))?.valeur as Partial<ReglageAbonnements> | undefined
+  return { abonnements: v?.abonnements ?? [], etatsAbonnements: v?.etatsAbonnements ?? {} }
+}
+const ecrireAbonnements = (v: ReglageAbonnements) => enregistrer(db.reglages, { id: CLE_ABONNEMENTS, valeur: v })
+
+export async function enregistrerAbonnement(a: Abonnement) {
+  const v = await lireAbonnements()
+  await ecrireAbonnements({ ...v, abonnements: [...v.abonnements.filter((x) => x.id !== a.id), a] })
+}
+
+/** Supprimer (résiliation) : plus rien de prévu ; les mouvements déjà enregistrés restent. */
+export async function supprimerAbonnement(id: string) {
+  const v = await lireAbonnements()
+  await ecrireAbonnements({ ...v, abonnements: v.abonnements.filter((x) => x.id !== id) })
+}
+
+async function noterEtat(a: Abonnement, mois: string, etat: EtatAbonnement) {
+  const v = await lireAbonnements()
+  await ecrireAbonnements({ ...v, etatsAbonnements: { ...v.etatsAbonnements, [`${a.id}|${mois}`]: etat } })
+}
+
+/** « Oui, c'est passé » (avec le vrai montant si différent) : le mouvement est enregistré à la date d'échéance. */
+export async function confirmerAbonnement(a: Abonnement, mois: string, montant = a.montant) {
+  const jour = aujourdhui()
+  const date = echeance(a, mois) <= jour ? echeance(a, mois) : jour
+  await enregistrerMouvement({ id: nouvelId(), type: 'depense', montant, date, compteId: a.compteId, categorieId: a.categorieId, note: a.nom, abonnementId: a.id })
+  await noterEtat(a, mois, { statut: 'paye' })
+}
+/** « Pas ce mois-ci » : rien n'est enregistré, l'abonnement reste pour les mois suivants. */
+export const sauterAbonnement = (a: Abonnement, mois: string) => noterEtat(a, mois, { statut: 'saute' })
+/** « Pas encore » : redemandé demain. */
+export const relancerAbonnement = (a: Abonnement, mois: string) => noterEtat(a, mois, { relance: decalerJour(aujourdhui(), 1) })
 
 // ---------- Réglages du module ----------
 
