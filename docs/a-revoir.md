@@ -48,6 +48,9 @@ Points décidés ou mis de côté, à reprendre au bon moment.
   (POST/PUT /athlete/{id}/events, champ `indoor` pour Zwift, watts absolus, « freeride » pour les efforts à fond, sans ERG).
   Testé avec succès par Titouan le 28/10 (l'envoi passe) ; reste à vérifier l'affichage sur la montre et dans Zwift. Limites : une séance
   déplacée de jour change d'identifiant (ancienne version à retirer à la main dans Intervals) ; pas d'envoi automatique.
+  29/10 : Titouan est repassé sur Zwift pour le vélo ; Garmin servira peut-être pour la course. Il laisse les deux boutons.
+  À l'avenir : envoi vers son compteur iGPSPORT (sorties dehors). Pas de lien direct Intervals → iGPSPORT ; pistes :
+  TrainingPeaks, l'appli iGPSPORT Android/Windows, ou un fichier .FIT à charger à la main. Modèle du compteur à demander.
 - Catalogue scientifique (73 séances, `catalogue/`, module Catalogue) : à brancher plus tard sur le programme (choix des
   séances selon la qualité à travailler, progression). Certains PMID restent à vérifier (PubMed bloqué pendant la relecture).
 - Banques de séances repérées (28/10) : bibliothèque Intervals.icu (déjà relié à l'appli), TrainerDay (communauté, export .zwo),
