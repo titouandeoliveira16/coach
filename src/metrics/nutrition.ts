@@ -1,8 +1,8 @@
 /**
  * Besoins du jour (estimation, ±10-15 %) : énergie et macronutriments selon les séances.
  *  - Métabolisme de base : Mifflin-St Jeor (Frankenfield 2005 : la plus juste des équations comparées).
- *  - Vie quotidienne hors sport : métabolisme × 1,5 (digestion, posture, petits mouvements, la marche du quotidien,
- *    les jours de stage debout et les activités occasionnelles ; FAO/OMS/UNU 2004 : sédentaire 1,40-1,69 ; choix de Titouan le 29/10).
+ *  - Vie quotidienne hors sport : métabolisme × 1,4 (digestion, posture, petits mouvements, la marche du quotidien
+ *    et les activités occasionnelles comme un five ; FAO/OMS/UNU 2004 : sédentaire 1,40-1,69).
  *    Pas de comptage de pas : le maintien mesuré (repas + poids) corrige ensuite le coefficient.
  *  - Séances : vélo 1 kcal par kJ de travail (rendement brut ~24 %) ; course ~1 kcal × kg × km ;
  *    sinon par équivalent métabolique (MET, Compendium d'Ainsworth), hors repos. Jamais les calories de la montre.
@@ -99,8 +99,8 @@ export interface Besoins {
   lipides: number
 }
 
-/** Vie quotidienne (marche comprise) : métabolisme × 1,5. */
-export const FACTEUR_QUOTIDIEN = 1.5
+/** Vie quotidienne (marche comprise) : métabolisme × 1,4. */
+export const FACTEUR_QUOTIDIEN = 1.4
 
 export function besoinsDuJour(o: {
   kg: number; cm: number; age: number; activites: ActiviteJour[]; objectif?: Objectif
