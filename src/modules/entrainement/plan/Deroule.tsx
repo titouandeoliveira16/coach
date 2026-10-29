@@ -1,4 +1,6 @@
+import { Aide } from '../../../core/ui/Aide'
 import { couleurPctCP } from '../../../core/zones'
+import { AIDES } from '../aides'
 import type { Etape } from '../../../metrics/programme'
 import { useReglagesEntrainement } from '../reglagesEntrainement'
 import { CP_DEFAUT } from './programme'
@@ -46,6 +48,7 @@ export function Deroule({ etapes }: { etapes: Etape[] }) {
             <span className="min-w-0 flex-1">
               {e.libelle}
               {e.dureeSec > 0 && <span className="text-texte-3"> · {duree(e.dureeSec)}</span>}
+              {e.libelle.startsWith('Souffle') && <Aide titre="Échauffement" texte={AIDES.echauffement} />}
             </span>
             {e.dureeSec > 0 && <span className="shrink-0 font-semibold tabular-nums" style={{ color: couleur(e, cpW) }}>{e.w ? `${e.w} W` : 'à fond'}</span>}
           </li>
