@@ -87,9 +87,35 @@ export const FORMATS: Format[] = [
 
 export const formatDe = (id: string) => FORMATS.find((f) => f.id === id)
 
-/** Échauffement et retour au calme des séances d'intensité */
-export const ECHAUFFEMENT_SEC = 15 * 60
-export const RETOUR_SEC = 10 * 60
+/**
+ * Échauffement et retour au calme des séances d'intensité, selon la qualité travaillée :
+ *  - seuil, sweet spot, tempo : 15' progressives avec 1' à 95 % (Burnley 2005) ;
+ *  - VO2 : 20', dont 3 × 30" à 110 % puis 5' faciles avant la 1re répétition (Bailey 2009 : le « priming »
+ *    aide si l'on récupère assez, il gêne avec 3' seulement) ;
+ *  - retour au calme dégressif de 55 à 45 % (Van Hooren & Peake 2018 : confort, peu d'effet sur le lendemain).
+ */
+export type Preparation = 'seuil' | 'vo2'
+export const preparationDe = (f: Format): Preparation => (f.famille.startsWith('vo2') ? 'vo2' : 'seuil')
+type Morceau = [dureeSec: number, pctCp: number, libelle: string]
+const BASE: Morceau[] = [[300, 0.5, 'Échauffement, très facile'], [240, 0.65, 'Échauffement, facile'], [180, 0.8, 'Échauffement, modéré']]
+const ECHAUFFEMENTS: Record<Preparation, Morceau[]> = {
+  seuil: [...BASE, [60, 0.95, "Échauffement : 1' au rythme du seuil"], [120, 0.55, 'Souffle, pédale souple avant le 1er bloc']],
+  vo2: [
+    ...BASE,
+    ...[1, 2, 3].flatMap((i): Morceau[] => [[30, 1.1, `Échauffement : accélération ${i}/3 (30")`], [30, 0.55, '30" facile']]),
+    [300, 0.55, "Souffle 5', pédale souple avant la 1re répétition"],
+  ],
+}
+const RETOURS: Record<Preparation, Morceau[]> = {
+  seuil: [[180, 0.55, 'Retour au calme, en relâchant peu à peu'], [240, 0.45, 'Retour au calme, très facile']],
+  vo2: [[180, 0.55, 'Retour au calme, en relâchant peu à peu'], [180, 0.5, 'Retour au calme, facile'], [240, 0.45, 'Retour au calme, très facile']],
+}
+const somme = (l: Morceau[]) => l.reduce((t, [d]) => t + d, 0)
+export const echauffementSec = (pr: Preparation) => somme(ECHAUFFEMENTS[pr])
+export const retourSec = (pr: Preparation) => somme(RETOURS[pr])
+/** Ancien échauffement + retour au calme (25') : sert à choisir le palier, pour qu'un échauffement plus long
+ *  ne retire pas de répétition. */
+const ENCADREMENT_PALIER_SEC = 25 * 60
 
 const arrondi5 = (w: number) => Math.round(w / 5) * 5
 const enMin = (sec: number) => (sec % 60 ? `${Math.floor(sec / 60)}'${String(sec % 60).padStart(2, '0')}` : `${sec / 60}'`)
@@ -135,12 +161,13 @@ export function dureeFormat(f: Format, palier: number | Palier) {
   const t = pa.travailSec ?? f.travailSec
   const bloc = f.continu ? pa.reps * (t + f.recupSec) : pa.reps * t + (pa.reps - 1) * f.recupSec
   const corps = pa.series * bloc + (pa.series - 1) * (f.recupSerieSec ?? 0)
-  return { totalSec: ECHAUFFEMENT_SEC + corps + RETOUR_SEC, corpsSec: corps, travailSec: pa.series * pa.reps * t }
+  const pr = preparationDe(f)
+  return { totalSec: echauffementSec(pr) + corps + retourSec(pr), corpsSec: corps, travailSec: pa.series * pa.reps * t }
 }
 
-/** Plus haut palier (≤ visé) qui tient dans le créneau. */
+/** Plus haut palier (≤ visé) qui tient dans le créneau (avec l'encadrement de 25', voir plus haut). */
 export function palierPossible(f: Format, vise: number, maxMin: number) {
-  for (let i = vise; i > 0; i--) if (dureeFormat(f, i).totalSec <= maxMin * 60) return i
+  for (let i = vise; i > 0; i--) if (dureeFormat(f, i).corpsSec + ENCADREMENT_PALIER_SEC <= maxMin * 60) return i
   return 0
 }
 
@@ -150,13 +177,14 @@ export function palierRaccourci(f: Format, palier: number): Palier {
   return pa.series > 1 ? { ...pa, series: pa.series - 1 } : { ...pa, reps: Math.max(1, Math.round(pa.reps * 0.66)) }
 }
 
-/** Échauffement détaillé des séances d'intensité (15 min). */
-function echauffement(cpW: number): Etape[] {
-  return [
-    { debutSec: 0, dureeSec: 300, libelle: 'Échauffement, très facile', w: arrondi5(cpW * 0.5) },
-    { debutSec: 300, dureeSec: 300, libelle: 'Échauffement, facile', w: arrondi5(cpW * 0.6) },
-    { debutSec: 600, dureeSec: 300, libelle: 'Échauffement, modéré, avec 3 accélérations de 10" (à 11\', 12\' et 13\') vers ' + arrondi5(cpW * 1.1) + ' W', w: arrondi5(cpW * 0.7) },
-  ]
+/** Échauffement détaillé des séances d'intensité. */
+function echauffement(pr: Preparation, cpW: number): Etape[] {
+  let h = 0
+  return ECHAUFFEMENTS[pr].map(([d, x, libelle]) => {
+    const e: Etape = { debutSec: h, dureeSec: d, libelle, w: arrondi5(cpW * x) }
+    h += d
+    return e
+  })
 }
 
 /** Construit une séance d'intervalles : structure, déroulé, watts, durée, kJ. */
@@ -167,11 +195,13 @@ export function construireIntervalles(f: Format, palier: number | Palier, cpW: n
   const wT = arrondi5(cpW * (f.pct / 100) * (1 + bonus))
   const wR = arrondi5(cpW * (f.pctRecup / 100) * (f.continu ? 1 + bonus : 1))
   const wFacile = arrondi5(cpW * 0.5)
-  const kj = (ECHAUFFEMENT_SEC * cpW * 0.6 + travailSec * wT + (corpsSec - travailSec) * wR + RETOUR_SEC * wFacile) / 1000
+  const pr = preparationDe(f)
+  const kjEncadrement = [...ECHAUFFEMENTS[pr], ...RETOURS[pr]].reduce((t, [d, x]) => t + d * cpW * x, 0)
+  const kj = (kjEncadrement + travailSec * wT + (corpsSec - travailSec) * wR) / 1000
 
   // Déroulé : échauffement, séries / répétitions, récupérations, retour au calme
-  const etapes = echauffement(cpW)
-  let h = ECHAUFFEMENT_SEC
+  const etapes = echauffement(pr, cpW)
+  let h = echauffementSec(pr)
   const ajouter = (dureeSec: number, libelle: string, w?: number) => {
     etapes.push({ debutSec: h, dureeSec, libelle, w })
     h += dureeSec
@@ -191,7 +221,7 @@ export function construireIntervalles(f: Format, palier: number | Palier, cpW: n
     }
     if (si < pa.series) ajouter(recupSerie, 'Récupération entre séries, pédale souple', wFacile)
   }
-  ajouter(RETOUR_SEC, 'Retour au calme, très facile', wFacile)
+  RETOURS[pr].forEach(([d, x, libelle]) => ajouter(d, libelle, arrondi5(cpW * x)))
 
   let titre: string
   let corps: string
@@ -208,7 +238,7 @@ export function construireIntervalles(f: Format, palier: number | Palier, cpW: n
     titre = `${pa.reps} × ${enMin(t)} ${f.famille === 'seuil' ? 'seuil' : f.nom.replace(/^intervalles de .*/, 'VO2')}`
     corps = `${pa.reps} × ${enMin(t)} à ${wT} W, ${enMin(f.recupSec)} à ${wR} W entre`
   }
-  const detail = `Échauffement 15' · ${corps} · Retour au calme 10'`
+  const detail = `Échauffement ${enMin(echauffementSec(pr))} · ${corps} · Retour au calme ${enMin(retourSec(pr))}`
   return {
     titre, detail, dureeMin: Math.round(totalSec / 60), kj: Math.round(kj),
     velo: { famille: f.famille, formatId: f.id, palier: typeof palier === 'number' ? palier : undefined, cibleW: wT, etapes },
