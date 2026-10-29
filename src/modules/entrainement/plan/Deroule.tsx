@@ -41,6 +41,12 @@ export function Deroule({ etapes }: { etapes: Etape[] }) {
   return (
     <>
       <Profil etapes={etapes} cpW={cpW} />
+      {etapes.some((e) => e.wMin) && (
+        <p className="mt-1.5 text-xs text-texte-3">
+          Vise la plage : c'est la moyenne de chaque répétition qui compte. La cadence est un repère, pas une consigne.
+          <Aide titre="Plages et cadence" texte={AIDES.plagesCadence} />
+        </p>
+      )}
       <ol className="mt-2 divide-y divide-bordure overflow-hidden rounded-xl bg-surface-2 text-sm">
         {etapes.map((e, i) => (
           <li key={i} className="flex gap-2 border-l-4 px-2.5 py-2" style={{ borderLeftColor: e.dureeSec > 0 ? couleur(e, cpW) : 'transparent' }}>
@@ -49,8 +55,9 @@ export function Deroule({ etapes }: { etapes: Etape[] }) {
               {e.libelle}
               {e.dureeSec > 0 && <span className="text-texte-3"> · {duree(e.dureeSec)}</span>}
               {e.libelle.startsWith('Souffle') && <Aide titre="Échauffement" texte={AIDES.echauffement} />}
+              {e.cadence && <span className="block text-xs text-texte-3">↻ repère {e.cadence} tr/min</span>}
             </span>
-            {e.dureeSec > 0 && <span className="shrink-0 font-semibold tabular-nums" style={{ color: couleur(e, cpW) }}>{e.w ? `${e.w} W` : 'à fond'}</span>}
+            {e.dureeSec > 0 && <span className="shrink-0 font-semibold tabular-nums" style={{ color: couleur(e, cpW) }}>{e.wMin && e.wMax ? `${e.wMin}-${e.wMax} W` : e.w ? `${e.w} W` : 'à fond'}</span>}
           </li>
         ))}
       </ol>

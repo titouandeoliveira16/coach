@@ -10,6 +10,7 @@
  *  - budget kJ hebdomadaire : +7,5 % si validé et signaux au vert, stable si mitigé, −15 % si rouge ;
  *    semaine allégée (−35 %) toutes les 4 semaines et la semaine d'une course.
  */
+import catalogue from '../../catalogue/seances.json'
 import { decaler } from './vfc'
 
 export type Famille = 'vo2-courts' | 'vo2-longs' | 'seuil' | 'seuil-variable' | 'sweet-spot' | 'tempo'
@@ -40,50 +41,34 @@ export interface Format {
   paliers: [Palier, Palier, Palier, Palier]
   preuve: 'forte' | 'bonne' | 'correcte' | 'plus faible'
   source: string
+  /** Fiche du catalogue scientifique d'où vient le format */
+  catalogueId: string
 }
 
-const p = (series: number, reps: number, travailSec?: number): Palier => ({ series, reps, travailSec })
+/** Paramètres « programme » d'une séance du catalogue (catalogue/generer.py, fonction prog). */
+interface ProgrammeCatalogue extends Omit<Format, 'paliers' | 'catalogueId'> {
+  paliers: [number, number, number?][]
+  ordre: number
+}
 
-/** Banque de séances d'intensité. Les % de CP sont des points de départ, ajustés ensuite par la progression. */
-export const FORMATS: Format[] = [
-  // VO2 courts : séries de 3' de récupération
-  { id: '30-15', famille: 'vo2-courts', nom: '30/15', travailSec: 30, pct: 120, recupSec: 15, pctRecup: 50, recupSerieSec: 180,
-    paliers: [p(2, 10), p(2, 13), p(3, 10), p(3, 13)], preuve: 'forte', source: 'Rønnestad et al. 2015, 2020 : meilleurs gains de VO2max et de puissance que 4 × 5 min chez des cyclistes entraînés.' },
-  { id: '30-30', famille: 'vo2-courts', nom: '30/30', travailSec: 30, pct: 125, recupSec: 30, pctRecup: 50, recupSerieSec: 180,
-    paliers: [p(2, 8), p(2, 10), p(3, 8), p(3, 10)], preuve: 'correcte', source: 'Billat 2000-2001 : le 30/30 permet de passer beaucoup de temps près de la VO2max.' },
-  { id: '15-15', famille: 'vo2-courts', nom: '15/15', travailSec: 15, pct: 135, recupSec: 15, pctRecup: 50, recupSerieSec: 180,
-    paliers: [p(2, 10), p(2, 12), p(3, 10), p(3, 12)], preuve: 'correcte', source: 'Buchheit & Laursen 2013 : les intervalles très courts accumulent du temps près de la VO2max avec peu de fatigue.' },
-  { id: '40-20', famille: 'vo2-courts', nom: '40/20', travailSec: 40, pct: 115, recupSec: 20, pctRecup: 50, recupSerieSec: 180,
-    paliers: [p(2, 6), p(2, 8), p(3, 6), p(3, 8)], preuve: 'correcte', source: 'Buchheit & Laursen 2013 : même logique que le 30/15, avec un ratio travail/récup de 2:1.' },
-  { id: '20-40', famille: 'vo2-courts', nom: '20/40', travailSec: 20, pct: 140, recupSec: 40, pctRecup: 50, recupSerieSec: 180,
-    paliers: [p(2, 8), p(2, 10), p(3, 8), p(3, 10)], preuve: 'correcte', source: 'Buchheit & Laursen 2013 : efforts courts plus intenses, récupération longue.' },
-  // VO2 longs
-  { id: '3min', famille: 'vo2-longs', nom: "intervalles de 3'", travailSec: 180, pct: 115, recupSec: 180, pctRecup: 50,
-    paliers: [p(1, 4), p(1, 5), p(1, 6), p(1, 7)], preuve: 'correcte', source: 'Buchheit & Laursen 2013 : intervalles longs de 2-4 min à la PMA.' },
-  { id: '4min', famille: 'vo2-longs', nom: "intervalles de 4'", travailSec: 240, pct: 110, recupSec: 180, pctRecup: 50,
-    paliers: [p(1, 3), p(1, 4), p(1, 5), p(1, 6)], preuve: 'correcte', source: 'Helgerud et al. 2007 : 4 × 4 min, gains de VO2max (étudié surtout en course à pied).' },
-  { id: '5min', famille: 'vo2-longs', nom: "intervalles de 5'", travailSec: 300, pct: 107, recupSec: 150, pctRecup: 50,
-    paliers: [p(1, 3), p(1, 4), p(1, 5), p(1, 6)], preuve: 'bonne', source: 'Rønnestad et al. 2015 : 4 × 5 min, groupe contrôle qui progresse aussi.' },
-  { id: '6min', famille: 'vo2-longs', nom: "intervalles de 6'", travailSec: 360, pct: 106, recupSec: 150, pctRecup: 50,
-    paliers: [p(1, 2), p(1, 3), p(1, 4), p(1, 5)], preuve: 'correcte', source: 'Buchheit & Laursen 2013 : intervalles longs proches de la PMA.' },
-  { id: '8min', famille: 'vo2-longs', nom: "intervalles de 8'", travailSec: 480, pct: 104, recupSec: 120, pctRecup: 50,
-    paliers: [p(1, 2), p(1, 3), p(1, 4), p(1, 5)], preuve: 'forte', source: 'Seiler et al. 2013 : 4 × 8 min a donné plus de gains que 4 × 4 et 4 × 16 min.' },
-  // Seuil
-  { id: 'seuil-8-10', famille: 'seuil', nom: "seuil en blocs de 8-10'", travailSec: 480, pct: 97, recupSec: 180, pctRecup: 50,
-    paliers: [p(1, 3), p(1, 3, 600), p(1, 4), p(1, 4, 600)], preuve: 'bonne', source: 'Sylta et al. 2016 : intervalles longs au seuil, progrès comparables aux formats VO2 à charge égale.' },
-  { id: 'seuil-12-20', famille: 'seuil', nom: "seuil en blocs de 12-20'", travailSec: 720, pct: 97, recupSec: 240, pctRecup: 50,
-    paliers: [p(1, 2), p(1, 2, 900), p(1, 3), p(1, 2, 1200)], preuve: 'bonne', source: 'Sylta et al. 2016 : intervalles longs (jusqu’à 16 min), +5 à 10 % de puissance sur 40 min.' },
-  { id: 'seuil-continu', famille: 'seuil', nom: 'seuil continu', travailSec: 1200, pct: 95, recupSec: 0, pctRecup: 50,
-    paliers: [p(1, 1), p(1, 1, 1500), p(1, 1, 1800), p(1, 1, 2100)], preuve: 'bonne', source: 'Travail continu juste sous la CP (état stable lactique maximal).' },
-  // Seuil variable : cycles de 2' à 95 % + 1' à 105 %
-  { id: 'over-under', famille: 'seuil-variable', nom: 'over-unders', travailSec: 60, pct: 105, recupSec: 120, pctRecup: 95, recupSerieSec: 240, continu: true,
-    paliers: [p(2, 3), p(2, 4), p(3, 3), p(3, 4)], preuve: 'plus faible', source: 'Pratique d’entraîneurs, peu étudiée : gardée pour varier le travail au seuil.' },
-  // Sweet spot et tempo
-  { id: 'sweet-spot', famille: 'sweet-spot', nom: 'sweet spot', travailSec: 900, pct: 91, recupSec: 240, pctRecup: 50,
-    paliers: [p(1, 2), p(1, 3, 720), p(1, 2, 1200), p(1, 3, 840)], preuve: 'plus faible', source: 'Peu étudié : utile en reprise pour accumuler du travail sous le seuil.' },
-  { id: 'tempo', famille: 'tempo', nom: 'tempo', travailSec: 900, pct: 83, recupSec: 300, pctRecup: 50,
-    paliers: [p(1, 2), p(1, 2, 1080), p(1, 2, 1200), p(1, 1, 2700)], preuve: 'plus faible', source: 'Zone 3 (« moyenne ») : utile en reprise, à doser (modèle pyramidal).' },
-]
+/**
+ * Banque de séances d'intensité : piochée dans le catalogue scientifique (catalogue/seances.json), parmi les séances
+ * qui ont des paramètres « programme ». Une séance ajoutée au catalogue avec ces paramètres entre dans le programme.
+ * Les % de CP sont des points de départ, ajustés ensuite par la progression.
+ */
+export const FORMATS: Format[] = (catalogue.seances as { id: string; programme?: ProgrammeCatalogue }[])
+  .filter((s) => s.programme)
+  .sort((x, y) => x.programme!.ordre - y.programme!.ordre)
+  .map((s) => {
+    const { ordre: _ordre, paliers, recupSerieSec, continu, ...f } = s.programme!
+    return {
+      ...f,
+      ...(recupSerieSec !== undefined ? { recupSerieSec } : {}),
+      ...(continu ? { continu } : {}),
+      paliers: paliers.map(([series, reps, travailSec]) => ({ series, reps, travailSec })) as Format['paliers'],
+      catalogueId: s.id,
+    }
+  })
 
 export const formatDe = (id: string) => FORMATS.find((f) => f.id === id)
 
@@ -95,9 +80,13 @@ export const formatDe = (id: string) => FORMATS.find((f) => f.id === id)
  *  - retour au calme dégressif de 55 à 45 % (Van Hooren & Peake 2018 : confort, peu d'effet sur le lendemain).
  */
 export type Preparation = 'seuil' | 'vo2'
+/** Repère de cadence (Hansen & Rønnestad 2017, Lucía 2004 : plus haute sur les efforts durs, jamais imposée). */
+export const CADENCE_VO2 = '90-105'
+export const CADENCE_SEUIL = '85-95'
 export const preparationDe = (f: Format): Preparation => (f.famille.startsWith('vo2') ? 'vo2' : 'seuil')
 type Morceau = [dureeSec: number, pctCp: number, libelle: string]
 const BASE: Morceau[] = [[300, 0.5, 'Échauffement, très facile'], [240, 0.65, 'Échauffement, facile'], [180, 0.8, 'Échauffement, modéré']]
+const CADENCES_ECHAUFFEMENT: Record<number, string> = { 0.95: CADENCE_SEUIL, 1.1: CADENCE_VO2 }
 const ECHAUFFEMENTS: Record<Preparation, Morceau[]> = {
   seuil: [...BASE, [60, 0.95, "Échauffement : 1' au rythme du seuil"], [120, 0.55, 'Souffle, pédale souple avant le 1er bloc']],
   vo2: [
@@ -127,9 +116,28 @@ export interface Etape {
   debutSec: number
   dureeSec: number
   libelle: string
-  /** Watts cibles (absent : à fond ou libre) */
+  /** Watts cibles (absent : à fond ou libre) : le milieu de la plage, envoyé à Zwift */
   w?: number
+  /** Plage de watts à viser (moyenne de l'étape), sur les efforts */
+  wMin?: number
+  wMax?: number
+  /** Repère de cadence en tr/min (« 85-95 »), pas une consigne ; absent : cadence libre */
+  cadence?: string
 }
+
+/**
+ * Plage autour de la cible, par famille (relecture du 29/10 : Liedl 1999, Bossi 2020 ; largeurs = choix d'entraîneur) :
+ * on juge la puissance moyenne de chaque répétition, pas la puissance seconde par seconde.
+ */
+const PLAGES: Record<Famille | 'z2', [number, number]> = {
+  'vo2-courts': [-0.03, 0.05], 'vo2-longs': [-0.03, 0.05], seuil: [-0.02, 0.03], 'seuil-variable': [-0.03, 0.03],
+  'sweet-spot': [-0.03, 0.03], tempo: [-0.03, 0.03], z2: [-0.05, 0.05],
+}
+/** Familles où dépasser la plage compte comme « pas tenu » (on passerait au-dessus du seuil). */
+export const FAMILLES_PLAFONNEES = new Set<string>(['seuil', 'sweet-spot', 'tempo'])
+export const plage = (w: number, famille: Famille | 'z2') =>
+  ({ wMin: arrondi5(w * (1 + PLAGES[famille][0])), wMax: arrondi5(w * (1 + PLAGES[famille][1])) })
+const cadenceDe = (f: Famille) => (f.startsWith('vo2') ? CADENCE_VO2 : CADENCE_SEUIL)
 
 /** Une séance vélo générée (stockée dans la séance prévue). */
 export interface SeanceVelo {
@@ -181,7 +189,7 @@ export function palierRaccourci(f: Format, palier: number): Palier {
 function echauffement(pr: Preparation, cpW: number): Etape[] {
   let h = 0
   return ECHAUFFEMENTS[pr].map(([d, x, libelle]) => {
-    const e: Etape = { debutSec: h, dureeSec: d, libelle, w: arrondi5(cpW * x) }
+    const e: Etape = { debutSec: h, dureeSec: d, libelle, w: arrondi5(cpW * x), ...(CADENCES_ECHAUFFEMENT[x] ? { cadence: CADENCES_ECHAUFFEMENT[x] } : {}) }
     h += d
     return e
   })
@@ -202,20 +210,20 @@ export function construireIntervalles(f: Format, palier: number | Palier, cpW: n
   // Déroulé : échauffement, séries / répétitions, récupérations, retour au calme
   const etapes = echauffement(pr, cpW)
   let h = echauffementSec(pr)
-  const ajouter = (dureeSec: number, libelle: string, w?: number) => {
-    etapes.push({ debutSec: h, dureeSec, libelle, w })
+  const ajouter = (dureeSec: number, libelle: string, w?: number, effort?: boolean) => {
+    etapes.push({ debutSec: h, dureeSec, libelle, w, ...(effort ? { ...(w ? plage(w, f.famille) : {}), cadence: cadenceDe(f.famille) } : {}) })
     h += dureeSec
   }
   const recupSerie = f.recupSerieSec ?? 0
   for (let si = 1; si <= pa.series; si++) {
     if (f.continu) {
-      ajouter(pa.reps * (t + f.recupSec), `Bloc ${si}/${pa.series} : ${pa.reps} × (${enDuree(f.recupSec)} à ${wR} W puis ${enDuree(t)} à ${wT} W), sans pause`)
+      ajouter(pa.reps * (t + f.recupSec), `Bloc ${si}/${pa.series} : ${pa.reps} × (${enDuree(f.recupSec)} à ${wR} W puis ${enDuree(t)} à ${wT} W), sans pause`, undefined, true)
     } else if (f.famille === 'vo2-courts') {
       const bloc = pa.reps * t + (pa.reps - 1) * f.recupSec
-      ajouter(bloc, `Série ${si}/${pa.series} : ${pa.reps} × (${enDuree(t)} à ${wT} W puis ${enDuree(f.recupSec)} à ${wR} W)`, wT)
+      ajouter(bloc, `Série ${si}/${pa.series} : ${pa.reps} × (${enDuree(t)} à ${wT} W puis ${enDuree(f.recupSec)} à ${wR} W)`, wT, true)
     } else {
       for (let ri = 1; ri <= pa.reps; ri++) {
-        ajouter(t, `${pa.reps > 1 ? `Répétition ${ri}/${pa.reps}` : 'Bloc'} : ${enMin(t)} régulier`, wT)
+        ajouter(t, `${pa.reps > 1 ? `Répétition ${ri}/${pa.reps}` : 'Bloc'} : ${enMin(t)} régulier`, wT, true)
         if (ri < pa.reps) ajouter(f.recupSec, 'Récupération, pédale souple', wR)
       }
     }
@@ -258,7 +266,7 @@ export function construireZ2(dureeMin: number, z2W: number, sprints?: { n: numbe
   const fin = dureeMin * 60
   const etapes: Etape[] = [
     { debutSec: 0, dureeSec: ech, libelle: 'Mise en route progressive', w: wEch },
-    { debutSec: ech, dureeSec: fin - ech - 300, libelle: 'Z2 régulière : RPE ≤ 3, tu peux parler en phrases', w: z2W },
+    { debutSec: ech, dureeSec: fin - ech - 300, libelle: 'Z2 régulière : RPE ≤ 3, tu peux parler en phrases', w: z2W, ...plage(z2W, 'z2') },
     { debutSec: fin - 300, dureeSec: 300, libelle: 'Retour au calme', w: wEch },
   ]
   let sprintsTexte = ''

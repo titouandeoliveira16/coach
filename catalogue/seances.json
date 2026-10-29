@@ -1,6 +1,6 @@
 {
- "version": 2,
- "majLe": "2026-10-28",
+ "version": 3,
+ "majLe": "2026-10-29",
  "description": "Catalogue scientifique de séances (vélo, course à pied, renforcement, tests, méthodes). Voir catalogue/README.md.",
  "unites": {
   "%CP": "pourcentage de la puissance critique (≈ FTP)",
@@ -366,7 +366,8 @@
        "intensite": [
         88,
         95
-       ]
+       ],
+       "cadence": "85-95"
       },
       {
        "type": "recup",
@@ -534,6 +535,39 @@
       "revue": "VeloPress (livre)"
      }
     ]
+   },
+   "programme": {
+    "id": "tempo",
+    "famille": "tempo",
+    "nom": "tempo",
+    "travailSec": 900,
+    "pct": 83,
+    "recupSec": 300,
+    "pctRecup": 50,
+    "paliers": [
+     [
+      1,
+      2
+     ],
+     [
+      1,
+      2,
+      1080
+     ],
+     [
+      1,
+      2,
+      1200
+     ],
+     [
+      1,
+      1,
+      2700
+     ]
+    ],
+    "preuve": "plus faible",
+    "source": "Zone 3 (« moyenne ») : utile en reprise, à doser (modèle pyramidal).",
+    "ordre": 15
    }
   },
   {
@@ -626,6 +660,39 @@
       "pmid": "23264537"
      }
     ]
+   },
+   "programme": {
+    "id": "sweet-spot",
+    "famille": "sweet-spot",
+    "nom": "sweet spot",
+    "travailSec": 900,
+    "pct": 91,
+    "recupSec": 240,
+    "pctRecup": 50,
+    "paliers": [
+     [
+      1,
+      2
+     ],
+     [
+      1,
+      3,
+      720
+     ],
+     [
+      1,
+      2,
+      1200
+     ],
+     [
+      1,
+      3,
+      840
+     ]
+    ],
+    "preuve": "plus faible",
+    "source": "Peu étudié : utile en reprise pour accumuler du travail sous le seuil.",
+    "ordre": 14
    }
   },
   {
@@ -660,7 +727,8 @@
        "intensite": [
         88,
         92
-       ]
+       ],
+       "cadence": "85-95"
       },
       {
        "type": "recup",
@@ -829,7 +897,8 @@
        "intensite": [
         95,
         102
-       ]
+       ],
+       "cadence": "85-95"
       },
       {
        "type": "recup",
@@ -878,6 +947,38 @@
       "revue": "VeloPress (livre)"
      }
     ]
+   },
+   "programme": {
+    "id": "seuil-8-10",
+    "famille": "seuil",
+    "nom": "seuil en blocs de 8-10'",
+    "travailSec": 480,
+    "pct": 97,
+    "recupSec": 180,
+    "pctRecup": 50,
+    "paliers": [
+     [
+      1,
+      3
+     ],
+     [
+      1,
+      3,
+      600
+     ],
+     [
+      1,
+      4
+     ],
+     [
+      1,
+      4,
+      600
+     ]
+    ],
+    "preuve": "bonne",
+    "source": "Sylta et al. 2016 : intervalles longs au seuil, progrès comparables aux formats VO2 à charge égale.",
+    "ordre": 10
    }
   },
   {
@@ -913,7 +1014,8 @@
         90,
         95
        ],
-       "note": "effort maximal tenable sur les 4 répétitions"
+       "note": "effort maximal tenable sur les 4 répétitions",
+       "cadence": "85-95"
       },
       {
        "type": "recup",
@@ -968,6 +1070,38 @@
       "revue": "Med Sci Sports Exerc"
      }
     ]
+   },
+   "programme": {
+    "id": "seuil-12-20",
+    "famille": "seuil",
+    "nom": "seuil en blocs de 12-20'",
+    "travailSec": 720,
+    "pct": 97,
+    "recupSec": 240,
+    "pctRecup": 50,
+    "paliers": [
+     [
+      1,
+      2
+     ],
+     [
+      1,
+      2,
+      900
+     ],
+     [
+      1,
+      3
+     ],
+     [
+      1,
+      2,
+      1200
+     ]
+    ],
+    "preuve": "bonne",
+    "source": "Sylta et al. 2016 : intervalles longs (jusqu’à 16 min), +5 à 10 % de puissance sur 40 min.",
+    "ordre": 11
    }
   },
   {
@@ -1006,7 +1140,8 @@
          "intensite": [
           93,
           97
-         ]
+         ],
+         "cadence": "85-95"
         },
         {
          "type": "effort",
@@ -1014,7 +1149,8 @@
          "intensite": [
           105,
           110
-         ]
+         ],
+         "cadence": "90-105"
         }
        ]
       },
@@ -1064,6 +1200,38 @@
       "revue": "VeloPress (livre)"
      }
     ]
+   },
+   "programme": {
+    "id": "over-under",
+    "famille": "seuil-variable",
+    "nom": "over-unders",
+    "travailSec": 60,
+    "pct": 105,
+    "recupSec": 120,
+    "pctRecup": 95,
+    "recupSerieSec": 240,
+    "continu": true,
+    "paliers": [
+     [
+      2,
+      3
+     ],
+     [
+      2,
+      4
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      3,
+      4
+     ]
+    ],
+    "preuve": "plus faible",
+    "source": "Pratique d’entraîneurs, peu étudiée : gardée pour varier le travail au seuil.",
+    "ordre": 13
    }
   },
   {
@@ -1094,7 +1262,8 @@
      "intensite": [
       90,
       95
-     ]
+     ],
+     "cadence": "85-95"
     },
     {
      "type": "retour",
@@ -1131,6 +1300,39 @@
       "revue": "VeloPress (livre)"
      }
     ]
+   },
+   "programme": {
+    "id": "seuil-continu",
+    "famille": "seuil",
+    "nom": "seuil continu",
+    "travailSec": 1200,
+    "pct": 95,
+    "recupSec": 0,
+    "pctRecup": 50,
+    "paliers": [
+     [
+      1,
+      1
+     ],
+     [
+      1,
+      1,
+      1500
+     ],
+     [
+      1,
+      1,
+      1800
+     ],
+     [
+      1,
+      1,
+      2100
+     ]
+    ],
+    "preuve": "bonne",
+    "source": "Travail continu juste sous la CP (état stable lactique maximal).",
+    "ordre": 12
    }
   },
   {
@@ -1165,7 +1367,8 @@
        "intensite": [
         100,
         105
-       ]
+       ],
+       "cadence": "90-105"
       },
       {
        "type": "recup",
@@ -1222,6 +1425,36 @@
       "revue": "Med Sci Sports Exerc"
      }
     ]
+   },
+   "programme": {
+    "id": "8min",
+    "famille": "vo2-longs",
+    "nom": "intervalles de 8'",
+    "travailSec": 480,
+    "pct": 104,
+    "recupSec": 120,
+    "pctRecup": 50,
+    "paliers": [
+     [
+      1,
+      2
+     ],
+     [
+      1,
+      3
+     ],
+     [
+      1,
+      4
+     ],
+     [
+      1,
+      5
+     ]
+    ],
+    "preuve": "forte",
+    "source": "Seiler et al. 2013 : 4 × 8 min a donné plus de gains que 4 × 4 et 4 × 16 min.",
+    "ordre": 9
    }
   },
   {
@@ -1328,6 +1561,37 @@
       "pmid": "31977120"
      }
     ]
+   },
+   "programme": {
+    "id": "30-15",
+    "famille": "vo2-courts",
+    "nom": "30/15",
+    "travailSec": 30,
+    "pct": 120,
+    "recupSec": 15,
+    "pctRecup": 50,
+    "recupSerieSec": 180,
+    "paliers": [
+     [
+      2,
+      10
+     ],
+     [
+      2,
+      13
+     ],
+     [
+      3,
+      10
+     ],
+     [
+      3,
+      13
+     ]
+    ],
+    "preuve": "forte",
+    "source": "Rønnestad et al. 2015, 2020 : meilleurs gains de VO2max et de puissance que 4 × 5 min chez des cyclistes entraînés.",
+    "ordre": 0
    }
   },
   {
@@ -1366,7 +1630,8 @@
          "intensite": [
           130,
           140
-         ]
+         ],
+         "cadence": "90-105"
         },
         {
          "type": "recup",
@@ -1425,6 +1690,37 @@
       "revue": "Sports Med"
      }
     ]
+   },
+   "programme": {
+    "id": "15-15",
+    "famille": "vo2-courts",
+    "nom": "15/15",
+    "travailSec": 15,
+    "pct": 135,
+    "recupSec": 15,
+    "pctRecup": 50,
+    "recupSerieSec": 180,
+    "paliers": [
+     [
+      2,
+      10
+     ],
+     [
+      2,
+      12
+     ],
+     [
+      3,
+      10
+     ],
+     [
+      3,
+      12
+     ]
+    ],
+    "preuve": "correcte",
+    "source": "Buchheit & Laursen 2013 : les intervalles très courts accumulent du temps près de la VO2max avec peu de fatigue.",
+    "ordre": 2
    }
   },
   {
@@ -1463,7 +1759,8 @@
          "intensite": [
           135,
           145
-         ]
+         ],
+         "cadence": "90-105"
         },
         {
          "type": "recup",
@@ -1528,6 +1825,37 @@
       "revue": "Sports Med"
      }
     ]
+   },
+   "programme": {
+    "id": "20-40",
+    "famille": "vo2-courts",
+    "nom": "20/40",
+    "travailSec": 20,
+    "pct": 140,
+    "recupSec": 40,
+    "pctRecup": 50,
+    "recupSerieSec": 180,
+    "paliers": [
+     [
+      2,
+      8
+     ],
+     [
+      2,
+      10
+     ],
+     [
+      3,
+      8
+     ],
+     [
+      3,
+      10
+     ]
+    ],
+    "preuve": "correcte",
+    "source": "Buchheit & Laursen 2013 : efforts courts plus intenses, récupération longue.",
+    "ordre": 4
    }
   },
   {
@@ -1562,7 +1890,8 @@
        "intensite": [
         106,
         115
-       ]
+       ],
+       "cadence": "90-105"
       },
       {
        "type": "recup",
@@ -1618,6 +1947,270 @@
       "revue": "Scand J Med Sci Sports"
      }
     ]
+   },
+   "programme": {
+    "id": "5min",
+    "famille": "vo2-longs",
+    "nom": "intervalles de 5'",
+    "travailSec": 300,
+    "pct": 107,
+    "recupSec": 150,
+    "pctRecup": 50,
+    "paliers": [
+     [
+      1,
+      3
+     ],
+     [
+      1,
+      4
+     ],
+     [
+      1,
+      5
+     ],
+     [
+      1,
+      6
+     ]
+    ],
+    "preuve": "bonne",
+    "source": "Rønnestad et al. 2015 : 4 × 5 min, groupe contrôle qui progresse aussi.",
+    "ordre": 7
+   }
+  },
+  {
+   "id": "velo-vo2-3min",
+   "sport": "velo",
+   "famille": "vo2max",
+   "nom": "Intervalles de 3 min",
+   "objectif": "VO2max, intervalles longs courts",
+   "resume": "4 à 7 × 3 min à ~115 % de la CP, récupération 3 min.",
+   "unite": "%CP",
+   "zone": "Z5",
+   "rpe": "8-9",
+   "niveau": "intermédiaire",
+   "dureeMin": 60,
+   "travailMin": 15.0,
+   "deroule": [
+    {
+     "type": "echauffement",
+     "duree": 1200,
+     "intensite": [
+      50,
+      75
+     ]
+    },
+    {
+     "type": "repetition",
+     "fois": 5,
+     "etapes": [
+      {
+       "type": "effort",
+       "duree": 180,
+       "intensite": [
+        112,
+        118
+       ],
+       "cadence": "90-105"
+      },
+      {
+       "type": "recup",
+       "duree": 180,
+       "intensite": [
+        45,
+        55
+       ]
+      }
+     ]
+    },
+    {
+     "type": "retour",
+     "duree": 600,
+     "intensite": [
+      45,
+      55
+     ]
+    }
+   ],
+   "variantes": [
+    "4 × 3",
+    "5 × 3",
+    "6 × 3",
+    "7 × 3"
+   ],
+   "quand": {
+    "phases": [
+     "construction"
+    ],
+    "parSemaine": "1",
+    "recuperation": "48 h"
+   },
+   "conseils": [
+    "Sans ERG : choisis ton braquet avant chaque effort (un ou deux pignons plus dur), lance les 5 premières secondes un peu au-dessus de la cible puis stabilise."
+   ],
+   "preuve": {
+    "niveau": "plausible",
+    "resultat": "Les intervalles de 2 à 4 min proches de la PMA font passer du temps près de la VO2max ; pas d'essai dédié à ce format exact à vélo.",
+    "references": [
+     {
+      "auteurs": "Buchheit M, Laursen PB",
+      "annee": 2013,
+      "titre": "High-intensity interval training, solutions to the programming puzzle. Part I: cardiopulmonary emphasis",
+      "revue": "Sports Med"
+     }
+    ]
+   },
+   "programme": {
+    "id": "3min",
+    "famille": "vo2-longs",
+    "nom": "intervalles de 3'",
+    "travailSec": 180,
+    "pct": 115,
+    "recupSec": 180,
+    "pctRecup": 50,
+    "paliers": [
+     [
+      1,
+      4
+     ],
+     [
+      1,
+      5
+     ],
+     [
+      1,
+      6
+     ],
+     [
+      1,
+      7
+     ]
+    ],
+    "preuve": "correcte",
+    "source": "Buchheit & Laursen 2013 : intervalles longs de 2-4 min à la PMA.",
+    "ordre": 5
+   }
+  },
+  {
+   "id": "velo-vo2-6min",
+   "sport": "velo",
+   "famille": "vo2max",
+   "nom": "Intervalles de 6 min",
+   "objectif": "VO2max et tenue d'un effort long au-dessus du seuil",
+   "resume": "2 à 5 × 6 min à ~106 % de la CP, récupération 2 min 30.",
+   "unite": "%CP",
+   "zone": "Z5",
+   "rpe": "8",
+   "niveau": "intermédiaire",
+   "dureeMin": 64,
+   "travailMin": 24.0,
+   "deroule": [
+    {
+     "type": "echauffement",
+     "duree": 1200,
+     "intensite": [
+      50,
+      75
+     ]
+    },
+    {
+     "type": "repetition",
+     "fois": 4,
+     "etapes": [
+      {
+       "type": "effort",
+       "duree": 360,
+       "intensite": [
+        104,
+        108
+       ],
+       "cadence": "90-105"
+      },
+      {
+       "type": "recup",
+       "duree": 150,
+       "intensite": [
+        45,
+        55
+       ]
+      }
+     ]
+    },
+    {
+     "type": "retour",
+     "duree": 600,
+     "intensite": [
+      45,
+      55
+     ]
+    }
+   ],
+   "variantes": [
+    "2 × 6",
+    "3 × 6",
+    "4 × 6",
+    "5 × 6"
+   ],
+   "quand": {
+    "phases": [
+     "construction",
+     "spécifique"
+    ],
+    "parSemaine": "1",
+    "recuperation": "48 h"
+   },
+   "conseils": [
+    "Sans ERG : choisis ton braquet avant chaque effort (un ou deux pignons plus dur), lance les 5 premières secondes un peu au-dessus de la cible puis stabilise."
+   ],
+   "preuve": {
+    "niveau": "plausible",
+    "resultat": "Intervalles longs proches de la PMA (Buchheit & Laursen 2013) ; format intermédiaire entre 5 et 8 min, sans essai dédié.",
+    "references": [
+     {
+      "auteurs": "Buchheit M, Laursen PB",
+      "annee": 2013,
+      "titre": "High-intensity interval training, solutions to the programming puzzle. Part I: cardiopulmonary emphasis",
+      "revue": "Sports Med"
+     },
+     {
+      "auteurs": "Seiler S, Jøranson K, Olesen BV, Hetlelid KJ",
+      "annee": 2013,
+      "titre": "Adaptations to aerobic interval training: interactive effects of exercise intensity and total work duration",
+      "revue": "Scand J Med Sci Sports",
+      "pmid": "21812820"
+     }
+    ]
+   },
+   "programme": {
+    "id": "6min",
+    "famille": "vo2-longs",
+    "nom": "intervalles de 6'",
+    "travailSec": 360,
+    "pct": 106,
+    "recupSec": 150,
+    "pctRecup": 50,
+    "paliers": [
+     [
+      1,
+      2
+     ],
+     [
+      1,
+      3
+     ],
+     [
+      1,
+      4
+     ],
+     [
+      1,
+      5
+     ]
+    ],
+    "preuve": "correcte",
+    "source": "Buchheit & Laursen 2013 : intervalles longs proches de la PMA.",
+    "ordre": 8
    }
   },
   {
@@ -1652,7 +2245,8 @@
        "intensite": [
         105,
         110
-       ]
+       ],
+       "cadence": "90-105"
       },
       {
        "type": "recup",
@@ -1737,7 +2331,8 @@
          "intensite": [
           125,
           130
-         ]
+         ],
+         "cadence": "90-105"
         },
         {
          "type": "effort",
@@ -1745,7 +2340,8 @@
          "intensite": [
           95,
           100
-         ]
+         ],
+         "cadence": "85-95"
         }
        ]
       },
@@ -1832,7 +2428,8 @@
         108,
         118
        ],
-       "note": "cible réelle : 90-95 % de la FC max"
+       "note": "cible réelle : 90-95 % de la FC max",
+       "cadence": "90-105"
       },
       {
        "type": "recup",
@@ -1882,6 +2479,36 @@
       "pmid": "17414804"
      }
     ]
+   },
+   "programme": {
+    "id": "4min",
+    "famille": "vo2-longs",
+    "nom": "intervalles de 4'",
+    "travailSec": 240,
+    "pct": 110,
+    "recupSec": 180,
+    "pctRecup": 50,
+    "paliers": [
+     [
+      1,
+      3
+     ],
+     [
+      1,
+      4
+     ],
+     [
+      1,
+      5
+     ],
+     [
+      1,
+      6
+     ]
+    ],
+    "preuve": "correcte",
+    "source": "Helgerud et al. 2007 : 4 × 4 min, gains de VO2max (étudié surtout en course à pied).",
+    "ordre": 6
    }
   },
   {
@@ -1920,7 +2547,8 @@
          "intensite": [
           120,
           130
-         ]
+         ],
+         "cadence": "90-105"
         },
         {
          "type": "recup",
@@ -1986,6 +2614,37 @@
       "revue": "Sports Med"
      }
     ]
+   },
+   "programme": {
+    "id": "30-30",
+    "famille": "vo2-courts",
+    "nom": "30/30",
+    "travailSec": 30,
+    "pct": 125,
+    "recupSec": 30,
+    "pctRecup": 50,
+    "recupSerieSec": 180,
+    "paliers": [
+     [
+      2,
+      8
+     ],
+     [
+      2,
+      10
+     ],
+     [
+      3,
+      8
+     ],
+     [
+      3,
+      10
+     ]
+    ],
+    "preuve": "correcte",
+    "source": "Billat 2000-2001 : le 30/30 permet de passer beaucoup de temps près de la VO2max.",
+    "ordre": 1
    }
   },
   {
@@ -2024,7 +2683,8 @@
          "intensite": [
           115,
           120
-         ]
+         ],
+         "cadence": "90-105"
         },
         {
          "type": "recup",
@@ -2081,6 +2741,37 @@
       "revue": "Sports Med"
      }
     ]
+   },
+   "programme": {
+    "id": "40-20",
+    "famille": "vo2-courts",
+    "nom": "40/20",
+    "travailSec": 40,
+    "pct": 115,
+    "recupSec": 20,
+    "pctRecup": 50,
+    "recupSerieSec": 180,
+    "paliers": [
+     [
+      2,
+      6
+     ],
+     [
+      2,
+      8
+     ],
+     [
+      3,
+      6
+     ],
+     [
+      3,
+      8
+     ]
+    ],
+    "preuve": "correcte",
+    "source": "Buchheit & Laursen 2013 : même logique que le 30/15, avec un ratio travail/récup de 2:1.",
+    "ordre": 3
    }
   },
   {
@@ -2115,7 +2806,8 @@
        "intensite": [
         130,
         150
-       ]
+       ],
+       "cadence": "90-105"
       },
       {
        "type": "recup",
@@ -2200,7 +2892,8 @@
       {
        "type": "effort",
        "duree": 30,
-       "max": true
+       "max": true,
+       "cadence": "100-120"
       },
       {
        "type": "recup",
@@ -2283,7 +2976,8 @@
        "intensite": [
         210,
         230
-       ]
+       ],
+       "cadence": "90-105"
       },
       {
        "type": "recup",
@@ -2362,7 +3056,8 @@
       {
        "type": "effort",
        "duree": 10,
-       "max": true
+       "max": true,
+       "cadence": "100-120"
       },
       {
        "type": "recup",
@@ -2448,7 +3143,8 @@
        "type": "effort",
        "duree": 20,
        "max": true,
-       "note": "≈ 170 % de la puissance à VO2max"
+       "note": "≈ 170 % de la puissance à VO2max",
+       "cadence": "100-120"
       },
       {
        "type": "recup",
@@ -2913,7 +3609,7 @@
    ],
    "preuve": {
     "niveau": "mitigé",
-    "resultat": "6 × 5 min à 60 tr/min (2 fois par semaine, 4 semaines) a un peu amélioré le contre-la-montre en côte, mais le groupe contrôle aussi. 5 × 6 min à 40 tr/min pendant 12 semaines n'a rien apporté chez des vétérans très entraînés. La musculation lourde a de meilleures preuves.",
+    "resultat": "6 × 5 min à 60 tr/min (2 fois par semaine, 4 semaines) a un peu amélioré le contre-la-montre en côte, mais le groupe contrôle aussi. 5 × 6 min à 40 tr/min pendant 12 semaines n'a rien apporté chez des vétérans très entraînés. Revue de 7 études : pas de preuve solide qu'imposer une basse cadence fasse progresser. La musculation lourde a de meilleures preuves.",
     "references": [
      {
       "auteurs": "Nimmerichter A, Eston R, Bachl N, Williams C",
@@ -2927,6 +3623,13 @@
       "annee": 2014,
       "titre": "Low cadence interval training at moderate intensity does not improve cycling performance in highly trained veteran cyclists",
       "revue": "Front Physiol"
+     },
+     {
+      "auteurs": "Hansen EA, Rønnestad BR",
+      "annee": 2017,
+      "titre": "Effects of cycling training at imposed low cadences: a systematic review",
+      "revue": "Int J Sports Physiol Perform",
+      "pmid": "28095074"
      }
     ]
    }
@@ -2958,7 +3661,8 @@
      "type": "effort",
      "duree": 720,
      "max": true,
-     "note": "12 min à fond, réparti"
+     "note": "12 min à fond, réparti",
+     "cadence": "100-120"
     },
     {
      "type": "recup",
@@ -2972,7 +3676,8 @@
      "type": "effort",
      "duree": 420,
      "max": true,
-     "note": "7 min à fond"
+     "note": "7 min à fond",
+     "cadence": "100-120"
     },
     {
      "type": "recup",
@@ -2986,7 +3691,8 @@
      "type": "effort",
      "duree": 180,
      "max": true,
-     "note": "3 min à fond"
+     "note": "3 min à fond",
+     "cadence": "100-120"
     },
     {
      "type": "retour",
@@ -3058,7 +3764,8 @@
     {
      "type": "effort",
      "duree": 180,
-     "max": true
+     "max": true,
+     "cadence": "100-120"
     },
     {
      "type": "recup",
@@ -3071,7 +3778,8 @@
     {
      "type": "effort",
      "duree": 720,
-     "max": true
+     "max": true,
+     "cadence": "100-120"
     },
     {
      "type": "retour",
@@ -3132,7 +3840,8 @@
      "type": "effort",
      "duree": 300,
      "max": true,
-     "note": "5 min à fond pour vider la réserve anaérobie"
+     "note": "5 min à fond pour vider la réserve anaérobie",
+     "cadence": "100-120"
     },
     {
      "type": "recup",
@@ -3145,7 +3854,8 @@
     {
      "type": "effort",
      "duree": 1200,
-     "max": true
+     "max": true,
+     "cadence": "100-120"
     },
     {
      "type": "retour",
@@ -3220,7 +3930,8 @@
      "type": "effort",
      "duree": 720,
      "max": true,
-     "note": "+20 à 25 W chaque minute jusqu'à l'arrêt"
+     "note": "+20 à 25 W chaque minute jusqu'à l'arrêt",
+     "cadence": "100-120"
     },
     {
      "type": "retour",
@@ -3282,7 +3993,8 @@
     {
      "type": "effort",
      "duree": 300,
-     "max": true
+     "max": true,
+     "cadence": "100-120"
     },
     {
      "type": "retour",
@@ -3351,7 +4063,8 @@
      "type": "effort",
      "duree": 300,
      "max": true,
-     "note": "5 min à fond fatigué"
+     "note": "5 min à fond fatigué",
+     "cadence": "100-120"
     },
     {
      "type": "retour",
@@ -3423,7 +4136,8 @@
       {
        "type": "effort",
        "duree": 10,
-       "max": true
+       "max": true,
+       "cadence": "100-120"
       },
       {
        "type": "recup",
@@ -5021,14 +5735,30 @@
     "recuperation": "48 h (pas la veille d'une séance dure)"
    },
    "conseils": [
+    "Placement : le même jour qu'une séance dure, au moins 3 h après (ou 2 jours avant la suivante) ; ce jour compte comme dur pour les jambes.",
+    "Commence léger (10RM, loin de l'échec) : les courbatures pèsent sur le vélo les premières semaines.",
+    "Faire de l'endurance en même temps ne freine pas la force ; seule l'explosivité baisse un peu, surtout dans la même séance (Schumann 2022).",
     "Montée explosive, descente contrôlée.",
     "L'étude faisait des séries RM (à l'échec ou presque) ; garder 1-2 reps en réserve est une adaptation d'entraîneur.",
     "Découpage des RM par semaines : repris des études du même groupe, à confirmer pour 2010."
    ],
    "preuve": {
     "niveau": "prouvé",
-    "resultat": "Ajoutée à l'endurance, la musculation lourde améliore l'économie de pédalage et la performance des cyclistes entraînés ; 1 séance par semaine en saison maintient les gains (et améliore la performance).",
+    "resultat": "Ajoutée à l'endurance, la musculation lourde améliore l'économie de pédalage et la performance des cyclistes entraînés ; 1 séance par semaine en saison maintient les gains (et améliore la performance). Méta-analyse 2025 (17 études, 262 cyclistes, charges ≥ 80 % du max) : meilleure économie, puissance et performance, sans effet sur la VO2max.",
     "references": [
+     {
+      "auteurs": "Llanos-Lagos C, Ramirez-Campillo R, Sáez de Villarreal E",
+      "annee": 2025,
+      "titre": "Effect of strength training on cycling performance: a systematic review with meta-analysis",
+      "revue": "Eur J Appl Physiol"
+     },
+     {
+      "auteurs": "Vikmoen O, Ellefsen S, Trøen Ø, et al.",
+      "annee": 2016,
+      "titre": "Strength training improves cycling performance, fractional utilization of VO2max and cycling economy in female cyclists",
+      "revue": "Scand J Med Sci Sports",
+      "pmid": "25892654"
+     },
      {
       "auteurs": "Rønnestad BR, Hansen EA, Raastad T",
       "annee": 2010,
@@ -5049,6 +5779,13 @@
       "titre": "Strength training improves 5-min all-out performance following 185 min of cycling",
       "revue": "Scand J Med Sci Sports",
       "pmid": "19903319"
+     },
+     {
+      "auteurs": "Schumann M, Feuerbacher JF, Sünkeler M, et al.",
+      "annee": 2022,
+      "titre": "Compatibility of concurrent aerobic and strength training for skeletal muscle size and function: an updated systematic review and meta-analysis",
+      "revue": "Sports Med",
+      "pmid": "34757594"
      }
     ]
    }
@@ -5646,6 +6383,132 @@
       "titre": "Effects of tapering on performance in endurance athletes: a systematic review and meta-analysis",
       "revue": "PLoS One",
       "pmid": "37163550"
+     }
+    ]
+   }
+  },
+  {
+   "id": "methode-plages-watts",
+   "sport": "methode",
+   "famille": "organisation",
+   "nom": "Plage de watts plutôt qu'une valeur",
+   "objectif": "Juger un intervalle sans ERG",
+   "resume": "Viser une plage (ex. seuil 95-100 % de la CP) et juger chaque répétition sur sa puissance moyenne, pas seconde par seconde.",
+   "zone": "—",
+   "rpe": "—",
+   "niveau": "—",
+   "variantes": [],
+   "quand": {
+    "phases": [
+     "toutes"
+    ],
+    "parSemaine": "",
+    "recuperation": ""
+   },
+   "conseils": [
+    "Z2 ±5 % · tempo et sweet spot ±3 % · seuil −2 / +3 % sans dépasser la CP · VO2 −3 / +5 % · sprints à fond."
+   ],
+   "preuve": {
+    "niveau": "plausible",
+    "resultat": "Faire varier la puissance de ±5 % pendant 1 h ne change ni la FC, ni le lactate, ni l'effort perçu ; en VO2, une puissance variable donne même plus de temps près de la VO2max. Les largeurs de plage sont un choix d'entraîneur.",
+    "references": [
+     {
+      "auteurs": "Liedl MA, Swain DP, Branch JD",
+      "annee": 1999,
+      "titre": "Physiological effects of constant versus variable power during endurance cycling",
+      "revue": "Med Sci Sports Exerc"
+     },
+     {
+      "auteurs": "Bossi AH, Mesquida C, Passfield L, Rønnestad BR, Hopker JG",
+      "annee": 2020,
+      "titre": "Optimizing interval training through power-output variation within the work intervals",
+      "revue": "Int J Sports Physiol Perform",
+      "pmid": "32244222"
+     }
+    ]
+   }
+  },
+  {
+   "id": "methode-cadence",
+   "sport": "methode",
+   "famille": "organisation",
+   "nom": "Cadence : un repère, pas une consigne",
+   "objectif": "Choisir sa cadence de pédalage",
+   "resume": "Cadence libre en endurance ; plus haute sur les efforts durs (85-95 tr/min au seuil, 90-105 en VO2, 100-120 en sprint).",
+   "zone": "—",
+   "rpe": "—",
+   "niveau": "—",
+   "variantes": [],
+   "quand": {
+    "phases": [
+     "toutes"
+    ],
+    "parSemaine": "",
+    "recuperation": ""
+   },
+   "conseils": [],
+   "preuve": {
+    "niveau": "plausible",
+    "resultat": "Imposer une basse cadence n'a pas montré de bénéfice solide (revue de 7 études). À forte puissance, le rendement est meilleur vers 100 tr/min qu'à 60 chez des pros. Les plages sont des repères d'entraîneur.",
+    "references": [
+     {
+      "auteurs": "Hansen EA, Rønnestad BR",
+      "annee": 2017,
+      "titre": "Effects of cycling training at imposed low cadences: a systematic review",
+      "revue": "Int J Sports Physiol Perform",
+      "pmid": "28095074"
+     },
+     {
+      "auteurs": "Lucía A, San Juan AF, Montilla M, et al.",
+      "annee": 2004,
+      "titre": "In professional road cyclists, low pedaling cadences are less efficient",
+      "revue": "Med Sci Sports Exerc"
+     }
+    ]
+   }
+  },
+  {
+   "id": "methode-echauffement",
+   "sport": "methode",
+   "famille": "organisation",
+   "nom": "Échauffement selon la séance",
+   "objectif": "Préparer une séance d'intensité",
+   "resume": "Seuil : 15 min progressives avec 1 min au seuil. VO2 : 20 min avec 3 × 30 s à ~110 % puis 5 min faciles avant la 1re répétition. Retour au calme dégressif 7-10 min.",
+   "zone": "—",
+   "rpe": "—",
+   "niveau": "—",
+   "variantes": [],
+   "quand": {
+    "phases": [
+     "toutes"
+    ],
+    "parSemaine": "",
+    "recuperation": ""
+   },
+   "conseils": [],
+   "preuve": {
+    "niveau": "plausible",
+    "resultat": "Un échauffement assez intense améliore de 2-3 % un effort sévère, à condition de récupérer au moins ~9 min (moins de 3 min : la tenue baisse). Le retour au calme change peu la récupération du lendemain.",
+    "references": [
+     {
+      "auteurs": "Bailey SJ, Vanhatalo A, Wilkerson DP, DiMenna FJ, Jones AM",
+      "annee": 2009,
+      "titre": "Optimizing the 'priming' effect: influence of prior exercise intensity and recovery duration on O2 uptake kinetics and severe-intensity exercise tolerance",
+      "revue": "J Appl Physiol",
+      "pmid": "19797685"
+     },
+     {
+      "auteurs": "Burnley M, Doust JH, Jones AM",
+      "annee": 2005,
+      "titre": "Effects of prior warm-up regime on severe-intensity cycling performance",
+      "revue": "Med Sci Sports Exerc"
+     },
+     {
+      "auteurs": "Van Hooren B, Peake JM",
+      "annee": 2018,
+      "titre": "Do we need a cool-down after exercise? A narrative review of the psychophysiological effects and the effects on performance, injuries and the long-term adaptive response",
+      "revue": "Sports Med",
+      "pmid": "29663142"
      }
     ]
    }

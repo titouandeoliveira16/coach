@@ -51,8 +51,11 @@ Points décidés ou mis de côté, à reprendre au bon moment.
   29/10 : Titouan est repassé sur Zwift pour le vélo ; Garmin servira peut-être pour la course. Il laisse les deux boutons.
   À l'avenir : envoi vers son compteur iGPSPORT (sorties dehors). Pas de lien direct Intervals → iGPSPORT ; pistes :
   TrainingPeaks, l'appli iGPSPORT Android/Windows, ou un fichier .FIT à charger à la main. Modèle du compteur à demander.
-- Catalogue scientifique (73 séances, `catalogue/`, module Catalogue) : à brancher plus tard sur le programme (choix des
-  séances selon la qualité à travailler, progression). Certains PMID restent à vérifier (PubMed bloqué pendant la relecture).
+- Catalogue scientifique (78 séances, `catalogue/`) : depuis la v0.55.0, le programme y pioche ses 16 formats d'intensité
+  (bloc `programme`) et chaque séance prévue montre sa fiche. Reste possible : choisir les séances selon la qualité à
+  travailler, ajouter des formats (ex. 1 h chrono, puissance variée). Certains PMID restent à vérifier (PubMed bloqué).
+- Plages de watts et repère de cadence (v0.55.0) : vérifier dans Zwift que le repère de cadence s'affiche bien (envoyé en « rpm »)
+  et, après quelques séances, que le plafond au seuil / sweet spot / tempo ne juge pas trop sévèrement.
 - Banques de séances repérées (28/10) : bibliothèque Intervals.icu (déjà relié à l'appli), TrainerDay (communauté, export .zwo),
   WhatsOnZwift (séances Zwift). Idée : importer des séances .zwo dans l'appli ou envoyer les nôtres vers Zwift via Intervals.
 - Étape du Tour 2027 (11/07, Cluses – Les Saisies, 154 km, 4 850 m) : simple idée pour l'instant. Si elle devient
@@ -80,6 +83,7 @@ Points décidés ou mis de côté, à reprendre au bon moment.
 - Module course à pied (aujourd'hui saisi depuis Campus Coach) et vélo généré selon les objectifs de saison : à repenser plus tard.
 
 ## Fait
+- 29/10/2026 (v0.55.0) : plages de watts, repère de cadence, Entraînement branché sur le catalogue (78 séances, v3). Pas de séance de force sur le vélo (preuve faible) ; muscu lourde des jambes : après le CAPEPS.
 - 29/10/2026 (v0.54.0) : échauffement selon la séance (seuil 15′, VO2 20′ avec 5′ de souffle), retour au calme dégressif.
 - 29/10/2026 (v0.53.0) : abonnements dans le Budget, FTP estimée, rappel FTP Zwift ; fonction « rappels » redéployée par Titouan.
 - 27/10/2026 (v0.42.0) : lignes d'explication sous le feu, nuit sans montre, case « pas de ceinture », semaine chargée

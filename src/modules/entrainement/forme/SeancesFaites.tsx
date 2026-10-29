@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { db } from '../../../core/db'
 import { formatNombre } from '../../../core/format'
 import { enregistrer } from '../../../core/stockage'
-import { SEUIL_TENU } from '../plan/blocs'
+import { blocTenu } from '../plan/blocs'
 import { categorieDe, controleFc, questionReserve, texteReserve } from '../plan/controleFc'
 import { chargerContexte, domaineDe } from '../seances/donnees'
 import { LIBELLES_RPE } from '../seances/FormulaireSeance'
@@ -99,10 +99,10 @@ export function Blocs({ b }: { b: NonNullable<Seance['blocs']> }) {
       {b.w.map((w, i) => (
         <span key={i}>
           {i > 0 && ' · '}
-          <b style={{ color: w >= SEUIL_TENU * b.cibleW ? '#4ade80' : '#fb923c' }}>{w}</b>
+          <b style={{ color: blocTenu(w, b) ? '#4ade80' : '#fb923c' }}>{w}</b>
         </span>
       ))}{' '}
-      W <span className="text-texte-3">(cible {b.cibleW})</span>
+      W <span className="text-texte-3">({b.minW && b.maxW ? `plage ${b.minW}-${b.maxW}` : `cible ${b.cibleW}`})</span>
     </p>
   )
 }

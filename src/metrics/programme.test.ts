@@ -3,6 +3,7 @@ import {
   budgetSemaine, choisirFormat, construireIntervalles, construireZ2, dureeFormat, etatProgression, formatDe, FORMATS,
   palierPossible, phaseDe, placer, projeterSaison, type HistoIntensite, type Phase, type Role,
 } from './programme'
+import catalogue from '../../catalogue/seances.json'
 import { decaler } from './vfc'
 
 const PHASES: Phase[] = [
@@ -43,6 +44,24 @@ describe('banque de séances', () => {
     expect(e.at(-1)!.w!).toBeLessThan(e.at(-2)!.w!)
     for (let i = 1; i < e.length; i++) expect(e[i].debutSec).toBe(e[i - 1].debutSec + e[i - 1].dureeSec)
     expect(e.at(-1)!.debutSec + e.at(-1)!.dureeSec).toBe(seuil.dureeMin * 60)
+  })
+
+  it('banque piochée dans le catalogue : 16 formats, chacun relié à sa fiche', () => {
+    expect(FORMATS).toHaveLength(16)
+    expect(new Set(FORMATS.map((f) => f.id)).size).toBe(16)
+    for (const f of FORMATS) expect(catalogue.seances.some((s) => s.id === f.catalogueId)).toBe(true)
+    expect(formatDe('30-15')!.catalogueId).toBe('velo-vo2-30-15-ronnestad')
+  })
+
+  it('plages de watts et repère de cadence sur les efforts', () => {
+    const ss = construireIntervalles(formatDe('sweet-spot')!, 0, 260, 0).velo.etapes!
+    const rep = ss.find((e) => e.libelle.startsWith('Répétition'))!
+    expect([rep.wMin, rep.w, rep.wMax, rep.cadence]).toEqual([230, 235, 240, '85-95'])
+    expect(ss.find((e) => e.libelle.startsWith('Récupération'))!.wMin).toBeUndefined()
+    const vo2 = construireIntervalles(formatDe('5min')!, 0, 260, 0).velo.etapes!.find((e) => e.libelle.startsWith('Répétition'))!
+    expect([vo2.wMin, vo2.wMax, vo2.cadence]).toEqual([270, 295, '90-105'])
+    const z2 = construireZ2(60, 160).velo.etapes!.find((e) => e.libelle.startsWith('Z2'))!
+    expect([z2.wMin, z2.wMax, z2.cadence]).toEqual([150, 170, undefined])
   })
 
   it("l'échauffement plus long ne retire pas de répétition", () => {
