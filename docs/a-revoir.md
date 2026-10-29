@@ -62,7 +62,7 @@ Points décidés ou mis de côté, à reprendre au bon moment.
   l'objectif : phase spécifique après le CAPEPS (montées longues Z3, sorties 4-6 h, 60-90 g/h), affûtage 10-14 j.
 - Musculation : 30 min/sem. au poids du corps (genoux, prévention des blessures), choix de Titouan faute de temps.
   Musculation lourde (Rønnestad & Mujika 2014) à reproposer après le CAPEPS.
-- Nutrition : la carte « maintien mesuré » apparaît seule après 3 semaines de repas notés et de pesées (vers le
+- Nutrition : la carte « maintien mesuré » apparaît dès 14 jours (provisoire, vers le 9/11/2026), puis confirmée à 3 semaines (vers le
   16/11/2026) : en parler avec Titouan AVANT qu'il l'accepte. Lui demander si ses saisies sont complètes (huile,
   sauces, grignotages : on oublie souvent 10-20 %, ce qui ferait baisser ses objectifs à tort), regarder performances et feux.
 - Pesée 5 matins par semaine depuis le 27/10 (lun., mar., mer., sam., dim. ; jeudi et vendredi = internat).
@@ -84,6 +84,10 @@ Points décidés ou mis de côté, à reprendre au bon moment.
 - Module course à pied (aujourd'hui saisi depuis Campus Coach) et vélo généré selon les objectifs de saison : à repenser plus tard.
 
 ## Fait
+- 29/10/2026 (v0.58.0) : bilan nutrition du dimanche (faim, énergie, tour de taille, rappel photo), ajustement du déficit
+  proposé (200 à 600 kcal, ±100/200 au plus toutes les 2 semaines, pause de 7 jours si alerte), maintien mesuré provisoire
+  dès 14 jours. Fonction « rappels » à redéployer (message du dimanche). Pas encore pris en compte : VFC orange/rouge
+  ≥ 3 jours sur 7 et séances clés ratées comme signaux d'alerte (proposés par le relecteur).
 - 29/10/2026 (v0.55.0) : plages de watts, repère de cadence, Entraînement branché sur le catalogue (78 séances, v3). Pas de séance de force sur le vélo (preuve faible) ; muscu lourde des jambes : après le CAPEPS.
 - 29/10/2026 (v0.54.0) : échauffement selon la séance (seuil 15′, VO2 20′ avec 5′ de souffle), retour au calme dégressif.
 - 29/10/2026 (v0.53.0) : abonnements dans le Budget, FTP estimée, rappel FTP Zwift ; fonction « rappels » redéployée par Titouan.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { besoinsDuJour, glucidesParKg, kcalActivite, metabolismeBase, partGlucides, tendancePoids } from './nutrition'
+import { besoinsDuJour, evolutionTaille, glucidesParKg, kcalActivite, metabolismeBase, partGlucides, propositionNutrition, tendancePoids, type BilanNutrition, type Energie, type Faim } from './nutrition'
 import { ageAu } from '../core/profil'
 
 describe('besoins du jour', () => {
@@ -75,5 +75,42 @@ describe('ajustements', () => {
   it('l’étalement ne passe jamais sous le plancher', () => {
     const b = besoinsDuJour({ kg: 70, cm: 175, age: 25, activites: [], objectif: 'perte', reduction: 250 })
     expect(b.kcal - b.seances).toBeGreaterThanOrEqual(30 * 70 * 0.85 - 50)
+  })
+})
+
+describe('bilan du dimanche', () => {
+  const b = (date: string, faim: Faim = 'ok', energie: Energie = 'bien', tailleCm?: number): BilanNutrition => ({ date, faim, energie, tailleCm })
+  const base = { kg: 75, deficitBase: 500 }
+  it('rythme dans la cible : on garde ; rien avant 14 jours de pesées', () => {
+    expect(propositionNutrition({ ...base, tendance14: -0.35, tendance21: -0.35, bilans: [b('2026-11-15')] }).type).toBe('garder')
+    expect(propositionNutrition({ ...base, tendance14: undefined, bilans: [b('2026-11-08')] }).type).toBe('garder')
+  })
+  it('trop vite : −100 (0,7 à 1 %/sem) ou −200 (≥ 1 %/sem) ; jamais plus d’un ajustement en 14 jours', () => {
+    expect(propositionNutrition({ ...base, tendance14: -0.6, bilans: [b('2026-11-15')] })).toMatchObject({ type: 'ajuster', delta: -100 })
+    expect(propositionNutrition({ ...base, tendance14: -0.8, bilans: [b('2026-11-15')] })).toMatchObject({ type: 'ajuster', delta: -200 })
+    expect(propositionNutrition({ ...base, tendance14: -0.8, bilans: [b('2026-11-15')], joursDepuisAjustement: 7 }).type).toBe('garder')
+  })
+  it('stagnation 3 semaines sans faim ni fatigue : +100, plafonné à 600', () => {
+    const bilans = [b('2026-11-15'), b('2026-11-08')]
+    expect(propositionNutrition({ ...base, tendance14: -0.1, tendance21: -0.1, bilans })).toMatchObject({ type: 'ajuster', delta: 100 })
+    expect(propositionNutrition({ ...base, deficitBase: 600, tendance14: -0.1, tendance21: -0.1, bilans }).type).toBe('garder')
+    expect(propositionNutrition({ ...base, tendance14: -0.1, tendance21: -0.1, bilans: [b('2026-11-15', 'un-peu'), b('2026-11-08')] }).type).toBe('garder')
+  })
+  it('faim et fatigue : −100 ; 2 semaines de faim forte : pause au maintien, puis médecin si ça revient', () => {
+    expect(propositionNutrition({ ...base, tendance14: -0.3, bilans: [b('2026-11-15', 'un-peu', 'moyen')] })).toMatchObject({ type: 'ajuster', delta: -100 })
+    const faim = [b('2026-11-15', 'souvent'), b('2026-11-08', 'souvent')]
+    expect(propositionNutrition({ ...base, tendance14: -0.3, bilans: faim })).toMatchObject({ type: 'pause', medecin: false })
+    expect(propositionNutrition({ ...base, tendance14: -0.3, bilans: faim, pauseRecente: true })).toMatchObject({ type: 'pause', medecin: true })
+  })
+  it('déficit de base ajusté, mais les jours de grosse séance restent à −100', () => {
+    const p = { kg: 70, cm: 175, age: 25, objectif: 'perte' as const }
+    expect(besoinsDuJour({ ...p, activites: [], deficitBase: 300 }).deficit).toBe(300)
+    const dure = { sport: 'velo' as const, dureeMin: 120, intensite: 'haute' as const, kj: 1500 }
+    expect(besoinsDuJour({ ...p, activites: [dure], deficitBase: 600 }).deficit).toBe(100)
+  })
+  it('tour de taille : écart sur au moins 14 jours, significatif à partir de 1,5 cm', () => {
+    expect(evolutionTaille([b('2026-11-08', 'ok', 'bien', 82)])).toBeUndefined()
+    expect(evolutionTaille([b('2026-11-22', 'ok', 'bien', 80.2), b('2026-11-15', 'ok', 'bien', 81), b('2026-11-08', 'ok', 'bien', 82)]))
+      .toEqual({ ecart: -1.8, significatif: true, depuis: '2026-11-08' })
   })
 })
