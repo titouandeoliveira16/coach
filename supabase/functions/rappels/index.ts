@@ -137,6 +137,26 @@ async function ligne(userId: string, table: string, cle: string) {
 /** Heure du rappel de pesée (avant le petit-déjeuner). */
 const HEURE_PESEE = '07:00'
 
+/** "AAAA-MM-JJ" du lendemain. */
+function lendemain(date: string) {
+  const d = new Date(`${date}T12:00:00Z`)
+  d.setUTCDate(d.getUTCDate() + 1)
+  return d.toISOString().slice(0, 10)
+}
+
+/** Noms des abonnements à confirmer ce jour-là (même règle que l'appli : échéance passée, ni payé, ni sauté, ni remis à plus tard). */
+async function abonnementsAVerifier(userId: string, date: string) {
+  const v = (await ligne(userId, 'reglages', 'abonnements'))?.valeur as
+    { abonnements?: { id: string; nom: string; jour: number; actif: boolean; depuis: string }[]; etatsAbonnements?: Record<string, { statut?: string; relance?: string }> } | undefined
+  const mois = date.slice(0, 7)
+  const fin = new Date(Date.UTC(Number(mois.slice(0, 4)), Number(mois.slice(5, 7)), 0)).getUTCDate()
+  return (v?.abonnements ?? []).filter((a) => {
+    const ech = `${mois}-${String(Math.min(a.jour, fin)).padStart(2, '0')}`
+    const e = v?.etatsAbonnements?.[`${a.id}|${mois}`]
+    return a.actif && ech >= a.depuis && ech <= date && !e?.statut && (!e?.relance || e.relance <= date)
+  }).map((a) => a.nom)
+}
+
 /** Vrai si l'utilisateur a des comptes dans le Budget. */
 async function utiliseBudget(userId: string) {
   const { data } = await admin.from('donnees').select('cle').eq('user_id', userId).eq('table_nom', 'comptes').eq('supprime', false).limit(1)
@@ -182,6 +202,14 @@ async function envoyerRappels() {
         messages.push({ titre: '⚖️ Pesée', texte: 'Le matin, à jeun, après être passé aux toilettes.', tag: 'pesee', url: './#/entrainement/aujourdhui' })
     }
 
+    // Le lendemain d'un test CP enregistré dans l'appli (réglage « entrainement »), à 9 h : mettre la FTP Zwift à jour
+    if (dansLeQuart(t.heure, '09:00')) {
+      const e = (await ligne(a.user_id, 'reglages', 'entrainement'))?.valeur as { tests?: { date: string; type: string; valeur: number }[] } | undefined
+      const test = (e?.tests ?? []).filter((x) => x.type === 'cp').sort((x, y) => x.date.localeCompare(y.date)).pop()
+      if (test && lendemain(test.date) === t.date)
+        messages.push({ titre: '🚴 FTP Zwift', texte: `Nouvelle CP : ${Math.round(test.valeur)} W. Mets ta FTP Zwift à ${Math.round(test.valeur)} W et renvoie tes séances déjà envoyées.`, tag: 'ftp', url: './#/entrainement/semaine' })
+    }
+
     // Budget : rappel de saisie à l'heure choisie dans l'appli (réglage synchronisé « budget »).
     // L'appel a lieu tous les quarts d'heure : le rappel part dans le quart d'heure choisi, donc une seule fois par jour.
     const budget = (await ligne(a.user_id, 'reglages', 'budget'))?.valeur as { rappelActif?: boolean; rappelHeure?: string; rappelReleves?: boolean; rappelControle?: boolean; dernierControle?: string } | undefined
@@ -191,6 +219,11 @@ async function envoyerRappels() {
     // Dimanche, à l'heure du rappel du soir : contrôle du solde du compte courant (sauf si déjà fait aujourd'hui)
     if (t.jour === 0 && budget?.rappelControle !== false && budget?.dernierControle !== t.date && dansLeQuart(t.heure, budget?.rappelHeure ?? '21:00') && (await utiliseBudget(a.user_id)))
       messages.push({ titre: '🔍 Contrôle de la semaine', texte: "1 minute : compare le solde de ton compte courant avec celui de ta banque.", tag: 'controle', url: './#/budget/mois' })
+    // Abonnements dont le prélèvement est passé et pas encore confirmé (réglage « abonnements »), à l'heure du rappel du soir
+    if (dansLeQuart(t.heure, budget?.rappelHeure ?? '21:00')) {
+      const n = await abonnementsAVerifier(a.user_id, t.date)
+      if (n.length) messages.push({ titre: '🔁 Abonnements', texte: `${n.join(', ')} : est-ce passé sur ton compte ?`, tag: 'abonnements', url: './#/budget/mois' })
+    }
     if (budget?.rappelActif && dansLeQuart(t.heure, budget.rappelHeure ?? '21:00')) {
       if (t.date.endsWith('-01'))
         messages.push({ titre: '📊 Bilan du mois', texte: 'Ton bilan du mois dernier est prêt. Pense aussi aux relevés de tes placements.', tag: 'bilan', url: './#/budget/mois' })

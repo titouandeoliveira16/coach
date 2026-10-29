@@ -44,6 +44,11 @@ export function ModeEmploiBudget() {
           <p>Pile juste : parfait. Un écart : <B>« Saisir l'oubli »</B> ouvre la saisie avec le montant déjà rempli ; si tu ne retrouves pas, écris d'où il vient (frais bancaires, arrondi…) et <B>« Ajuster »</B> remet le solde au niveau de ta banque.</p>
           <p>Fais-le après avoir noté tes dépenses du jour. Attention aux paiements encore « en cours » à la banque : ils sont parfois déjà retirés du solde affiché, parfois pas.</p>
         </Rubrique>
+        <Rubrique titre="🔁 Abonnements">
+          <p>Réglages → <B>Abonnements</B> : nom, montant, catégorie, compte et jour du prélèvement. Ils sont <B>comptés d'avance</B> dans ton reste à vivre et ta prévision.</p>
+          <p>Le jour du prélèvement, une carte (et la notification du soir) te demande : <B>est-ce passé sur ton compte ?</B> Oui (le mouvement est noté), autre montant, pas encore (redemandé demain) ou pas ce mois-ci.</p>
+          <p>Résilié ? Supprime-le : les paiements déjà notés restent.</p>
+        </Rubrique>
         <Rubrique titre="🎯 Plafonds et jauges">
           <p>Dans « Mois », « Modifier les plafonds » : un plafond par catégorie. Change-les quand tu veux : les mois passés ne bougent pas, et le mois suivant reprend les mêmes.</p>
           <p>Jauge <span style={{ color: '#4ade80' }}>verte</span> sous 75 %, <span style={{ color: '#fb923c' }}>orange</span> jusqu'à 100 %, <span style={{ color: '#f87171' }}>rouge</span> au-delà. Un message t'avertit quand une catégorie atteint 90 % puis 100 %.</p>
@@ -52,7 +57,7 @@ export function ModeEmploiBudget() {
         </Rubrique>
         <Rubrique titre="🛟 Livrets">
           <p>Quand tu mets de côté, note un <B>virement</B> (ex. courant → Livret A) : le solde du livret se met à jour tout seul. Pas de relevé à faire.</p>
-          <p>Tu prends sur ton épargne ? Note un <B>virement</B> livret → courant, puis ta dépense comme d'habitude. Ou la dépense directement en choisissant « Payé avec : Livret A ».</p>
+          <p>Tu prends sur ton épargne ? Note un <B>virement</B> : <B>De</B> Livret A, <B>Vers</B> Compte courant, puis ta dépense comme d'habitude. Ou la dépense directement en choisissant « Payé avec : Livret A ».</p>
           <p>Une fois par an, quand les intérêts tombent, un relevé du livret remet le solde pile.</p>
         </Rubrique>
         <Rubrique titre="📈 Placements (PEA, compte-titres, Bricks)">

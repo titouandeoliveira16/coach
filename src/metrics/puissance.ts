@@ -68,6 +68,9 @@ export function meilleurePuissance(w1Hz: number[], dureeSec: number) {
 /** Durées utilisées pour estimer la CP entre deux tests (Karsten 2015 : 3, 7 et 12 min). */
 export const DUREES_CP = [180, 420, 720] as const
 /** Durées de la courbe de puissance (de 1 s à 2 h, les mêmes que Garmin). */
+/** FTP ≈ 97 % de la CP : la CP est en moyenne ~7 W au-dessus de la FTP (Karsten 2021), sans être interchangeable. */
+export const FTP_SUR_CP = 0.97
+
 export const DUREES_COURBE = [1, 2, 5, 10, 20, 30, 60, 120, 300, 600, 1200, 1800, 3600, 7200] as const
 /** Meilleurs efforts gardés pour chaque séance : courbe de puissance + estimation de la CP. */
 export const DUREES_MEILLEURS = [...new Set([...DUREES_COURBE, ...DUREES_CP])].sort((a, b) => a - b)

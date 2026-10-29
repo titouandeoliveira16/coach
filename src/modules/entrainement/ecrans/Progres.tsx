@@ -7,6 +7,7 @@ import { Aide } from '../../../core/ui/Aide'
 import { Carte } from '../../../core/ui/Carte'
 import { GraphiqueBarres, GraphiqueLignes, SERIES } from '../../../core/ui/graphiques'
 import { AIDES } from '../aides'
+import { FTP_SUR_CP } from '../../../metrics/puissance'
 import { JOURS_AMORCAGE } from '../analyse/donnees'
 import { donneesProgres } from '../analyse/progres'
 import { progressionFamilles } from '../plan/programme'
@@ -42,6 +43,8 @@ export function Progres() {
           evolution={signe(pct(t.effRecente, t.effAvant))} hausse={t.effAvant ? t.effRecente! >= t.effAvant : undefined} />
         <Tuile libelle="Vélo 28 j" valeur={formatNombre(t.kj28)} sous="kJ" evolution={signe(pct(t.kj28, t.kj28Avant))} hausse={t.kj28Avant ? t.kj28 >= t.kj28Avant : undefined} />
       </div>
+
+      <LigneFtp cpW={t.cpW ?? t.cpEstimee} poidsKg={t.poidsKg} estimee={!t.cpW} />
 
       <Carte titre="Évolution de mes tests">
         {t.tests.length === 0 ? (
@@ -213,5 +216,18 @@ function Tuile({ libelle, valeur, aide, sous, evolution, hausse }: { libelle: st
       {evolution && <p className={`text-xs font-semibold ${hausse ? 'text-nutrition' : 'text-[#f87171]'}`}>{hausse ? '▲' : '▼'} {evolution}</p>}
       {sous && <p className="text-[11px] text-texte-3">{sous}</p>}
     </div>
+  )
+}
+
+/** FTP estimée à partir de la CP (la CP est en moyenne un peu au-dessus de la FTP : ≈ 97 %), en W et W/kg. */
+function LigneFtp({ cpW, poidsKg, estimee }: { cpW?: number; poidsKg?: number; estimee: boolean }) {
+  if (!cpW) return null
+  const ftp = Math.round(cpW * FTP_SUR_CP)
+  return (
+    <p className="rounded-2xl border border-bordure bg-surface px-4 py-3 text-sm text-texte-2">
+      FTP estimée : <b className="text-texte">≈ {ftp} W</b>{poidsKg ? <> · <b className="text-texte">{formatNombre(ftp / poidsKg, 2)} W/kg</b></> : null}
+      <span className="block text-xs text-texte-3">À partir de ta CP {estimee ? 'estimée' : ''} de {Math.round(cpW)} W{poidsKg ? ` (${formatNombre(cpW / poidsKg, 2)} W/kg)` : ''} · sur Zwift, mets ta FTP égale à ta CP.</span>
+      <Aide titre="FTP et CP" texte={AIDES.ftp} />
+    </p>
   )
 }

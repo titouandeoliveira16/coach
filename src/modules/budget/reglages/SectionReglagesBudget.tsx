@@ -5,6 +5,7 @@ import { Feuille } from '../../../core/ui/Feuille'
 import { COULEURS } from '../categoriesDepart'
 import { enregistrerCategorie, nouvelId, useBudget, useReglagesBudget } from '../donnees'
 import type { Categorie } from '../types'
+import { CarteAbonnements } from './CarteAbonnements'
 import { CarteImport } from './CarteImport'
 import { CarteRemiseAZero } from './CarteRemiseAZero'
 
@@ -51,6 +52,8 @@ export function SectionReglagesBudget() {
         </label>
         <p className="text-xs text-texte-3">Pas de rappel si tu as déjà saisi quelque chose ce jour-là. Le 1er du mois, tu reçois aussi l'annonce de ton bilan. Les notifications doivent être activées une fois pour toute l'appli : Accueil → ⚙️.</p>
       </Carte>
+
+      <CarteAbonnements d={d} />
 
       {(['depense', 'revenu'] as const).map((genre) => (
         <Carte key={genre} titre={genre === 'depense' ? 'Catégories de dépenses' : 'Catégories de revenus'}>

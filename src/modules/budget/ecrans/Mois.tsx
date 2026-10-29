@@ -6,6 +6,7 @@ import { Aide } from '../../../core/ui/Aide'
 import { Carte } from '../../../core/ui/Carte'
 import { BarreRepartition, Camembert } from '../../../core/ui/graphiques'
 import { Bilan } from '../Bilan'
+import { CarteAVerifier } from '../CarteAVerifier'
 import { CarteControle } from '../CarteControle'
 import {
   controleAFaire, couleurJauge, debutSuivi, decalerMois, depensesParCategorie, dernierJour, moisDe, nomMois, patrimoineAu, plafondDe,
@@ -63,6 +64,8 @@ export function Mois() {
         </Carte>
       )}
 
+      {enCours && <CarteAVerifier d={d} />}
+
       {enCours && reglages.rappelControle !== false && controleAFaire(reglages.dernierControle, jour) && <CarteControle d={d} />}
 
       {aReleverCeMois.length > 0 && (
@@ -82,6 +85,7 @@ export function Mois() {
           <p className="mt-1 text-sm text-texte-3">
             {formatEuros(reste.courant)} sur ton compte{reste.especes ? ` + ${formatEuros(reste.especes)} en espèces` : ''}
             {reste.fixesRestantes > 0 && ` − ${formatEuros(reste.fixesRestantes)} de charges fixes à venir`}
+            {reste.abonnements > 0 && ` − ${formatEuros(reste.abonnements)} d'abonnements à venir`}
           </p>
         </Carte>
       ) : (
@@ -101,7 +105,7 @@ export function Mois() {
             </p>
             <p className="text-3xl font-bold tabular-nums" style={{ color: prevision.prevision < 0 ? ETAT.rouge : undefined }}>{formatEuros(prevision.prevision)}</p>
             <p className="mt-1 text-sm text-texte-3">
-              Aujourd'hui {formatEuros(prevision.solde)} · environ {formatEuros(prevision.rythme)} par jour · {prevision.restants} j restants
+              Aujourd'hui {formatEuros(prevision.solde)}{prevision.abonnements > 0 ? ` · ${formatEuros(prevision.abonnements)} d'abonnements à venir` : ''} · environ {formatEuros(prevision.rythme)} par jour · {prevision.restants} j restants
             </p>
           </>
         ) : (
