@@ -66,9 +66,9 @@ Points décidés ou mis de côté, à reprendre au bon moment.
   16/11/2026) : en parler avec Titouan AVANT qu'il l'accepte. Lui demander si ses saisies sont complètes (huile,
   sauces, grignotages : on oublie souvent 10-20 %, ce qui ferait baisser ses objectifs à tort), regarder performances et feux.
 - Pesée 5 matins par semaine depuis le 27/10 (lun., mar., mer., sam., dim. ; jeudi et vendredi = internat).
-- Nutrition : plus de comptage de pas depuis le 27/10 (v0.44.0) : vie quotidienne = métabolisme × 1,5 depuis le 29/10
-  (× 1,4 avant), marche, stages et activités occasionnelles (five, petite rando) compris : elles ne sont pas importées
-  (choix de Titouan, v0.56.0 annulée). Le maintien mesuré (~16/11) dira si 1,5 est juste.
+- Nutrition : plus de comptage de pas depuis le 27/10 (v0.44.0) : vie quotidienne = métabolisme × 1,4 (essai à 1,5
+  le 29/10, revenu à 1,4 : on ajuste selon le poids), marche, stages et activités occasionnelles (five, petite rando) compris : elles ne sont pas importées
+  (choix de Titouan, v0.56.0 annulée). Le maintien mesuré (~16/11) dira si 1,4 est juste (Titouan pense être plutôt à 1,5).
 - Zwift (repris dès le test du 1/11, ERG désactivé) : FTP Zwift = CP après chaque test (notification le lendemain à 9 h).
 - Format « 1 h chrono » (Methodic Cycling, 29/10) : 10-15′ d'échauffement, 30-35′ de corps de séance à récupérations
   courtes, 6-10′ de retour au calme. Pour les créneaux d'1 h et les semaines chargées. L'échauffement adapté et le retour
