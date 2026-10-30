@@ -60,6 +60,11 @@ Points décidés ou mis de côté, à reprendre au bon moment.
   WhatsOnZwift (séances Zwift). Idée : importer des séances .zwo dans l'appli ou envoyer les nôtres vers Zwift via Intervals.
 - Étape du Tour 2027 (11/07, Cluses – Les Saisies, 154 km, 4 850 m) : simple idée pour l'instant. Si elle devient
   l'objectif : phase spécifique après le CAPEPS (montées longues Z3, sorties 4-6 h, 60-90 g/h), affûtage 10-14 j.
+- Durabilité (30/10, « intéressant à bosser », mis de côté) : prépa en 4 temps proposée. Base : sortie longue Z2 qui
+  s'allonge + sprints, muscu lourde jambes 2×/sem (seul levier prouvé, Rønnestad 2011). Construction : blocs sweet spot
+  en fin de sortie longue, intervalles après 1 h 30 de Z2, 60-90 g/h. Spécifique : 4-6 h avec efforts dans la dernière
+  heure, deux jours longs d'affilée. Affûtage 10-14 j. Suivi : test de durabilité (5′ frais vs après 2 h 30) toutes les
+  6-8 semaines + découplage. Calendrier envisagé : construction mars-mai, spécifique mai-juin (après le CAPEPS).
 - Musculation : 30 min/sem. au poids du corps (genoux, prévention des blessures), choix de Titouan faute de temps.
   Musculation lourde (Rønnestad & Mujika 2014) à reproposer après le CAPEPS.
 - Nutrition : la carte « maintien mesuré » apparaît dès 14 jours (provisoire, vers le 9/11/2026), puis confirmée à 3 semaines (vers le
