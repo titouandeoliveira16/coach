@@ -51,7 +51,8 @@ En ligne : https://titouandeoliveira16.github.io/coach/ (GitHub Pages, déployé
 
 ## Serveur (Supabase, projet `vjjuopkiwfyqjolxmnho`)
 - Fonctions : `supabase/functions/intervals` (clé Intervals chiffrée) et `rappels` (notifications Web Push,
-  appelée toutes les 15 min par pg_cron ; envoie aussi le rappel de saisie du Budget, réglé dans `reglages|budget`). « Verify JWT » désactivé sur les deux.
+  appelée toutes les 15 min par pg_cron ; envoie aussi le rappel de saisie du Budget, réglé dans `reglages|budget`),
+  `agenda` (séances prévues en iCal pour Google Agenda, clé secrète dans `reglages|agenda`). « Verify JWT » désactivé sur les trois.
 - SQL : `supabase/sql/01…03` (déjà exécutés). Toute nouvelle table doit recevoir ses droits explicitement
   (le projet n'expose pas les nouvelles tables).
 - Modifier une fonction ou le SQL ne passe pas par GitHub : déployer via le serveur MCP `supabase` s'il est
