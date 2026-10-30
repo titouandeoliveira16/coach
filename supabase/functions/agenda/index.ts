@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
   const cle = new URL(req.url).searchParams.get('cle') ?? ''
   if (!/^[0-9a-f]{32,64}$/.test(cle)) return new Response('Lien invalide', { status: 404 })
   const { data: proprio } = await admin.from('donnees').select('user_id').eq('table_nom', 'reglages').eq('cle', 'agenda')
-    .eq('supprime', false).eq('valeur->>cle', cle).maybeSingle()
+    .eq('supprime', false).eq('valeur->valeur->>cle', cle).maybeSingle()
   if (!proprio) return new Response('Lien invalide', { status: 404 })
 
   const aujourdhui = new Date().toISOString().slice(0, 10)
