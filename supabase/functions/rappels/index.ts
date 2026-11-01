@@ -198,7 +198,9 @@ async function envoyerRappels() {
     const jourPesee = (a.pesee_jours ?? []).includes(t.jour) || (a.pesee_dates ?? []).includes(t.date)
     if (jourPesee && t.heure >= HEURE_PESEE && t.heure < '12:00' && a.derniere_pesee !== t.date) {
       maj.derniere_pesee = t.date
-      if (!(await ligne(a.user_id, 'pesees', t.date)))
+      // Pas de rappel si la pesée est faite, ou si le jour est marqué « pas de pesée aujourd'hui » dans l'appli
+      const sansPesee = ((await ligne(a.user_id, 'reglages', 'pesees-sans'))?.valeur as string[] | undefined) ?? []
+      if (!(await ligne(a.user_id, 'pesees', t.date)) && !sansPesee.includes(t.date))
         // Le dimanche : tour de taille et photo en même temps (bilan nutrition de la semaine)
         messages.push(t.jour === 0
           ? { titre: '⚖️ Pesée + 📏 tour de taille + 📸 photo', texte: 'À jeun, après les toilettes : poids, tour de taille au nombril (2 mesures) et ta photo. Bilan de la semaine dans l’appli.', tag: 'pesee', url: './#/entrainement/aujourdhui' }

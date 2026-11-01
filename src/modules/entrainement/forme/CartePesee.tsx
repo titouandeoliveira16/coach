@@ -6,22 +6,33 @@ import { useProfil } from '../../../core/profil'
 import { Bouton } from '../../../core/ui/Bouton'
 import { Carte } from '../../../core/ui/Carte'
 import { ChampNombre } from '../../../core/ui/ChampNombre'
-import { effacerPesee, enregistrerPesee, peseesValides } from './pesees'
+import { effacerPesee, enregistrerPesee, lireSansPesee, marquerSansPesee, peseesValides } from './pesees'
 
 /** Poids : une ligne avec la dernière pesée ; on se pèse quand on veut (toucher pour saisir ou effacer). */
 export function CartePesee() {
   const [profil] = useProfil()
   const dernieres = useLiveQuery(peseesValides)
+  const sansPesee = useLiveQuery(async () => (await lireSansPesee()).includes(aujourdhui()))
   const [poids, setPoids] = useState<number>()
   const [ouverte, setOuverte] = useState(false)
 
-  if (!dernieres) return null
+  if (!dernieres || sansPesee === undefined) return null
   const [derniere, precedente] = dernieres
   const duJour = derniere?.date === aujourdhui() ? derniere : undefined
   const ecart = derniere && precedente ? derniere.poidsKg - precedente.poidsKg : undefined
 
+  if (sansPesee && !ouverte) {
+    return (
+      <div className="flex w-full items-center justify-between rounded-2xl border border-bordure bg-surface px-4 py-3">
+        <span className="text-texte-2">⚖️ Pas de pesée aujourd'hui</span>
+        <button type="button" className="text-sm text-texte-3 underline" onClick={() => marquerSansPesee(aujourdhui(), false)}>Annuler</button>
+      </div>
+    )
+  }
+
   if (!ouverte) {
     return (
+      <div className="space-y-1">
       <button type="button" onClick={() => setOuverte(true)} className="flex w-full items-center justify-between rounded-2xl border border-bordure bg-surface px-4 py-3">
         <span className="text-texte-2">⚖️ Poids</span>
         <span>
@@ -30,6 +41,12 @@ export function CartePesee() {
           {derniere && <span className="ml-2 text-xs text-texte-3">{jourCourt(derniere.date)}</span>}
         </span>
       </button>
+      {!duJour && (
+        <button type="button" className="w-full py-1 text-right text-sm text-texte-3" onClick={() => marquerSansPesee(aujourdhui(), true)}>
+          Pas de pesée aujourd'hui (oubli)
+        </button>
+      )}
+      </div>
     )
   }
 
