@@ -31,7 +31,7 @@ export function Aujourdhui() {
   const dateDuJour = new Date(`${aujourdhui()}T12:00:00`).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 pb-20">
       <p className="text-lg capitalize text-texte-2">{dateDuJour}</p>
       <CarteRemise />
       <CartePlanCampus />

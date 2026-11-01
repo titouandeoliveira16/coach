@@ -8,11 +8,21 @@ import { enregistrer, supprimer } from '../../../core/stockage'
  */
 export const CLE_PESEES_EFFACEES = 'pesees-effacees'
 
+/** Jours marqués « pas de pesée aujourd'hui » (oubli) : pas de rappel, et aucun poids de ce jour-là n'est compté. */
+export const CLE_SANS_PESEE = 'pesees-sans'
+
 const lireEffacees = async () => ((await db.reglages.get(CLE_PESEES_EFFACEES))?.valeur as string[] | undefined) ?? []
+export const lireSansPesee = async () => ((await db.reglages.get(CLE_SANS_PESEE))?.valeur as string[] | undefined) ?? []
+
+/** Marque (ou démarque) un jour sans pesée ; on garde les 60 derniers jours. */
+export async function marquerSansPesee(date: string, sans: boolean) {
+  const jours = (await lireSansPesee()).filter((d) => d !== date)
+  await enregistrer(db.reglages, { id: CLE_SANS_PESEE, valeur: (sans ? [...jours, date] : jours).sort().slice(-60) })
+}
 
 /** Pesées valides, de la plus récente à la plus ancienne. */
 export async function peseesValides() {
-  const effacees = new Set(await lireEffacees())
+  const effacees = new Set([...(await lireEffacees()), ...(await lireSansPesee())])
   return (await db.pesees.orderBy('date').reverse().toArray()).filter((p) => !effacees.has(p.date))
 }
 
@@ -20,6 +30,7 @@ export async function enregistrerPesee(date: string, poidsKg: number) {
   await enregistrer(db.pesees, { date, poidsKg })
   const effacees = await lireEffacees()
   if (effacees.includes(date)) await enregistrer(db.reglages, { id: CLE_PESEES_EFFACEES, valeur: effacees.filter((d) => d !== date) })
+  if ((await lireSansPesee()).includes(date)) await marquerSansPesee(date, false)
   await majPoidsProfil()
 }
 
