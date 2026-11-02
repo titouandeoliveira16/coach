@@ -74,6 +74,33 @@ export async function donneesProgres() {
   const kjEntre = (du: string, au: string) => somme(seances.filter((s) => s.sport === 'velo' && s.date >= du && s.date <= au).map((s) => s.kj ?? 0))
   const kj28 = kjEntre(decalerJour(jour, -27), jour)
   const kj28Avant = kjEntre(decalerJour(jour, -55), decalerJour(jour, -28))
+  // Système kJ : total des 90 derniers jours contre les 90 précédents (le vrai compteur de progression)
+  const kj90 = kjEntre(decalerJour(jour, -89), jour)
+  const kj90Avant = kjEntre(decalerJour(jour, -179), decalerJour(jour, -90))
+
+  // Petites victoires : même type de séance comparée à la précédente
+  const prevues = new Map((await db.prevues.toArray()).map((p) => [p.id, p]))
+  const familleDe = (s: (typeof seances)[number]) => (s.prevueId ? prevues.get(s.prevueId)?.velo : undefined)
+  const z2 = seances
+    .filter((s) => s.sport === 'velo' && s.puissanceMoyW && s.fcMoy && !s.sansCeinture && s.dureeSec >= 2700 &&
+      (['z2', 'z2-long'].includes(familleDe(s)?.famille ?? '') || (!s.prevueId && s.tempsPuissance && s.tempsPuissance[1] + s.tempsPuissance[2] < 600)))
+    .sort((x, y) => x.date.localeCompare(y.date))
+  const derniereZ2 = z2.at(-1)
+  // La précédente de durée comparable (± 30 %)
+  const precedenteZ2 = derniereZ2 && [...z2.slice(0, -1)].reverse().find((s) => Math.abs(s.dureeSec - derniereZ2.dureeSec) <= 0.3 * derniereZ2.dureeSec)
+  const intervalles = seances
+    .filter((s) => s.sport === 'velo' && s.blocs && familleDe(s)?.formatId)
+    .sort((x, y) => x.date.localeCompare(y.date))
+  const derniereInt = intervalles.at(-1)
+  const precedenteInt = derniereInt && [...intervalles.slice(0, -1)].reverse().find((s) => familleDe(s)?.formatId === familleDe(derniereInt)?.formatId)
+  const resumeInt = (s?: (typeof seances)[number]) => s?.blocs && {
+    date: s.date, titre: s.titre, w: Math.round(somme(s.blocs.w) / s.blocs.w.length),
+    fc: s.blocs.fcFin?.length ? Math.round(somme(s.blocs.fcFin) / s.blocs.fcFin.length) : undefined, rpe: s.rpe,
+  }
+  const resumeZ2 = (s?: (typeof seances)[number]) => s && { date: s.date, w: s.puissanceMoyW!, fc: s.fcMoy!, decouplage: s.decouplage, dureeMin: Math.round(s.dureeSec / 60) }
+  // Régularité : séances prévues faites sur les 4 dernières semaines
+  const passees = [...prevues.values()].filter((p) => p.date >= decalerJour(jour, -27) && p.date < jour && p.statut !== 'reportee')
+  const regularite = passees.length ? { faites: passees.filter((p) => p.statut === 'faite').length, prevues: passees.length } : undefined
 
   // Volume par semaine (12 semaines) : kJ vélo et charge course
   const lundi = lundiDe(jour)
@@ -98,5 +125,6 @@ export async function donneesProgres() {
 
   return {
     a, cpW: r?.cpW, cpPrecedente, tests, cpEstimee, poidsKg: await poidsAu(jour), testsPrevus: programmeDe(r?.programme).testsCp.filter((d) => d >= jour).sort(), testsCourts: programmeDe(r?.programme).testsCourts ?? [],
-    efficacite, effRecente, effAvant, kj28, kj28Avant, semaines, kjVelo, chargeCourse, unite: c.chargeRef === 'trimp' ? 'TRIMP' : 'sRPE', forme, physio }
+    efficacite, effRecente, effAvant, kj28, kj28Avant, kj90, kj90Avant, regularite,
+    victoires: { z2: [resumeZ2(precedenteZ2), resumeZ2(derniereZ2)] as const, intervalles: [resumeInt(precedenteInt), resumeInt(derniereInt)] as const }, semaines, kjVelo, chargeCourse, unite: c.chargeRef === 'trimp' ? 'TRIMP' : 'sRPE', forme, physio }
 }

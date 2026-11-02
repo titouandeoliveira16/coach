@@ -8,6 +8,7 @@ import { CarteBesoins } from '../forme/CarteBesoins'
 import { CarteRepas } from '../forme/CarteRepas'
 import { CarteCalibration } from '../forme/CarteCalibration'
 import { CarteCpEnHausse } from '../forme/CarteCpEnHausse'
+import { CarteHorsPlan } from '../forme/CarteHorsPlan'
 import { CarteBilanNutrition } from '../forme/CarteBilanNutrition'
 import { CarteFcMax } from '../forme/CarteFcMax'
 import { CartePanne } from '../forme/CartePanne'
@@ -39,6 +40,7 @@ export function Aujourdhui() {
       <CarteResultat />
       <CarteFcMax />
       <CarteCpEnHausse />
+      <CarteHorsPlan />
       {/* Le dimanche : bilan de la semaine ; le lundi : celui de la semaine écoulée */}
       {jourSemaine === 0 && <CarteBilan lundi={lundiDe(aujourdhui())} />}
       {jourSemaine === 1 && <CarteBilan lundi={decalerJour(lundiDe(aujourdhui()), -7)} />}
