@@ -16,6 +16,7 @@ import { NOMS_FAMILLES } from '../../../metrics/programme'
 import { Historique } from './Historique'
 import { SuiviRepas } from '../forme/SuiviRepas'
 import { CourbePuissance } from '../analyse/CourbePuissance'
+import { Calculateurs } from '../analyse/Calculateurs'
 
 const jj = (d: string) => depuisJour(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'numeric' })
 
@@ -35,14 +36,17 @@ export function Progres() {
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-2">
         <Tuile libelle="CP" valeur={dernierTest?.wkg ? formatNombre(dernierTest.wkg, 2) : '–'} sous={dernierTest ? `W/kg · ${dernierTest.w} W` : 'W/kg'}
           evolution={dernierTest?.wkg && avantDernier?.wkg ? `${dernierTest.wkg >= avantDernier.wkg ? '+' : ''}${formatNombre(dernierTest.wkg - avantDernier.wkg, 2)}` : undefined}
           hausse={dernierTest?.wkg && avantDernier?.wkg ? dernierTest.wkg >= avantDernier.wkg : undefined} />
         <Tuile libelle="Efficacité" aide={AIDES.efficacite} valeur={t.effRecente ? formatNombre(t.effRecente, 2) : '–'} sous="W par bpm"
           evolution={signe(pct(t.effRecente, t.effAvant))} hausse={t.effAvant ? t.effRecente! >= t.effAvant : undefined} />
-        <Tuile libelle="Vélo 28 j" valeur={formatNombre(t.kj28)} sous="kJ" evolution={signe(pct(t.kj28, t.kj28Avant))} hausse={t.kj28Avant ? t.kj28 >= t.kj28Avant : undefined} />
+        <Tuile libelle="Vélo 28 j" valeur={formatNombre(t.kj28)} sous="kJ · vs 28 j d'avant" evolution={signe(pct(t.kj28, t.kj28Avant))} hausse={t.kj28Avant ? t.kj28 >= t.kj28Avant : undefined} />
+        <Tuile libelle="Vélo 90 j" aide={AIDES.kj90} valeur={formatNombre(t.kj90)} sous={`kJ · ${formatNombre(t.kj90Avant)} les 90 j d'avant`} evolution={signe(pct(t.kj90, t.kj90Avant))} hausse={t.kj90Avant ? t.kj90 >= t.kj90Avant : undefined} />
       </div>
+
+      <PetitesVictoires t={t} />
 
       <LigneFtp cpW={t.cpW ?? t.cpEstimee} poidsKg={t.poidsKg} estimee={!t.cpW} />
 
@@ -140,6 +144,8 @@ export function Progres() {
         </Carte>
       )}
 
+      <Calculateurs cpW={t.cpW ?? t.cpEstimee} wPrimeKj={r.wPrimeKj} poidsKg={t.poidsKg} />
+
       <Carte titre="Efficacité aérobie (vélo)">
         <GraphiqueLignes etiquettes={t.efficacite.map((p) => jj(p.date))} format={(n) => n.toFixed(2).replace('.', ',')}
           series={[{ nom: 'W par bpm', couleur: SERIES[0], valeurs: t.efficacite.map((p) => p.valeur) }]} />
@@ -231,3 +237,42 @@ function LigneFtp({ cpW, poidsKg, estimee }: { cpW?: number; poidsKg?: number; e
     </p>
   )
 }
+
+type Donnees = NonNullable<Awaited<ReturnType<typeof donneesProgres>>>
+
+/** Petites victoires : régularité, ta dernière Z2 et ta dernière séance d'intervalles comparées aux précédentes du même type. */
+function PetitesVictoires({ t }: { t: Donnees }) {
+  const [z2a, z2b] = t.victoires.z2
+  const [ia, ib] = t.victoires.intervalles
+  if (!t.regularite && !(z2a && z2b) && !(ia && ib)) return null
+  const ecart = (b: number, a: number, unite: string, inverse = false) => {
+    const d = b - a
+    const bien = inverse ? d < 0 : d > 0
+    return <b className={d === 0 ? 'text-texte' : bien ? 'text-nutrition' : 'text-[#f87171]'}>{d > 0 ? '+' : ''}{formatNombre(d, unite === '%' ? 1 : 0)} {unite}</b>
+  }
+  return (
+    <Carte titre="🏅 Petites victoires">
+      <ul className="space-y-2 text-sm text-texte-2">
+        {t.regularite && (
+          <li>Régularité (4 sem.) : <b className="text-texte">{t.regularite.faites}/{t.regularite.prevues}</b> séances prévues faites.</li>
+        )}
+        {z2a && z2b && (
+          <li>
+            Z2 du {jj(z2b.date)} ({z2b.dureeMin} min) vs {jj(z2a.date)} : {ecart(z2b.w, z2a.w, 'W')} pour {ecart(z2b.fc, z2a.fc, 'bpm', true)}
+            {z2a.decouplage !== undefined && z2b.decouplage !== undefined && <> · dérive {formatNombre(z2a.decouplage, 1)} → {formatNombre(z2b.decouplage, 1)} %</>}.
+            <span className="block text-xs text-texte-3">Plus de watts ou moins de battements pour la même sortie : tu progresses.</span>
+          </li>
+        )}
+        {ia && ib && (
+          <li>
+            {ib.titre ?? 'Intervalles'} du {jj(ib.date)} vs {jj(ia.date)} : blocs à {ib.w} W ({ecart(ib.w, ia.w, 'W')})
+            {ia.fc && ib.fc ? <>, FC de fin de bloc {ecart(ib.fc, ia.fc, 'bpm', true)}</> : null}
+            {ia.rpe !== undefined && ib.rpe !== undefined ? <>, RPE {ia.rpe} → {ib.rpe}</> : null}.
+          </li>
+        )}
+      </ul>
+      <Aide titre="Petites victoires" texte={AIDES.victoires} />
+    </Carte>
+  )
+}
+

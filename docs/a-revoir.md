@@ -96,6 +96,12 @@ Points décidés ou mis de côté, à reprendre au bon moment.
 - Module course à pied (aujourd'hui saisi depuis Campus Coach) et vélo généré selon les objectifs de saison : à repenser plus tard.
 
 ## Fait
+- 2/11/2026 (v0.64.0) : d'après le Système kJ (LSDC) et Just Push : compteur kJ 90 j vs 90 j d'avant, petites victoires
+  (régularité, Z2 et intervalles comparés à la précédente), temps limite (CP + W′) sur les efforts, calculateurs col et
+  glucides, test CP proposé explicitement (Titouan valide), carte « sortie hors plan » qui propose de recalculer la semaine.
+  Pas repris : paliers polarisé → pyramidal (pas de preuve), indice E (CP suffit jusqu'à 20 min ; loi de puissance −0,08 au-delà
+  dans le calculateur), défi tous les 21 jours, motivation/stress au bilan. Protocole muscu maison LSDC (endurance de force)
+  : transition possible avant la muscu lourde, à décider.
 - 2/11/2026 (v0.63.0) : bilan des 34 études. 1er seuil estimé à 70 % de la CP (Z2 56-70 %), domaines FC moyenne = Z3+Z4,
   zones de FC proposées à partir des sorties (Réglages → Avancé → Zones vélo), format 8′ plafonné à 4 × 8′, alerte « CP en
   hausse » (≥ 4 % au-dessus du test), catalogue 81 fiches (méthodes zones, VFC, glucides à l'effort). Reste : D (affûtage,

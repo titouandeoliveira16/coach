@@ -1,6 +1,7 @@
 import { Aide } from '../../../core/ui/Aide'
 import { couleurPctCP } from '../../../core/zones'
 import { AIDES } from '../aides'
+import { tempsLimite } from '../../../metrics/col'
 import { deplier, type Etape } from '../../../metrics/programme'
 import { useReglagesEntrainement } from '../reglagesEntrainement'
 import { CP_DEFAUT } from './programme'
@@ -52,6 +53,8 @@ export function Deroule({ etapes }: { etapes: Etape[] }) {
         {etapes.map((e, i) => {
           // Série répétée : on affiche la cible de l'effort (la 1re sous-étape), pas celle de la récup
           const cible = e.repetition?.etapes[0] ?? e
+          // Temps limite à ces watts (modèle CP + W′) : à quel point la répétition approche de l'échec
+          const tte = cible.w && r.wPrimeKj ? tempsLimite(cible.w, cpW, r.wPrimeKj) : undefined
           return (
             <li key={i} className="flex gap-2 border-l-4 px-2.5 py-2" style={{ borderLeftColor: e.dureeSec > 0 ? couleur(cible, cpW) : 'transparent' }}>
               <span className="w-11 shrink-0 tabular-nums text-texte-3">{horloge(e.debutSec)}</span>
@@ -60,6 +63,12 @@ export function Deroule({ etapes }: { etapes: Etape[] }) {
                 {e.dureeSec > 0 && <span className="text-texte-3"> · {duree(e.dureeSec)}</span>}
                 {e.libelle.startsWith('Souffle') && <Aide titre="Échauffement" texte={AIDES.echauffement} />}
                 {cible.cadence && <span className="block text-xs text-texte-3">↻ repère {cible.cadence} tr/min</span>}
+                {tte !== undefined && tte > (cible.dureeSec ?? 0) && (
+                  <span className="block text-xs text-texte-3">
+                    ⏱ à ces watts, tu tiendrais environ {tte >= 90 ? `${Math.round(tte / 60)} min` : `${Math.round(tte)} s`} à fond
+                    {i === etapes.findIndex((x) => (x.repetition?.etapes[0] ?? x).w === cible.w) && <Aide titre="Temps limite" texte={AIDES.tte} />}
+                  </span>
+                )}
               </span>
               {e.dureeSec > 0 && <span className="shrink-0 font-semibold tabular-nums" style={{ color: couleur(cible, cpW) }}>{cible.wMin && cible.wMax ? `${cible.wMin}-${cible.wMax} W` : cible.w ? `${cible.w} W` : 'à fond'}</span>}
             </li>
