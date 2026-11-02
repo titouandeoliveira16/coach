@@ -1,7 +1,7 @@
 import { Aide } from '../../../core/ui/Aide'
 import { couleurPctCP } from '../../../core/zones'
 import { AIDES } from '../aides'
-import type { Etape } from '../../../metrics/programme'
+import { deplier, type Etape } from '../../../metrics/programme'
 import { useReglagesEntrainement } from '../reglagesEntrainement'
 import { CP_DEFAUT } from './programme'
 
@@ -15,7 +15,8 @@ const duree = (sec: number) => (sec >= 60 ? `${Math.floor(sec / 60)}'${sec % 60 
 
 /** Profil de la séance comme sur Zwift : une barre par étape, hauteur = watts, couleur = zone (en % de la CP). */
 function Profil({ etapes, cpW }: { etapes: Etape[]; cpW?: number }) {
-  const blocs = etapes.filter((e) => e.dureeSec > 0)
+  // Répétitions déroulées : une barre par effort et par récup, comme sur Zwift
+  const blocs = deplier(etapes).filter((e) => e.dureeSec > 0)
   const total = blocs.reduce((t, e) => t + e.dureeSec, 0)
   if (!total) return null
   const wMax = Math.max(...blocs.map((e) => e.w ?? 0), cpW ? cpW * 1.3 : 0) || 1
@@ -31,7 +32,7 @@ function Profil({ etapes, cpW }: { etapes: Etape[]; cpW?: number }) {
   )
 }
 
-const couleur = (e: Etape, cpW?: number) => (e.w && cpW ? couleurPctCP((e.w / cpW) * 100) : e.w ? '#8b949e' : couleurPctCP(undefined))
+const couleur = (e: Pick<Etape, 'w'>, cpW?: number) => (e.w && cpW ? couleurPctCP((e.w / cpW) * 100) : e.w ? '#8b949e' : couleurPctCP(undefined))
 
 /** Déroulé minute par minute d'une séance vélo (à suivre sur le compteur), en couleurs de zones comme sur Zwift. */
 export function Deroule({ etapes }: { etapes: Etape[] }) {
@@ -48,18 +49,22 @@ export function Deroule({ etapes }: { etapes: Etape[] }) {
         </p>
       )}
       <ol className="mt-2 divide-y divide-bordure overflow-hidden rounded-xl bg-surface-2 text-sm">
-        {etapes.map((e, i) => (
-          <li key={i} className="flex gap-2 border-l-4 px-2.5 py-2" style={{ borderLeftColor: e.dureeSec > 0 ? couleur(e, cpW) : 'transparent' }}>
-            <span className="w-11 shrink-0 tabular-nums text-texte-3">{horloge(e.debutSec)}</span>
-            <span className="min-w-0 flex-1">
-              {e.libelle}
-              {e.dureeSec > 0 && <span className="text-texte-3"> · {duree(e.dureeSec)}</span>}
-              {e.libelle.startsWith('Souffle') && <Aide titre="Échauffement" texte={AIDES.echauffement} />}
-              {e.cadence && <span className="block text-xs text-texte-3">↻ repère {e.cadence} tr/min</span>}
-            </span>
-            {e.dureeSec > 0 && <span className="shrink-0 font-semibold tabular-nums" style={{ color: couleur(e, cpW) }}>{e.wMin && e.wMax ? `${e.wMin}-${e.wMax} W` : e.w ? `${e.w} W` : 'à fond'}</span>}
-          </li>
-        ))}
+        {etapes.map((e, i) => {
+          // Série répétée : on affiche la cible de l'effort (la 1re sous-étape), pas celle de la récup
+          const cible = e.repetition?.etapes[0] ?? e
+          return (
+            <li key={i} className="flex gap-2 border-l-4 px-2.5 py-2" style={{ borderLeftColor: e.dureeSec > 0 ? couleur(cible, cpW) : 'transparent' }}>
+              <span className="w-11 shrink-0 tabular-nums text-texte-3">{horloge(e.debutSec)}</span>
+              <span className="min-w-0 flex-1">
+                {e.libelle}
+                {e.dureeSec > 0 && <span className="text-texte-3"> · {duree(e.dureeSec)}</span>}
+                {e.libelle.startsWith('Souffle') && <Aide titre="Échauffement" texte={AIDES.echauffement} />}
+                {cible.cadence && <span className="block text-xs text-texte-3">↻ repère {cible.cadence} tr/min</span>}
+              </span>
+              {e.dureeSec > 0 && <span className="shrink-0 font-semibold tabular-nums" style={{ color: couleur(cible, cpW) }}>{cible.wMin && cible.wMax ? `${cible.wMin}-${cible.wMax} W` : cible.w ? `${cible.w} W` : 'à fond'}</span>}
+            </li>
+          )
+        })}
       </ol>
     </>
   )

@@ -88,11 +88,11 @@ type Morceau = [dureeSec: number, pctCp: number, libelle: string]
 const BASE: Morceau[] = [[300, 0.5, 'Échauffement, très facile'], [240, 0.65, 'Échauffement, facile'], [180, 0.8, 'Échauffement, modéré']]
 const CADENCES_ECHAUFFEMENT: Record<number, string> = { 0.95: CADENCE_SEUIL, 1.1: CADENCE_VO2 }
 const ECHAUFFEMENTS: Record<Preparation, Morceau[]> = {
-  seuil: [...BASE, [60, 0.95, "Échauffement : 1' au rythme du seuil"], [120, 0.55, 'Souffle, pédale souple avant le 1er bloc']],
+  seuil: [...BASE, [60, 0.95, "Échauffement : 1' au rythme du seuil"], [120, 0.55, 'Souffle, pédale souple avant le premier bloc']],
   vo2: [
     ...BASE,
     ...[1, 2, 3].flatMap((i): Morceau[] => [[30, 1.1, `Échauffement : accélération ${i}/3 (30")`], [30, 0.55, '30" facile']]),
-    [300, 0.55, "Souffle 5', pédale souple avant la 1re répétition"],
+    [300, 0.55, 'Souffle cinq minutes, pédale souple avant la première répétition'],
   ],
 }
 const RETOURS: Record<Preparation, Morceau[]> = {
@@ -123,6 +123,42 @@ export interface Etape {
   wMax?: number
   /** Repère de cadence en tr/min (« 85-95 »), pas une consigne ; absent : cadence libre */
   cadence?: string
+  /**
+   * Série répétée : `fois` × (sous-étapes), envoyée telle quelle à Zwift / Garmin et dessinée répétition par répétition.
+   * `derniere` : nombre de sous-étapes gardées dans la dernière répétition (ex. 1 : pas de récup avant la suite).
+   */
+  repetition?: { fois: number; etapes: SousEtape[]; derniere?: number }
+}
+
+/** Une sous-étape d'une série répétée (w absent : à fond). */
+export interface SousEtape {
+  dureeSec: number
+  libelle: string
+  w?: number
+  wMin?: number
+  wMax?: number
+  cadence?: string
+}
+
+/** Étapes à plat, répétitions déroulées (pour le profil et l'envoi). */
+export function deplier(etapes: Etape[]): Etape[] {
+  const out: Etape[] = []
+  for (const e of etapes) {
+    if (!e.repetition) {
+      out.push(e)
+      continue
+    }
+    let h = e.debutSec
+    const { fois, etapes: sous, derniere = sous.length } = e.repetition
+    for (let i = 0; i < fois; i++) {
+      for (let j = 0; j < sous.length; j++) {
+        if (i === fois - 1 && j >= derniere) break
+        out.push({ ...sous[j], debutSec: h })
+        h += sous[j].dureeSec
+      }
+    }
+  }
+  return out
 }
 
 /**
@@ -216,11 +252,14 @@ export function construireIntervalles(f: Format, palier: number | Palier, cpW: n
   }
   const recupSerie = f.recupSerieSec ?? 0
   for (let si = 1; si <= pa.series; si++) {
+    const effort = (dureeSec: number, w: number, libelle: string): SousEtape => ({ dureeSec, libelle, w, ...plage(w, f.famille), cadence: cadenceDe(f.famille) })
     if (f.continu) {
-      ajouter(pa.reps * (t + f.recupSec), `Bloc ${si}/${pa.series} : ${pa.reps} × (${enDuree(f.recupSec)} à ${wR} W puis ${enDuree(t)} à ${wT} W), sans pause`, undefined, true)
+      ajouter(pa.reps * (t + f.recupSec), `Bloc ${si}/${pa.series} : ${pa.reps} × (${enDuree(f.recupSec)} à ${wR} W puis ${enDuree(t)} à ${wT} W), sans pause`, wT, true)
+      etapes[etapes.length - 1].repetition = { fois: pa.reps, etapes: [effort(f.recupSec, wR, 'Sous la CP'), effort(t, wT, 'Au-dessus')] }
     } else if (f.famille === 'vo2-courts') {
       const bloc = pa.reps * t + (pa.reps - 1) * f.recupSec
       ajouter(bloc, `Série ${si}/${pa.series} : ${pa.reps} × (${enDuree(t)} à ${wT} W puis ${enDuree(f.recupSec)} à ${wR} W)`, wT, true)
+      etapes[etapes.length - 1].repetition = { fois: pa.reps, etapes: [effort(t, wT, 'Effort'), { dureeSec: f.recupSec, libelle: 'Récup', w: wR }], derniere: 1 }
     } else {
       for (let ri = 1; ri <= pa.reps; ri++) {
         ajouter(t, `${pa.reps > 1 ? `Répétition ${ri}/${pa.reps}` : 'Bloc'} : ${enMin(t)} régulier`, wT, true)
@@ -259,7 +298,8 @@ export const SPRINTS = [
 ]
 
 /** Séance d'endurance (Z2), avec sprints pour la sortie longue. */
-export function construireZ2(dureeMin: number, z2W: number, sprints?: { n: number; sec: number }): SeanceConstruite {
+export function construireZ2(duree: number, z2W: number, sprints?: { n: number; sec: number }): SeanceConstruite {
+  const dureeMin = Math.round(duree)
   const ech = Math.min(10, dureeMin) * 60
   const wEch = arrondi5(z2W * 0.85)
   const kj = (ech * wEch + (dureeMin * 60 - ech) * z2W) / 1000 + (sprints ? sprints.n * sprints.sec * z2W * 2.5 / 1000 : 0)
@@ -269,16 +309,34 @@ export function construireZ2(dureeMin: number, z2W: number, sprints?: { n: numbe
     { debutSec: ech, dureeSec: fin - ech - 300, libelle: 'Z2 régulière : RPE ≤ 3, tu peux parler en phrases', w: z2W, ...plage(z2W, 'z2') },
     { debutSec: fin - 300, dureeSec: 300, libelle: 'Retour au calme', w: wEch },
   ]
-  let sprintsTexte = ''
-  if (sprints) {
-    // Un sprint toutes les 10 min à partir de la 20e, avant les 10 dernières minutes
-    const minutes = Array.from({ length: sprints.n }, (_, i) => 20 + i * 10).filter((m) => m <= dureeMin - 10)
-    sprintsTexte = `Sprints à ${minutes.map((m) => `${m}'`).join(', ')} : ${sprints.sec}" à fond (assis puis debout en alternance), puis 2' très facile avant de reprendre la Z2`
-    etapes.splice(2, 0, { debutSec: minutes[0] * 60, dureeSec: 0, libelle: sprintsTexte })
+  // Un sprint toutes les 10 min à partir de la 20e, avant les 10 dernières minutes
+  const minutes = sprints ? Array.from({ length: sprints.n }, (_, i) => 20 + i * 10).filter((m) => m <= dureeMin - 10) : []
+  if (sprints && minutes.length) {
+    const s = sprints.sec
+    const debut = minutes[0] * 60
+    const finSprints = minutes[minutes.length - 1] * 60 + s + 120
+    const z2Etape = etapes[1]
+    etapes.splice(1, 1,
+      { ...z2Etape, dureeSec: debut - ech },
+      {
+        debutSec: debut, dureeSec: finSprints - debut, w: wEch,
+        libelle: `${minutes.length} sprints de ${s}" à fond (à ${minutes.map((m) => `${m}'`).join(', ')}), assis puis debout en alternance ; 2' très facile après chacun, puis Z2`,
+        // La dernière répétition s'arrête après les 2' faciles : la Z2 reprend ensuite jusqu'au retour au calme
+        repetition: {
+          fois: minutes.length, derniere: 2,
+          etapes: [
+            { dureeSec: s, libelle: 'Sprint à fond', cadence: '100-120' },
+            { dureeSec: 120, libelle: 'Très facile', w: wEch },
+            { dureeSec: 600 - s - 120, libelle: 'Z2', w: z2W, ...plage(z2W, 'z2') },
+          ],
+        },
+      },
+      { ...z2Etape, debutSec: finSprints, dureeSec: fin - 300 - finSprints, libelle: 'Z2 régulière jusqu’au retour au calme' },
+    )
   }
   return {
-    titre: sprints ? `Z2 longue + ${sprints.n} sprints` : 'Endurance Z2',
-    detail: `10' progressif puis Z2 à ${z2W} W (RPE ≤ 3)${sprints ? ` · ${sprints.n} sprints de ${sprints.sec}"` : ''}`,
+    titre: sprints ? (minutes.length ? `Z2 longue + ${minutes.length} sprints` : 'Z2 longue') : 'Endurance Z2',
+    detail: `10' progressif puis Z2 à ${z2W} W (RPE ≤ 3)${minutes.length ? ` · ${minutes.length} sprints de ${sprints!.sec}"` : ''}`,
     dureeMin, kj: Math.round(kj),
     velo: { famille: sprints ? 'z2-long' : 'z2', cibleW: z2W, etapes },
   }
