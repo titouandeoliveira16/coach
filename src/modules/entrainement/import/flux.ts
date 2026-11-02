@@ -1,4 +1,5 @@
 import { versJour } from '../../../core/dates'
+import { SEUIL1_PCT_CP } from '../../../core/zones'
 import { trimpBanister } from '../../../metrics/charge'
 import { decouplage, tempsParZone } from '../../../metrics/fc'
 import { kjDepuisEchantillons, meilleursEfforts, puissanceNormalisee, reechantillonner1Hz } from '../../../metrics/puissance'
@@ -80,7 +81,7 @@ export function analyserFlux(flux: Flux, r: Resume, c: Contexte): Seance {
     // Temps par domaine de puissance (pour juger l'intensité avec les watts plutôt qu'avec la FC)
     if (c.cpW) {
       const tp: [number, number, number] = [0, 0, 0]
-      for (const w of w1Hz) tp[w > c.cpW ? 2 : w >= 0.76 * c.cpW ? 1 : 0]++
+      for (const w of w1Hz) tp[w > c.cpW ? 2 : w >= SEUIL1_PCT_CP * c.cpW ? 1 : 0]++
       s.tempsPuissance = tp
     }
   }

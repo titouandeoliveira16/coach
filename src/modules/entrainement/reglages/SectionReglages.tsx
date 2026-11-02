@@ -3,6 +3,7 @@ import { Aide } from '../../../core/ui/Aide'
 import { Carte } from '../../../core/ui/Carte'
 import { AIDES } from '../aides'
 import { useReglagesEntrainement } from '../reglagesEntrainement'
+import { CalageFc } from './CalageFc'
 import { SectionAgenda } from './SectionAgenda'
 import { SectionAnalyse } from './SectionAnalyse'
 import { SectionIntervals } from './SectionIntervals'
@@ -28,6 +29,7 @@ export function SectionReglagesEntrainement() {
         <>
           <Carte titre="Zones vélo">
             <p className="text-sm text-texte-2">En % de ta CP (domaines physiologiques).<Aide titre="Zones" texte={AIDES.zonesCp} /></p>
+            <CalageFc zones={r.zonesVelo} cpW={r.cpW} onModifier={(zonesVelo) => modifier({ zonesVelo })} />
             <ZonesVelo zones={r.zonesVelo} cpW={r.cpW} onModifier={(zonesVelo) => modifier({ zonesVelo })} />
           </Carte>
           <ProgrammeAvance />

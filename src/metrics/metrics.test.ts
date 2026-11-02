@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { contrainte, modeleForme, monotonie, ratioPic, srpe, trimpBanister, trimpDepuisMoyenne } from './charge'
 import { allureSecKm, pctVma, rtss, vitesseKmh } from './course'
-import { decouplage, domaineDepuisFc, domaines, tempsParZone, type BornesZones } from './fc'
+import { calageFc, decouplage, domaineDepuisFc, domaines, tempsParZone, type BornesZones } from './fc'
 import { kjDepuisEchantillons, kjDepuisMoyenne, meilleurePuissance, puissanceNormalisee, tss } from './puissance'
 import { analyserVfc, decaler } from './vfc'
 import { adapterSeance, analyserSommeil, calculerSignal } from './signal'
@@ -98,10 +98,20 @@ describe('fréquence cardiaque', () => {
     const fc = t.map((i) => (i <= 100 ? 130 : i <= 200 ? 150 : i <= 300 ? 170 : 190))
     const z = tempsParZone(t, fc, BORNES)
     expect(z).toEqual([100, 100, 100, 100, 0])
-    expect(domaines(z)).toEqual({ basse: 200, moyenne: 100, haute: 100 })
+    expect(domaines(z)).toEqual({ basse: 200, moyenne: 200, haute: 0 })
     expect(domaineDepuisFc(140, BORNES)).toBe('basse')
     expect(domaineDepuisFc(170, BORNES)).toBe('moyenne')
+    expect(domaineDepuisFc(190, BORNES)).toBe('moyenne')
     expect(domaineDepuisFc(196, BORNES)).toBe('haute')
+  })
+
+  it('FC calées sur les sorties : 1er seuil, CP, Z3 interpolée ; rien sans assez de données', () => {
+    const sortie = (fcMoy: number) => ({ fcMoy, puissanceMoyW: 160, dureeSec: 3600, decouplage: 3 })
+    const bloc = (fcFin: number, seance: string) => ({ w: 230, fcFin, dureeSec: 1200, seance })
+    const o = { cpW: 235, bornes: BORNES, sorties: [sortie(150), sortie(152), sortie(154)], blocs: [bloc(178, 'a'), bloc(182, 'b')] }
+    expect(calageFc(o)).toMatchObject({ fc1: 152, fcCp: 180, bornes: [143, 152, 171, 180] })
+    expect(calageFc({ ...o, blocs: [bloc(178, 'a'), bloc(182, 'a')] })).toBeUndefined()
+    expect(calageFc({ ...o, sorties: [sortie(150), { ...sortie(152), decouplage: 8 }, sortie(154)] })).toBeUndefined()
   })
 
   it('découplage : même vitesse, FC 140 puis 147 → 4,76 %', () => {
