@@ -43,7 +43,7 @@ export function ControleSeance({ s, famille }: { s: Seance & { controle: Control
         ))}
       </ul>
       {c.auDessusSeuil1 !== undefined && <p className="mt-1 text-xs text-texte-3">Au-dessus du 1er seuil : {Math.round(c.auDessusSeuil1 / 60)} min (5 max pour une vraie Z2).</p>}
-      <p className="mt-1 text-xs text-texte-3">Touche un bloc pour noter ton ressenti.</p>
+      <p className="mt-1 text-xs text-texte-3">{c.parTours ? 'Moyennes des tours Zwift.' : 'Moyennes calculées sur ton fichier.'} Touche un bloc pour noter ton ressenti.</p>
     </div>
   )
 }

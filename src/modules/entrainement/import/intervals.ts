@@ -8,7 +8,7 @@ import { sportDepuisType } from '../sports'
 import type { MesureMatin } from '../types'
 import { meilleursEfforts, reechantillonner1Hz } from '../../../metrics/puissance'
 import { blocsDeLaSeance, tempsFc90, tousTenus } from '../plan/blocs'
-import { controlerSeance, controleTenu } from '../../../metrics/controle'
+import { controlerSeance, controleTenu, type Tour } from '../../../metrics/controle'
 import { regrouperEnchainements } from '../seances/enchainements'
 import { analyserFlux } from './flux'
 import { CLE_PESEES_EFFACEES, nettoyerPeseesEffacees } from '../forme/pesees'
@@ -133,7 +133,7 @@ async function importerActivites(depuis: string, surProgression?: (n: number) =>
 
   for (let i = 0; i < nouvelles.length; i += 10) {
     const lot = nouvelles.slice(i, i + 10)
-    const { flux } = await appeler<{ flux: Record<string, { time?: number[]; heartrate?: number[]; watts?: number[]; velocity_smooth?: number[] }> }>('flux', { ids: lot.map((a) => a.id) })
+    const { flux } = await appeler<{ flux: Record<string, { time?: number[]; heartrate?: number[]; watts?: number[]; velocity_smooth?: number[]; tours?: Tour[] }> }>('flux', { ids: lot.map((a) => a.id) })
     for (const a of lot) {
       const f = flux[a.id] ?? {}
       const debut = new Date(a.start_date)
@@ -167,7 +167,7 @@ async function importerActivites(depuis: string, surProgression?: (n: number) =>
         const blocs = prevue && blocsDeLaSeance(w1Hz, prevue, fc1Hz)
         const t90 = prevue && tempsFc90(prevue, fc1Hz, c.fcMax)
         // Contrôle de toute la séance (séries, over-unders, Z2) : chaque bloc dans sa plage ?
-        const controle = prevue?.velo?.etapes && c.cpW ? controlerSeance({ etapes: prevue.velo.etapes, famille: prevue.velo.famille, w1Hz, fc1Hz, cpW: c.cpW }) : undefined
+        const controle = prevue?.velo?.etapes && c.cpW ? controlerSeance({ etapes: prevue.velo.etapes, famille: prevue.velo.famille, w1Hz, fc1Hz, cpW: c.cpW, tours: f.tours }) : undefined
         if (prevue && (blocs || t90 !== undefined || controle)) {
           await enregistrer(db.seances, { ...enregistree, ...(blocs ? { blocs } : {}), ...(t90 !== undefined ? { tempsFc90: t90 } : {}), ...(controle ? { controle } : {}) })
           const intensite = !['z2', 'z2-long', 'test'].includes(prevue.velo?.famille ?? 'z2')

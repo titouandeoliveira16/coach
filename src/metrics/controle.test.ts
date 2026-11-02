@@ -35,7 +35,8 @@ it('over-unders : passages sous et au-dessus contrôlés séparément', () => {
 it('Z2 avec sprints : la Z2 est contrôlée, les sprints ignorés ; ressenti en hausse signalé', () => {
   const z = construireZ2(90, 150, { n: 6, sec: 10 })
   const c = controlerSeance({ etapes: z.velo.etapes!, famille: 'z2-long', w1Hz: simuler(z.velo.etapes!, 0), cpW: 235 })!
-  expect(c.lignes.every((l) => l.libelle === 'Z2')).toBe(true)
+  expect(c.lignes.map((l) => l.libelle)).toEqual(['Z2', 'Z2 entre les sprints', 'Z2'])
+  expect(c.lignes.every((l) => l.verdict === 'ok')).toBe(true)
   expect(c.auDessusSeuil1).toBeLessThan(60)
   expect(controleTenu(c)).toBe(true)
   const s = construireIntervalles(formatDe('seuil-8-10')!, 0, 235, 0)
@@ -44,3 +45,20 @@ it('Z2 avec sprints : la Z2 est contrôlée, les sprints ignorés ; ressenti en 
   k.lignes[2].rpe = 9
   expect(bilanControle(k, 'seuil')).toMatch(/Ressenti en hausse de 3 points/)
 })
+
+it('avec les tours de Zwift : moyennes et FC prises tour par tour', () => {
+  const s = construireIntervalles(formatDe('seuil-8-10')!, 0, 235, 0)
+  const plat = deplier(s.velo.etapes!)
+  // Un tour libre avant la séance, puis un tour par étape ; le 2e bloc fait trop fort
+  let bloc = 0
+  const tours = [{ dureeSec: 300, w: 120 }, ...plat.map((e) => {
+    const effort = !!e.wMin
+    if (effort) bloc++
+    return { dureeSec: e.dureeSec, w: effort && bloc === 2 ? 260 : e.w ?? 0, fc: effort ? 175 + bloc : 130 }
+  })]
+  const c = controlerSeance({ etapes: s.velo.etapes!, famille: 'seuil', w1Hz: [], cpW: 235, tours })!
+  expect(c.parTours).toBe(true)
+  expect(c.lignes.map((l) => l.verdict)).toEqual(['ok', 'haut', 'ok'])
+  expect(c.lignes[2].fc).toBe(178)
+})
+
