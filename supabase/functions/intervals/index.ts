@@ -143,6 +143,12 @@ Deno.serve(async (req) => {
       for (const id of ids) {
         const series = (await intervals(`/activity/${id}/streams.json?types=time,heartrate,watts,velocity_smooth`, c.cle).catch(() => [])) as { type: string; data: unknown[] }[]
         flux[id] = Object.fromEntries(series.map((s) => [s.type, s.data]))
+        // Tours (laps) de l'activité : Zwift en crée un par étape de la séance ; durée, watts et FC moyens de chacun
+        const tours = (await intervals(`/activity/${id}/intervals`, c.cle).catch(() => ({}))) as { icu_intervals?: Record<string, unknown>[] }
+        flux[id].tours = (tours.icu_intervals ?? []).map((t) => ({
+          dureeSec: Number(t.elapsed_time ?? t.moving_time ?? 0), w: Number(t.average_watts ?? 0),
+          ...(t.average_heartrate ? { fc: Math.round(Number(t.average_heartrate)) } : {}),
+        }))
       }
       return json({ flux })
     }
