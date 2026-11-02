@@ -7,13 +7,15 @@ import { enregistrer } from '../core/stockage'
  *  - profil : taille, date de naissance, FC max… (fusionné avec le profil) ;
  *  - entrainement : réglages d'entraînement (ex. zones), seulement s'ils ne sont pas déjà enregistrés ;
  *  - recordsPuissance : records de départ de la courbe de puissance (durée en s → watts et date) ;
- *  - comptesDepart : solde (€) et date de départ de comptes du Budget déjà créés.
+ *  - comptesDepart : solde (€) et date de départ de comptes du Budget déjà créés ;
+ *  - bornesFc : bornes hautes de FC des zones vélo Z1 à Z4 (bpm), appliquées aux zones existantes (remplacent les anciennes).
  */
 export interface FichierDonnees {
   profil?: Record<string, unknown>
   entrainement?: Record<string, unknown>
   recordsPuissance?: Record<string, { w: number; date: string }>
   comptesDepart?: Record<string, { solde: number; date: string }>
+  bornesFc?: [number, number, number, number]
 }
 
 export function lireFichierDonnees(texte: string): FichierDonnees {
@@ -23,7 +25,7 @@ export function lireFichierDonnees(texte: string): FichierDonnees {
   } catch {
     throw new Error('Fichier illisible.')
   }
-  if (!f || typeof f !== 'object' || !(f.profil || f.entrainement || f.recordsPuissance || f.comptesDepart))
+  if (!f || typeof f !== 'object' || !(f.profil || f.entrainement || f.recordsPuissance || f.comptesDepart || f.bornesFc))
     throw new Error('Rien à importer dans ce fichier.')
   return f
 }
@@ -47,6 +49,16 @@ export async function importerDonnees(f: FichierDonnees) {
   if (f.recordsPuissance) {
     await enregistrer(db.reglages, { id: 'recordsPuissance', valeur: { ...(await lire('recordsPuissance')), ...f.recordsPuissance } })
     fait.push(`${Object.keys(f.recordsPuissance).length} records de puissance`)
+  }
+  if (f.bornesFc?.length === 4) {
+    const e = await lire('entrainement')
+    const zones = (e.zonesVelo as { fcMin?: number; fcMax?: number }[] | undefined) ?? []
+    if (zones.length) {
+      const b = f.bornesFc
+      const zonesVelo = zones.map((z, i) => ({ ...z, ...(i <= 3 ? { fcMax: b[i] } : {}), ...(i >= 1 && i <= 4 ? { fcMin: b[i - 1] } : {}) }))
+      await enregistrer(db.reglages, { id: 'entrainement', valeur: { ...e, zonesVelo } })
+      fait.push('zones de FC')
+    }
   }
   let comptes = 0
   for (const [id, { solde, date }] of Object.entries(f.comptesDepart ?? {})) {
