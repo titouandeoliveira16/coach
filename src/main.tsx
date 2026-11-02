@@ -11,6 +11,8 @@ demanderStockagePersistant()
 demarrerSynchro()
 // Laisse le temps à la session du compte de se restaurer
 setTimeout(() => synchroniserRappels(), 5000)
+// Après la première synchro : séances à venir remises au format avec répétitions (v0.62)
+setTimeout(() => import('./modules/entrainement/plan/programme').then((m) => m.mettreAJourFormatSeances()).catch(() => {}), 8000)
 
 // Mises à jour : on vérifie s'il existe une nouvelle version à chaque retour
 // sur l'appli (iPhone : l'appli est souvent « réveillée » plutôt que relancée)

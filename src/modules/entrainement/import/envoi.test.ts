@@ -22,17 +22,18 @@ describe('envoi vers Intervals.icu', () => {
   })
   it('repère de cadence envoyé sur les efforts, pas sur la Z2', () => {
     const ss = texteIntervals(construireIntervalles(formatDe('sweet-spot')!, 0, 260, 0).velo.etapes!)
-    expect(ss).toMatch(/15m 235w 85-95rpm/)
+    expect(ss).toMatch(/15m 235w 90rpm/)
     expect(texteIntervals(construireZ2(60, 180).velo.etapes!)).not.toMatch(/rpm/)
   })
-  it('séries répétées en blocs « Nx » (dernière répétition sans récup) et sprints de la sortie longue envoyés un par un', () => {
+  it('séries écrites répétition par répétition, sprints de la sortie longue envoyés un par un', () => {
     const v = texteIntervals(construireIntervalles(formatDe('30-15')!, 0, 235, 0).velo.etapes!)
-    expect(v).toContain('9x\n- Effort 30s 280w 90-105rpm\n- Récup 15s 120w\n\n- Effort 30s 280w 90-105rpm')
+    expect(v).not.toMatch(/^\d+x$/m)
+    expect(v.match(/- Effort 30s 280w/g)).toHaveLength(20)
+    expect(v.match(/- Récup 15s 120w/g)).toHaveLength(18)
     const z = construireZ2(62.9999999, 160, { n: 6, sec: 10 })
     expect(z.dureeMin).toBe(63)
     const t = texteIntervals(z.velo.etapes!)
-    expect(t).toContain('3x\n- Sprint à fond 10s freeride 100-120rpm\n- Très facile 2m 135w\n- Endurance 7m50s 160w')
-    expect(t.match(/freeride/g)).toHaveLength(2) // 3 dans le bloc « 3x », puis le dernier
+    expect(t.match(/- Sprint à fond 10s freeride 110rpm/g)).toHaveLength(4)
     expect(t).not.toMatch(/\d+\.\d/)
   })
 })

@@ -371,6 +371,22 @@ export async function progressionFamilles() {
  * Après un test CP : les séances vélo encore à faire (semaine en cours et semaines déjà générées)
  * sont recalculées avec la nouvelle CP.
  */
+/**
+ * Séances à venir créées avant la v0.62 (séries 30/15, over-unders et sprints en un seul bloc) :
+ * on régénère leur semaine pour qu'elles aient leurs répétitions (profil, envoi à Zwift / Garmin).
+ */
+export async function mettreAJourFormatSeances() {
+  const jour = aujourdhui()
+  const aRefaire = new Set<string>()
+  for (const p of await db.prevues.where('date').aboveOrEqual(jour).toArray()) {
+    const v = p.velo
+    if (p.origine !== 'auto' || p.statut !== 'prevue' || !v?.etapes) continue
+    const aDesSeries = v.famille === 'vo2-courts' || v.famille === 'seuil-variable' || (v.famille === 'z2-long' && / sprints?/.test(p.titre))
+    if (aDesSeries && !v.etapes.some((e) => e.repetition)) aRefaire.add(lundiDe(p.date))
+  }
+  for (const l of aRefaire) if (await lireMeta(l)) await genererSemaineVelo(l).catch(() => {})
+}
+
 export async function recalculerApresTest() {
   const lundi = lundiDe(aujourdhui())
   for (const l of [lundi, decalerJour(lundi, 7), decalerJour(lundi, 14)]) {

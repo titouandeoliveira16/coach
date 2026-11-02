@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../../core/db'
 import { enregistrer } from '../../../core/stockage'
-import type { Etape } from '../../../metrics/programme'
+import { deplier, type Etape } from '../../../metrics/programme'
 import type { SeancePrevue } from '../types'
 import { appeler } from './intervals'
 
@@ -33,29 +33,20 @@ const libelle = (t: string) => t.split(':')[0]
 
 /** Texte de la séance au format du « workout builder » d'Intervals.icu : une ligne par étape, watts absolus (milieu de la plage),
  *  repère de cadence quand il y en a un. */
-const ligne = (e: Pick<Etape, 'libelle' | 'dureeSec' | 'w' | 'cadence'>) =>
-  `- ${libelle(e.libelle)} ${dureeIntervals(e.dureeSec)} ${e.w ? `${e.w}w` : 'freeride'}${e.cadence ? ` ${e.cadence}rpm` : ''}`.replace(/\s+/g, ' ')
-
-/**
- * Une série répétée devient un bloc « 10x » d'Intervals (Zwift et Garmin affichent chaque répétition) ;
- * si la dernière répétition est plus courte (pas de récup avant la suite), elle est écrite à part.
- */
-function lignes(e: Etape): string[] {
-  if (!e.repetition) return [ligne(e)]
-  const { fois, etapes: sous, derniere = sous.length } = e.repetition
-  const complete = derniere < sous.length ? fois - 1 : fois
-  const out = complete > 0 ? ['', `${complete}x`, ...sous.map(ligne), ''] : []
-  if (complete < fois) out.push(...sous.slice(0, derniere).map(ligne), '')
-  return out
+/** Repère de cadence envoyé en une seule valeur (milieu de la plage) : la forme la plus simple pour Intervals. */
+const cadenceMilieu = (c: string) => {
+  const [a, b] = c.split('-').map(Number)
+  return Math.round(((a + (b || a)) / 2) / 5) * 5
 }
+const ligne = (e: Pick<Etape, 'libelle' | 'dureeSec' | 'w' | 'cadence'>) =>
+  `- ${libelle(e.libelle)} ${dureeIntervals(e.dureeSec)} ${e.w ? `${e.w}w` : 'freeride'}${e.cadence ? ` ${cadenceMilieu(e.cadence)}rpm` : ''}`.replace(/\s+/g, ' ')
 
+/** Texte envoyé : chaque répétition écrite une par une (30", 15", 30", 15"…), comme le profil de l'appli. */
 export function texteIntervals(etapes: Etape[]) {
-  return etapes
+  return deplier(etapes)
     .filter((e) => e.dureeSec > 0)
-    .flatMap(lignes)
+    .map(ligne)
     .join('\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim()
 }
 
 export async function envoyerSeance(p: SeancePrevue, etapes: Etape[], cible: Cible) {
