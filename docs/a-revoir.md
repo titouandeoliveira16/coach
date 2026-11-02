@@ -89,6 +89,10 @@ Points décidés ou mis de côté, à reprendre au bon moment.
 - Module course à pied (aujourd'hui saisi depuis Campus Coach) et vélo généré selon les objectifs de saison : à repenser plus tard.
 
 ## Fait
+- 2/11/2026 (v0.61.0) : zones de puissance en % de CP ancrées sur les domaines (Z4 91-100 %, Z5 101-120 %), bouton
+  « Recaler sur ma CP », intensité des séances vélo jugée par les watts (≥ 1 min > CP = haute ; ≥ 10 min 76-100 % = moyenne).
+  Bornes de FC proposées par le relecteur, à saisir par Titouan dans Zones vélo, puis à recaler sur ses sorties
+  (FC stabilisée après 20′ à 75 % CP ; bloc de 20′ à 95-100 %). Les séances déjà importées gardent le classement par FC.
 - 30/10/2026 (v0.59.0) : séances prévues dans Google Agenda (lien iCal privé, journée entière, fonction « agenda » à créer).
 - 29/10/2026 (v0.58.0) : bilan nutrition du dimanche (faim, énergie, tour de taille, rappel photo), ajustement du déficit
   proposé (200 à 600 kcal, ±100/200 au plus toutes les 2 semaines, pause de 7 jours si alerte), maintien mesuré provisoire

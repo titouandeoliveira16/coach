@@ -77,6 +77,12 @@ export function analyserFlux(flux: Flux, r: Resume, c: Contexte): Seance {
     // Meilleurs efforts : courbe de puissance et estimation de la CP entre deux tests
     const meilleurs = meilleursEfforts(w1Hz)
     if (Object.keys(meilleurs).length) s.meilleurs = meilleurs
+    // Temps par domaine de puissance (pour juger l'intensité avec les watts plutôt qu'avec la FC)
+    if (c.cpW) {
+      const tp: [number, number, number] = [0, 0, 0]
+      for (const w of w1Hz) tp[w > c.cpW ? 2 : w >= 0.76 * c.cpW ? 1 : 0]++
+      s.tempsPuissance = tp
+    }
   }
   if (aFc && dureeSec >= DUREE_MIN_DECOUPLAGE) {
     const sortie = aPuissance ? flux.w! : flux.v

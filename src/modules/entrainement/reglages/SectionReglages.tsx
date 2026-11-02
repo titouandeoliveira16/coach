@@ -1,5 +1,7 @@
 import { useState } from 'react'
+import { Aide } from '../../../core/ui/Aide'
 import { Carte } from '../../../core/ui/Carte'
+import { AIDES } from '../aides'
 import { useReglagesEntrainement } from '../reglagesEntrainement'
 import { SectionAgenda } from './SectionAgenda'
 import { SectionAnalyse } from './SectionAnalyse'
@@ -25,6 +27,7 @@ export function SectionReglagesEntrainement() {
       {avance && (
         <>
           <Carte titre="Zones vélo">
+            <p className="text-sm text-texte-2">En % de ta CP (domaines physiologiques).<Aide titre="Zones" texte={AIDES.zonesCp} /></p>
             <ZonesVelo zones={r.zonesVelo} cpW={r.cpW} onModifier={(zonesVelo) => modifier({ zonesVelo })} />
           </Carte>
           <ProgrammeAvance />

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { lireNombre } from '../../../core/format'
+import { zonesDepuisCp } from '../../../core/zones'
 import type { ZoneVelo } from '../types'
 
 interface Props {
@@ -18,6 +19,9 @@ export function ZonesVelo({ zones, cpW, onModifier }: Props) {
   }
 
   const pctCp = (w?: number) => (cpW && w !== undefined ? Math.round((w / cpW) * 100) : undefined)
+  // Zones de puissance qui ne suivent pas les % de CP de l'appli (anciennes zones importées) : proposer de les recaler
+  const standard = cpW ? zonesDepuisCp(cpW, zones) : undefined
+  const decalees = !!standard && (standard.length !== zones.length || standard.some((z, i) => z.wMin !== zones[i].wMin || z.wMax !== zones[i].wMax))
 
   return (
     <div className="mt-4">
@@ -28,6 +32,14 @@ export function ZonesVelo({ zones, cpW, onModifier }: Props) {
         </button>
       </div>
 
+      {decalees && !edition && (
+        <div className="mb-2 rounded-xl bg-surface-2 p-2.5 text-sm text-texte-2">
+          Tes zones de puissance ne suivent pas les % de ta CP utilisés par tes séances.
+          <button type="button" className="mt-1 block font-semibold text-accent" onClick={() => onModifier(standard!)}>
+            Recaler sur ma CP ({cpW} W)
+          </button>
+        </div>
+      )}
       {edition ? (
         <div className="space-y-2">
           {zones.map((z, i) => (
