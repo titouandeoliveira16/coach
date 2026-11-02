@@ -23,4 +23,13 @@ describe('changer de jour', () => {
     expect((await db.prevues.get('v1'))?.date).toBe('2026-11-03')
     expect((await db.prevues.get('v1'))?.deplacee).toBe(true)
   })
+
+  it('« les deux ce jour » : le renfo rejoint le footing, rien d’autre ne bouge', async () => {
+    await db.prevues.put({ ...p('r1', '2026-11-05', 'Renfo'), sport: 'renfo' })
+    const m = await changerDeJour((await db.prevues.get('r1'))!, '2026-11-04', true)
+    expect((await db.prevues.get('r1'))?.date).toBe('2026-11-04')
+    expect((await db.prevues.get('c1'))?.date).toBe('2026-11-04')
+    expect(m.join(' ')).toMatch(/2 séances/)
+    expect(m.join(' ')).toMatch(/3 h/)
+  })
 })
