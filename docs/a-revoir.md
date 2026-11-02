@@ -60,6 +60,9 @@ Points décidés ou mis de côté, à reprendre au bon moment.
   WhatsOnZwift (séances Zwift). Idée : importer des séances .zwo dans l'appli ou envoyer les nôtres vers Zwift via Intervals.
 - Étape du Tour 2027 (11/07, Cluses – Les Saisies, 154 km, 4 850 m) : simple idée pour l'instant. Si elle devient
   l'objectif : phase spécifique après le CAPEPS (montées longues Z3, sorties 4-6 h, 60-90 g/h), affûtage 10-14 j.
+- Zones (2/11, Titouan cherche des études avant de trancher) : proposition d'un modèle 5 zones par domaines
+  (Z1 < 60 % CP · Z2 60 % → LT1 ~78 % · Z3 LT1 → CP · Z4 CP → CP + W′/120 · Z5 au-delà) + vue 3 zones de Seiler.
+  L'appli reste pour l'instant en 6 zones % CP (v0.61.0). LT1 à mesurer (DFA-α1) plutôt qu'estimer.
 - Durabilité (30/10, « intéressant à bosser », mis de côté) : prépa en 4 temps proposée. Base : sortie longue Z2 qui
   s'allonge + sprints, muscu lourde jambes 2×/sem (seul levier prouvé, Rønnestad 2011). Construction : blocs sweet spot
   en fin de sortie longue, intervalles après 1 h 30 de Z2, 60-90 g/h. Spécifique : 4-6 h avec efforts dans la dernière
