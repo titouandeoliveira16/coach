@@ -170,6 +170,8 @@ export interface Seance {
   /** Watts moyens de chaque bloc de travail, comparés à la cible de la séance prévue (et montée de FC dans chaque bloc, %) */
   /** Plage visée : minW (absent : 97 % de la cible) et maxW (seuil, sweet spot, tempo seulement) */
   blocs?: { cibleW: number; minW?: number; maxW?: number; dureeSec: number; w: number[]; deriveFc?: number[]; fcFin?: number[] }
+  /** Contrôle de la séance prévue : moyenne de chaque bloc contre sa plage (et ressenti saisi par bloc) */
+  controle?: import('../../metrics/controle').Controle
   /** Intervalles VO2 : secondes à 90 % ou plus de la FC max */
   tempsFc90?: number
   /** « En réserve ? » après le RPE : ok (facile tenable 1-2 h / 0-1 répétition en réserve), moyen, non */
