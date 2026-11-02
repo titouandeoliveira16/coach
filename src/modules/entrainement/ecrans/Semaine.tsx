@@ -263,17 +263,27 @@ function DetailSeance({ p, jours, prevues, onFermer, onMessage }: {
         </div>
       ) : mode === 'jour' ? (
         <div className="mt-4 space-y-2">
-          <p className="text-texte-2">Vers quel jour ? Si une séance y est déjà prévue, les deux échangent leur jour.</p>
+          <p className="text-texte-2">Vers quel jour ? Si une séance y est déjà prévue, tu peux échanger les deux, ou les garder le même jour (ex. renfo le jour d'un footing).</p>
           {jours.map((d) => {
             const la = prevues.filter((x) => x.date === d && x.statut === 'prevue' && x.id !== p.id)
+            const jour = <span className="font-semibold capitalize">{depuisJour(d).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric' })}</span>
+            if (la.length && d !== p.date) {
+              return (
+                <div key={d} className="rounded-xl border border-bordure px-3 py-2.5 text-sm">
+                  <div className="flex items-center justify-between">{jour}<span className="text-texte-2">{la.map((x) => `${iconeSport(x.sport)} ${x.titre}`).join(', ')}</span></div>
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    <button type="button" className="rounded-lg border border-bordure py-1.5 font-semibold" onClick={async () => { onMessage(await changerDeJour(p, d)); onFermer() }}>↔ Échanger</button>
+                    <button type="button" className="rounded-lg border border-bordure py-1.5 font-semibold" onClick={async () => { onMessage(await changerDeJour(p, d, true)); onFermer() }}>＋ Les deux ce jour</button>
+                  </div>
+                </div>
+              )
+            }
             return (
               <button key={d} type="button" disabled={d === p.date}
                 onClick={async () => { onMessage(await changerDeJour(p, d)); onFermer() }}
                 className={`flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-left text-sm ${d === p.date ? 'border-accent opacity-60' : 'border-bordure'}`}>
-                <span className="font-semibold capitalize">{depuisJour(d).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric' })}</span>
-                <span className="text-texte-2">
-                  {d === p.date ? 'actuel' : la.length ? `↔ ${la.map((x) => `${iconeSport(x.sport)} ${x.titre}`).join(', ')}` : 'libre'}
-                </span>
+                {jour}
+                <span className="text-texte-2">{d === p.date ? 'actuel' : 'libre'}</span>
               </button>
             )
           })}

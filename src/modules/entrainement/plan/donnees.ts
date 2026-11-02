@@ -70,12 +70,25 @@ export async function declarerNonFaite(p: SeancePrevue, raison: Raison) {
 /**
  * Change une séance de jour. Si le jour choisi a déjà des séances à faire, elles prennent sa place : les jours sont échangés.
  */
-export async function changerDeJour(p: SeancePrevue, vers: string) {
+/**
+ * Change une séance de jour. Par défaut, si une séance est déjà prévue ce jour-là, les deux échangent leur jour ;
+ * avec `ensemble`, les deux restent le même jour (ex. renfo le jour d'un footing).
+ */
+export async function changerDeJour(p: SeancePrevue, vers: string, ensemble = false) {
   if (vers === p.date) return []
   const la = (await db.prevues.where('date').equals(vers).toArray()).filter((x) => x.statut === 'prevue' && x.id !== p.id)
   await enregistrer(db.prevues, { ...p, date: vers, deplacee: true })
-  for (const x of la) await enregistrer(db.prevues, { ...x, date: p.date, deplacee: true })
   const nom = (d: string) => new Date(`${d}T12:00:00`).toLocaleDateString('fr-FR', { weekday: 'long' })
+  if (ensemble && la.length) {
+    const deuxDures = p.intensite === 'haute' && la.some((x) => x.intensite === 'haute')
+    const renfo = p.sport === 'renfo' || la.some((x) => x.sport === 'renfo')
+    return [
+      `${p.titre} passe au ${nom(vers)}, avec ${la.map((x) => x.titre).join(' et ')} : 2 séances ce jour-là.`,
+      ...(renfo ? ['Fais le renfo au moins 3 h après (ou avant) l’autre séance : dans la même séance, l’explosivité progresse moins (Schumann 2022).'] : []),
+      ...(deuxDures ? ['Attention : deux séances dures le même jour, c’est beaucoup. Garde-le exceptionnel.'] : []),
+    ]
+  }
+  for (const x of la) await enregistrer(db.prevues, { ...x, date: p.date, deplacee: true })
   return la.length
     ? [`${p.titre} passe au ${nom(vers)}, ${la.map((x) => x.titre).join(' et ')} au ${nom(p.date)}.`]
     : [`${p.titre} passe au ${nom(vers)}.`]
