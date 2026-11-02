@@ -13,7 +13,7 @@ export interface Etape {
   etapes?: Etape[]
 }
 
-export interface Reference { auteurs: string; annee: number; titre: string; revue: string; pmid?: string }
+export interface Reference { auteurs: string; annee: number; titre: string; revue: string; pmid?: string; doi?: string }
 
 export interface SeanceCatalogue {
   id: string

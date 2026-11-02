@@ -63,6 +63,10 @@ Points décidés ou mis de côté, à reprendre au bon moment.
 - Zones (2/11, Titouan cherche des études avant de trancher) : proposition d'un modèle 5 zones par domaines
   (Z1 < 60 % CP · Z2 60 % → LT1 ~78 % · Z3 LT1 → CP · Z4 CP → CP + W′/120 · Z5 au-delà) + vue 3 zones de Seiler.
   L'appli reste pour l'instant en 6 zones % CP (v0.61.0). LT1 à mesurer (DFA-α1) plutôt qu'estimer.
+- Prise de sang de contrôle (hémoglobine, ferritine) avant la préparation de l'Étape du Tour, et en cas de fatigue
+  inhabituelle : gros volume + déficit (Lippi 2020 : hématocrite et hémoglobine plus bas avec le volume ; RED-S).
+- Études lues en entier le 2/11 (envoyées par Titouan) : Galán-Rioja 2023, Neal 2013, Mateo-March 2026, Ventura 2023,
+  de Oliveira 2024, Magalhães 2024 ajoutées au catalogue. Écartées : Nabofa 2025 (incohérences), bicarbonate (hors sujet).
 - Durabilité (30/10, « intéressant à bosser », mis de côté) : prépa en 4 temps proposée. Base : sortie longue Z2 qui
   s'allonge + sprints, muscu lourde jambes 2×/sem (seul levier prouvé, Rønnestad 2011). Construction : blocs sweet spot
   en fin de sortie longue, intervalles après 1 h 30 de Z2, 60-90 g/h. Spécifique : 4-6 h avec efforts dans la dernière

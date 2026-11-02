@@ -83,6 +83,7 @@ export function Fiche({ s }: { s: SeanceCatalogue }) {
               <li key={r.auteurs + r.annee}>
                 {r.auteurs} ({r.annee}). <i className="text-texte">{r.titre}</i>. {r.revue}.
                 {r.pmid && <> <a href={`https://pubmed.ncbi.nlm.nih.gov/${r.pmid}/`} target="_blank" rel="noreferrer" className="text-accent underline">PubMed</a></>}
+                {!r.pmid && r.doi && <> <a href={`https://doi.org/${r.doi}`} target="_blank" rel="noreferrer" className="text-accent underline">Article</a></>}
               </li>
             ))}
           </ul>

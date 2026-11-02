@@ -1,6 +1,6 @@
 {
  "version": 3,
- "majLe": "2026-10-29",
+ "majLe": "2026-11-02",
  "description": "Catalogue scientifique de séances (vélo, course à pied, renforcement, tests, méthodes). Voir catalogue/README.md.",
  "unites": {
   "%CP": "pourcentage de la puissance critique (≈ FTP)",
@@ -211,7 +211,7 @@
    ],
    "preuve": {
     "niveau": "plausible",
-    "resultat": "Le volume facile est la base des athlètes d'endurance. La tenue à la fatigue (durabilité) sépare les meilleurs pros en course ; la sortie longue l'entraîne logiquement, sans essai qui compare sorties longues et courtes à volume égal.",
+    "resultat": "Le volume facile est la base des athlètes d'endurance. La tenue à la fatigue (durabilité) sépare les meilleurs pros en course ; la sortie longue l'entraîne logiquement, sans essai qui compare sorties longues et courtes à volume égal. Manger pendant l'effort compte : 13 amateurs ont produit environ 5 % de travail en plus sur 20 min après 100 min de vélo avec des glucides qu'avec un placebo (type de sucre peu important).",
     "references": [
      {
       "auteurs": "Seiler S",
@@ -232,6 +232,13 @@
       "titre": "The importance of 'durability' in the physiological profiling of endurance athletes",
       "revue": "Sports Med",
       "pmid": "33886100"
+     },
+     {
+      "auteurs": "de Oliveira NG, de Oliveira LF, da Silva RP, et al.",
+      "annee": 2024,
+      "titre": "Trehalose improved 20-min cycling time-trial performance after 100-min cycling in amateur cyclists",
+      "revue": "Int J Sport Nutr Exerc Metab",
+      "doi": "10.1123/ijsnem.2023-0241"
      }
     ]
    }
@@ -3720,7 +3727,7 @@
    ],
    "preuve": {
     "niveau": "prouvé",
-    "resultat": "Tests de terrain valides et fiables pour la CP quand les efforts sont maximaux. Avec 30 min de récupération entre les efforts, l'erreur moyenne est de 3,7 % sur la CP mais de 33 % sur W′.",
+    "resultat": "Tests de terrain valides et fiables pour la CP quand les efforts sont maximaux. Avec 30 min de récupération entre les efforts, l'erreur moyenne est de 3,7 % sur la CP mais de 33 % sur W′. Avec 3 efforts, la CP et W′ prédisent bien le temps tenu au-dessus de la CP (19 cyclistes) ; avec 2, la prédiction se dégrade sur les efforts très courts.",
     "references": [
      {
       "auteurs": "Karsten B, Jobson SA, Hopker J, Stevens L, Beedie C",
@@ -3735,6 +3742,13 @@
       "titre": "Comparison of inter-trial recovery times for the determination of critical power and W′ in cycling",
       "revue": "J Sports Sci",
       "pmid": "27531664"
+     },
+     {
+      "auteurs": "Ventura TP, Borszcz FK, Antunes D, Caputo F, Turnes T",
+      "annee": 2023,
+      "titre": "Prediction of exercise tolerance in the severe and extreme intensity domains by a critical power model",
+      "revue": "J Hum Kinet",
+      "doi": "10.5114/jhk/170101"
      }
     ]
    }
@@ -3803,13 +3817,20 @@
    ],
    "preuve": {
     "niveau": "plausible",
-    "resultat": "Deux efforts maximaux donnent une CP quasi identique à celle obtenue avec trois (283 contre 282 W dans l'étude).",
+    "resultat": "Deux efforts maximaux donnent une CP quasi identique à celle obtenue avec trois (283 contre 282 W dans l'étude). Mais avec 2 efforts, le temps tenu au-dessus de la CP est moins bien prédit qu'avec 3 : à garder pour dépanner.",
     "references": [
      {
       "auteurs": "Simpson LP, Kordi M",
       "annee": 2017,
       "titre": "Comparison of critical power and W′ derived from 2 or 3 maximal tests",
       "revue": "Int J Sports Physiol Perform"
+     },
+     {
+      "auteurs": "Ventura TP, Borszcz FK, Antunes D, Caputo F, Turnes T",
+      "annee": 2023,
+      "titre": "Prediction of exercise tolerance in the severe and extreme intensity domains by a critical power model",
+      "revue": "J Hum Kinet",
+      "doi": "10.5114/jhk/170101"
      }
     ]
    }
@@ -6198,7 +6219,7 @@
    "conseils": [],
    "preuve": {
     "niveau": "plausible",
-    "resultat": "Au moins aussi efficace que les autres répartitions ; méta-analyse 2024 (17 études) : léger avantage sur la VO2max seulement (athlètes très entraînés, moins de 12 semaines), pas sur les contre-la-montre.",
+    "resultat": "Au moins aussi efficace que les autres répartitions ; méta-analyse 2024 (17 études) : léger avantage sur la VO2max seulement (athlètes très entraînés, moins de 12 semaines), pas sur les contre-la-montre. Chez 12 cyclistes entraînés (6 semaines, ordre tiré au sort), 80 % facile / 20 % dur a fait plus progresser la puissance max et le seuil lactique qu'un programme centré sur le seuil (43 % au milieu), en moins d'heures. Revue 2023 chez des cyclistes entraînés : aucun modèle de périodisation supérieur sur 8-12 semaines ; 7 à 12 h par semaine conseillées.",
     "references": [
      {
       "auteurs": "Silva Oliveira P, Boppre G, Fonseca H",
@@ -6225,6 +6246,20 @@
       "annee": 2025,
       "titre": "Which training intensity distribution intervention will produce the greatest improvements in maximal oxygen uptake and time-trial performance in endurance athletes?",
       "revue": "Sports Med"
+     },
+     {
+      "auteurs": "Neal CM, Hunter AM, Brennan L, et al.",
+      "annee": 2013,
+      "titre": "Six weeks of a polarized training-intensity distribution leads to greater physiological and performance adaptations than a threshold model in trained cyclists",
+      "revue": "J Appl Physiol",
+      "pmid": "23264537"
+     },
+     {
+      "auteurs": "Galán-Rioja MÁ, Gonzalez-Ravé JM, González-Mohíno F, Seiler S",
+      "annee": 2023,
+      "titre": "Training periodization, intensity distribution, and volume in trained cyclists: a systematic review",
+      "revue": "Int J Sports Physiol Perform",
+      "doi": "10.1123/ijspp.2022-0302"
      }
     ]
    }
@@ -6250,7 +6285,7 @@
    "conseils": [],
    "preuve": {
     "niveau": "plausible",
-    "resultat": "Répartition fréquente chez les élites, surtout en période de base ; elle fait jeu égal avec le polarisé dans les comparaisons récentes.",
+    "resultat": "Répartition fréquente chez les élites, surtout en période de base ; elle fait jeu égal avec le polarisé dans les comparaisons récentes. Plus de 90 % des pros WorldTour sont pyramidaux avant la saison (en puissance : ~70 % sous le 1er seuil estimé à 70 % de la CP, ~25 % entre ce seuil et la CP, ~4 % au-dessus). Chez 14 amateurs (16 semaines, ~7,6 h/sem, sans groupe de comparaison), la puissance au seuil a progressé.",
     "references": [
      {
       "auteurs": "Silva Oliveira P, Boppre G, Fonseca H",
@@ -6263,6 +6298,27 @@
       "annee": 2025,
       "titre": "Which training intensity distribution intervention will produce the greatest improvements in maximal oxygen uptake and time-trial performance in endurance athletes?",
       "revue": "Sports Med"
+     },
+     {
+      "auteurs": "Galán-Rioja MÁ, Gonzalez-Ravé JM, González-Mohíno F, Seiler S",
+      "annee": 2023,
+      "titre": "Training periodization, intensity distribution, and volume in trained cyclists: a systematic review",
+      "revue": "Int J Sports Physiol Perform",
+      "doi": "10.1123/ijspp.2022-0302"
+     },
+     {
+      "auteurs": "Mateo-March M, Barranco-Gil D, Muriel X, Pallarés JG, Valenzuela PL",
+      "annee": 2026,
+      "titre": "Training characteristics of male and female WorldTour professional road cyclists before the competitive phase",
+      "revue": "Biol Sport",
+      "doi": "10.5114/biolsport.2026.156234"
+     },
+     {
+      "auteurs": "Magalhães PM, Cipriano F, Morais JE, Bragada JA",
+      "annee": 2024,
+      "titre": "Effects of a 16-week training program with a pyramidal intensity distribution on recreational male cyclists",
+      "revue": "Sports",
+      "doi": "10.3390/sports12010017"
      }
     ]
    }

@@ -31,9 +31,10 @@ def X(n, *etapes, note=None):
     if note: d["note"] = note
     return d
 
-def ref(auteurs, annee, titre, revue, pmid=None):
+def ref(auteurs, annee, titre, revue, pmid=None, doi=None):
     r = {"auteurs": auteurs, "annee": annee, "titre": titre, "revue": revue}
     if pmid: r["pmid"] = pmid
+    if doi: r["doi"] = doi
     return r
 
 # Temps de qualité : efforts au-dessus de l'endurance (≥ 76 % CP, ≥ 80 % VMA) ou à fond
@@ -145,6 +146,12 @@ ALFREDSON_1998 = ref("Alfredson H, Pietilä T, Jonsson P, Lorentzon R", 1998, "H
 GRGIC_2022 = ref("Grgic J, Schoenfeld BJ, Orazem J, Sabol F", 2022, "Effects of resistance training performed to repetition failure or non-failure on muscular strength and hypertrophy: a systematic review and meta-analysis", "J Sport Health Sci")
 HELMS_2016 = ref("Helms ER, Cronin J, Storey A, Zourdos MC", 2016, "Application of the repetitions in reserve-based rating of perceived exertion scale for resistance training", "Strength Cond J")
 WENDLER = ref("Wendler J", 2011, "5/3/1: The Simplest and Most Effective Training System to Increase Raw Strength (2e éd.)", "Jim Wendler LLC (livre)")
+# Articles lus en entier (envoyés par Titouan le 2/11/2026) : DOI relevés sur les PDF
+GALAN_RIOJA_2023 = ref("Galán-Rioja MÁ, Gonzalez-Ravé JM, González-Mohíno F, Seiler S", 2023, "Training periodization, intensity distribution, and volume in trained cyclists: a systematic review", "Int J Sports Physiol Perform", doi="10.1123/ijspp.2022-0302")
+MATEO_MARCH_2026 = ref("Mateo-March M, Barranco-Gil D, Muriel X, Pallarés JG, Valenzuela PL", 2026, "Training characteristics of male and female WorldTour professional road cyclists before the competitive phase", "Biol Sport", doi="10.5114/biolsport.2026.156234")
+VENTURA_2023 = ref("Ventura TP, Borszcz FK, Antunes D, Caputo F, Turnes T", 2023, "Prediction of exercise tolerance in the severe and extreme intensity domains by a critical power model", "J Hum Kinet", doi="10.5114/jhk/170101")
+DE_OLIVEIRA_2024 = ref("de Oliveira NG, de Oliveira LF, da Silva RP, et al.", 2024, "Trehalose improved 20-min cycling time-trial performance after 100-min cycling in amateur cyclists", "Int J Sport Nutr Exerc Metab", doi="10.1123/ijsnem.2023-0241")
+MAGALHAES_2024 = ref("Magalhães PM, Cipriano F, Morais JE, Bragada JA", 2024, "Effects of a 16-week training program with a pyramidal intensity distribution on recreational male cyclists", "Sports", doi="10.3390/sports12010017")
 LIEDL_1999 = ref("Liedl MA, Swain DP, Branch JD", 1999, "Physiological effects of constant versus variable power during endurance cycling", "Med Sci Sports Exerc")
 LUCIA_2004 = ref("Lucía A, San Juan AF, Montilla M, et al.", 2004, "In professional road cyclists, low pedaling cadences are less efficient", "Med Sci Sports Exerc")
 HANSEN_RONNESTAD_2017 = ref("Hansen EA, Rønnestad BR", 2017, "Effects of cycling training at imposed low cadences: a systematic review", "Int J Sports Physiol Perform", "28095074")
@@ -182,7 +189,7 @@ seance("velo-endurance-longue", famille="endurance", nom="Sortie longue",
        variantes=["1 h 45", "2 h 30", "3 h", "4 h et plus (objectif cyclosportive)"], phases=["base", "construction", "spécifique"],
        parSemaine="1", recuperation="24-48 h",
        conseils=["Glucides : 30-60 g/h au-delà de 1 h 15, 60-90 g/h au-delà de 2 h 30 (consensus ACSM).", "Bois selon la soif, davantage en intérieur."],
-       preuve=P("plausible", "Le volume facile est la base des athlètes d'endurance. La tenue à la fatigue (durabilité) sépare les meilleurs pros en course ; la sortie longue l'entraîne logiquement, sans essai qui compare sorties longues et courtes à volume égal.", SEILER_2010, VAN_ERP_2021, MAUNDER_2021), **V)
+       preuve=P("plausible", "Le volume facile est la base des athlètes d'endurance. La tenue à la fatigue (durabilité) sépare les meilleurs pros en course ; la sortie longue l'entraîne logiquement, sans essai qui compare sorties longues et courtes à volume égal. Manger pendant l'effort compte : 13 amateurs ont produit environ 5 % de travail en plus sur 20 min après 100 min de vélo avec des glucides qu'avec un placebo (type de sucre peu important).", SEILER_2010, VAN_ERP_2021, MAUNDER_2021, DE_OLIVEIRA_2024), **V)
 
 seance("velo-endurance-sprints", famille="endurance", nom="Endurance + sprints",
        objectif="Garder la puissance de sprint pendant les blocs d'endurance", resume="Z2 avec quelques sprints répartis dans la sortie.",
@@ -414,14 +421,14 @@ seance("velo-test-cp-3-7-12", famille="test", nom="Test CP 3/7/12 min",
        deroule=[ECH(20, 50, 75, note="avec 2 × 1 min à 110 %"), MAX(720, note="12 min à fond, réparti"), R(30, 45, 55), MAX(420, note="7 min à fond"), R(30, 45, 55), MAX(180, note="3 min à fond"), CALME(10)],
        variantes=["Efforts sur 3 jours séparés (plus juste pour W′)", "Version courte 3 + 12 min (test CP 2 points)"], phases=["début et fin de phase"], parSemaine="toutes les 6-8 semaines",
        recuperation="48 h", conseils=["Frais (feu vert), même heure, même vélo, mêmes conditions.", "Sans ERG, c'est ce qu'il faut : effort libre."],
-       preuve=P("prouvé", "Tests de terrain valides et fiables pour la CP quand les efforts sont maximaux. Avec 30 min de récupération entre les efforts, l'erreur moyenne est de 3,7 % sur la CP mais de 33 % sur W′.", KARSTEN_2015, KARSTEN_2017), **V)
+       preuve=P("prouvé", "Tests de terrain valides et fiables pour la CP quand les efforts sont maximaux. Avec 30 min de récupération entre les efforts, l'erreur moyenne est de 3,7 % sur la CP mais de 33 % sur W′. Avec 3 efforts, la CP et W′ prédisent bien le temps tenu au-dessus de la CP (19 cyclistes) ; avec 2, la prédiction se dégrade sur les efforts très courts.", KARSTEN_2015, KARSTEN_2017, VENTURA_2023), **V)
 
 seance("velo-test-cp-2-points", famille="test", nom="Test CP 2 points (3 + 12 min)",
        objectif="CP en moins de temps", resume="3 min puis 12 min à fond, 30 min de récupération entre les deux.",
        zone="test", rpe="10", niveau="intermédiaire", deroule=[ECH(20), MAX(180), R(30, 45, 55), MAX(720), CALME(10)],
        variantes=[], phases=["début et fin de phase"], parSemaine="toutes les 6-8 semaines", recuperation="48 h",
        conseils=["Un peu moins précis que 3 efforts, mais suffisant pour recaler les zones."],
-       preuve=P("plausible", "Deux efforts maximaux donnent une CP quasi identique à celle obtenue avec trois (283 contre 282 W dans l'étude).", SIMPSON_2017), **V)
+       preuve=P("plausible", "Deux efforts maximaux donnent une CP quasi identique à celle obtenue avec trois (283 contre 282 W dans l'étude). Mais avec 2 efforts, le temps tenu au-dessus de la CP est moins bien prédit qu'avec 3 : à garder pour dépanner.", SIMPSON_2017, VENTURA_2023), **V)
 
 seance("velo-test-ftp-20", famille="test", nom="Test FTP 20 min",
        objectif="Estimer le seuil (FTP ≈ 95 % de la puissance sur 20 min)", resume="5 min à fond, 10 min facile, puis 20 min à fond.",
@@ -674,10 +681,10 @@ def methode(id, nom, objectif, resume, preuve, conseils=(), phases=()):
 
 methode("methode-polarise", "Répartition polarisée (80/20)", "Répartir l'intensité sur la semaine",
         "≈ 80 % des séances sous le premier seuil, ≈ 20 % au-dessus du second, très peu entre les deux.",
-        P("plausible", "Au moins aussi efficace que les autres répartitions ; méta-analyse 2024 (17 études) : léger avantage sur la VO2max seulement (athlètes très entraînés, moins de 12 semaines), pas sur les contre-la-montre.", OLIVEIRA_2024, ROSENBLAT_2019, STOGGL_2014, ROSENBLAT_2025), phases=["toutes"])
+        P("plausible", "Au moins aussi efficace que les autres répartitions ; méta-analyse 2024 (17 études) : léger avantage sur la VO2max seulement (athlètes très entraînés, moins de 12 semaines), pas sur les contre-la-montre. Chez 12 cyclistes entraînés (6 semaines, ordre tiré au sort), 80 % facile / 20 % dur a fait plus progresser la puissance max et le seuil lactique qu'un programme centré sur le seuil (43 % au milieu), en moins d'heures. Revue 2023 chez des cyclistes entraînés : aucun modèle de périodisation supérieur sur 8-12 semaines ; 7 à 12 h par semaine conseillées.", OLIVEIRA_2024, ROSENBLAT_2019, STOGGL_2014, ROSENBLAT_2025, NEAL_2013, GALAN_RIOJA_2023), phases=["toutes"])
 methode("methode-pyramidal", "Répartition pyramidale", "Répartir l'intensité sur la semaine",
         "Beaucoup de Z1-Z2, une part notable de Z3 (tempo, sweet spot), un peu de Z4-Z5.",
-        P("plausible", "Répartition fréquente chez les élites, surtout en période de base ; elle fait jeu égal avec le polarisé dans les comparaisons récentes.", OLIVEIRA_2024, ROSENBLAT_2025), phases=["base"])
+        P("plausible", "Répartition fréquente chez les élites, surtout en période de base ; elle fait jeu égal avec le polarisé dans les comparaisons récentes. Plus de 90 % des pros WorldTour sont pyramidaux avant la saison (en puissance : ~70 % sous le 1er seuil estimé à 70 % de la CP, ~25 % entre ce seuil et la CP, ~4 % au-dessus). Chez 14 amateurs (16 semaines, ~7,6 h/sem, sans groupe de comparaison), la puissance au seuil a progressé.", OLIVEIRA_2024, ROSENBLAT_2025, GALAN_RIOJA_2023, MATEO_MARCH_2026, MAGALHAES_2024), phases=["base"])
 methode("methode-bloc-vo2", "Bloc d'intensité concentré", "Choc VO2max sur une semaine",
         "1 semaine avec 5 séances de VO2max, puis 3 semaines à 1 séance par semaine (et le reste en endurance).",
         P("mitigé", "Un petit essai favorable (VO2max +4,6 %) et une méta-analyse avec un petit effet de faible certitude ; mais sur 12 semaines à charge égale, aucune différence de performance.", RONNESTAD_2014B, MOLMEN_2019, ALMQUIST_2022), phases=["construction"],
@@ -766,7 +773,7 @@ ids = [s["id"] for s in S]
 assert len(ids) == len(set(ids)), "identifiants en double"
 data = {
     "version": 3,
-    "majLe": "2026-10-29",
+    "majLe": "2026-11-02",
     "description": "Catalogue scientifique de séances (vélo, course à pied, renforcement, tests, méthodes). Voir catalogue/README.md.",
     "unites": {"%CP": "pourcentage de la puissance critique (≈ FTP)", "%VMA": "pourcentage de la vitesse maximale aérobie", "%1RM": "pourcentage du maximum sur 1 répétition"},
     "seances": S,
