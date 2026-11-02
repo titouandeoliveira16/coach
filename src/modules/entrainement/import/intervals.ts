@@ -8,6 +8,7 @@ import { sportDepuisType } from '../sports'
 import type { MesureMatin } from '../types'
 import { meilleursEfforts, reechantillonner1Hz } from '../../../metrics/puissance'
 import { blocsDeLaSeance, tempsFc90, tousTenus } from '../plan/blocs'
+import { controlerSeance, controleTenu } from '../../../metrics/controle'
 import { regrouperEnchainements } from '../seances/enchainements'
 import { analyserFlux } from './flux'
 import { CLE_PESEES_EFFACEES, nettoyerPeseesEffacees } from '../forme/pesees'
@@ -162,11 +163,16 @@ async function importerActivites(depuis: string, surProgression?: (n: number) =>
       if (enregistree.prevueId && f.time?.length && f.watts?.length) {
         const prevue = await db.prevues.get(enregistree.prevueId)
         const fc1Hz = f.heartrate?.length ? reechantillonner1Hz(f.time, f.heartrate) : undefined
-        const blocs = prevue && blocsDeLaSeance(reechantillonner1Hz(f.time, f.watts), prevue, fc1Hz)
+        const w1Hz = reechantillonner1Hz(f.time, f.watts)
+        const blocs = prevue && blocsDeLaSeance(w1Hz, prevue, fc1Hz)
         const t90 = prevue && tempsFc90(prevue, fc1Hz, c.fcMax)
-        if (prevue && (blocs || t90 !== undefined)) {
-          await enregistrer(db.seances, { ...enregistree, ...(blocs ? { blocs } : {}), ...(t90 !== undefined ? { tempsFc90: t90 } : {}) })
-          if (blocs && !prevue.resultat && tousTenus(blocs)) await enregistrer(db.prevues, { ...(await db.prevues.get(prevue.id))!, resultat: 'reussie' })
+        // Contrôle de toute la séance (séries, over-unders, Z2) : chaque bloc dans sa plage ?
+        const controle = prevue?.velo?.etapes && c.cpW ? controlerSeance({ etapes: prevue.velo.etapes, famille: prevue.velo.famille, w1Hz, fc1Hz, cpW: c.cpW }) : undefined
+        if (prevue && (blocs || t90 !== undefined || controle)) {
+          await enregistrer(db.seances, { ...enregistree, ...(blocs ? { blocs } : {}), ...(t90 !== undefined ? { tempsFc90: t90 } : {}), ...(controle ? { controle } : {}) })
+          const intensite = !['z2', 'z2-long', 'test'].includes(prevue.velo?.famille ?? 'z2')
+          const tenue = controle ? controleTenu(controle) : blocs ? tousTenus(blocs) : false
+          if (intensite && !prevue.resultat && tenue) await enregistrer(db.prevues, { ...(await db.prevues.get(prevue.id))!, resultat: 'reussie' })
         }
       }
       n++

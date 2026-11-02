@@ -1,4 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
+import { ControleSeance } from './ControleSeance'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { db } from '../../../core/db'
@@ -32,7 +33,7 @@ function SeanceFaite({ s }: { s: Seance }) {
   const info = useLiveQuery(async () => {
     const prevue = s.prevueId ? await db.prevues.get(s.prevueId) : undefined
     const c = await chargerContexte()
-    return { categorie: categorieDe(s, prevue, domaineDe(s, c.bornes)), fcMax: c.fcMax }
+    return { categorie: categorieDe(s, prevue, domaineDe(s, c.bornes)), fcMax: c.fcMax, famille: prevue?.velo?.famille ?? '' }
   }, [s.id, s.prevueId, s.fcMoy, s.tempsZones?.join()])
   const categorie = info?.categorie
   const verdict = info ? controleFc(s, info.categorie, info.fcMax) : undefined
@@ -43,7 +44,7 @@ function SeanceFaite({ s }: { s: Seance }) {
     <div>
       <p className="font-semibold">✅ Faite · {iconeSport(s.sport)} {s.titre ?? 'Séance'}</p>
       <p className="text-sm text-texte-2">{resume}</p>
-      {s.blocs && <Blocs b={s.blocs} />}
+      {s.controle ? <ControleSeance s={{ ...s, controle: s.controle }} famille={info?.famille ?? ''} /> : s.blocs && <Blocs b={s.blocs} />}
       {verdict && <p className="mt-1 text-sm" style={{ color: COULEURS[verdict.couleur] }}>{PASTILLES[verdict.couleur]} {verdict.texte}<Aide titre="Contrôle FC" texte={AIDES.controleFc} /></p>}
       {s.rpe === undefined || edition ? (
         <div className="mt-2">

@@ -96,6 +96,10 @@ Points décidés ou mis de côté, à reprendre au bon moment.
 - Module course à pied (aujourd'hui saisi depuis Campus Coach) et vélo généré selon les objectifs de saison : à repenser plus tard.
 
 ## Fait
+- 2/11/2026 (v0.65.0) : contrôle de chaque séance importée (blocs, séries 30/15, over-unders, Z2 < 5 min au-dessus du
+  1er seuil) avec verdict ✅/⬇️/⬆️, FC de fin de bloc, RPE par bloc et bilan ; une séance d'intensité tenue valide la
+  progression. À vérifier sur les premières vraies séances (recalage du fichier sur la séance prévue). Seuil « 5 min »
+  = choix d'entraîneur, pas encore relu.
 - 2/11/2026 (v0.64.0) : d'après le Système kJ (LSDC) et Just Push : compteur kJ 90 j vs 90 j d'avant, petites victoires
   (régularité, Z2 et intervalles comparés à la précédente), temps limite (CP + W′) sur les efforts, calculateurs col et
   glucides, test CP proposé explicitement (Titouan valide), carte « sortie hors plan » qui propose de recalculer la semaine.
