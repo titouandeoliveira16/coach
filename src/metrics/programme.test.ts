@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   budgetSemaine, choisirFormat, construireIntervalles, construireZ2, dureeFormat, etatProgression, formatDe, FORMATS,
-  palierPossible, phaseDe, placer, projeterSaison, type HistoIntensite, type Phase, type Role,
+  palierPossible, phaseDe, deplier, placer, projeterSaison, type HistoIntensite, type Phase, type Role,
 } from './programme'
 import catalogue from '../../catalogue/seances.json'
 import { decaler } from './vfc'
@@ -62,6 +62,18 @@ describe('banque de séances', () => {
     expect([vo2.wMin, vo2.wMax, vo2.cadence]).toEqual([270, 295, '90-105'])
     const z2 = construireZ2(60, 160).velo.etapes!.find((e) => e.libelle.startsWith('Z2'))!
     expect([z2.wMin, z2.wMax, z2.cadence]).toEqual([150, 170, undefined])
+  })
+
+  it('répétitions déroulées : même durée que la séance, pas de trou', () => {
+    for (const f of FORMATS) {
+      const s = construireIntervalles(f, 1, 260, 0)
+      const d = deplier(s.velo.etapes!)
+      for (let i = 1; i < d.length; i++) expect(d[i].debutSec).toBe(d[i - 1].debutSec + d[i - 1].dureeSec)
+      expect(d.at(-1)!.debutSec + d.at(-1)!.dureeSec).toBe(dureeFormat(f, 1).totalSec)
+    }
+    const z = deplier(construireZ2(90, 160, { n: 6, sec: 10 }).velo.etapes!)
+    expect(z.at(-1)!.debutSec + z.at(-1)!.dureeSec).toBe(90 * 60)
+    expect(z.filter((e) => e.libelle === 'Sprint à fond')).toHaveLength(6)
   })
 
   it("l'échauffement plus long ne retire pas de répétition", () => {

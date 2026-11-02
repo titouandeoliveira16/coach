@@ -33,11 +33,29 @@ const libelle = (t: string) => t.split(':')[0]
 
 /** Texte de la séance au format du « workout builder » d'Intervals.icu : une ligne par étape, watts absolus (milieu de la plage),
  *  repère de cadence quand il y en a un. */
+const ligne = (e: Pick<Etape, 'libelle' | 'dureeSec' | 'w' | 'cadence'>) =>
+  `- ${libelle(e.libelle)} ${dureeIntervals(e.dureeSec)} ${e.w ? `${e.w}w` : 'freeride'}${e.cadence ? ` ${e.cadence}rpm` : ''}`.replace(/\s+/g, ' ')
+
+/**
+ * Une série répétée devient un bloc « 10x » d'Intervals (Zwift et Garmin affichent chaque répétition) ;
+ * si la dernière répétition est plus courte (pas de récup avant la suite), elle est écrite à part.
+ */
+function lignes(e: Etape): string[] {
+  if (!e.repetition) return [ligne(e)]
+  const { fois, etapes: sous, derniere = sous.length } = e.repetition
+  const complete = derniere < sous.length ? fois - 1 : fois
+  const out = complete > 0 ? ['', `${complete}x`, ...sous.map(ligne), ''] : []
+  if (complete < fois) out.push(...sous.slice(0, derniere).map(ligne), '')
+  return out
+}
+
 export function texteIntervals(etapes: Etape[]) {
   return etapes
     .filter((e) => e.dureeSec > 0)
-    .map((e) => `- ${libelle(e.libelle)} ${dureeIntervals(e.dureeSec)} ${e.w ? `${e.w}w` : 'freeride'}${e.cadence ? ` ${e.cadence}rpm` : ''}`.replace(/\s+/g, ' '))
+    .flatMap(lignes)
     .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
 }
 
 export async function envoyerSeance(p: SeancePrevue, etapes: Etape[], cible: Cible) {
