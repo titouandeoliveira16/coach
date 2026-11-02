@@ -1,8 +1,9 @@
 /**
  * Fréquence cardiaque : temps par zone, domaines d'intensité, découplage.
  *
- * Domaines (modèle à 3 zones de Seiler, 2010) : basse = sous le 1er seuil (Z1-Z2),
- * moyenne = entre les seuils (Z3), haute = au-dessus du 2e seuil (Z4-Z5).
+ * Domaines (modèle à 3 zones de Seiler, 2010, ancré sur la CP) : basse = sous le 1er seuil (Z1-Z2),
+ * moyenne = du 1er seuil à la CP (Z3-Z4), haute = au-dessus de la CP (Z5). Les bornes de FC sont celles
+ * des zones de puissance (Z4 s'arrête à la CP), recalées sur les sorties (calageFc).
  * Découplage (« Pa:HR » / « Pw:HR ») : Friel ; < 5 % = bonne endurance aérobie.
  */
 
@@ -27,17 +28,17 @@ export function tempsParZone(t: number[], fc: (number | null)[], bornes: BornesZ
   return zones
 }
 
-/** Regroupe 5 zones en 3 domaines : basse (Z1+Z2), moyenne (Z3), haute (Z4+Z5). */
+/** Regroupe 5 zones en 3 domaines : basse (Z1+Z2), moyenne (Z3+Z4, jusqu'à la CP), haute (Z5). */
 export const domaines = (zones: number[]) => ({
   basse: zones[0] + zones[1],
-  moyenne: zones[2],
-  haute: zones[3] + zones[4],
+  moyenne: zones[2] + zones[3],
+  haute: zones[4],
 })
 
 /** Domaine estimé d'une séance sans flux, à partir de sa FC moyenne. */
 export function domaineDepuisFc(fcMoy: number, bornes: BornesZones): 'basse' | 'moyenne' | 'haute' {
   const z = zoneDe(fcMoy, bornes)
-  return z <= 1 ? 'basse' : z === 2 ? 'moyenne' : 'haute'
+  return z <= 1 ? 'basse' : z <= 3 ? 'moyenne' : 'haute'
 }
 
 /**
@@ -79,4 +80,35 @@ export function deriveDansBloc(fc1Hz: number[], debut: number, duree: number) {
   const deuxieme = moy(debut + q, debut + 2 * q)
   const dernier = moy(debut + 3 * q, debut + duree)
   return deuxieme && dernier ? ((dernier - deuxieme) / deuxieme) * 100 : undefined
+}
+
+/**
+ * Bornes de FC calées sur les sorties (relecture du 2/11 : choix d'entraîneur, aucune étude ne valide ce protocole précis) :
+ *  - FC au 1er seuil = médiane, sur au moins 3 sorties stables (≥ 45 min, découplage < 5 %), de leur FC moyenne quand
+ *    leur puissance moyenne est entre 65 et 75 % de la CP ;
+ *  - FC à la CP = médiane de la FC de la dernière minute des blocs de 12 min ou plus faits à 95-100 % de la CP
+ *    (au moins 2 séances : près de la CP, la FC monte encore 10 à 20 min) ;
+ *  - Z2 s'arrête au 1er seuil, Z4 à la CP, Z3 à 90 % de la CP (interpolée : FC et puissance montent à peu près en ligne
+ *    droite sous la CP). Z1 ne bouge pas.
+ */
+export function calageFc(o: {
+  cpW: number
+  bornes: BornesZones
+  sorties: { fcMoy: number; puissanceMoyW: number; dureeSec: number; decouplage?: number }[]
+  blocs: { w: number; fcFin: number; dureeSec: number; seance: string }[]
+}) {
+  const mediane = (x: number[]) => {
+    const t = [...x].sort((a, b) => a - b)
+    return t.length % 2 ? t[(t.length - 1) / 2] : (t[t.length / 2 - 1] + t[t.length / 2]) / 2
+  }
+  const stables = o.sorties.filter((s) => s.dureeSec >= 2700 && s.decouplage !== undefined && Math.abs(s.decouplage) < 5 &&
+    s.puissanceMoyW >= 0.65 * o.cpW && s.puissanceMoyW <= 0.75 * o.cpW)
+  const seuil = o.blocs.filter((b) => b.dureeSec >= 720 && b.w >= 0.95 * o.cpW && b.w <= 1.0 * o.cpW)
+  if (stables.length < 3 || new Set(seuil.map((b) => b.seance)).size < 2) return undefined
+  const fc1 = Math.round(mediane(stables.map((s) => s.fcMoy)))
+  const fcCp = Math.round(mediane(seuil.map((b) => b.fcFin)))
+  if (fcCp <= fc1 + 5) return undefined
+  const fc90 = Math.round(fc1 + ((fcCp - fc1) * (0.9 - 0.7)) / (1 - 0.7))
+  const bornes: BornesZones = [Math.min(o.bornes[0], fc1 - 1), fc1, fc90, fcCp]
+  return { fc1, fcCp, bornes, nSorties: stables.length, nBlocs: seuil.length }
 }

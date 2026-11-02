@@ -23,7 +23,7 @@ export async function propositionDuBilan(dimanche: string): Promise<Proposition 
   if (profil.objectif !== 'perte') return undefined
   const n = await lireReglagesNutrition()
   const pesees = await peseesValides()
-  const kg = (await poidsAu(dimanche)) ?? profil.poidsKg ?? 76
+  const kg = (await poidsAu(dimanche)) ?? profil.poidsKg ?? PROFIL_DEFAUT.poidsKg!
   return propositionNutrition({
     tendance14: tendancePoids(pesees, dimanche, 14, 10, 4),
     tendance21: tendancePoids(pesees, dimanche, 21, 17, 6),

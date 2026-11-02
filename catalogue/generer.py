@@ -152,6 +152,24 @@ MATEO_MARCH_2026 = ref("Mateo-March M, Barranco-Gil D, Muriel X, Pallarés JG, V
 VENTURA_2023 = ref("Ventura TP, Borszcz FK, Antunes D, Caputo F, Turnes T", 2023, "Prediction of exercise tolerance in the severe and extreme intensity domains by a critical power model", "J Hum Kinet", doi="10.5114/jhk/170101")
 DE_OLIVEIRA_2024 = ref("de Oliveira NG, de Oliveira LF, da Silva RP, et al.", 2024, "Trehalose improved 20-min cycling time-trial performance after 100-min cycling in amateur cyclists", "Int J Sport Nutr Exerc Metab", doi="10.1123/ijsnem.2023-0241")
 MAGALHAES_2024 = ref("Magalhães PM, Cipriano F, Morais JE, Bragada JA", 2024, "Effects of a 16-week training program with a pyramidal intensity distribution on recreational male cyclists", "Sports", doi="10.3390/sports12010017")
+# Lus en entier (34 études envoyées par Titouan, 2/11/2026)
+JONES_2019 = ref("Jones AM, Burnley M, Black MI, Poole DC, Vanhatalo A", 2019, "The maximal metabolic steady state: redefining the 'gold standard'", "Physiol Rep", doi="10.14814/phy2.14098")
+GALAN_RIOJA_2020 = ref("Galán-Rioja MÁ, González-Mohíno F, Poole DC, González-Ravé JM", 2020, "Relative proximity of critical power and metabolic/ventilatory thresholds: systematic review and meta-analysis", "Sports Med", doi="10.1007/s40279-020-01314-8")
+JAMNICK_2020 = ref("Jamnick NA, Pettitt RW, Granata C, Pyne DB, Bishop DJ", 2020, "An examination and critique of current methods to determine exercise intensity", "Sports Med", doi="10.1007/s40279-020-01322-8")
+CAEN_2024 = ref("Caen K, Poole DC, Vanhatalo A, Jones AM", 2024, "Critical power and maximal lactate steady state in cycling: 'watts' the difference?", "Sports Med", doi="10.1007/s40279-024-02075-4")
+WONG_2023 = ref("Wong S, Burnley M, Mauger A, Fenghua S, Hopker J", 2023, "Functional threshold power is not a valid marker of the maximal metabolic steady state", "J Sports Sci", doi="10.1080/02640414.2023.2176045")
+COVE_2025 = ref("Cove B, Chalmers S, Nelson MJ, Anderson M, Bennett H", 2025, "The effect of training distribution, duration, and volume on VO2max and performance in trained cyclists: a systematic review, multilevel meta-analysis, and multivariate meta-regression", "J Sci Med Sport", doi="10.1016/j.jsams.2024.12.005")
+DUKING_2021 = ref("Düking P, Zinner C, Trabelsi K, et al.", 2021, "Monitoring and adapting endurance training on the basis of heart rate variability monitored by wearable technologies: a systematic review with meta-analysis", "J Sci Med Sport", doi="10.1016/j.jsams.2021.04.012")
+PLEWS_2013 = ref("Plews DJ, Laursen PB, Stanley J, Kilding AE, Buchheit M", 2013, "Training adaptation and heart rate variability in elite endurance athletes: opening the door to effective monitoring", "Sports Med", doi="10.1007/s40279-013-0071-8")
+BOURDON_2017 = ref("Bourdon PC, Cardinale M, Murray A, et al.", 2017, "Monitoring athlete training loads: consensus statement", "Int J Sports Physiol Perform", doi="10.1123/IJSPP.2017-0208")
+ROSENBLAT_2021 = ref("Rosenblat MA, Lin E, da Costa BR, Thomas SG", 2021, "Programming interval training to optimize time-trial performance: a systematic review and meta-analysis", "Sports Med", doi="10.1007/s40279-021-01457-2")
+PODLOGAR_2022 = ref("Podlogar T, Bokal Š, Cirnski S, Wallis GA", 2022, "Increased exogenous but unaltered endogenous carbohydrate oxidation with combined fructose-maltodextrin ingested at 120 g/h versus 90 g/h at different ratios", "Eur J Appl Physiol", doi="10.1007/s00421-022-05019-w")
+PODLOGAR_WALLIS_2022 = ref("Podlogar T, Wallis GA", 2022, "New horizons in carbohydrate research and application for endurance athletes", "Sports Med", doi="10.1007/s40279-022-01757-1")
+MOUNTJOY_2023 = ref("Mountjoy M, Ackerman KE, Bailey DM, et al.", 2023, "2023 International Olympic Committee's (IOC) consensus statement on Relative Energy Deficiency in Sport (REDs)", "Br J Sports Med", doi="10.1136/bjsports-2023-106994")
+MUJIKA_2010 = ref("Mujika I", 2010, "Intense training: the key to optimal performance before and during the taper", "Scand J Med Sci Sports", doi="10.1111/j.1600-0838.2010.01189.x")
+CHRISTENSEN_2024 = ref("Christensen PM, Andreasen JJ, Lyngholm J, et al.", 2024, "Importance of training volume during intensified training in elite cyclists: maintained vs. reduced volume at moderate intensity", "Scand J Med Sci Sports", doi="10.1111/sms.14362")
+JONES_KIRBY_2025 = ref("Jones AM, Kirby BS", 2025, "Physiological resilience: what is it and how might it be trained?", "Scand J Med Sci Sports", doi="10.1111/sms.70032")
+MATOMAKI_2023 = ref("Matomäki P, Heinonen OJ, Nummela A, et al.", 2023, "Durability is improved by both low and high intensity endurance training", "Front Physiol", doi="10.3389/fphys.2023.1128111")
 LIEDL_1999 = ref("Liedl MA, Swain DP, Branch JD", 1999, "Physiological effects of constant versus variable power during endurance cycling", "Med Sci Sports Exerc")
 LUCIA_2004 = ref("Lucía A, San Juan AF, Montilla M, et al.", 2004, "In professional road cyclists, low pedaling cadences are less efficient", "Med Sci Sports Exerc")
 HANSEN_RONNESTAD_2017 = ref("Hansen EA, Rønnestad BR", 2017, "Effects of cycling training at imposed low cadences: a systematic review", "Int J Sports Physiol Perform", "28095074")
@@ -206,7 +224,7 @@ seance("velo-durabilite-effort-final", famille="durabilite", nom="Sortie longue 
        variantes=["1 × 15 min en fin de sortie", "2 × 12 min", "3 × 10 min", "20 min en continu à 90 %"],
        phases=["construction", "spécifique"], parSemaine="1 tous les 7-14 jours", recuperation="48 h",
        conseils=["Mange régulièrement avant l'effort final (60-90 g/h) : on entraîne la tenue, pas la panne.", SANS_ERG],
-       preuve=P("plausible", "La baisse de puissance après un gros travail sépare les vainqueurs des autres chez les pros ; un travail préalable intense fatigue plus qu'un travail facile. Seul essai d'entraînement : la musculation lourde a amélioré un 5 min à fond fait après 185 min de vélo. Aucun essai sur l'effort final lui-même.", VAN_ERP_2021, SPRAGG_2024, RONNESTAD_2011, MAUNDER_2021), **V)
+       preuve=P("plausible", "La baisse de puissance après un gros travail sépare les vainqueurs des autres chez les pros ; un travail préalable intense fatigue plus qu'un travail facile. Seul essai d'entraînement : la musculation lourde a amélioré un 5 min à fond fait après 185 min de vélo. Aucun essai sur l'effort final lui-même ; la revue de 2025 sur la « résilience » recommande justement des sorties longues avec des efforts au rythme de course en fin de sortie, la régularité sur des années et la musculation lourde. Chez des débutants, facile et intense améliorent autant la durabilité.", VAN_ERP_2021, SPRAGG_2024, RONNESTAD_2011, MAUNDER_2021, JONES_KIRBY_2025, MATOMAKI_2023), **V)
 
 seance("velo-tempo-2x20", famille="tempo", nom="Tempo 2 × 20 min",
        objectif="Endurance aérobie haute, préparation au sweet spot", resume="2 blocs de 20 min en Z3 basse, récupération 5 min.",
@@ -435,7 +453,7 @@ seance("velo-test-ftp-20", famille="test", nom="Test FTP 20 min",
        zone="test", rpe="10", niveau="tous", deroule=[ECH(20), MAX(300, note="5 min à fond pour vider la réserve anaérobie"), R(10), MAX(1200), CALME(10)],
        variantes=[], phases=["début de phase"], parSemaine="toutes les 6-8 semaines",
        recuperation="48 h", conseils=["Le coefficient 0,95 est une moyenne : il varie d'un cycliste à l'autre.", "L'appli raisonne en CP : préfère le test CP."],
-       preuve=PRATIQUE("La FTP (95 % des 20 min) se tient en moyenne 51 ± 16 min avec de gros écarts entre cyclistes ; elle surestime l'état stable lactique (≈ 93 % de la FTP). La CP est en moyenne un peu plus haute (+7 W), mais les deux ne sont pas interchangeables.", BORSZCZ_2018, INGLIS_2020, KARSTEN_2021), **V)
+       preuve=PRATIQUE("La FTP (95 % des 20 min) se tient en moyenne 51 ± 16 min avec de gros écarts entre cyclistes ; elle surestime l'état stable lactique (≈ 93 % de la FTP). La CP est en moyenne un peu plus haute (+7 W), mais les deux ne sont pas interchangeables. La FTP n'est pas la frontière entre effort stable et épuisant : la VO2 se stabilise encore 15 W au-dessus.", BORSZCZ_2018, INGLIS_2020, KARSTEN_2021, WONG_2023), **V)
 
 seance("velo-test-rampe", famille="test", nom="Test rampe (PMA)",
        objectif="Puissance maximale aérobie (PMA)", resume="Paliers de 1 min augmentant de 20-25 W jusqu'à l'épuisement.",
@@ -681,20 +699,20 @@ def methode(id, nom, objectif, resume, preuve, conseils=(), phases=()):
 
 methode("methode-polarise", "Répartition polarisée (80/20)", "Répartir l'intensité sur la semaine",
         "≈ 80 % des séances sous le premier seuil, ≈ 20 % au-dessus du second, très peu entre les deux.",
-        P("plausible", "Au moins aussi efficace que les autres répartitions ; méta-analyse 2024 (17 études) : léger avantage sur la VO2max seulement (athlètes très entraînés, moins de 12 semaines), pas sur les contre-la-montre. Chez 12 cyclistes entraînés (6 semaines, ordre tiré au sort), 80 % facile / 20 % dur a fait plus progresser la puissance max et le seuil lactique qu'un programme centré sur le seuil (43 % au milieu), en moins d'heures. Revue 2023 chez des cyclistes entraînés : aucun modèle de périodisation supérieur sur 8-12 semaines ; 7 à 12 h par semaine conseillées.", OLIVEIRA_2024, ROSENBLAT_2019, STOGGL_2014, ROSENBLAT_2025, NEAL_2013, GALAN_RIOJA_2023), phases=["toutes"])
+        P("plausible", "Au moins aussi efficace que les autres répartitions ; méta-analyse 2024 (17 études) : léger avantage sur la VO2max seulement (athlètes très entraînés, moins de 12 semaines), pas sur les contre-la-montre. Chez 12 cyclistes entraînés (6 semaines, ordre tiré au sort), 80 % facile / 20 % dur a fait plus progresser la puissance max et le seuil lactique qu'un programme centré sur le seuil (43 % au milieu), en moins d'heures. Revue 2023 chez des cyclistes entraînés : aucun modèle de périodisation supérieur sur 8-12 semaines ; 7 à 12 h par semaine conseillées.", OLIVEIRA_2024, ROSENBLAT_2019, STOGGL_2014, ROSENBLAT_2025, NEAL_2013, GALAN_RIOJA_2023, COVE_2025), phases=["toutes"])
 methode("methode-pyramidal", "Répartition pyramidale", "Répartir l'intensité sur la semaine",
         "Beaucoup de Z1-Z2, une part notable de Z3 (tempo, sweet spot), un peu de Z4-Z5.",
-        P("plausible", "Répartition fréquente chez les élites, surtout en période de base ; elle fait jeu égal avec le polarisé dans les comparaisons récentes. Plus de 90 % des pros WorldTour sont pyramidaux avant la saison (en puissance : ~70 % sous le 1er seuil estimé à 70 % de la CP, ~25 % entre ce seuil et la CP, ~4 % au-dessus). Chez 14 amateurs (16 semaines, ~7,6 h/sem, sans groupe de comparaison), la puissance au seuil a progressé.", OLIVEIRA_2024, ROSENBLAT_2025, GALAN_RIOJA_2023, MATEO_MARCH_2026, MAGALHAES_2024), phases=["base"])
+        P("plausible", "Répartition fréquente chez les élites, surtout en période de base ; elle fait jeu égal avec le polarisé dans les comparaisons récentes. Plus de 90 % des pros WorldTour sont pyramidaux avant la saison (en puissance : ~70 % sous le 1er seuil estimé à 70 % de la CP, ~25 % entre ce seuil et la CP, ~4 % au-dessus). Chez 14 amateurs (16 semaines, ~7,6 h/sem, sans groupe de comparaison), la puissance au seuil a progressé. Méta-analyse de 41 études (797 cyclistes entraînés) : polarisé et non polarisé font les mêmes progrès ; la durée du programme compte, le volume au-delà du nécessaire non.", OLIVEIRA_2024, ROSENBLAT_2025, GALAN_RIOJA_2023, MATEO_MARCH_2026, MAGALHAES_2024, COVE_2025), phases=["base"])
 methode("methode-bloc-vo2", "Bloc d'intensité concentré", "Choc VO2max sur une semaine",
         "1 semaine avec 5 séances de VO2max, puis 3 semaines à 1 séance par semaine (et le reste en endurance).",
         P("mitigé", "Un petit essai favorable (VO2max +4,6 %) et une méta-analyse avec un petit effet de faible certitude ; mais sur 12 semaines à charge égale, aucune différence de performance.", RONNESTAD_2014B, MOLMEN_2019, ALMQUIST_2022), phases=["construction"],
         conseils=["Seulement avec une bonne récupération (feu vert) et un volume d'endurance déjà solide."])
 methode("methode-ordre-intervalles", "Ordre des formats d'intervalles", "Enchaîner les séances dures sur plusieurs semaines",
         "Alterner intervalles longs (4 × 16), moyens (4 × 8) et courts (4 × 4), dans n'importe quel ordre, à charge égale.",
-        P("prouvé", "Sur 12 semaines (63 cyclistes), longs puis courts, l'inverse ou un mélange : +5 à 10 % pour tous les groupes ; l'ordre change peu.", SYLTA_2016), phases=["toutes"])
+        P("prouvé", "Sur 12 semaines (63 cyclistes), longs puis courts, l'inverse ou un mélange : +5 à 10 % pour tous les groupes ; l'ordre change peu. Méta-analyse de 29 études : chez les entraînés, les intervalles font gagner ~2 % en contre-la-montre ; l'effet dépend de la durée des répétitions plus que de leur intensité, et en faire plus que le nécessaire n'apporte rien.", SYLTA_2016, ROSENBLAT_2021), phases=["toutes"])
 methode("methode-affutage", "Affûtage avant l'objectif", "Arriver frais et en forme le jour J",
         "Sur 8 à 14 jours (jusqu'à 21) : baisser le volume de 40 à 60 % (en exponentielle), garder l'intensité et la fréquence des séances.",
-        P("prouvé", "Méta-analyses : une baisse de volume de 41-60 % sur ~2 semaines, en gardant l'intensité, donne le meilleur effet ; confirmé chez les athlètes d'endurance.", BOSQUET_2007, WANG_2023), phases=["affûtage"])
+        P("prouvé", "Méta-analyses : une baisse de volume de 41-60 % sur ~2 semaines, en gardant l'intensité, donne le meilleur effet ; confirmé chez les athlètes d'endurance (14 études : contre-la-montre amélioré, pas la VO2max ; mieux encore après une grosse charge juste avant). L'intensité est la clé avant et pendant l'affûtage.", BOSQUET_2007, WANG_2023, MUJIKA_2010), phases=["affûtage"])
 methode("methode-plages-watts", "Plage de watts plutôt qu'une valeur", "Juger un intervalle sans ERG",
         "Viser une plage (ex. seuil 95-100 % de la CP) et juger chaque répétition sur sa puissance moyenne, pas seconde par seconde.",
         P("plausible", "Faire varier la puissance de ±5 % pendant 1 h ne change ni la FC, ni le lactate, ni l'effort perçu ; en VO2, une puissance variable donne même plus de temps près de la VO2max. Les largeurs de plage sont un choix d'entraîneur.", LIEDL_1999, BOSSI_2020), phases=["toutes"],
@@ -705,12 +723,22 @@ methode("methode-cadence", "Cadence : un repère, pas une consigne", "Choisir sa
 methode("methode-echauffement", "Échauffement selon la séance", "Préparer une séance d'intensité",
         "Seuil : 15 min progressives avec 1 min au seuil. VO2 : 20 min avec 3 × 30 s à ~110 % puis 5 min faciles avant la 1re répétition. Retour au calme dégressif 7-10 min.",
         P("plausible", "Un échauffement assez intense améliore de 2-3 % un effort sévère, à condition de récupérer au moins ~9 min (moins de 3 min : la tenue baisse). Le retour au calme change peu la récupération du lendemain.", BAILEY_2009, BURNLEY_2005, VAN_HOOREN_2018), phases=["toutes"])
+methode("methode-zones-domaines", "Zones ancrées sur 3 domaines", "Découper les intensités",
+        "3 domaines : facile sous le 1er seuil (estimé à ~70 % de la CP), soutenu jusqu'à la CP, épuisant au-dessus. Les zones Z1-Z6 les subdivisent.",
+        P("prouvé", "La CP est la frontière entre effort stable et effort qui épuise ; la FTP, le seuil à 4 mmol et les % de FC max ou de VO2max ne la délimitent pas. Méta-analyse : 1er seuil ventilatoire ~30 % sous la CP (grande variation individuelle). Mesurés avec rigueur, CP et seuil lactique ne diffèrent que de quelques watts.", JONES_2019, GALAN_RIOJA_2020, JAMNICK_2020, CAEN_2024, WONG_2023), phases=["toutes"],
+        conseils=["Le 1er seuil se mesure en labo (lactate, gaz) ou s'estime avec le DFA-α1 (ceinture cardio)."])
+methode("methode-vfc", "Entraînement guidé par la VFC", "Adapter la séance du jour à la récupération",
+        "VFC du matin en moyenne sur 7 jours, comparée à ta zone normale : séance maintenue, allégée ou remplacée.",
+        P("plausible", "Méta-analyse de 8 études : par rapport à un plan fixe, effet moyen sur les paramètres sous-maximaux, petit et non significatif sur la performance et la VO2max, et moins de « non-répondants ». Lire la VFC en moyenne sur 7 jours et individuellement. Combiner charge externe (watts) et interne (FC, RPE).", DUKING_2021, PLEWS_2013, BOURDON_2017), phases=["toutes"])
+methode("methode-glucides-effort", "Glucides pendant l'effort", "Tenir les sorties longues",
+        "30-60 g/h au-delà de 1 h 15, 60-90 g/h au-delà de 2 h 30, à entraîner avant le jour J.",
+        P("prouvé", "Après 100 min de vélo, des glucides ont donné ~5 % de travail en plus sur 20 min qu'un placebo. Monter à 120 g/h augmente le sucre utilisé mais n'épargne pas plus les réserves (performance non testée). Adapter les glucides à ce que demande chaque séance.", DE_OLIVEIRA_2024, PODLOGAR_2022, PODLOGAR_WALLIS_2022), phases=["toutes"])
 methode("methode-semaine-allegee", "Semaine allégée", "Assimiler la charge",
         "1 semaine sur 3 ou 4 avec ~30-40 % de volume en moins, sans supprimer toute l'intensité.",
-        PRATIQUE("Principe d'entraîneur (surcompensation) ; durée et ampleur exactes non établies par des essais.", FRIEL), phases=["toutes"])
+        PRATIQUE("Principe d'entraîneur (surcompensation) ; durée et ampleur exactes non établies par des essais. Repère : chez des élites (7 semaines, 3 séances dures par semaine), couper un tiers du volume modéré n'a rien coûté (contre-la-montre +3 % contre +2 %).", FRIEL, CHRISTENSEN_2024), phases=["toutes"])
 methode("methode-sleep-low", "« Sleep low » (glucides périodisés)", "Stimuler les adaptations aérobies",
         "Séance intense le soir, dîner pauvre en glucides, puis séance facile à jeun le lendemain matin.",
-        P("mitigé", "Triathlètes (3 semaines) : 10 km de course −2,9 % de temps ; cyclistes (1 semaine) : +3,2 % sur 20 km. Mais aucun effet chez des élites, et une méta-analyse de 9 études ne trouve pas d'effet global. À éviter en déficit calorique (risque de RED-S).", MARQUET_2016, MARQUET_2016B, GEJL_2017, GEJL_2021), phases=["base"],
+        P("mitigé", "Triathlètes (3 semaines) : 10 km de course −2,9 % de temps ; cyclistes (1 semaine) : +3,2 % sur 20 km. Mais aucun effet chez des élites, et une méta-analyse de 9 études ne trouve pas d'effet global. À éviter en déficit calorique (risque de RED-S).", MARQUET_2016, MARQUET_2016B, GEJL_2017, GEJL_2021, PODLOGAR_WALLIS_2022, MOUNTJOY_2023), phases=["base"],
         conseils=["Pas compatible avec une perte de poids en cours."])
 
 # ════════════════════════ PROGRAMME (séances que l'Entraînement pioche) ════════════════════════
@@ -742,7 +770,7 @@ prog("velo-vo2-4x5", "5min", "vo2-longs", "intervalles de 5'", 300, 107, 150, 50
      "Rønnestad et al. 2015 : 4 × 5 min, groupe contrôle qui progresse aussi.")
 prog("velo-vo2-6min", "6min", "vo2-longs", "intervalles de 6'", 360, 106, 150, 50, [(1, 2), (1, 3), (1, 4), (1, 5)], "correcte",
      "Buchheit & Laursen 2013 : intervalles longs proches de la PMA.")
-prog("velo-vo2-4x8-seiler", "8min", "vo2-longs", "intervalles de 8'", 480, 104, 120, 50, [(1, 2), (1, 3), (1, 4), (1, 5)], "forte",
+prog("velo-vo2-4x8-seiler", "8min", "vo2-longs", "intervalles de 8'", 480, 104, 120, 50, [(1, 2), (1, 3), (1, 3, 540), (1, 4)], "forte",
      "Seiler et al. 2013 : 4 × 8 min a donné plus de gains que 4 × 4 et 4 × 16 min.")
 prog("velo-seuil-4x10", "seuil-8-10", "seuil", "seuil en blocs de 8-10'", 480, 97, 180, 50, [(1, 3), (1, 3, 600), (1, 4), (1, 4, 600)], "bonne",
      "Sylta et al. 2016 : intervalles longs au seuil, progrès comparables aux formats VO2 à charge égale.")

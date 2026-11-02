@@ -415,7 +415,7 @@
    ],
    "preuve": {
     "niveau": "plausible",
-    "resultat": "La baisse de puissance après un gros travail sépare les vainqueurs des autres chez les pros ; un travail préalable intense fatigue plus qu'un travail facile. Seul essai d'entraînement : la musculation lourde a amélioré un 5 min à fond fait après 185 min de vélo. Aucun essai sur l'effort final lui-même.",
+    "resultat": "La baisse de puissance après un gros travail sépare les vainqueurs des autres chez les pros ; un travail préalable intense fatigue plus qu'un travail facile. Seul essai d'entraînement : la musculation lourde a amélioré un 5 min à fond fait après 185 min de vélo. Aucun essai sur l'effort final lui-même ; la revue de 2025 sur la « résilience » recommande justement des sorties longues avec des efforts au rythme de course en fin de sortie, la régularité sur des années et la musculation lourde. Chez des débutants, facile et intense améliorent autant la durabilité.",
     "references": [
      {
       "auteurs": "van Erp T, Sanders D, Lamberts RP",
@@ -442,6 +442,20 @@
       "titre": "The importance of 'durability' in the physiological profiling of endurance athletes",
       "revue": "Sports Med",
       "pmid": "33886100"
+     },
+     {
+      "auteurs": "Jones AM, Kirby BS",
+      "annee": 2025,
+      "titre": "Physiological resilience: what is it and how might it be trained?",
+      "revue": "Scand J Med Sci Sports",
+      "doi": "10.1111/sms.70032"
+     },
+     {
+      "auteurs": "Matomäki P, Heinonen OJ, Nummela A, et al.",
+      "annee": 2023,
+      "titre": "Durability is improved by both low and high intensity endurance training",
+      "revue": "Front Physiol",
+      "doi": "10.3389/fphys.2023.1128111"
      }
     ]
    }
@@ -1452,11 +1466,12 @@
      ],
      [
       1,
-      4
+      3,
+      540
      ],
      [
       1,
-      5
+      4
      ]
     ],
     "preuve": "forte",
@@ -3901,7 +3916,7 @@
    ],
    "preuve": {
     "niveau": "pratique",
-    "resultat": "La FTP (95 % des 20 min) se tient en moyenne 51 ± 16 min avec de gros écarts entre cyclistes ; elle surestime l'état stable lactique (≈ 93 % de la FTP). La CP est en moyenne un peu plus haute (+7 W), mais les deux ne sont pas interchangeables.",
+    "resultat": "La FTP (95 % des 20 min) se tient en moyenne 51 ± 16 min avec de gros écarts entre cyclistes ; elle surestime l'état stable lactique (≈ 93 % de la FTP). La CP est en moyenne un peu plus haute (+7 W), mais les deux ne sont pas interchangeables. La FTP n'est pas la frontière entre effort stable et épuisant : la VO2 se stabilise encore 15 W au-dessus.",
     "references": [
      {
       "auteurs": "Borszcz FK, Tramontin AF, Bossi AH, Carminatti LJ, Costa VP",
@@ -3921,6 +3936,13 @@
       "annee": 2021,
       "titre": "Relationship between the critical power test and a 20-min functional threshold power test in cycling",
       "revue": "Front Physiol"
+     },
+     {
+      "auteurs": "Wong S, Burnley M, Mauger A, Fenghua S, Hopker J",
+      "annee": 2023,
+      "titre": "Functional threshold power is not a valid marker of the maximal metabolic steady state",
+      "revue": "J Sports Sci",
+      "doi": "10.1080/02640414.2023.2176045"
      }
     ]
    }
@@ -6260,6 +6282,13 @@
       "titre": "Training periodization, intensity distribution, and volume in trained cyclists: a systematic review",
       "revue": "Int J Sports Physiol Perform",
       "doi": "10.1123/ijspp.2022-0302"
+     },
+     {
+      "auteurs": "Cove B, Chalmers S, Nelson MJ, Anderson M, Bennett H",
+      "annee": 2025,
+      "titre": "The effect of training distribution, duration, and volume on VO2max and performance in trained cyclists: a systematic review, multilevel meta-analysis, and multivariate meta-regression",
+      "revue": "J Sci Med Sport",
+      "doi": "10.1016/j.jsams.2024.12.005"
      }
     ]
    }
@@ -6285,7 +6314,7 @@
    "conseils": [],
    "preuve": {
     "niveau": "plausible",
-    "resultat": "Répartition fréquente chez les élites, surtout en période de base ; elle fait jeu égal avec le polarisé dans les comparaisons récentes. Plus de 90 % des pros WorldTour sont pyramidaux avant la saison (en puissance : ~70 % sous le 1er seuil estimé à 70 % de la CP, ~25 % entre ce seuil et la CP, ~4 % au-dessus). Chez 14 amateurs (16 semaines, ~7,6 h/sem, sans groupe de comparaison), la puissance au seuil a progressé.",
+    "resultat": "Répartition fréquente chez les élites, surtout en période de base ; elle fait jeu égal avec le polarisé dans les comparaisons récentes. Plus de 90 % des pros WorldTour sont pyramidaux avant la saison (en puissance : ~70 % sous le 1er seuil estimé à 70 % de la CP, ~25 % entre ce seuil et la CP, ~4 % au-dessus). Chez 14 amateurs (16 semaines, ~7,6 h/sem, sans groupe de comparaison), la puissance au seuil a progressé. Méta-analyse de 41 études (797 cyclistes entraînés) : polarisé et non polarisé font les mêmes progrès ; la durée du programme compte, le volume au-delà du nécessaire non.",
     "references": [
      {
       "auteurs": "Silva Oliveira P, Boppre G, Fonseca H",
@@ -6319,6 +6348,13 @@
       "titre": "Effects of a 16-week training program with a pyramidal intensity distribution on recreational male cyclists",
       "revue": "Sports",
       "doi": "10.3390/sports12010017"
+     },
+     {
+      "auteurs": "Cove B, Chalmers S, Nelson MJ, Anderson M, Bennett H",
+      "annee": 2025,
+      "titre": "The effect of training distribution, duration, and volume on VO2max and performance in trained cyclists: a systematic review, multilevel meta-analysis, and multivariate meta-regression",
+      "revue": "J Sci Med Sport",
+      "doi": "10.1016/j.jsams.2024.12.005"
      }
     ]
    }
@@ -6392,13 +6428,20 @@
    "conseils": [],
    "preuve": {
     "niveau": "prouvé",
-    "resultat": "Sur 12 semaines (63 cyclistes), longs puis courts, l'inverse ou un mélange : +5 à 10 % pour tous les groupes ; l'ordre change peu.",
+    "resultat": "Sur 12 semaines (63 cyclistes), longs puis courts, l'inverse ou un mélange : +5 à 10 % pour tous les groupes ; l'ordre change peu. Méta-analyse de 29 études : chez les entraînés, les intervalles font gagner ~2 % en contre-la-montre ; l'effet dépend de la durée des répétitions plus que de leur intensité, et en faire plus que le nécessaire n'apporte rien.",
     "references": [
      {
       "auteurs": "Sylta Ø, Tønnessen E, Hammarström D, et al.",
       "annee": 2016,
       "titre": "The effect of different high-intensity periodization models on endurance adaptations",
       "revue": "Med Sci Sports Exerc"
+     },
+     {
+      "auteurs": "Rosenblat MA, Lin E, da Costa BR, Thomas SG",
+      "annee": 2021,
+      "titre": "Programming interval training to optimize time-trial performance: a systematic review and meta-analysis",
+      "revue": "Sports Med",
+      "doi": "10.1007/s40279-021-01457-2"
      }
     ]
    }
@@ -6424,7 +6467,7 @@
    "conseils": [],
    "preuve": {
     "niveau": "prouvé",
-    "resultat": "Méta-analyses : une baisse de volume de 41-60 % sur ~2 semaines, en gardant l'intensité, donne le meilleur effet ; confirmé chez les athlètes d'endurance.",
+    "resultat": "Méta-analyses : une baisse de volume de 41-60 % sur ~2 semaines, en gardant l'intensité, donne le meilleur effet ; confirmé chez les athlètes d'endurance (14 études : contre-la-montre amélioré, pas la VO2max ; mieux encore après une grosse charge juste avant). L'intensité est la clé avant et pendant l'affûtage.",
     "references": [
      {
       "auteurs": "Bosquet L, Montpetit J, Arvisais D, Mujika I",
@@ -6439,6 +6482,13 @@
       "titre": "Effects of tapering on performance in endurance athletes: a systematic review and meta-analysis",
       "revue": "PLoS One",
       "pmid": "37163550"
+     },
+     {
+      "auteurs": "Mujika I",
+      "annee": 2010,
+      "titre": "Intense training: the key to optimal performance before and during the taper",
+      "revue": "Scand J Med Sci Sports",
+      "doi": "10.1111/j.1600-0838.2010.01189.x"
      }
     ]
    }
@@ -6570,6 +6620,163 @@
    }
   },
   {
+   "id": "methode-zones-domaines",
+   "sport": "methode",
+   "famille": "organisation",
+   "nom": "Zones ancrées sur 3 domaines",
+   "objectif": "Découper les intensités",
+   "resume": "3 domaines : facile sous le 1er seuil (estimé à ~70 % de la CP), soutenu jusqu'à la CP, épuisant au-dessus. Les zones Z1-Z6 les subdivisent.",
+   "zone": "—",
+   "rpe": "—",
+   "niveau": "—",
+   "variantes": [],
+   "quand": {
+    "phases": [
+     "toutes"
+    ],
+    "parSemaine": "",
+    "recuperation": ""
+   },
+   "conseils": [
+    "Le 1er seuil se mesure en labo (lactate, gaz) ou s'estime avec le DFA-α1 (ceinture cardio)."
+   ],
+   "preuve": {
+    "niveau": "prouvé",
+    "resultat": "La CP est la frontière entre effort stable et effort qui épuise ; la FTP, le seuil à 4 mmol et les % de FC max ou de VO2max ne la délimitent pas. Méta-analyse : 1er seuil ventilatoire ~30 % sous la CP (grande variation individuelle). Mesurés avec rigueur, CP et seuil lactique ne diffèrent que de quelques watts.",
+    "references": [
+     {
+      "auteurs": "Jones AM, Burnley M, Black MI, Poole DC, Vanhatalo A",
+      "annee": 2019,
+      "titre": "The maximal metabolic steady state: redefining the 'gold standard'",
+      "revue": "Physiol Rep",
+      "doi": "10.14814/phy2.14098"
+     },
+     {
+      "auteurs": "Galán-Rioja MÁ, González-Mohíno F, Poole DC, González-Ravé JM",
+      "annee": 2020,
+      "titre": "Relative proximity of critical power and metabolic/ventilatory thresholds: systematic review and meta-analysis",
+      "revue": "Sports Med",
+      "doi": "10.1007/s40279-020-01314-8"
+     },
+     {
+      "auteurs": "Jamnick NA, Pettitt RW, Granata C, Pyne DB, Bishop DJ",
+      "annee": 2020,
+      "titre": "An examination and critique of current methods to determine exercise intensity",
+      "revue": "Sports Med",
+      "doi": "10.1007/s40279-020-01322-8"
+     },
+     {
+      "auteurs": "Caen K, Poole DC, Vanhatalo A, Jones AM",
+      "annee": 2024,
+      "titre": "Critical power and maximal lactate steady state in cycling: 'watts' the difference?",
+      "revue": "Sports Med",
+      "doi": "10.1007/s40279-024-02075-4"
+     },
+     {
+      "auteurs": "Wong S, Burnley M, Mauger A, Fenghua S, Hopker J",
+      "annee": 2023,
+      "titre": "Functional threshold power is not a valid marker of the maximal metabolic steady state",
+      "revue": "J Sports Sci",
+      "doi": "10.1080/02640414.2023.2176045"
+     }
+    ]
+   }
+  },
+  {
+   "id": "methode-vfc",
+   "sport": "methode",
+   "famille": "organisation",
+   "nom": "Entraînement guidé par la VFC",
+   "objectif": "Adapter la séance du jour à la récupération",
+   "resume": "VFC du matin en moyenne sur 7 jours, comparée à ta zone normale : séance maintenue, allégée ou remplacée.",
+   "zone": "—",
+   "rpe": "—",
+   "niveau": "—",
+   "variantes": [],
+   "quand": {
+    "phases": [
+     "toutes"
+    ],
+    "parSemaine": "",
+    "recuperation": ""
+   },
+   "conseils": [],
+   "preuve": {
+    "niveau": "plausible",
+    "resultat": "Méta-analyse de 8 études : par rapport à un plan fixe, effet moyen sur les paramètres sous-maximaux, petit et non significatif sur la performance et la VO2max, et moins de « non-répondants ». Lire la VFC en moyenne sur 7 jours et individuellement. Combiner charge externe (watts) et interne (FC, RPE).",
+    "references": [
+     {
+      "auteurs": "Düking P, Zinner C, Trabelsi K, et al.",
+      "annee": 2021,
+      "titre": "Monitoring and adapting endurance training on the basis of heart rate variability monitored by wearable technologies: a systematic review with meta-analysis",
+      "revue": "J Sci Med Sport",
+      "doi": "10.1016/j.jsams.2021.04.012"
+     },
+     {
+      "auteurs": "Plews DJ, Laursen PB, Stanley J, Kilding AE, Buchheit M",
+      "annee": 2013,
+      "titre": "Training adaptation and heart rate variability in elite endurance athletes: opening the door to effective monitoring",
+      "revue": "Sports Med",
+      "doi": "10.1007/s40279-013-0071-8"
+     },
+     {
+      "auteurs": "Bourdon PC, Cardinale M, Murray A, et al.",
+      "annee": 2017,
+      "titre": "Monitoring athlete training loads: consensus statement",
+      "revue": "Int J Sports Physiol Perform",
+      "doi": "10.1123/IJSPP.2017-0208"
+     }
+    ]
+   }
+  },
+  {
+   "id": "methode-glucides-effort",
+   "sport": "methode",
+   "famille": "organisation",
+   "nom": "Glucides pendant l'effort",
+   "objectif": "Tenir les sorties longues",
+   "resume": "30-60 g/h au-delà de 1 h 15, 60-90 g/h au-delà de 2 h 30, à entraîner avant le jour J.",
+   "zone": "—",
+   "rpe": "—",
+   "niveau": "—",
+   "variantes": [],
+   "quand": {
+    "phases": [
+     "toutes"
+    ],
+    "parSemaine": "",
+    "recuperation": ""
+   },
+   "conseils": [],
+   "preuve": {
+    "niveau": "prouvé",
+    "resultat": "Après 100 min de vélo, des glucides ont donné ~5 % de travail en plus sur 20 min qu'un placebo. Monter à 120 g/h augmente le sucre utilisé mais n'épargne pas plus les réserves (performance non testée). Adapter les glucides à ce que demande chaque séance.",
+    "references": [
+     {
+      "auteurs": "de Oliveira NG, de Oliveira LF, da Silva RP, et al.",
+      "annee": 2024,
+      "titre": "Trehalose improved 20-min cycling time-trial performance after 100-min cycling in amateur cyclists",
+      "revue": "Int J Sport Nutr Exerc Metab",
+      "doi": "10.1123/ijsnem.2023-0241"
+     },
+     {
+      "auteurs": "Podlogar T, Bokal Š, Cirnski S, Wallis GA",
+      "annee": 2022,
+      "titre": "Increased exogenous but unaltered endogenous carbohydrate oxidation with combined fructose-maltodextrin ingested at 120 g/h versus 90 g/h at different ratios",
+      "revue": "Eur J Appl Physiol",
+      "doi": "10.1007/s00421-022-05019-w"
+     },
+     {
+      "auteurs": "Podlogar T, Wallis GA",
+      "annee": 2022,
+      "titre": "New horizons in carbohydrate research and application for endurance athletes",
+      "revue": "Sports Med",
+      "doi": "10.1007/s40279-022-01757-1"
+     }
+    ]
+   }
+  },
+  {
    "id": "methode-semaine-allegee",
    "sport": "methode",
    "famille": "organisation",
@@ -6590,13 +6797,20 @@
    "conseils": [],
    "preuve": {
     "niveau": "pratique",
-    "resultat": "Principe d'entraîneur (surcompensation) ; durée et ampleur exactes non établies par des essais.",
+    "resultat": "Principe d'entraîneur (surcompensation) ; durée et ampleur exactes non établies par des essais. Repère : chez des élites (7 semaines, 3 séances dures par semaine), couper un tiers du volume modéré n'a rien coûté (contre-la-montre +3 % contre +2 %).",
     "references": [
      {
       "auteurs": "Friel J",
       "annee": 2018,
       "titre": "The Cyclist's Training Bible (5e éd.)",
       "revue": "VeloPress (livre)"
+     },
+     {
+      "auteurs": "Christensen PM, Andreasen JJ, Lyngholm J, et al.",
+      "annee": 2024,
+      "titre": "Importance of training volume during intensified training in elite cyclists: maintained vs. reduced volume at moderate intensity",
+      "revue": "Scand J Med Sci Sports",
+      "doi": "10.1111/sms.14362"
      }
     ]
    }
@@ -6653,6 +6867,20 @@
       "titre": "Performance effects of periodized carbohydrate restriction in endurance trained athletes – a systematic review and meta-analysis",
       "revue": "J Int Soc Sports Nutr",
       "pmid": "34001184"
+     },
+     {
+      "auteurs": "Podlogar T, Wallis GA",
+      "annee": 2022,
+      "titre": "New horizons in carbohydrate research and application for endurance athletes",
+      "revue": "Sports Med",
+      "doi": "10.1007/s40279-022-01757-1"
+     },
+     {
+      "auteurs": "Mountjoy M, Ackerman KE, Bailey DM, et al.",
+      "annee": 2023,
+      "titre": "2023 International Olympic Committee's (IOC) consensus statement on Relative Energy Deficiency in Sport (REDs)",
+      "revue": "Br J Sports Med",
+      "doi": "10.1136/bjsports-2023-106994"
      }
     ]
    }

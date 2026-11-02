@@ -13,6 +13,35 @@ import { mesureUtile } from '../forme/donnees'
 
 const somme = (x: number[]) => x.reduce((a, b) => a + b, 0)
 
+/**
+ * Estimation de la CP entre deux tests : meilleurs efforts de 3, 7 et 12 min des 6 dernières semaines (Karsten 2015 :
+ * CP de terrain fiable à ~2-4 % près). Undefined si les efforts ne s'alignent pas assez bien (r² ≤ 0,95).
+ */
+export function estimerCp(seances: { sport: string; date: string; meilleurs?: Record<number, number> }[], jour: string) {
+  const recents = seances.filter((s) => s.sport === 'velo' && s.meilleurs && s.date > decalerJour(jour, -42))
+  const efforts = DUREES_CP.flatMap((d) => {
+    const w = Math.max(0, ...recents.map((s) => s.meilleurs?.[d] ?? 0))
+    return w ? [{ dureeSec: d, puissanceW: w }] : []
+  })
+  const estimation = efforts.length >= 2 ? calculerCP(efforts) : undefined
+  return estimation && estimation.cpW > 0 && estimation.r2 > 0.95 ? Math.round(estimation.cpW) : undefined
+}
+
+/** Seuil de l'alerte « CP en hausse » : au-delà de l'erreur d'un test de terrain (Karsten 2015 : CV 2,4-3,5 %). */
+export const HAUSSE_CP = 1.04
+
+/** Alerte de l'écran Aujourd'hui : ta CP estimée dépasse nettement ta CP de test. */
+export async function alerteCp() {
+  const jour = aujourdhui()
+  const r = (await db.reglages.get('entrainement'))?.valeur as Partial<ReglagesEntrainement> | undefined
+  if (!r?.cpW) return undefined
+  const vue = (await db.reglages.get('alerte-cp'))?.valeur as { jusquau?: string } | undefined
+  if (vue?.jusquau && vue.jusquau >= jour) return undefined
+  const seances = await db.seances.where('date').above(decalerJour(jour, -42)).toArray()
+  const estimee = estimerCp(seances, jour)
+  return estimee && estimee >= r.cpW * HAUSSE_CP ? { estimee, cpW: r.cpW } : undefined
+}
+
 /** Données de l'onglet Progrès : watts, volume par semaine, forme / fatigue, VFC et FC de repos. */
 export async function donneesProgres() {
   const jour = aujourdhui()
@@ -29,14 +58,7 @@ export async function donneesProgres() {
     }))
   const cpPrecedente = tests.length >= 2 ? tests[tests.length - 2].w : undefined
 
-  // Estimation de la CP entre deux tests : meilleurs efforts de 3, 7 et 12 min des 6 dernières semaines (Karsten 2015)
-  const recents = seances.filter((s) => s.sport === 'velo' && s.meilleurs && s.date > decalerJour(jour, -42))
-  const efforts = DUREES_CP.flatMap((d) => {
-    const w = Math.max(0, ...recents.map((s) => s.meilleurs?.[d] ?? 0))
-    return w ? [{ dureeSec: d, puissanceW: w }] : []
-  })
-  const estimation = efforts.length >= 2 ? calculerCP(efforts) : undefined
-  const cpEstimee = estimation && estimation.cpW > 0 && estimation.r2 > 0.95 ? Math.round(estimation.cpW) : undefined
+  const cpEstimee = estimerCp(seances, jour)
 
   // Efficacité aérobie vélo : watts par battement sur les sorties faciles de 45 min et plus (capteur + cardio)
   const efficacite = seances

@@ -45,7 +45,7 @@ const plusDure = (a: Intensite, b?: Intensite) => (b && ORDRE.indexOf(b) > ORDRE
 export async function besoinsDe(jour: string, o: { sansCorrection?: boolean; sansEtalement?: boolean } = {}) {
   const n = await lireReglagesNutrition()
   const profil = { ...PROFIL_DEFAUT, ...((await db.reglages.get('profil'))?.valeur as Profil | undefined) }
-  const kg = (await poidsAu(jour)) ?? profil.poidsKg ?? 76
+  const kg = (await poidsAu(jour)) ?? profil.poidsKg ?? PROFIL_DEFAUT.poidsKg!
   const c = await chargerContexte()
   const seances = await db.seances.where('date').equals(jour).toArray()
   const prevues = await db.prevues.where('date').equals(jour).toArray()

@@ -96,6 +96,10 @@ Points décidés ou mis de côté, à reprendre au bon moment.
 - Module course à pied (aujourd'hui saisi depuis Campus Coach) et vélo généré selon les objectifs de saison : à repenser plus tard.
 
 ## Fait
+- 2/11/2026 (v0.63.0) : bilan des 34 études. 1er seuil estimé à 70 % de la CP (Z2 56-70 %), domaines FC moyenne = Z3+Z4,
+  zones de FC proposées à partir des sorties (Réglages → Avancé → Zones vélo), format 8′ plafonné à 4 × 8′, alerte « CP en
+  hausse » (≥ 4 % au-dessus du test), catalogue 81 fiches (méthodes zones, VFC, glucides à l'effort). Reste : D (affûtage,
+  durabilité, muscu) dans la prépa de l'Étape du Tour ; 1er seuil à mesurer (labo ou DFA-α1).
 - 2/11/2026 (v0.61.0) : zones de puissance en % de CP ancrées sur les domaines (Z4 91-100 %, Z5 101-120 %), bouton
   « Recaler sur ma CP », intensité des séances vélo jugée par les watts (≥ 1 min > CP = haute ; ≥ 10 min 76-100 % = moyenne).
   Bornes de FC proposées par le relecteur, à saisir par Titouan dans Zones vélo, puis à recaler sur ses sorties

@@ -9,7 +9,7 @@ import { GraphiqueBarres, GraphiqueLignes, SERIES } from '../../../core/ui/graph
 import { AIDES } from '../aides'
 import { FTP_SUR_CP } from '../../../metrics/puissance'
 import { JOURS_AMORCAGE } from '../analyse/donnees'
-import { donneesProgres } from '../analyse/progres'
+import { donneesProgres, HAUSSE_CP } from '../analyse/progres'
 import { progressionFamilles } from '../plan/programme'
 import { programmeDe, useReglagesEntrainement } from '../reglagesEntrainement'
 import { NOMS_FAMILLES } from '../../../metrics/programme'
@@ -87,7 +87,7 @@ export function Progres() {
           <p className="mt-2 text-sm text-texte-2">
             D'après tes meilleurs efforts des 6 dernières semaines : <b className="text-texte">~{t.cpEstimee} W</b>
             <Aide titre="Estimation entre deux tests" texte={AIDES.cpEstimee} />
-            {t.cpW && t.cpEstimee > t.cpW * 1.03 && <span className="block font-semibold text-nutrition">Tu sembles avoir progressé : avance ton prochain test.</span>}
+            {t.cpW && t.cpEstimee >= t.cpW * HAUSSE_CP && <span className="block font-semibold text-nutrition">Tu sembles avoir progressé : avance ton prochain test.</span>}
           </p>
         )}
       </Carte>
