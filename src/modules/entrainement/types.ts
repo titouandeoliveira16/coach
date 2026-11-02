@@ -7,7 +7,7 @@ export type { Note }
 export interface ZoneVelo {
   nom: string
   wMin: number
-  /** Absent pour la zone la plus haute (ex. sprint > 674 W) */
+  /** Absent pour la zone la plus haute */
   wMax?: number
   fcMin?: number
   fcMax?: number
@@ -147,6 +147,8 @@ export interface Seance {
   // Calculés à l'enregistrement (voir metrics/)
   /** Secondes dans chaque zone FC (Z1 à Z5) */
   tempsZones?: number[]
+  /** Secondes par domaine de puissance : sous 76 % de la CP, de 76 à 100 %, au-dessus de la CP */
+  tempsPuissance?: [number, number, number]
   trimp?: number
   /** Vrai si le TRIMP vient du flux de FC complet (sinon : estimé depuis la FC moyenne) */
   trimpFlux?: boolean

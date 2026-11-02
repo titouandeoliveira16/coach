@@ -11,7 +11,9 @@ export const AIDES = {
   decouplage:
     'Découplage = baisse du rapport vitesse (ou puissance) / FC entre la 1re et la 2de moitié de la séance. Sous 5 % : bonne endurance aérobie.',
   zones: 'Temps passé dans chaque zone de FC (bornes réglées dans Réglages → Vélo → Zones).',
-  domaines: 'Basse = Z1-Z2 (sous le 1er seuil), moyenne = Z3, haute = Z4-Z5 (modèle à 3 zones de Seiler).',
+  domaines: "Basse = sous ~75 % de ta CP (Z1-Z2, facile), moyenne = de 76 à 100 % (Z3-Z4, soutenu mais stable), haute = au-dessus de ta CP (Z5-Z6 : ta réserve W′ se vide). C'est le modèle à 3 zones de Seiler, ancré sur ta CP (Jones 2019, Poole 2016). À vélo avec un capteur, l'appli juge avec tes watts : au moins 1 min au-dessus de la CP = séance haute, au moins 10 min entre 76 et 100 % = moyenne. Sans puissance (course, pas de capteur), avec ta FC, qui réagit en retard et monte avec la chaleur et la fatigue.",
+  zonesCp:
+    "Tes zones partent de ta CP, la puissance que ton corps peut tenir sans s'emballer. Z1 < 55 %, Z2 56-75 % (facile), Z3 76-90 % (tempo, sweet spot 88-94 %), Z4 91-100 % (seuil), Z5 101-120 % (VO2max), Z6 > 120 %. Sous 75 % de la CP c'est facile ; entre 75 et 100 % c'est soutenu mais stable ; au-dessus de la CP ta réserve d'effort (W′) se vide. La limite à 100 % est solide ; celle à 75 % est un choix prudent (en course, le 1er seuil est vers 80 % de la vitesse critique, Hunter 2024). Les zones de FC sont des estimations à recaler sur tes sorties (FC stabilisée après 20 min à 75 % de la CP, FC d'un bloc de 20 min à 95-100 %) : la FC varie beaucoup d'une personne à l'autre (Iannetta 2020).",
   rpeRegle: 'Règle de ton PDF : RPE < 3 = « kJ faciles » (ton placement sûr), RPE ≥ 7,5 = « stress » (placement à risque, 2-3 fois par semaine maximum).',
   ctl: 'Fitness (CTL) = moyenne exponentielle de ta charge quotidienne sur 42 jours : ta « forme de fond ».',
   atl: 'Fatigue (ATL) = moyenne exponentielle de ta charge quotidienne sur 7 jours.',

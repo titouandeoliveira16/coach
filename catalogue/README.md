@@ -43,7 +43,8 @@ La `cadence` des efforts vélo est un **repère** (pas une consigne) : 85-95 tr/
 
 ### Zones (vélo, en % de la CP)
 
-Z1 < 55 % · Z2 56-75 % · Z3 76-90 % (sweet spot 88-94 %) · Z4 91-105 % · Z5 106-120 % · Z6 > 120 % · Z7 sprint.
+Z1 < 55 % · Z2 56-75 % · Z3 76-90 % (sweet spot 88-94 %) · Z4 91-100 % · Z5 101-120 % · Z6 > 120 % · Z7 sprint
+(la CP sépare l'effort stable de l'effort qui épuise : Jones 2019).
 Modèle à 3 zones (Seiler) : zone 1 sous le premier seuil (≈ Z1-Z2), zone 2 entre les seuils (≈ Z3-Z4), zone 3 au-dessus (≈ Z5+).
 
 ### Export futur

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { zonesDepuisCp } from '../../../core/zones'
 import { aujourdhui } from '../../../core/dates'
 import { Carte } from '../../../core/ui/Carte'
 import { ChampNombre } from '../../../core/ui/ChampNombre'
@@ -38,9 +39,8 @@ export function SectionVelo() {
       {calculateur && (
         <CalculateurCP
           onUtiliser={async (cpW, wPrimeKj) => {
-            // Zones de puissance recalées sur la nouvelle CP (même % de CP qu'avant)
-            const ratio = cpW / (reglages.cpW ?? 260)
-            const zonesVelo = reglages.zonesVelo.map((z) => ({ ...z, wMin: Math.round(z.wMin * ratio), wMax: z.wMax && Math.round(z.wMax * ratio) }))
+            // Zones de puissance recalculées en % de la nouvelle CP ; les bornes de FC restent
+            const zonesVelo = zonesDepuisCp(cpW, reglages.zonesVelo)
             const poidsKg = await poidsAu(aujourdhui())
             await modifier({ cpW, wPrimeKj, zonesVelo, tests: [...reglages.tests, { date: aujourdhui(), type: 'cp', valeur: cpW, poidsKg }] })
             setCalculateur(false)

@@ -17,3 +17,11 @@ describe('intensité d’une séance', () => {
     expect(domaineDe(s({ fcMoy: 140, fcMax: 185, sansCeinture: true }), bornes)).toBe('basse')
   })
 })
+
+it('avec la puissance : haute si ≥ 1 min au-dessus de la CP, moyenne si ≥ 10 min entre 76 et 100 %, même si la FC dit autre chose', () => {
+  const v = (tp: [number, number, number], c: Partial<Seance> = {}) => s({ sport: 'velo', tempsPuissance: tp, tempsZones: [3000, 600, 0, 0, 120], ...c })
+  expect(domaineDe(v([3000, 300, 90]), bornes)).toBe('haute')
+  expect(domaineDe(v([2400, 1500, 30]), bornes)).toBe('moyenne')
+  expect(domaineDe(v([3500, 200, 20]), bornes)).toBe('basse')
+  expect(domaineDe(v([3500, 200, 20], { rpe: 8 }), bornes)).toBe('haute')
+})
