@@ -53,8 +53,9 @@ def duree(etapes, unite):
 S = []
 
 def seance(id, sport, famille, nom, objectif, resume, zone, rpe, niveau, deroule=None, exercices=None, unite=None,
-           variantes=(), phases=(), parSemaine="", recuperation="", conseils=(), preuve=None, dureeMin=None, travailMin=None):
+           variantes=(), phases=(), parSemaine="", recuperation="", conseils=(), preuve=None, dureeMin=None, travailMin=None, disciplines=()):
     s = {"id": id, "sport": sport, "famille": famille, "nom": nom, "objectif": objectif, "resume": resume}
+    if disciplines: s["disciplines"] = list(disciplines)
     if unite: s["unite"] = unite
     s.update({"zone": zone, "rpe": rpe, "niveau": niveau})
     if deroule:
@@ -693,8 +694,8 @@ seance("force-haut-du-corps-531", famille="force-lourde", nom="Développé couch
 # ════════════════════════ MÉTHODES (organisation, pour plus tard) ════════════════════════
 M = dict(sport="methode")
 
-def methode(id, nom, objectif, resume, preuve, conseils=(), phases=()):
-    seance(id, famille="organisation", nom=nom, objectif=objectif, resume=resume, zone="—", rpe="—", niveau="—",
+def methode(id, nom, objectif, resume, preuve, conseils=(), phases=(), famille="organisation", disciplines=()):
+    seance(id, famille=famille, disciplines=disciplines, nom=nom, objectif=objectif, resume=resume, zone="—", rpe="—", niveau="—",
            variantes=[], phases=phases, conseils=conseils, preuve=preuve, **M)
 
 methode("methode-polarise", "Répartition polarisée (80/20)", "Répartir l'intensité sur la semaine",

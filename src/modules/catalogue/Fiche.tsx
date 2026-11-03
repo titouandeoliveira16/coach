@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { aPlat, COULEUR_PREUVE, couleurZone, type Etape, type SeanceCatalogue } from './donnees'
+import { aPlat, COULEUR_PREUVE, couleurZone, NOMS_DISCIPLINES, type Etape, type SeanceCatalogue } from './donnees'
 
 /** Profil de la séance : une barre par étape, hauteur = intensité, couleur = zone (comme un écran de home trainer). */
 export function Profil({ s }: { s: SeanceCatalogue }) {
@@ -71,6 +71,7 @@ export function Fiche({ s }: { s: SeanceCatalogue }) {
           {s.variantes.length > 0 && <><Titre>Variantes et progression</Titre><ul className="list-disc space-y-0.5 pl-4">{s.variantes.map((v) => <li key={v}>{v}</li>)}</ul></>}
           <Titre>Quand</Titre>
           <ul className="list-disc space-y-0.5 pl-4">
+            {s.disciplines && s.disciplines.length > 0 && <li>Disciplines : {s.disciplines.map((d) => NOMS_DISCIPLINES[d] ?? d).join(', ')}</li>}
             {s.quand.phases.length > 0 && <li>Phases : {s.quand.phases.join(', ')}</li>}
             {s.quand.parSemaine && <li>Fréquence : {s.quand.parSemaine} par semaine</li>}
             {s.quand.recuperation && <li>Récupération : {s.quand.recuperation}</li>}
