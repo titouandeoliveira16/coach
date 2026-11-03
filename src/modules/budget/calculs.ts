@@ -163,8 +163,39 @@ export function abonnementsAVerifier(d: Donnees, jour: string) {
 
 const sommeAbonnements = (l: Abonnement[]) => l.reduce((s, a) => s + a.montant, 0)
 
+/**
+ * Revenu de fin de mois : à partir du 25, un revenu sert à vivre le mois suivant (ex. salaire versé le 30).
+ * Il compte alors pour le mois suivant dans les bilans (revenus, 50/30/20) ; le solde du compte, lui, ne change pas.
+ */
+export const JOUR_REVENU_MOIS_SUIVANT = 25
+export const moisDuRevenu = (date: string) => (Number(date.slice(8)) >= JOUR_REVENU_MOIS_SUIVANT ? decalerMois(moisDe(date), 1) : moisDe(date))
+
+/** Abonnement de revenu (catégorie de revenu) : un revenu régulier attendu (salaire, bourse…). */
+export const estRevenuAttendu = (a: Abonnement, d: Pick<Donnees, 'categories'>) => d.categories.find((c) => c.id === a.categorieId)?.genre === 'revenu'
+
+/**
+ * À venir ce mois-ci (pas encore confirmés) : dépenses régulières (abonnements) et revenus réguliers attendus.
+ * Les revenus attendus à partir du 25 servent au mois suivant : ils ne sont pas comptés ici.
+ */
+export function aVenir(d: Donnees, jour: string) {
+  const l = abonnementsAVenir(d, jour)
+  const revenus = l.filter((a) => estRevenuAttendu(a, d) && a.jour < JOUR_REVENU_MOIS_SUIVANT)
+  const depenses = l.filter((a) => !estRevenuAttendu(a, d))
+  return { depenses, revenus }
+}
+
+/** Charges fixes encore à payer ce mois-ci, catégorie par catégorie (plafond − déjà payé). */
+export function detailFixesRestantes(d: Donnees, mois: string) {
+  const parCat = depensesParCategorie(d.mouvements, d.categories, mois)
+  const abonnees = categoriesAbonnees(d)
+  return d.categories
+    .filter((c) => c.genre === 'depense' && !c.parentId && c.fixe && !c.archive && !abonnees.has(c.id))
+    .map((c) => ({ categorie: c, montant: Math.max(0, (plafondDe(c.id, mois, d.plafonds) ?? 0) - (parCat.get(c.id) ?? 0)) }))
+    .filter((x) => x.montant > 0)
+}
+
 /** Catégories (racines) suivies par un abonnement actif : elles ne passent plus par le système « charge fixe ». */
-const categoriesAbonnees = (d: Donnees) => new Set((d.abonnements ?? []).filter((a) => a.actif).map((a) => racine(a.categorieId, d.categories)))
+const categoriesAbonnees = (d: Donnees) => new Set((d.abonnements ?? []).filter((a) => a.actif && !estRevenuAttendu(a, d)).map((a) => racine(a.categorieId, d.categories)))
 
 export interface ResumeMois {
   revenus: number
@@ -181,7 +212,8 @@ export function resumeMois(d: Donnees, mois: string): ResumeMois {
   const du = d.mouvements.filter(duMois(mois))
   const somme = (f: (m: Mouvement) => boolean) => du.filter(f).reduce((s, m) => s + m.montant, 0)
   const typeDe = (id?: string) => d.comptes.find((c) => c.id === id)?.type
-  const revenus = somme((m) => m.type === 'revenu')
+  // Revenus : ceux qui servent à ce mois (un salaire du 30 compte pour le mois suivant)
+  const revenus = d.mouvements.filter((m) => m.type === 'revenu' && moisDuRevenu(m.date) === mois).reduce((s, m) => s + m.montant, 0)
   const depenses = somme((m) => m.type === 'depense')
   const investi = somme((m) => m.type === 'investissement')
   const epargne =
@@ -193,7 +225,8 @@ export function resumeMois(d: Donnees, mois: string): ResumeMois {
 
 /**
  * Reste à vivre (mois en cours) : l'argent disponible aujourd'hui, compte(s) courant(s) + espèces,
- * moins les charges fixes et les abonnements encore à payer ce mois-ci. Part de ce que tu as vraiment, comme ta banque.
+ * moins les charges fixes et les abonnements encore à payer ce mois-ci, plus les revenus réguliers attendus
+ * avant le 25 (ceux de fin de mois servent au mois suivant). Part de ce que tu as vraiment, comme ta banque.
  */
 export function resteAVivre(d: Donnees, jour: string) {
   const solde = (type: Compte['type']) => d.comptes
@@ -202,16 +235,14 @@ export function resteAVivre(d: Donnees, jour: string) {
   const courant = solde('courant')
   const especes = solde('especes')
   const fixesRestantes = fixesRestantesDuMois(d, moisDe(jour))
-  const abonnements = sommeAbonnements(abonnementsAVenir(d, jour))
-  return { courant, especes, fixesRestantes, abonnements, reste: courant + especes - fixesRestantes - abonnements }
+  const v = aVenir(d, jour)
+  const abonnements = sommeAbonnements(v.depenses)
+  const revenusAttendus = sommeAbonnements(v.revenus)
+  return { courant, especes, fixesRestantes, abonnements, revenusAttendus, reste: courant + especes - fixesRestantes - abonnements + revenusAttendus }
 }
 
 function fixesRestantesDuMois(d: Donnees, mois: string) {
-  const parCat = depensesParCategorie(d.mouvements, d.categories, mois)
-  const abonnees = categoriesAbonnees(d)
-  return d.categories
-    .filter((c) => c.genre === 'depense' && !c.parentId && c.fixe && !c.archive && !abonnees.has(c.id))
-    .reduce((s, c) => s + Math.max(0, (plafondDe(c.id, mois, d.plafonds) ?? 0) - (parCat.get(c.id) ?? 0)), 0)
+  return detailFixesRestantes(d, mois).reduce((s, x) => s + x.montant, 0)
 }
 
 /**
@@ -239,9 +270,14 @@ export function previsionFinDeMois(d: Donnees, jour: string) {
   if (ecoules < 7 && debut && debut <= premierJour(precedent)) rythme = variables(precedent, dernierJour(precedent)) / joursDansMois(precedent)
 
   const fixesRestantes = fixesRestantesDuMois(d, mois)
-  // Abonnements pas encore passés, prélevés sur un compte courant
-  const abonnements = sommeAbonnements(abonnementsAVenir(d, jour).filter((a) => estCourant.has(a.compteId)))
-  return { solde, fixesRestantes, abonnements, rythme: Math.round(rythme), restants, prevision: Math.round(solde - fixesRestantes - abonnements - rythme * restants) }
+  // Abonnements pas encore passés et revenus attendus (avant le 25), sur un compte courant
+  const v = aVenir(d, jour)
+  const abonnements = sommeAbonnements(v.depenses.filter((a) => estCourant.has(a.compteId)))
+  const revenusAttendus = sommeAbonnements(v.revenus.filter((a) => estCourant.has(a.compteId)))
+  return {
+    solde, fixesRestantes, abonnements, revenusAttendus, rythme: Math.round(rythme), restants,
+    prevision: Math.round(solde - fixesRestantes - abonnements + revenusAttendus - rythme * restants),
+  }
 }
 
 /**

@@ -6,6 +6,7 @@ import { COULEURS } from '../categoriesDepart'
 import { enregistrerCategorie, nouvelId, useBudget, useReglagesBudget } from '../donnees'
 import type { Categorie } from '../types'
 import { CarteAbonnements } from './CarteAbonnements'
+import { CarteExport } from './CarteExport'
 import { CarteImport } from './CarteImport'
 import { CarteRemiseAZero } from './CarteRemiseAZero'
 
@@ -43,7 +44,7 @@ export function SectionReglagesBudget() {
           </label>
         )}
         <label className="flex items-center justify-between py-1.5">
-          <span className="text-texte-2">Relevés des placements le 5 du mois à 9 h</span>
+          <span className="text-texte-2">Relevés du mois le 5 à 9 h (compte courant et placements)</span>
           <input type="checkbox" checked={r.rappelReleves !== false} onChange={(e) => modifier({ rappelReleves: e.target.checked })} className="h-6 w-6 accent-[#facc15]" />
         </label>
         <label className="flex items-center justify-between py-1.5">
@@ -54,6 +55,7 @@ export function SectionReglagesBudget() {
       </Carte>
 
       <CarteAbonnements d={d} />
+      <CarteExport d={d} />
 
       {(['depense', 'revenu'] as const).map((genre) => (
         <Carte key={genre} titre={genre === 'depense' ? 'Catégories de dépenses' : 'Catégories de revenus'}>

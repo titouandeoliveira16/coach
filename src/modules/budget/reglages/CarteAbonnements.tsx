@@ -5,12 +5,12 @@ import { Bouton } from '../../../core/ui/Bouton'
 import { Carte } from '../../../core/ui/Carte'
 import { Feuille } from '../../../core/ui/Feuille'
 import { enregistrerAbonnement, nouvelId, supprimerAbonnement } from '../donnees'
-import type { Donnees } from '../calculs'
+import { estRevenuAttendu, type Donnees } from '../calculs'
 import type { Abonnement } from '../types'
 
 const champ = 'w-full rounded-lg border border-bordure bg-surface-2 px-3 py-2.5 outline-none focus:border-accent'
 
-/** Abonnements qui reviennent chaque mois : comptés d'avance, confirmés à la main le jour où ils passent. */
+/** Abonnements et revenus réguliers (salaire, bourse…) : comptés d'avance, confirmés à la main le jour où ils passent. */
 export function CarteAbonnements({ d }: { d: Donnees }) {
   const [ouvert, setOuvert] = useState<Abonnement>()
   const liste = [...(d.abonnements ?? [])].sort((a, b) => a.jour - b.jour)
@@ -20,15 +20,19 @@ export function CarteAbonnements({ d }: { d: Donnees }) {
     compteId: d.comptes.find((c) => c.type === 'courant' && !c.archive)?.id ?? '',
   })
   return (
-    <Carte titre="Abonnements">
-      <p className="text-xs text-texte-3">Comptés d'avance dans ton reste à vivre et ta prévision. Le jour du prélèvement, l'appli te demande s'il est bien passé.</p>
+    <Carte titre="Abonnements et revenus réguliers">
+      <p className="text-xs text-texte-3">Comptés d'avance dans ton reste à vivre et ta prévision. Le jour prévu, l'appli te demande s'il est bien passé. Choisis une catégorie de revenu pour un salaire ou une bourse : à partir du 25, il compte pour le mois suivant.</p>
       {liste.map((a) => (
         <button key={a.id} type="button" onClick={() => setOuvert(a)} className="flex w-full items-center justify-between py-2 text-left active:opacity-60">
-          <span className={a.actif ? '' : 'text-texte-3 line-through'}>{a.nom}</span>
-          <span className="text-sm text-texte-2">{formatEuros(a.montant)} · le {a.jour}</span>
+          <span className={a.actif ? '' : 'text-texte-3 line-through'}>{estRevenuAttendu(a, d) ? '💰' : '🔁'} {a.nom}</span>
+          <span className="text-sm text-texte-2">{estRevenuAttendu(a, d) ? '+' : ''}{formatEuros(a.montant)} · le {a.jour}</span>
         </button>
       ))}
-      <button type="button" onClick={() => setOuvert(nouveau())} className="mt-1 w-full py-2 text-sm font-semibold text-accent">+ Ajouter un abonnement</button>
+      <div className="mt-1 grid grid-cols-2 gap-2">
+        <button type="button" onClick={() => setOuvert(nouveau())} className="py-2 text-sm font-semibold text-accent">+ Abonnement</button>
+        <button type="button" onClick={() => setOuvert({ ...nouveau(), categorieId: d.categories.find((c) => c.genre === 'revenu' && !c.parentId && !c.archive)?.id ?? '' })}
+          className="py-2 text-sm font-semibold text-accent">+ Revenu régulier</button>
+      </div>
       {ouvert && <FicheAbonnement initial={ouvert} d={d} existe={liste.some((a) => a.id === ouvert.id)} onFermer={() => setOuvert(undefined)} />}
     </Carte>
   )
@@ -38,7 +42,8 @@ function FicheAbonnement({ initial, d, existe, onFermer }: { initial: Abonnement
   const [a, setA] = useState(initial)
   const [montant, setMontant] = useState(initial.montant ? String(initial.montant / 100).replace('.', ',') : '')
   const m = lireNombre(montant)
-  const categories = d.categories.filter((c) => c.genre === 'depense' && !c.archive)
+  const revenu = estRevenuAttendu(a, d)
+  const categories = d.categories.filter((c) => !c.archive).sort((x, y) => (x.genre === y.genre ? 0 : x.genre === 'depense' ? -1 : 1))
   const nomCat = (id: string) => {
     const c = d.categories.find((x) => x.id === id)
     const parent = c?.parentId ? d.categories.find((x) => x.id === c.parentId) : undefined
@@ -46,19 +51,19 @@ function FicheAbonnement({ initial, d, existe, onFermer }: { initial: Abonnement
   }
   const valide = a.nom.trim() && m && m > 0 && a.categorieId && a.compteId && a.jour >= 1 && a.jour <= 31
   return (
-    <Feuille titre={existe ? a.nom : 'Nouvel abonnement'} onFermer={onFermer}>
+    <Feuille titre={existe ? a.nom : revenu ? 'Nouveau revenu régulier' : 'Nouvel abonnement'} onFermer={onFermer}>
       <div className="space-y-3">
-        <input value={a.nom} onChange={(e) => setA({ ...a, nom: e.target.value })} placeholder="Nom (ex. Spotify)" className={champ} />
+        <input value={a.nom} onChange={(e) => setA({ ...a, nom: e.target.value })} placeholder={revenu ? 'Nom (ex. Salaire, Bourse)' : 'Nom (ex. Spotify)'} className={champ} />
         <label className="flex items-center justify-between gap-3"><span className="text-texte-2">Montant (€)</span>
           <input value={montant} onChange={(e) => setMontant(e.target.value)} inputMode="decimal" className={`${champ} w-28 text-right`} /></label>
-        <label className="flex items-center justify-between gap-3"><span className="text-texte-2">Jour du prélèvement</span>
+        <label className="flex items-center justify-between gap-3"><span className="text-texte-2">{revenu ? 'Jour du versement (environ)' : 'Jour du prélèvement'}</span>
           <input value={a.jour} onChange={(e) => setA({ ...a, jour: Math.round(lireNombre(e.target.value) ?? 0) })} inputMode="numeric" className={`${champ} w-20 text-right`} /></label>
         <label className="block text-sm text-texte-2">Catégorie
           <select value={a.categorieId} onChange={(e) => setA({ ...a, categorieId: e.target.value })} className={champ}>
             <option value="">Choisir…</option>
-            {categories.map((c) => <option key={c.id} value={c.id}>{nomCat(c.id)}</option>)}
+            {categories.map((c) => <option key={c.id} value={c.id}>{nomCat(c.id)}{c.genre === 'revenu' ? ' (revenu)' : ''}</option>)}
           </select></label>
-        <label className="block text-sm text-texte-2">Payé avec
+        <label className="block text-sm text-texte-2">{revenu ? 'Versé sur' : 'Payé avec'}
           <select value={a.compteId} onChange={(e) => setA({ ...a, compteId: e.target.value })} className={champ}>
             {d.comptes.filter((c) => !c.archive).map((c) => <option key={c.id} value={c.id}>{c.nom}</option>)}
           </select></label>

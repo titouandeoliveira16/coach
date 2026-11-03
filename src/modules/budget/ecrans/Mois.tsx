@@ -9,7 +9,7 @@ import { Bilan } from '../Bilan'
 import { CarteAVerifier } from '../CarteAVerifier'
 import { CarteControle } from '../CarteControle'
 import {
-  controleAFaire, couleurJauge, debutSuivi, decalerMois, depensesParCategorie, dernierJour, moisDe, nomMois, patrimoineAu, plafondDe,
+  aVenir, controleAFaire, couleurJauge, debutSuivi, decalerMois, depensesParCategorie, dernierJour, detailFixesRestantes, echeance, moisDe, nomMois, patrimoineAu, plafondDe,
   premierJour, previsionFinDeMois, repartition503020, resteAVivre, resumeMois, soldeAu,
 } from '../calculs'
 import { DetailMouvement } from '../DetailMouvement'
@@ -25,6 +25,7 @@ export function Mois() {
   const actuel = moisDe(jour)
   const [mois, setMois] = useState(actuel)
   const [detail, setDetail] = useState<Mouvement>()
+  const [voirReste, setVoirReste] = useState(false)
   if (!d) return null
 
   const enCours = mois === actuel
@@ -79,14 +80,35 @@ export function Mois() {
         <Carte>
           <p className="text-sm text-texte-2">
             Reste à vivre ce mois-ci
-            <Aide titre="Reste à vivre" texte="L'argent que tu as vraiment aujourd'hui (compte courant + espèces), moins les charges fixes encore à payer ce mois-ci (plafond des catégories « charge fixe » pas encore payé). Ce que tu mets de côté sur un livret sort tout de suite de ton compte, donc du reste à vivre. Le contrôle du dimanche le recale sur ta banque." />
+            <Aide titre="Reste à vivre" texte="L'argent que tu as vraiment aujourd'hui (compte courant + espèces), moins ce qui doit encore sortir ce mois-ci (charges fixes pas encore payées, abonnements pas encore passés), plus les revenus réguliers attendus avant le 25 (Réglages → Abonnements et revenus). Un revenu du 25 ou après (salaire de fin de mois) sert au mois suivant : il n'est pas compté ici. Ce que tu mets de côté sur un livret sort tout de suite de ton compte, donc du reste à vivre. Le contrôle recale ton compte sur ta banque." />
           </p>
           <p className="text-5xl font-bold tabular-nums" style={{ color: reste.reste < 0 ? ETAT.rouge : undefined }}>{formatEuros(reste.reste)}</p>
           <p className="mt-1 text-sm text-texte-3">
             {formatEuros(reste.courant)} sur ton compte{reste.especes ? ` + ${formatEuros(reste.especes)} en espèces` : ''}
             {reste.fixesRestantes > 0 && ` − ${formatEuros(reste.fixesRestantes)} de charges fixes à venir`}
             {reste.abonnements > 0 && ` − ${formatEuros(reste.abonnements)} d'abonnements à venir`}
+            {reste.revenusAttendus > 0 && ` + ${formatEuros(reste.revenusAttendus)} de revenus attendus`}
           </p>
+          {(reste.fixesRestantes > 0 || reste.abonnements > 0 || reste.revenusAttendus > 0) && (
+            <button type="button" onClick={() => setVoirReste(!voirReste)} className="mt-1 text-sm font-semibold text-accent">{voirReste ? 'Masquer le détail' : 'Voir le détail'}</button>
+          )}
+          {voirReste && (
+            <ul className="mt-2 space-y-1 border-t border-bordure pt-2 text-sm">
+              {detailFixesRestantes(d, mois).map((x) => (
+                <li key={x.categorie.id} className="flex justify-between gap-2"><span className="text-texte-2">{x.categorie.emoji} {x.categorie.nom} <span className="text-xs text-texte-3">(charge fixe pas encore payée)</span></span><span className="tabular-nums">− {formatEuros(x.montant)}</span></li>
+              ))}
+              {[...aVenir(d, jour).depenses, ...aVenir(d, jour).revenus].sort((a, b) => a.jour - b.jour).map((a) => {
+                const revenu = aVenir(d, jour).revenus.includes(a)
+                return (
+                  <li key={a.id} className="flex justify-between gap-2">
+                    <span className="text-texte-2">{revenu ? '💰' : '🔁'} {a.nom} <span className="text-xs text-texte-3">(prévu le {Number(echeance(a, mois).slice(8))})</span></span>
+                    <span className="tabular-nums" style={revenu ? { color: ETAT.vert } : undefined}>{revenu ? '+' : '−'} {formatEuros(a.montant)}</span>
+                  </li>
+                )
+              })}
+              <li className="pt-1 text-xs text-texte-3">Une charge déjà payée mais pas saisie apparaît ici comme « à venir » : saisis-la pour la retirer.</li>
+            </ul>
+          )}
         </Carte>
       ) : (
         <Carte>
@@ -101,11 +123,11 @@ export function Mois() {
           <>
             <p className="text-sm text-texte-2">
               Compte courant fin {nomMois(mois).split(' ')[0]} (prévision)
-              <Aide titre="Prévision du compte courant" texte="Solde d'aujourd'hui − charges fixes encore prévues − tes dépenses variables au rythme actuel (moyenne par jour depuis le début du mois ; les 7 premiers jours, le rythme du mois précédent) × jours restants. Les revenus à venir ne sont pas comptés." />
+              <Aide titre="Prévision du compte courant" texte="Solde d'aujourd'hui − charges fixes encore prévues − abonnements à venir + revenus réguliers attendus avant le 25 − tes dépenses variables au rythme actuel (moyenne par jour depuis le début du mois ; les 7 premiers jours, le rythme du mois précédent) × jours restants. Avant ton salaire de fin de mois (il sert au mois suivant)." />
             </p>
             <p className="text-3xl font-bold tabular-nums" style={{ color: prevision.prevision < 0 ? ETAT.rouge : undefined }}>{formatEuros(prevision.prevision)}</p>
             <p className="mt-1 text-sm text-texte-3">
-              Aujourd'hui {formatEuros(prevision.solde)}{prevision.abonnements > 0 ? ` · ${formatEuros(prevision.abonnements)} d'abonnements à venir` : ''} · environ {formatEuros(prevision.rythme)} par jour · {prevision.restants} j restants
+              Aujourd'hui {formatEuros(prevision.solde)}{prevision.abonnements > 0 ? ` · ${formatEuros(prevision.abonnements)} d'abonnements à venir` : ''}{prevision.revenusAttendus > 0 ? ` · + ${formatEuros(prevision.revenusAttendus)} de revenus attendus` : ''} · environ {formatEuros(prevision.rythme)} par jour · {prevision.restants} j restants
             </p>
           </>
         ) : (

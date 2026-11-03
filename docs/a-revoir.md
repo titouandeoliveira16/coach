@@ -19,6 +19,10 @@ Points décidés ou mis de côté, à reprendre au bon moment.
 - Faire le tour du module avec Titouan après quelques jours d'utilisation : ce qui manque, ce qui gêne, ce qui est en trop.
 - Abonnements (v0.53.0, 29/10) : 4 créés par Titouan ; vérifier au 1er prélèvement que la notification et la carte « à vérifier » arrivent.
 - Contrôle du solde du courant chaque dimanche (choisi plutôt que le 15) : voir après un mois si la fréquence convient.
+- 3/11/2026 (v0.69.0, Titouan perdu avec le reste à vivre et les mois qui se chevauchent) : revenus réguliers attendus
+  (salaire de fin de mois, job et bourse de début de mois), revenus du 25 ou après comptés pour le mois suivant, détail du
+  reste à vivre, export CSV, relevés le 5 (pas avant). Comparaison avec son relevé bancaire à faire (export + relevé,
+  fichiers effacés ensuite). Question ouverte : garder le contrôle du dimanche ou passer au seul relevé du 5 ?
 - Pas de remise à zéro : livrets et placements remis à leurs valeurs du 1/10 (v0.38.0). Les livrets évoluent avec
   les virements, les placements avec les relevés du 5. Le 5/11 : premier relevé des placements. Premier bilan complet
   le 1/12 → vérifier qu'il est utile et lisible.

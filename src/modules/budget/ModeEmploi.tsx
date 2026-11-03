@@ -45,15 +45,19 @@ export function ModeEmploiBudget() {
           <p>Fais-le après avoir noté tes dépenses du jour. Attention aux paiements encore « en cours » à la banque : ils sont parfois déjà retirés du solde affiché, parfois pas.</p>
         </Rubrique>
         <Rubrique titre="🔁 Abonnements">
-          <p>Réglages → <B>Abonnements</B> : nom, montant, catégorie, compte et jour du prélèvement. Ils sont <B>comptés d'avance</B> dans ton reste à vivre et ta prévision.</p>
+          <p>Réglages → <B>Abonnements et revenus réguliers</B> : nom, montant, catégorie, compte et jour. Ils sont <B>comptés d'avance</B> dans ton reste à vivre et ta prévision.</p>
+          <p><B>Revenus réguliers</B> (« + Revenu régulier » : salaire, job étudiant, bourse) : attendus jusqu'à leur arrivée, puis confirmés en un clic. Un revenu prévu à partir du 25 (salaire de fin de mois) sert au mois suivant : il n'entre pas dans le reste à vivre du mois en cours.</p>
           <p>Le jour du prélèvement, une carte (et la notification du soir) te demande : <B>est-ce passé sur ton compte ?</B> Oui (le mouvement est noté), autre montant, pas encore (redemandé demain) ou pas ce mois-ci.</p>
           <p>Résilié ? Supprime-le : les paiements déjà notés restent.</p>
+        </Rubrique>
+        <Rubrique titre="📅 Revenus de fin de mois">
+          <p>Un revenu reçu <B>à partir du 25</B> (ex. salaire versé le 30) sert à vivre le mois suivant : dans les bilans (revenus, 50/30/20), il compte pour le mois suivant. Ton solde, lui, change le jour où l'argent arrive.</p>
         </Rubrique>
         <Rubrique titre="🎯 Plafonds et jauges">
           <p>Dans « Mois », « Modifier les plafonds » : un plafond par catégorie. Change-les quand tu veux : les mois passés ne bougent pas, et le mois suivant reprend les mêmes.</p>
           <p>Jauge <span style={{ color: '#4ade80' }}>verte</span> sous 75 %, <span style={{ color: '#fb923c' }}>orange</span> jusqu'à 100 %, <span style={{ color: '#f87171' }}>rouge</span> au-delà. Un message t'avertit quand une catégorie atteint 90 % puis 100 %.</p>
           <p>Chaque catégorie est un <B>besoin</B> ou un <B>loisir</B> : la barre « Besoins · loisirs · épargne » et le bilan te situent par rapport au repère 50/30/20 (50 % besoins, 30 % loisirs, 20 % épargne).</p>
-          <p><B>Reste à vivre</B> = l'argent que tu as vraiment (compte courant + espèces), moins les <B>charges fixes</B> (loyer, abonnements) pas encore payées ce mois-ci.</p>
+          <p><B>Reste à vivre</B> = l'argent que tu as vraiment (compte courant + espèces), moins les <B>charges fixes</B> et abonnements pas encore payés ce mois-ci, plus les revenus réguliers attendus avant le 25. « Voir le détail » te montre chaque ligne : une charge déjà payée mais pas saisie y apparaît comme « à venir ».</p>
         </Rubrique>
         <Rubrique titre="🛟 Livrets">
           <p>Quand tu mets de côté, note un <B>virement</B> (ex. courant → Livret A) : le solde du livret se met à jour tout seul. Pas de relevé à faire.</p>
@@ -62,11 +66,12 @@ export function ModeEmploiBudget() {
         </Rubrique>
         <Rubrique titre="📈 Placements (PEA, compte-titres, Bricks)">
           <p>Leur valeur bouge avec les marchés : le <B>5 de chaque mois</B> (une notification et une carte te le rappellent), ouvre Patrimoine → le compte → <B>Nouveau relevé</B>, et note la valeur affichée par ta banque.</p>
+          <p>Ordre à suivre pour tout relevé ou contrôle : d'abord saisir tout ce que ta banque affiche déjà (dépenses, virement vers l'épargne…), ensuite seulement noter le solde de la banque.</p>
           <p>L'appli sépare <B>l'argent versé</B> et la <B>valeur actuelle</B> : la différence est ta plus-value (ou moins-value).</p>
         </Rubrique>
         <Rubrique titre="📊 Le 1er du mois">
           <p>Le bilan du mois passé s'affiche en haut de « Mois » : revenus, dépenses, épargne, investissements, catégories en hausse ou en baisse, plafonds dépassés, patrimoine.</p>
-          <p>Fais tes relevés, ajuste tes plafonds, puis « C'est noté ». Les anciens bilans restent dans Analyses.</p>
+          <p>Ajuste tes plafonds, puis « C'est noté ». Les relevés, c'est le <B>5</B>, une fois tes revenus de début de mois arrivés. Les anciens bilans restent dans Analyses.</p>
         </Rubrique>
         <Rubrique titre="🔔 Rappel du soir">
           <p>Réglages → « Rappel de saisie » : une notification à l'heure choisie, seulement si tu n'as rien saisi ce jour-là.</p>

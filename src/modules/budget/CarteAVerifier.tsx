@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { aujourdhui, depuisJour } from '../../core/dates'
 import { formatEuros, lireNombre } from '../../core/format'
 import { Carte } from '../../core/ui/Carte'
-import { abonnementsAVerifier, echeance, moisDe, type Donnees } from './calculs'
+import { abonnementsAVerifier, echeance, estRevenuAttendu, moisDe, type Donnees } from './calculs'
 import { confirmerAbonnement, relancerAbonnement, sauterAbonnement } from './donnees'
 import type { Abonnement } from './types'
 
@@ -12,13 +12,13 @@ export function CarteAVerifier({ d }: { d: Donnees }) {
   const liste = abonnementsAVerifier(d, jour)
   if (!liste.length) return null
   return (
-    <Carte titre="🔁 Abonnements à vérifier">
-      <div className="space-y-4">{liste.map((a) => <Ligne key={a.id} a={a} mois={moisDe(jour)} />)}</div>
+    <Carte titre="🔁 À vérifier sur ton compte">
+      <div className="space-y-4">{liste.map((a) => <Ligne key={a.id} a={a} mois={moisDe(jour)} revenu={estRevenuAttendu(a, d)} />)}</div>
     </Carte>
   )
 }
 
-function Ligne({ a, mois }: { a: Abonnement; mois: string }) {
+function Ligne({ a, mois, revenu }: { a: Abonnement; mois: string; revenu: boolean }) {
   const [autre, setAutre] = useState(false)
   const [texte, setTexte] = useState('')
   const montant = lireNombre(texte)
@@ -26,11 +26,11 @@ function Ligne({ a, mois }: { a: Abonnement; mois: string }) {
   return (
     <div>
       <p className="text-sm">
-        <b>{a.nom}</b> · {formatEuros(a.montant)} (prévu le {depuisJour(echeance(a, mois)).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}) : est-ce passé sur ton compte ?
+        <b>{a.nom}</b> · {formatEuros(a.montant)} (prévu le {depuisJour(echeance(a, mois)).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}) : {revenu ? 'est-il arrivé sur ton compte ?' : 'est-ce passé sur ton compte ?'}
       </p>
       {autre ? (
         <div className="mt-2 flex gap-2">
-          <input value={texte} onChange={(e) => setTexte(e.target.value)} inputMode="decimal" placeholder="Montant débité (€)" className="w-full rounded-lg border border-bordure bg-surface-2 px-3 py-2 outline-none focus:border-accent" />
+          <input value={texte} onChange={(e) => setTexte(e.target.value)} inputMode="decimal" placeholder={revenu ? 'Montant reçu (€)' : 'Montant débité (€)'} className="w-full rounded-lg border border-bordure bg-surface-2 px-3 py-2 outline-none focus:border-accent" />
           <button type="button" disabled={!montant} className={`${bouton} px-4 disabled:opacity-40`} onClick={() => confirmerAbonnement(a, mois, Math.round(montant! * 100))}>OK</button>
         </div>
       ) : (

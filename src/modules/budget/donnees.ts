@@ -50,7 +50,9 @@ async function noterEtat(a: Abonnement, mois: string, etat: EtatAbonnement) {
 export async function confirmerAbonnement(a: Abonnement, mois: string, montant = a.montant) {
   const jour = aujourdhui()
   const date = echeance(a, mois) <= jour ? echeance(a, mois) : jour
-  await enregistrerMouvement({ id: nouvelId(), type: 'depense', montant, date, compteId: a.compteId, categorieId: a.categorieId, note: a.nom, abonnementId: a.id })
+  // Abonnement d'une catégorie de revenu = revenu régulier attendu (salaire, bourse…)
+  const type = (await db.categories.get(a.categorieId))?.genre === 'revenu' ? 'revenu' : 'depense'
+  await enregistrerMouvement({ id: nouvelId(), type, montant, date, compteId: a.compteId, categorieId: a.categorieId, note: a.nom, abonnementId: a.id })
   await noterEtat(a, mois, { statut: 'paye' })
 }
 /** « Pas ce mois-ci » : rien n'est enregistré, l'abonnement reste pour les mois suivants. */
