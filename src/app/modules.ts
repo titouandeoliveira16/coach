@@ -17,6 +17,8 @@ export interface ModuleApp {
   description: string
   /** Module pas encore construit */
   bientot?: boolean
+  /** Mis de côté : pas sur l'accueil (ses écrans restent accessibles, ex. le Catalogue depuis les réglages de l'Entraînement) */
+  masque?: boolean
   /** Chemin de base, ex. "/entrainement" */
   chemin: string
   /** Couleur d'accent du module (code hexadécimal) */
@@ -34,7 +36,8 @@ export const MODULES: ModuleApp[] = [
   moduleEntrainement,
   moduleRevision,
   moduleBudget,
-  moduleMuscu,
-  moduleCatalogue,
+  // Mis de côté le 3/11/2026 (demande de Titouan) : plus sur l'accueil
+  { ...moduleMuscu, masque: true },
+  { ...moduleCatalogue, masque: true },
   // Plus tard : moduleNutrition
 ]

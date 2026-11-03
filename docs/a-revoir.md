@@ -48,6 +48,7 @@ Points décidés ou mis de côté, à reprendre au bon moment.
   les citations, auteurs, dates. Revoir aussi la gestion d'une pile de rappels en retard après une coupure.
 
 ## Muscu (construit le 28/10/2026, pas encore utilisé)
+- **Mis de côté le 3/11/2026** (v0.70.0) : Muscu et Catalogue retirés de l'accueil (`masque` dans `src/app/modules.ts`). Le Catalogue s'ouvre depuis Entraînement → Réglages ; la Muscu reste accessible par son adresse (#/muscu). Les remettre en enlevant `masque`.
 - Développé couché en 5/3/1 adapté (référence 85 % du max en perte, 90 % en maintien ; série « + » à 1 rep en réserve ;
   5×5 complémentaire ; progression selon la série à 95 %). Relu par le relecteur scientifique.
 - Plus tard (demande de Titouan) : relier les séances muscu à la nutrition et au module Entraînement
