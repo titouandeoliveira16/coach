@@ -1,4 +1,4 @@
-import { expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { bilanControle, controlerSeance, controleTenu } from './controle'
 import { construireIntervalles, construireZ2, deplier, formatDe } from './programme'
 
@@ -62,3 +62,52 @@ it('avec les tours de Zwift : moyennes et FC prises tour par tour', () => {
   expect(c.lignes[2].fc).toBe(178)
 })
 
+
+describe('arrêt pendant un bloc (pause pour parler, roue libre)', () => {
+  const s = construireIntervalles(formatDe('sweet-spot')!, 0, 235, 0)
+  const etapes = s.velo.etapes!
+  const plat = deplier(etapes)
+  const bloc1 = plat.find((e) => e.libelle.startsWith('Répétition 1'))!
+  // Fichier : la séance jouée à la cible, avec 60 s à 0 W au milieu du 1er bloc
+  const avecArret = (minuteurEnPause: boolean) => {
+    const w: number[] = []
+    for (const e of plat) {
+      for (let t = 0; t < e.dureeSec; t++) {
+        if (e === bloc1 && t === 420) for (let p = 0; p < 60; p++) w.push(0)
+        if (e === bloc1 && !minuteurEnPause && t >= 420 && t < 480) continue
+        w.push(e.w ?? 0)
+      }
+    }
+    return w
+  }
+
+  it('minuteur arrêté pendant la pause : le reste de la séance est décalé, la minute est exclue', () => {
+    const c = controlerSeance({ etapes, famille: 'sweet-spot', w1Hz: avecArret(true), cpW: 235 })!
+    expect(c.lignes.map((l) => l.verdict)).toEqual(['ok', 'ok'])
+    expect(c.lignes[0].w).toBe(bloc1.w)
+    expect(c.arretSec).toBe(60)
+  })
+
+  it('minuteur qui continue : la minute à 0 W est exclue de la moyenne du bloc', () => {
+    const c = controlerSeance({ etapes, famille: 'sweet-spot', w1Hz: avecArret(false), cpW: 235 })!
+    expect(c.lignes.map((l) => l.verdict)).toEqual(['ok', 'ok'])
+    expect(c.lignes[0].w).toBe(bloc1.w)
+  })
+
+  it('tours allongés par l’arrêt : reconnus, et la moyenne du tour est recalculée sans l’arrêt', () => {
+    const w = avecArret(true)
+    let h = 0
+    const tours = plat.map((e) => {
+      const d = e.dureeSec + (e === bloc1 ? 60 : 0)
+      const t = { dureeSec: d, w: moyenne(w.slice(h, h + d)) }
+      h += d
+      return t
+    })
+    const c = controlerSeance({ etapes, famille: 'sweet-spot', w1Hz: w, cpW: 235, tours })!
+    expect(c.parTours).toBe(true)
+    expect(c.lignes[0].w).toBe(bloc1.w)
+    expect(c.arretSec).toBe(60)
+  })
+})
+
+const moyenne = (x: number[]) => x.reduce((a, b) => a + b, 0) / x.length
