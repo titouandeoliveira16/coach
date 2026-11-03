@@ -68,7 +68,7 @@ function SeanceFaite({ s }: { s: Seance }) {
         <div className="mt-2">
           <p className="text-sm">{reserve.question}</p>
           <div className="mt-1 grid grid-cols-3 gap-1.5">
-            {(['ok', 'moyen', 'non'] as const).map((r) => (
+            {reserve.ordre.map((r) => (
               <button key={r} type="button" onClick={() => enregistrer(db.seances, { ...s, reserve: r })}
                 className={`rounded-md py-2 text-sm font-semibold ${s.reserve === r ? 'bg-accent text-fond' : 'bg-surface text-texte-2'}`}>{reserve.choix[r]}</button>
             ))}
