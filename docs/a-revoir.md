@@ -2,6 +2,17 @@
 
 Points décidés ou mis de côté, à reprendre au bon moment.
 
+## À lui rappeler au début de la prochaine conversation (demandé le 3/11/2026)
+- **Supabase : redéployer la fonction `rappels`** (version de la v0.69.0 : relevés le 5, plus rien le 1er). Il n'y est pas
+  arrivé seul : l'accompagner pas à pas (copier le fichier brut sur GitHub → Edge Functions → rappels → Code → Deploy).
+- **Budget : comparer l'appli avec sa banque.** Lui demander l'export CSV (Budget → Réglages → Exporter) ou des captures
+  (« Voir le détail » du reste à vivre, liste des mouvements), et ses captures de relevé depuis le début du suivi. Comparer
+  ligne par ligne dans le scratchpad, corriger (fichier d'import si besoin), puis effacer les fichiers. Rien de tout ça dans le dépôt.
+  Il a déjà envoyé les captures du 29/10 au 3/11 (opérations carte « en cours » non déduites du solde affiché, épargne le jour de la paie).
+- Proposé, pas encore validé : au contrôle du solde, demander le montant des opérations carte « en cours » pour les retirer du solde.
+- Question ouverte : garder le contrôle du dimanche, ou seulement le relevé du 5 ?
+- Il veut remplir le Budget au bon moment, à chaque fois : vérifier que le rappel du soir est activé (Budget → Réglages).
+
 ## Après le 5 km du 13/12/2026
 - Le vélo repasse en priorité : **4 séances vélo par semaine** au lieu de 3.
 - La course passe de **3 à 2 séances** par semaine.
