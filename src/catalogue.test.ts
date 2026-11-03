@@ -3,7 +3,8 @@ import catalogue from '../catalogue/seances.json'
 
 type Etape = { type: string; duree?: number; intensite?: number[]; max?: boolean; fois?: number; etapes?: Etape[] }
 
-const SPORTS = ['velo', 'course', 'force', 'methode']
+const SPORTS = ['velo', 'vtt', 'course', 'force', 'methode']
+const DISCIPLINES = ['route', 'xco', 'xcc', 'xcm', 'enduro', 'dh']
 const NIVEAUX_PREUVE = ['prouvé', 'plausible', 'mitigé', 'pratique', 'faible']
 
 function duree(etapes: Etape[]): number {
@@ -18,6 +19,7 @@ describe('catalogue de séances', () => {
     expect(new Set(ids).size).toBe(ids.length)
     for (const s of seances) {
       expect(SPORTS).toContain(s.sport)
+      for (const d of (s.disciplines as string[] | undefined) ?? []) expect(DISCIPLINES).toContain(d)
       const p = s.preuve as { niveau: string; resultat: string; references: { auteurs: string; annee: number }[] }
       expect(NIVEAUX_PREUVE).toContain(p.niveau)
       expect(p.resultat.length).toBeGreaterThan(10)

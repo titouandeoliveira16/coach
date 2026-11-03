@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { EnTete } from '../../core/ui/EnTete'
-import { CATALOGUE, NOMS_FAMILLES, NOMS_SPORTS, PREUVES, sansAccents, type SeanceCatalogue } from './donnees'
+import { CATALOGUE, NOMS_DISCIPLINES, NOMS_FAMILLES, NOMS_SPORTS, PREUVES, sansAccents, type SeanceCatalogue } from './donnees'
 import { Fiche } from './Fiche'
 
 type Sport = SeanceCatalogue['sport']
@@ -20,11 +20,13 @@ export function EcranCatalogue() {
   const [sport, setSport] = useState<Sport | undefined>()
   const [famille, setFamille] = useState<string>()
   const [preuve, setPreuve] = useState<string>()
+  const [discipline, setDiscipline] = useState<string>()
   const [texte, setTexte] = useState('')
   const S = CATALOGUE.seances
   const familles = [...new Set(S.filter((s) => !sport || s.sport === sport).map((s) => s.famille))]
   const t = sansAccents(texte.trim())
   const liste = S.filter((s) => (!sport || s.sport === sport) && (!famille || s.famille === famille) && (!preuve || s.preuve.niveau === preuve)
+    && (!discipline || (s.disciplines ?? []).includes(discipline))
     && (!t || sansAccents([s.nom, s.resume, s.objectif, ...s.preuve.references.map((r) => r.auteurs)].join(' ')).includes(t)))
 
   return (
@@ -40,6 +42,10 @@ export function EcranCatalogue() {
         <div className="-mx-4 flex gap-2 overflow-x-auto px-4">
           <Puce actif={!famille} onClick={() => setFamille(undefined)}>Toutes qualités</Puce>
           {familles.map((f) => <Puce key={f} actif={famille === f} onClick={() => setFamille(f)}>{NOMS_FAMILLES[f] ?? f}</Puce>)}
+        </div>
+        <div className="-mx-4 flex gap-2 overflow-x-auto px-4">
+          <Puce actif={!discipline} onClick={() => setDiscipline(undefined)}>Toutes disciplines</Puce>
+          {Object.entries(NOMS_DISCIPLINES).map(([d, nom]) => <Puce key={d} actif={discipline === d} onClick={() => setDiscipline(d)}>{nom}</Puce>)}
         </div>
         <div className="-mx-4 flex gap-2 overflow-x-auto px-4">
           <Puce actif={!preuve} onClick={() => setPreuve(undefined)}>Toute preuve</Puce>

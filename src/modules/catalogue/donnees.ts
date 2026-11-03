@@ -1,7 +1,7 @@
 import brut from '../../../catalogue/seances.json'
 import { COULEUR_A_FOND, couleurPctCP, couleurPctVMA } from '../../core/zones'
 
-/** Catalogue scientifique de séances (catalogue/seances.json, voir catalogue/README.md). Pas encore relié au reste de l'appli. */
+/** Catalogue scientifique de séances (catalogue/seances.json, voir catalogue/README.md). L'Entraînement pioche les séances qui ont un bloc `programme`. */
 export interface Etape {
   type: 'echauffement' | 'effort' | 'recup' | 'retour' | 'repetition'
   duree?: number
@@ -17,7 +17,9 @@ export interface Reference { auteurs: string; annee: number; titre: string; revu
 
 export interface SeanceCatalogue {
   id: string
-  sport: 'velo' | 'course' | 'force' | 'methode'
+  sport: 'velo' | 'vtt' | 'course' | 'force' | 'methode'
+  /** Disciplines où la séance (ou la méthode) sert : route, xco, xcc, xcm, enduro, dh. */
+  disciplines?: string[]
   famille: string
   nom: string
   objectif: string
@@ -38,11 +40,15 @@ export interface SeanceCatalogue {
 
 export const CATALOGUE = brut as unknown as { version: number; majLe: string; seances: SeanceCatalogue[] }
 
-export const NOMS_SPORTS: Record<SeanceCatalogue['sport'], string> = { velo: 'Vélo', course: 'Course à pied', force: 'Renfo', methode: 'Méthodes' }
+export const NOMS_SPORTS: Record<SeanceCatalogue['sport'], string> = { velo: 'Vélo', vtt: 'VTT', course: 'Course à pied', force: 'Renfo', methode: 'Méthodes' }
 export const NOMS_FAMILLES: Record<string, string> = {
   recuperation: 'Récupération', endurance: 'Endurance', durabilite: 'Durabilité', tempo: 'Tempo / sweet spot', seuil: 'Seuil',
   vo2max: 'VO2max', anaerobie: 'Anaérobie', sprint: 'Sprint / vitesse', force: 'Force sur le vélo', specifique: 'Spécifique',
   test: 'Tests', 'force-lourde': 'Force lourde', 'force-explosive': 'Explosivité', prevention: 'Prévention', organisation: 'Organisation',
+  'repetition-efforts': 'Répétition d’efforts', technique: 'Technique', profil: 'Profils de discipline',
+}
+export const NOMS_DISCIPLINES: Record<string, string> = {
+  route: 'Route', xco: 'XCO (olympique)', xcc: 'XCC (short track)', xcm: 'XCM (marathon)', enduro: 'Enduro', dh: 'Descente',
 }
 export const PREUVES = ['prouvé', 'plausible', 'mitigé', 'pratique', 'faible'] as const
 export const COULEUR_PREUVE: Record<string, string> = { 'prouvé': '#4ade80', plausible: '#7cb4f0', 'mitigé': '#fb923c', pratique: '#a3a8ab', faible: '#7d8183' }
