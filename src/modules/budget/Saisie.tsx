@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { aujourdhui } from '../../core/dates'
 import { formatEuros } from '../../core/format'
-import { categoriesParUsage } from './calculs'
+import { categoriesParUsage, moisDuRevenu, nomMois } from './calculs'
 import { enregistrerMouvement, nouvelId, useBudget } from './donnees'
 import type { Mouvement, TypeMouvement } from './types'
 
@@ -145,6 +145,7 @@ export function Saisie({ initial, onFermer }: { initial?: Partial<Mouvement>; on
           <input type="date" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} className={`${champ} w-auto`} />
           <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Note (facultatif)" className={champ} />
         </div>
+        {type === 'revenu' && moisDuRevenu(date) !== date.slice(0, 7) && <p className="mt-1 text-xs text-texte-3">Reçu à partir du 25 : compté pour {nomMois(moisDuRevenu(date))} dans les bilans (ton solde, lui, change tout de suite).</p>}
 
         <button type="button" disabled={!pret || occupe} onClick={valider}
           className="mt-3 mb-2 w-full rounded-xl bg-accent py-3.5 text-lg font-bold text-fond active:scale-[0.98] disabled:opacity-40">

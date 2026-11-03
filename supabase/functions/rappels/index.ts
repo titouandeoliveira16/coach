@@ -10,7 +10,7 @@
 //
 // Rappels : chaque matin (sauf si « Ton matin » est déjà rempli), pesée les jours choisis (sauf si déjà faite),
 // saisie du budget le soir si activée dans l'appli (sauf si déjà faite ; le 1er du mois : annonce du bilan),
-// et le 5 du mois à 9 h : relevés des placements.
+// et le 5 du mois à 9 h : relevés du mois (compte courant et placements), une fois les revenus de début de mois arrivés.
 // Aucun secret à ajouter : les clés VAPID sont créées et gardées par la fonction elle-même.
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
@@ -220,7 +220,7 @@ async function envoyerRappels() {
     const budget = (await ligne(a.user_id, 'reglages', 'budget'))?.valeur as { rappelActif?: boolean; rappelHeure?: string; rappelReleves?: boolean; rappelControle?: boolean; dernierControle?: string } | undefined
     // Relevés du mois : le 5 à 9 h (sauf si désactivé dans Budget → Réglages), pour qui utilise le Budget
     if (t.date.endsWith('-05') && dansLeQuart(t.heure, '09:00') && budget?.rappelReleves !== false && (await utiliseBudget(a.user_id)))
-      messages.push({ titre: '📈 Relevés du mois', texte: '2 minutes : note la valeur de tes placements (PEA, CTO, Bricks).', tag: 'releves', url: './#/budget/patrimoine' })
+      messages.push({ titre: '📈 Relevés du mois', texte: '2 minutes, maintenant que tes revenus du mois sont arrivés : compare ton compte courant avec ta banque, puis note la valeur de tes placements.', tag: 'releves', url: './#/budget/patrimoine' })
     // Dimanche, à l'heure du rappel du soir : contrôle du solde du compte courant (sauf si déjà fait aujourd'hui)
     if (t.jour === 0 && budget?.rappelControle !== false && budget?.dernierControle !== t.date && dansLeQuart(t.heure, budget?.rappelHeure ?? '21:00') && (await utiliseBudget(a.user_id)))
       messages.push({ titre: '🔍 Contrôle de la semaine', texte: "1 minute : compare le solde de ton compte courant avec celui de ta banque.", tag: 'controle', url: './#/budget/mois' })
@@ -231,7 +231,7 @@ async function envoyerRappels() {
     }
     if (budget?.rappelActif && dansLeQuart(t.heure, budget.rappelHeure ?? '21:00')) {
       if (t.date.endsWith('-01'))
-        messages.push({ titre: '📊 Bilan du mois', texte: 'Ton bilan du mois dernier est prêt. Pense aussi aux relevés de tes placements.', tag: 'bilan', url: './#/budget/mois' })
+        messages.push({ titre: '📊 Bilan du mois', texte: 'Ton bilan du mois dernier est prêt. Les relevés, ce sera le 5 (après tes revenus de début de mois).', tag: 'bilan', url: './#/budget/mois' })
       else if (!(await saisiAujourdhui(a.user_id, a.fuseau, t.date)))
         messages.push({ titre: '💶 Budget', texte: "Tes dépenses du jour : 10 secondes chacune, avant d'oublier.", tag: 'budget', url: './#/budget/mois' })
     }

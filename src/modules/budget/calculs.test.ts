@@ -144,3 +144,40 @@ describe('contrôle du dimanche', () => {
     expect(controleAFaire('2026-10-25', '2026-11-03')).toBe(true)
   })
 })
+
+describe('revenus réguliers et fin de mois', () => {
+  const d0: Donnees = { comptes: [compte('courant', 'courant', 50000)], mouvements: [], categories, plafonds: [], releves: [] }
+  const salaire = { id: 'sal', nom: 'Salaire', montant: 90000, categorieId: 'salaire', compteId: 'courant', jour: 30, actif: true, depuis: '2026-10-01' }
+  const job = { ...salaire, id: 'job', nom: 'Job', montant: 30000, jour: 5 }
+
+  it('un revenu du 25 ou après compte pour le mois suivant dans les bilans', async () => {
+    const { moisDuRevenu } = await import('./calculs')
+    expect(moisDuRevenu('2026-10-24')).toBe('2026-10')
+    expect(moisDuRevenu('2026-10-30')).toBe('2026-11')
+    expect(moisDuRevenu('2026-12-31')).toBe('2027-01')
+    const d: Donnees = { ...d0, mouvements: [mvt({ type: 'revenu', montant: 90000, date: '2026-10-30', compteId: 'courant', categorieId: 'salaire' })] }
+    expect(resumeMois(d, '2026-10').revenus).toBe(0)
+    expect(resumeMois(d, '2026-11').revenus).toBe(90000)
+    // Le solde, lui, change le jour même
+    expect(soldeAu(d.comptes[0], d.mouvements, [], '2026-10-30')).toBe(140000)
+  })
+
+  it('revenus attendus : ajoutés au reste à vivre et à la prévision, sauf ceux de fin de mois', () => {
+    const d: Donnees = { ...d0, abonnements: [salaire, job], etatsAbonnements: {} }
+    const r = resteAVivre(d, '2026-11-03')
+    expect(r.revenusAttendus).toBe(30000)
+    expect(r.abonnements).toBe(0)
+    expect(r.reste).toBe(80000)
+    expect(previsionFinDeMois(d, '2026-11-03').revenusAttendus).toBe(30000)
+    // Arrivé et confirmé : plus attendu
+    expect(resteAVivre({ ...d, etatsAbonnements: { 'job|2026-11': { statut: 'paye' } } }, '2026-11-06').revenusAttendus).toBe(0)
+  })
+
+  it('export CSV : comptes, mouvements, mois de rattachement', async () => {
+    const { exporterCsv } = await import('./exporter')
+    const d: Donnees = { ...d0, mouvements: [mvt({ type: 'revenu', montant: 90000, date: '2026-10-30', compteId: 'courant', categorieId: 'salaire', note: 'AED' })] }
+    const csv = exporterCsv(d, '2026-11-03')
+    expect(csv).toContain('"courant";courant;2026-10-01;1400,00')
+    expect(csv).toContain('2026-10-30;revenu;900,00;"courant";"";"salaire";"AED";2026-11')
+  })
+})
