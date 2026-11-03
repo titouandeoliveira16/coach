@@ -1,7 +1,7 @@
 {
  "version": 3,
- "majLe": "2026-11-02",
- "description": "Catalogue scientifique de séances (vélo, course à pied, renforcement, tests, méthodes). Voir catalogue/README.md.",
+ "majLe": "2026-11-03",
+ "description": "Catalogue scientifique de séances (vélo route et VTT, course à pied, renforcement, tests, méthodes et profils de discipline). Voir catalogue/README.md.",
  "unites": {
   "%CP": "pourcentage de la puissance critique (≈ FTP)",
   "%VMA": "pourcentage de la vitesse maximale aérobie",
@@ -59,7 +59,10 @@
       "pmid": "29663142"
      }
     ]
-   }
+   },
+   "disciplines": [
+    "route"
+   ]
   },
   {
    "id": "velo-endurance-courte",
@@ -149,7 +152,14 @@
       "pmid": "15354048"
      }
     ]
-   }
+   },
+   "disciplines": [
+    "route",
+    "xco",
+    "xcc",
+    "xcm",
+    "enduro"
+   ]
   },
   {
    "id": "velo-endurance-longue",
@@ -241,7 +251,13 @@
       "doi": "10.1123/ijsnem.2023-0241"
      }
     ]
-   }
+   },
+   "disciplines": [
+    "route",
+    "xco",
+    "xcm",
+    "enduro"
+   ]
   },
   {
    "id": "velo-endurance-sprints",
@@ -331,7 +347,13 @@
       "pmid": "33041839"
      }
     ]
-   }
+   },
+   "disciplines": [
+    "route",
+    "xco",
+    "xcc",
+    "enduro"
+   ]
   },
   {
    "id": "velo-durabilite-effort-final",
@@ -458,7 +480,12 @@
       "doi": "10.3389/fphys.2023.1128111"
      }
     ]
-   }
+   },
+   "disciplines": [
+    "route",
+    "xcm",
+    "xco"
+   ]
   },
   {
    "id": "velo-tempo-2x20",
@@ -589,7 +616,11 @@
     "preuve": "plus faible",
     "source": "Zone 3 (« moyenne ») : utile en reprise, à doser (modèle pyramidal).",
     "ordre": 15
-   }
+   },
+   "disciplines": [
+    "route",
+    "xcm"
+   ]
   },
   {
    "id": "velo-sweet-spot-3x15",
@@ -714,7 +745,12 @@
     "preuve": "plus faible",
     "source": "Peu étudié : utile en reprise pour accumuler du travail sous le seuil.",
     "ordre": 14
-   }
+   },
+   "disciplines": [
+    "route",
+    "xcm",
+    "xco"
+   ]
   },
   {
    "id": "velo-sweet-spot-long",
@@ -798,7 +834,11 @@
       "revue": "VeloPress (livre)"
      }
     ]
-   }
+   },
+   "disciplines": [
+    "route",
+    "xcm"
+   ]
   },
   {
    "id": "velo-seuil-2x20",
@@ -884,7 +924,12 @@
       "revue": "VeloPress (livre)"
      }
     ]
-   }
+   },
+   "disciplines": [
+    "route",
+    "xco",
+    "xcm"
+   ]
   },
   {
    "id": "velo-seuil-4x10",
@@ -1000,7 +1045,13 @@
     "preuve": "bonne",
     "source": "Sylta et al. 2016 : intervalles longs au seuil, progrès comparables aux formats VO2 à charge égale.",
     "ordre": 10
-   }
+   },
+   "disciplines": [
+    "route",
+    "xco",
+    "xcc",
+    "xcm"
+   ]
   },
   {
    "id": "velo-seuil-4x16",
@@ -1123,7 +1174,11 @@
     "preuve": "bonne",
     "source": "Sylta et al. 2016 : intervalles longs (jusqu’à 16 min), +5 à 10 % de puissance sur 40 min.",
     "ordre": 11
-   }
+   },
+   "disciplines": [
+    "route",
+    "xcm"
+   ]
   },
   {
    "id": "velo-over-unders",
@@ -1253,7 +1308,12 @@
     "preuve": "plus faible",
     "source": "Pratique d’entraîneurs, peu étudiée : gardée pour varier le travail au seuil.",
     "ordre": 13
-   }
+   },
+   "disciplines": [
+    "route",
+    "xco",
+    "xcc"
+   ]
   },
   {
    "id": "velo-seuil-continu",
@@ -1354,7 +1414,11 @@
     "preuve": "bonne",
     "source": "Travail continu juste sous la CP (état stable lactique maximal).",
     "ordre": 12
-   }
+   },
+   "disciplines": [
+    "route",
+    "xcm"
+   ]
   },
   {
    "id": "velo-vo2-4x8-seiler",
@@ -1477,7 +1541,10 @@
     "preuve": "forte",
     "source": "Seiler et al. 2013 : 4 × 8 min a donné plus de gains que 4 × 4 et 4 × 16 min.",
     "ordre": 9
-   }
+   },
+   "disciplines": [
+    "route"
+   ]
   },
   {
    "id": "velo-vo2-30-15-ronnestad",
@@ -1614,7 +1681,12 @@
     "preuve": "forte",
     "source": "Rønnestad et al. 2015, 2020 : meilleurs gains de VO2max et de puissance que 4 × 5 min chez des cyclistes entraînés.",
     "ordre": 0
-   }
+   },
+   "disciplines": [
+    "route",
+    "xco",
+    "xcc"
+   ]
   },
   {
    "id": "velo-vo2-15-15",
@@ -1743,7 +1815,12 @@
     "preuve": "correcte",
     "source": "Buchheit & Laursen 2013 : les intervalles très courts accumulent du temps près de la VO2max avec peu de fatigue.",
     "ordre": 2
-   }
+   },
+   "disciplines": [
+    "route",
+    "xco",
+    "xcc"
+   ]
   },
   {
    "id": "velo-vo2-20-40",
@@ -1878,7 +1955,10 @@
     "preuve": "correcte",
     "source": "Buchheit & Laursen 2013 : efforts courts plus intenses, récupération longue.",
     "ordre": 4
-   }
+   },
+   "disciplines": [
+    "route"
+   ]
   },
   {
    "id": "velo-vo2-4x5",
@@ -1999,7 +2079,13 @@
     "preuve": "bonne",
     "source": "Rønnestad et al. 2015 : 4 × 5 min, groupe contrôle qui progresse aussi.",
     "ordre": 7
-   }
+   },
+   "disciplines": [
+    "route",
+    "xco",
+    "xcc",
+    "xcm"
+   ]
   },
   {
    "id": "velo-vo2-3min",
@@ -2112,7 +2198,10 @@
     "preuve": "correcte",
     "source": "Buchheit & Laursen 2013 : intervalles longs de 2-4 min à la PMA.",
     "ordre": 5
-   }
+   },
+   "disciplines": [
+    "route"
+   ]
   },
   {
    "id": "velo-vo2-6min",
@@ -2233,7 +2322,10 @@
     "preuve": "correcte",
     "source": "Buchheit & Laursen 2013 : intervalles longs proches de la PMA.",
     "ordre": 8
-   }
+   },
+   "disciplines": [
+    "route"
+   ]
   },
   {
    "id": "velo-vo2-8x4-stepto",
@@ -2315,7 +2407,10 @@
       "pmid": "10331896"
      }
     ]
-   }
+   },
+   "disciplines": [
+    "route"
+   ]
   },
   {
    "id": "velo-vo2-puissance-variee",
@@ -2415,7 +2510,12 @@
       "pmid": "32244222"
      }
     ]
-   }
+   },
+   "disciplines": [
+    "route",
+    "xco",
+    "xcc"
+   ]
   },
   {
    "id": "velo-vo2-4x4-helgerud",
@@ -2531,7 +2631,10 @@
     "preuve": "correcte",
     "source": "Helgerud et al. 2007 : 4 × 4 min, gains de VO2max (étudié surtout en course à pied).",
     "ordre": 6
-   }
+   },
+   "disciplines": [
+    "route"
+   ]
   },
   {
    "id": "velo-vo2-30-30",
@@ -2667,7 +2770,12 @@
     "preuve": "correcte",
     "source": "Billat 2000-2001 : le 30/30 permet de passer beaucoup de temps près de la VO2max.",
     "ordre": 1
-   }
+   },
+   "disciplines": [
+    "route",
+    "xco",
+    "xcc"
+   ]
   },
   {
    "id": "velo-vo2-40-20",
@@ -2794,7 +2902,10 @@
     "preuve": "correcte",
     "source": "Buchheit & Laursen 2013 : même logique que le 30/15, avec un ratio travail/récup de 2:1.",
     "ordre": 3
-   }
+   },
+   "disciplines": [
+    "route"
+   ]
   },
   {
    "id": "velo-anaerobie-1min",
@@ -2883,7 +2994,10 @@
       "pmid": "10331896"
      }
     ]
-   }
+   },
+   "disciplines": [
+    "route"
+   ]
   },
   {
    "id": "velo-sit-30s",
@@ -2964,7 +3078,12 @@
       "pmid": "16825308"
      }
     ]
-   }
+   },
+   "disciplines": [
+    "route",
+    "xco",
+    "xcc"
+   ]
   },
   {
    "id": "velo-sit-supramax-laursen",
@@ -3047,7 +3166,10 @@
       "pmid": "12439086"
      }
     ]
-   }
+   },
+   "disciplines": [
+    "route"
+   ]
   },
   {
    "id": "velo-sit-10s",
@@ -3133,7 +3255,10 @@
       "pmid": "28079707"
      }
     ]
-   }
+   },
+   "disciplines": [
+    "route"
+   ]
   },
   {
    "id": "velo-tabata",
@@ -3214,7 +3339,10 @@
       "pmid": "8897392"
      }
     ]
-   }
+   },
+   "disciplines": [
+    "route"
+   ]
   },
   {
    "id": "velo-sprints-courts",
@@ -3300,7 +3428,14 @@
       "revue": "Eur J Appl Physiol"
      }
     ]
-   }
+   },
+   "disciplines": [
+    "route",
+    "xco",
+    "xcc",
+    "enduro",
+    "dh"
+   ]
   },
   {
    "id": "velo-sprints-force-paton",
@@ -3394,7 +3529,10 @@
       "pmid": "16287351"
      }
     ]
-   }
+   },
+   "disciplines": [
+    "route"
+   ]
   },
   {
    "id": "velo-departs-arretes",
@@ -3474,7 +3612,13 @@
       "revue": "VeloPress (livre)"
      }
     ]
-   }
+   },
+   "disciplines": [
+    "route",
+    "xco",
+    "enduro",
+    "dh"
+   ]
   },
   {
    "id": "velo-velocite",
@@ -3556,7 +3700,10 @@
       "revue": "VeloPress (livre)"
      }
     ]
-   }
+   },
+   "disciplines": [
+    "route"
+   ]
   },
   {
    "id": "velo-force-basse-cadence",
@@ -3654,7 +3801,10 @@
       "pmid": "28095074"
      }
     ]
-   }
+   },
+   "disciplines": [
+    "route"
+   ]
   },
   {
    "id": "velo-test-cp-3-7-12",
@@ -3766,7 +3916,14 @@
       "doi": "10.5114/jhk/170101"
      }
     ]
-   }
+   },
+   "disciplines": [
+    "route",
+    "xco",
+    "xcc",
+    "xcm",
+    "enduro"
+   ]
   },
   {
    "id": "velo-test-cp-2-points",
@@ -3848,7 +4005,10 @@
       "doi": "10.5114/jhk/170101"
      }
     ]
-   }
+   },
+   "disciplines": [
+    "route"
+   ]
   },
   {
    "id": "velo-test-ftp-20",
@@ -3945,7 +4105,10 @@
       "doi": "10.1080/02640414.2023.2176045"
      }
     ]
-   }
+   },
+   "disciplines": [
+    "route"
+   ]
   },
   {
    "id": "velo-test-rampe",
@@ -4009,7 +4172,10 @@
       "revue": "VeloPress (livre)"
      }
     ]
-   }
+   },
+   "disciplines": [
+    "route"
+   ]
   },
   {
    "id": "velo-test-5min",
@@ -4070,7 +4236,10 @@
       "revue": "Int J Sports Physiol Perform"
      }
     ]
-   }
+   },
+   "disciplines": [
+    "route"
+   ]
   },
   {
    "id": "velo-test-durabilite",
@@ -4148,7 +4317,10 @@
       "revue": "Med Sci Sports Exerc"
      }
     ]
-   }
+   },
+   "disciplines": [
+    "route"
+   ]
   },
   {
    "id": "velo-test-sprint",
@@ -4226,7 +4398,14 @@
       "revue": "VeloPress (livre)"
      }
     ]
-   }
+   },
+   "disciplines": [
+    "route",
+    "xco",
+    "xcc",
+    "enduro",
+    "dh"
+   ]
   },
   {
    "id": "velo-test-derive",
@@ -4298,6 +4477,1086 @@
       "titre": "The importance of 'durability' in the physiological profiling of endurance athletes",
       "revue": "Sports Med",
       "pmid": "33886100"
+     }
+    ]
+   },
+   "disciplines": [
+    "route"
+   ]
+  },
+  {
+   "id": "vtt-hit-inoue",
+   "sport": "vtt",
+   "famille": "vo2max",
+   "nom": "Intervalles longs du vététiste (Inoue)",
+   "objectif": "Temps de course en cross-country : VO2max et puissance au seuil",
+   "resume": "7 à 10 × 4-6 min au plus fort tenable sur toutes les répétitions, récupération 3 min.",
+   "disciplines": [
+    "xco",
+    "xcc",
+    "xcm"
+   ],
+   "unite": "%CP",
+   "zone": "Z5",
+   "rpe": "8-9",
+   "niveau": "confirmé",
+   "dureeMin": 89,
+   "travailMin": 40.0,
+   "deroule": [
+    {
+     "type": "echauffement",
+     "duree": 900,
+     "intensite": [
+      50,
+      75
+     ]
+    },
+    {
+     "type": "repetition",
+     "fois": 8,
+     "etapes": [
+      {
+       "type": "effort",
+       "duree": 300,
+       "intensite": [
+        100,
+        110
+       ],
+       "note": "le plus fort possible en tenant toutes les répétitions",
+       "cadence": "90-105"
+      },
+      {
+       "type": "recup",
+       "duree": 180,
+       "intensite": [
+        45,
+        55
+       ]
+      }
+     ]
+    },
+    {
+     "type": "retour",
+     "duree": 600,
+     "intensite": [
+      45,
+      55
+     ]
+    }
+   ],
+   "variantes": [
+    "7 × 4 min",
+    "8 × 5 min",
+    "10 × 6 min (fin de bloc)"
+   ],
+   "quand": {
+    "phases": [
+     "construction",
+     "spécifique"
+    ],
+    "parSemaine": "1-2 (3 dans l'étude, en plus de l'entraînement habituel)",
+    "recuperation": "48 h"
+   },
+   "conseils": [
+    "Sur home trainer ou en côte régulière : la puissance y est plus facile à tenir qu'en monotrace.",
+    "La récupération de 3 min est un choix d'entraîneur (non précisée dans le résumé de l'étude).",
+    "Repère en % de la CP converti par nous : l'étude dosait à l'effort maximal tenable."
+   ],
+   "preuve": {
+    "niveau": "prouvé",
+    "resultat": "Essai randomisé chez 16 vététistes entraînés (6 semaines, 3 séances par semaine ajoutées à leur entraînement) : 7-10 × 4-6 min à l'intensité maximale tenable ou 8-12 × 30 s à fond font tous deux progresser ; le temps de course a davantage baissé avec les intervalles longs (« probablement plus bénéfique »).",
+    "references": [
+     {
+      "auteurs": "Inoue A, Impellizzeri FM, Pires FO, Pompeu FAMS, Deslandes AC, Santos TM",
+      "annee": 2016,
+      "titre": "Effects of sprint versus high-intensity aerobic interval training on cross-country mountain biking performance: a randomized controlled trial",
+      "revue": "PLoS One",
+      "pmid": "26789124"
+     }
+    ]
+   }
+  },
+  {
+   "id": "vtt-sit-series",
+   "sport": "vtt",
+   "famille": "anaerobie",
+   "nom": "Sprints de 30 s en séries (vététistes)",
+   "objectif": "VO2max et puissance anaérobie, répétition des efforts courts",
+   "resume": "3 à 4 séries de 4 × 30 s à fond, récupération 90 s, 10 min faciles entre les séries.",
+   "disciplines": [
+    "xco",
+    "xcc"
+   ],
+   "unite": "%CP",
+   "zone": "Z7",
+   "rpe": "10",
+   "niveau": "confirmé",
+   "dureeMin": 84,
+   "travailMin": 6.0,
+   "deroule": [
+    {
+     "type": "echauffement",
+     "duree": 1200,
+     "intensite": [
+      50,
+      75
+     ]
+    },
+    {
+     "type": "repetition",
+     "fois": 3,
+     "etapes": [
+      {
+       "type": "repetition",
+       "fois": 4,
+       "etapes": [
+        {
+         "type": "effort",
+         "duree": 30,
+         "max": true,
+         "cadence": "100-120"
+        },
+        {
+         "type": "recup",
+         "duree": 90,
+         "intensite": [
+          45,
+          55
+         ]
+        }
+       ]
+      },
+      {
+       "type": "recup",
+       "duree": 600,
+       "intensite": [
+        50,
+        60
+       ]
+      }
+     ]
+    },
+    {
+     "type": "retour",
+     "duree": 600,
+     "intensite": [
+      45,
+      55
+     ]
+    }
+   ],
+   "variantes": [
+    "2 séries (reprise)",
+    "3 séries",
+    "4 séries (12-16 sprints, format polarisé de Hebisz)"
+   ],
+   "quand": {
+    "phases": [
+     "construction",
+     "spécifique"
+    ],
+    "parSemaine": "1-2",
+    "recuperation": "48-72 h"
+   },
+   "conseils": [
+    "Précéder ce travail d'une période de volume : les vététistes au gros passé d'endurance en ont le plus profité (Hebisz 2019).",
+    "La pause de 10 min entre les séries est un choix d'entraîneur.",
+    "Jamais un jour de feu orange."
+   ],
+   "preuve": {
+    "niveau": "prouvé",
+    "resultat": "Chez 26 vététistes (8 semaines), sprints de 30 s + intervalles de 4 min : VO2max de 57,9 à 66,6 ml/kg/min, seulement dans le groupe intervalles. En polarisé (2 séances de sprints par semaine), la puissance anaérobie a progressé. Sur le temps de course, les intervalles longs ont fait un peu mieux que les sprints (Inoue 2016).",
+    "references": [
+     {
+      "auteurs": "Hebisz P, Hebisz R, Zatoń M, et al.",
+      "annee": 2016,
+      "titre": "Concomitant application of sprint and high-intensity interval training on maximal oxygen uptake and work output in well-trained cyclists",
+      "revue": "Eur J Appl Physiol",
+      "doi": "10.1007/s00421-016-3405-z"
+     },
+     {
+      "auteurs": "Hebisz R, Hebisz P, Borkowski J, Zatoń M",
+      "annee": 2019,
+      "titre": "Effects of concomitant high-intensity interval training and sprint interval training on exercise capacity and response to exercise-induced muscle damage in mountain bike cyclists with different training backgrounds",
+      "revue": "Isokinet Exerc Sci",
+      "doi": "10.3233/IES-183170"
+     },
+     {
+      "auteurs": "Hebisz P, Hebisz R",
+      "annee": 2021,
+      "titre": "The effect of polarized training (SIT, HIIT, and ET) on muscle thickness and anaerobic power in trained cyclists",
+      "revue": "Int J Environ Res Public Health",
+      "pmid": "34207008"
+     },
+     {
+      "auteurs": "Inoue A, Impellizzeri FM, Pires FO, Pompeu FAMS, Deslandes AC, Santos TM",
+      "annee": 2016,
+      "titre": "Effects of sprint versus high-intensity aerobic interval training on cross-country mountain biking performance: a randomized controlled trial",
+      "revue": "PLoS One",
+      "pmid": "26789124"
+     }
+    ]
+   }
+  },
+  {
+   "id": "vtt-relances-xco",
+   "sport": "vtt",
+   "famille": "repetition-efforts",
+   "nom": "Relances sur fond de tempo (surges XCO)",
+   "objectif": "Répéter des efforts au-dessus de la CP comme en course : vider et recharger le W′",
+   "resume": "3 × 10 min à 80-90 % de la CP avec, toutes les 30 s, une relance de 8 s à 150-180 % ; 5 min faciles entre les blocs.",
+   "disciplines": [
+    "xco",
+    "xcc"
+   ],
+   "unite": "%CP",
+   "zone": "Z3 + Z6-Z7",
+   "rpe": "8",
+   "niveau": "confirmé",
+   "dureeMin": 70,
+   "travailMin": 30.0,
+   "deroule": [
+    {
+     "type": "echauffement",
+     "duree": 900,
+     "intensite": [
+      50,
+      75
+     ]
+    },
+    {
+     "type": "repetition",
+     "fois": 3,
+     "etapes": [
+      {
+       "type": "repetition",
+       "fois": 20,
+       "etapes": [
+        {
+         "type": "effort",
+         "duree": 22,
+         "intensite": [
+          80,
+          90
+         ],
+         "cadence": "85-95"
+        },
+        {
+         "type": "effort",
+         "duree": 8,
+         "intensite": [
+          150,
+          180
+         ],
+         "cadence": "90-110",
+         "note": "relance"
+        }
+       ]
+      },
+      {
+       "type": "recup",
+       "duree": 300,
+       "intensite": [
+        45,
+        55
+       ]
+      }
+     ]
+    },
+    {
+     "type": "retour",
+     "duree": 600,
+     "intensite": [
+      45,
+      55
+     ]
+    }
+   ],
+   "variantes": [
+    "2 × 8 min (reprise)",
+    "3 × 10 min",
+    "Relance toutes les 20 s (plus dense)",
+    "Dehors : relances en sortie de virage ou de bosse"
+   ],
+   "quand": {
+    "phases": [
+     "spécifique"
+    ],
+    "parSemaine": "1",
+    "recuperation": "48 h"
+   },
+   "conseils": [
+    "Si la puissance du tempo s'écroule après les relances, réduis leur nombre plutôt que leur intensité.",
+    "En VTT, « au-dessus de la PMA » ≈ au-dessus de 120 % de la CP (Z6) : dans Næss 2021, la CP vaut ≈ 83 % de la PMA.",
+    "Sans ERG : choisis ton braquet avant chaque effort (un ou deux pignons plus dur), lance les 5 premières secondes un peu au-dessus de la cible puis stabilise."
+   ],
+   "preuve": {
+    "niveau": "plausible",
+    "resultat": "Le format copie la course : en XCO, ≈ 40 % du temps au-dessus de la CP, en efforts d'environ 8 s à ≈ 120 % (Næss) ; plus de 300 efforts au-dessus de la PMA de ≈ 4 s, toutes les ≈ 11 s (Prinz) ; un pic toutes les 32 s (Macdermid). Faire varier la puissance dans un intervalle augmente le temps près de la VO2max (effet aigu). Aucun essai d'entraînement sur ce format.",
+    "references": [
+     {
+      "auteurs": "Næss S, Sollie O, Gløersen ØN, Losnegard T",
+      "annee": 2021,
+      "titre": "Exercise intensity and pacing pattern during a cross-country Olympic mountain bike race",
+      "revue": "Front Physiol",
+      "doi": "10.3389/fphys.2021.702415"
+     },
+     {
+      "auteurs": "Prinz B, Simon D, Tschan H, Nimmerichter A",
+      "annee": 2021,
+      "titre": "Aerobic and anaerobic power distribution during cross-country mountain bike racing",
+      "revue": "Int J Sports Physiol Perform",
+      "doi": "10.1123/ijspp.2020-0758"
+     },
+     {
+      "auteurs": "Macdermid PW, Stannard SR",
+      "annee": 2012,
+      "titre": "Mechanical work and physiological responses to simulated cross country mountain bike racing",
+      "revue": "J Sports Sci"
+     },
+     {
+      "auteurs": "Stapelfeldt B, Schwirtz A, Schumacher YO, Hillebrecht M",
+      "annee": 2004,
+      "titre": "Workload demands in mountain bike racing",
+      "revue": "Int J Sports Med",
+      "pmid": "15162249"
+     },
+     {
+      "auteurs": "Bossi AH, Mesquida C, Passfield L, Rønnestad BR, Hopker JG",
+      "annee": 2020,
+      "titre": "Optimizing interval training through power-output variation within the work intervals",
+      "revue": "Int J Sports Physiol Perform",
+      "pmid": "32244222"
+     }
+    ]
+   }
+  },
+  {
+   "id": "vtt-depart-xco",
+   "sport": "vtt",
+   "famille": "specifique",
+   "nom": "Simulation de départ XCO",
+   "objectif": "Encaisser un départ très rapide puis tenir le seuil",
+   "resume": "3 × (1 min à fond au-dessus de 150 % de la CP puis 6 min à 95-100 %), récupération 7 min.",
+   "disciplines": [
+    "xco"
+   ],
+   "unite": "%CP",
+   "zone": "Z7 puis Z4",
+   "rpe": "9",
+   "niveau": "confirmé",
+   "dureeMin": 72,
+   "travailMin": 21.0,
+   "deroule": [
+    {
+     "type": "echauffement",
+     "duree": 1200,
+     "intensite": [
+      50,
+      75
+     ]
+    },
+    {
+     "type": "repetition",
+     "fois": 3,
+     "etapes": [
+      {
+       "type": "effort",
+       "duree": 60,
+       "intensite": [
+        150,
+        180
+       ],
+       "note": "départ",
+       "cadence": "90-105"
+      },
+      {
+       "type": "effort",
+       "duree": 360,
+       "intensite": [
+        95,
+        100
+       ],
+       "cadence": "85-95"
+      },
+      {
+       "type": "recup",
+       "duree": 420,
+       "intensite": [
+        45,
+        55
+       ]
+      }
+     ]
+    },
+    {
+     "type": "retour",
+     "duree": 600,
+     "intensite": [
+      45,
+      55
+     ]
+    }
+   ],
+   "variantes": [
+    "2 départs",
+    "3 départs",
+    "4 départs (avant une course importante, 7-10 jours avant)"
+   ],
+   "quand": {
+    "phases": [
+     "spécifique"
+    ],
+    "parSemaine": "0-1",
+    "recuperation": "48 h"
+   },
+   "conseils": [
+    "Départ debout, gros braquet ; relance-toi assis au bout de 15-20 s.",
+    "Sans ERG : choisis ton braquet avant chaque effort (un ou deux pignons plus dur), lance les 5 premières secondes un peu au-dessus de la cible puis stabilise."
+   ],
+   "preuve": {
+    "niveau": "pratique",
+    "resultat": "En course, le départ et le 1er tour sont nettement plus rapides, puis l'allure se stabilise (Granier, Hays). Séance d'entraîneur qui reproduit ce profil, sans étude d'entraînement.",
+    "references": [
+     {
+      "auteurs": "Granier C, Abbiss CR, Aubry A, et al.",
+      "annee": 2018,
+      "titre": "Power output and pacing during international cross-country mountain bike cycling",
+      "revue": "Int J Sports Physiol Perform",
+      "pmid": "29688109"
+     },
+     {
+      "auteurs": "Hays A, Devys S, Bertin D, Marquet LA, Brisswalter J",
+      "annee": 2018,
+      "titre": "Understanding the physiological requirements of the mountain bike cross-country Olympic race format",
+      "revue": "Front Physiol",
+      "pmid": "30158873"
+     },
+     {
+      "auteurs": "Impellizzeri FM, Sassi A, Rodriguez-Alonso M, Mognoni P, Marcora SM",
+      "annee": 2002,
+      "titre": "Exercise intensity during off-road cycling competitions",
+      "revue": "Med Sci Sports Exerc",
+      "pmid": "12439087"
+     }
+    ]
+   }
+  },
+  {
+   "id": "vtt-xcc-variable",
+   "sport": "vtt",
+   "famille": "repetition-efforts",
+   "nom": "Short track : 20 min à relances",
+   "objectif": "Tenir ≈ 20 min autour de la CP avec des relances répétées",
+   "resume": "2 × 10 min à 95-100 % de la CP avec une relance de 12 s à 130-150 % chaque minute ; 6 min faciles entre les blocs.",
+   "disciplines": [
+    "xcc"
+   ],
+   "unite": "%CP",
+   "zone": "Z4 + Z6",
+   "rpe": "9",
+   "niveau": "confirmé",
+   "dureeMin": 62,
+   "travailMin": 20.0,
+   "deroule": [
+    {
+     "type": "echauffement",
+     "duree": 1200,
+     "intensite": [
+      50,
+      75
+     ]
+    },
+    {
+     "type": "repetition",
+     "fois": 2,
+     "etapes": [
+      {
+       "type": "repetition",
+       "fois": 10,
+       "etapes": [
+        {
+         "type": "effort",
+         "duree": 48,
+         "intensite": [
+          95,
+          100
+         ],
+         "cadence": "85-95"
+        },
+        {
+         "type": "effort",
+         "duree": 12,
+         "intensite": [
+          130,
+          150
+         ],
+         "note": "relance",
+         "cadence": "90-105"
+        }
+       ]
+      },
+      {
+       "type": "recup",
+       "duree": 360,
+       "intensite": [
+        45,
+        55
+       ]
+      }
+     ]
+    },
+    {
+     "type": "retour",
+     "duree": 600,
+     "intensite": [
+      45,
+      55
+     ]
+    }
+   ],
+   "variantes": [
+    "2 × 8 min",
+    "2 × 10 min",
+    "1 × 20 min (veille de course exclue)"
+   ],
+   "quand": {
+    "phases": [
+     "spécifique"
+    ],
+    "parSemaine": "0-1",
+    "recuperation": "48 h"
+   },
+   "conseils": [
+    "Le short track est court et peu technique : la puissance y compte plus qu'en XCO.",
+    "Sans ERG : choisis ton braquet avant chaque effort (un ou deux pignons plus dur), lance les 5 premières secondes un peu au-dessus de la cible puis stabilise."
+   ],
+   "preuve": {
+    "niveau": "pratique",
+    "resultat": "Une seule étude descriptive : en Coupe du monde, le XCC dure ≈ 21 min à ≈ 21 % de puissance en plus que le XCO (365 contre 301 W), avec une allure variable. La moyenne ≈ 95-100 % de la CP est notre estimation. Aucun essai d'entraînement.",
+    "references": [
+     {
+      "auteurs": "Arriel RA, Meireles A, Souza HLR, Leite LHR, Marocolo M",
+      "annee": 2023,
+      "titre": "Mechanical demands and pacing profile adopted by elite mountain bikers during different cross-country events",
+      "revue": "J Phys Educ (Maringá)"
+     }
+    ]
+   }
+  },
+  {
+   "id": "vtt-marathon-cotes",
+   "sport": "vtt",
+   "famille": "endurance",
+   "nom": "Sortie longue en côtes (marathon)",
+   "objectif": "Puissance au 2e seuil et durabilité sur plusieurs heures",
+   "resume": "3 à 5 h en Z2 avec 4 à 6 montées de 8-15 min à 85-95 % de la CP.",
+   "disciplines": [
+    "xcm"
+   ],
+   "unite": "%CP",
+   "zone": "Z2 + Z3-Z4",
+   "rpe": "4-6",
+   "niveau": "confirmé",
+   "dureeMin": 235,
+   "travailMin": 60.0,
+   "deroule": [
+    {
+     "type": "echauffement",
+     "duree": 900,
+     "intensite": [
+      50,
+      65
+     ]
+    },
+    {
+     "type": "repetition",
+     "fois": 5,
+     "etapes": [
+      {
+       "type": "effort",
+       "duree": 1500,
+       "intensite": [
+        56,
+        70
+       ]
+      },
+      {
+       "type": "effort",
+       "duree": 720,
+       "intensite": [
+        85,
+        95
+       ],
+       "note": "montée",
+       "cadence": "85-95"
+      }
+     ]
+    },
+    {
+     "type": "effort",
+     "duree": 1500,
+     "intensite": [
+      56,
+      70
+     ]
+    },
+    {
+     "type": "retour",
+     "duree": 600,
+     "intensite": [
+      45,
+      55
+     ]
+    }
+   ],
+   "variantes": [
+    "3 h avec 4 montées de 8 min",
+    "4 h avec 5 montées de 12 min",
+    "5 h avec 6 montées de 15 min (2-3 semaines avant l'objectif)"
+   ],
+   "quand": {
+    "phases": [
+     "construction",
+     "spécifique"
+    ],
+    "parSemaine": "1",
+    "recuperation": "48 h"
+   },
+   "conseils": [
+    "Mange 60-90 g de glucides par heure dès la 1re heure : on entraîne aussi l'estomac.",
+    "Garde les dernières montées aussi fortes que les premières : c'est le but (durabilité)."
+   ],
+   "preuve": {
+    "niveau": "plausible",
+    "resultat": "En course par étapes, la puissance absolue au 2e seuil lactique est le meilleur prédicteur du temps (r = −0,80, 24 amateurs) ; il faut tenir une puissance élevée des heures et répéter des efforts (Cape Epic, répartition pyramidale proposée). FC ≈ 85 % de la FC max sur la Transalp. Le format exact est un choix d'entraîneur.",
+    "references": [
+     {
+      "auteurs": "Engelbrecht L, Terblanche E",
+      "annee": 2018,
+      "titre": "Physiological performance predictors in mountain bike multi-stage races",
+      "revue": "J Sports Med Phys Fitness",
+      "doi": "10.23736/S0022-4707.17.07139-0"
+     },
+     {
+      "auteurs": "Reinpõld K, Bossi AH, Hopker J",
+      "annee": 2022,
+      "titre": "What does it take to complete the Cape Epic?",
+      "revue": "J Strength Cond Res",
+      "doi": "10.1519/JSC.0000000000004121"
+     },
+     {
+      "auteurs": "Wirnitzer KC, Kornexl E",
+      "annee": 2008,
+      "titre": "Exercise intensity during an 8-day mountain bike marathon race",
+      "revue": "Eur J Appl Physiol",
+      "pmid": "18777040"
+     },
+     {
+      "auteurs": "Jones AM, Kirby BS",
+      "annee": 2025,
+      "titre": "Physiological resilience: what is it and how might it be trained?",
+      "revue": "Scand J Med Sci Sports",
+      "doi": "10.1111/sms.70032"
+     }
+    ]
+   }
+  },
+  {
+   "id": "vtt-enduro-speciales",
+   "sport": "vtt",
+   "famille": "specifique",
+   "nom": "Spéciales d'enduro",
+   "objectif": "Enchaîner des descentes techniques rapides, relances comprises, malgré la fatigue",
+   "resume": "4 à 6 spéciales chronométrées de 3-8 min, pédalées fort sur les relances ; remontées tranquilles en Z1-Z2.",
+   "disciplines": [
+    "enduro"
+   ],
+   "unite": "%CP",
+   "zone": "Z5-Z7 (spéciales)",
+   "rpe": "8-9",
+   "niveau": "confirmé",
+   "dureeMin": 130,
+   "travailMin": 25.0,
+   "deroule": [
+    {
+     "type": "echauffement",
+     "duree": 1200,
+     "intensite": [
+      50,
+      75
+     ]
+    },
+    {
+     "type": "repetition",
+     "fois": 5,
+     "etapes": [
+      {
+       "type": "effort",
+       "duree": 300,
+       "intensite": [
+        100,
+        120
+       ],
+       "note": "spéciale : relances à fond, descente technique",
+       "cadence": "90-105"
+      },
+      {
+       "type": "recup",
+       "duree": 900,
+       "intensite": [
+        50,
+        65
+       ],
+       "note": "remontée (liaison)"
+      }
+     ]
+    },
+    {
+     "type": "retour",
+     "duree": 600,
+     "intensite": [
+      45,
+      55
+     ]
+    }
+   ],
+   "variantes": [
+    "4 spéciales de 3 min",
+    "5 spéciales de 5 min",
+    "6 spéciales de 8 min (format course)"
+   ],
+   "quand": {
+    "phases": [
+     "spécifique"
+    ],
+    "parSemaine": "1",
+    "recuperation": "48 h"
+   },
+   "conseils": [
+    "Le chrono compte plus que les watts : les vainqueurs vont surtout plus vite dans les descentes techniques.",
+    "Protections et reconnaissance : les blessures sont surtout fréquentes en course (38 pour 1000 h contre 4 à l'entraînement).",
+    "La puissance et la FC sous-estiment la charge (vibrations, bras) : note ton effort perçu."
+   ],
+   "preuve": {
+    "niveau": "pratique",
+    "resultat": "Études descriptives : en spéciale, FC au-dessus de 90 % de la FC max et lactate ≈ 15 mmol/L ; l'aérobie et l'anaérobie sont des prérequis, pas ce qui fait gagner. Aucun essai d'entraînement en enduro.",
+    "references": [
+     {
+      "auteurs": "Kirkwood L, Ingram L, Cunningham D, Malone E, Florida-James G",
+      "annee": 2017,
+      "titre": "Physiological characteristics and performance in elite enduro mountain biking",
+      "revue": "J Sci Cycling"
+     },
+     {
+      "auteurs": "West DW",
+      "annee": 2021,
+      "titre": "Enduro mountain bike racing: physiological characteristics related to performance, and training recommendations",
+      "revue": "J Aust Strength Cond"
+     },
+     {
+      "auteurs": "Palmer D, Florida-James G, Ball C",
+      "annee": 2021,
+      "titre": "Enduro World Series (EWS) mountain biking injuries: a 2-year prospective study of 2010 riders",
+      "revue": "Int J Sports Med",
+      "pmid": "33348388"
+     }
+    ]
+   }
+  },
+  {
+   "id": "vtt-dh-sprints",
+   "sport": "vtt",
+   "famille": "sprint",
+   "nom": "Descente : sprints courts",
+   "objectif": "Puissance de pointe pour les relances, sans fatigue inutile",
+   "resume": "8 à 10 × 5-8 s à fond depuis une allure lente, récupération 2-3 min.",
+   "disciplines": [
+    "dh",
+    "enduro"
+   ],
+   "unite": "%CP",
+   "zone": "Z7",
+   "rpe": "8",
+   "niveau": "intermédiaire",
+   "dureeMin": 46,
+   "travailMin": 0.9,
+   "deroule": [
+    {
+     "type": "echauffement",
+     "duree": 900,
+     "intensite": [
+      50,
+      75
+     ]
+    },
+    {
+     "type": "repetition",
+     "fois": 8,
+     "etapes": [
+      {
+       "type": "effort",
+       "duree": 7,
+       "max": true,
+       "note": "départ lancé lentement, debout",
+       "cadence": "100-120"
+      },
+      {
+       "type": "recup",
+       "duree": 150,
+       "intensite": [
+        40,
+        55
+       ]
+      }
+     ]
+    },
+    {
+     "type": "retour",
+     "duree": 600,
+     "intensite": [
+      45,
+      55
+     ]
+    }
+   ],
+   "variantes": [
+    "6 sprints",
+    "8 sprints",
+    "10 sprints"
+   ],
+   "quand": {
+    "phases": [
+     "toutes"
+    ],
+    "parSemaine": "1",
+    "recuperation": "24 h"
+   },
+   "conseils": [
+    "En descente, la puissance et la cadence ne sont pas liées au temps : la technique prime. Cette séance n'est qu'un complément.",
+    "Ajoute préhension et haut du corps en salle : la force de préhension baisse après une descente."
+   ],
+   "preuve": {
+    "niveau": "pratique",
+    "resultat": "Descente : pics de ≈ 830 W pour une moyenne de ≈ 75 W, sans lien entre puissance et temps de descente (17 descendeurs) ; FC et effort perçu gonflés par le stress (cortisol doublé avant le départ) ; préhension en baisse de 5,5 % après le run. Aucun essai d'entraînement.",
+    "references": [
+     {
+      "auteurs": "Hurst HT, Atkins S",
+      "annee": 2006,
+      "titre": "Power output of field-based downhill mountain biking",
+      "revue": "J Sports Sci",
+      "pmid": "17115519"
+     },
+     {
+      "auteurs": "Burr JF, Drury CT, Ivey AC, Warburton DER",
+      "annee": 2012,
+      "titre": "Physiological demands of downhill mountain biking",
+      "revue": "J Sports Sci",
+      "pmid": "23025296"
+     },
+     {
+      "auteurs": "Sperlich B, Achtzehn S, Buhr M, Zinner C, Zelle S, Holmberg HC",
+      "annee": 2012,
+      "titre": "Salivary cortisol, heart rate, and blood lactate responses during elite downhill mountain bike racing",
+      "revue": "Int J Sports Physiol Perform",
+      "pmid": "22461462"
+     }
+    ]
+   }
+  },
+  {
+   "id": "vtt-technique",
+   "sport": "vtt",
+   "famille": "technique",
+   "nom": "Séance technique",
+   "objectif": "Pilotage : virages, passages, lignes, freinage",
+   "resume": "45 à 60 min à intensité basse, en répétant une même section (virages, racines, marches).",
+   "disciplines": [
+    "xco",
+    "xcm",
+    "enduro",
+    "dh"
+   ],
+   "unite": "%CP",
+   "zone": "Z1-Z2",
+   "rpe": "3-5",
+   "niveau": "tous",
+   "dureeMin": 55,
+   "travailMin": 0.0,
+   "deroule": [
+    {
+     "type": "echauffement",
+     "duree": 600,
+     "intensite": [
+      50,
+      65
+     ]
+    },
+    {
+     "type": "repetition",
+     "fois": 10,
+     "etapes": [
+      {
+       "type": "effort",
+       "duree": 120,
+       "intensite": [
+        56,
+        75
+       ],
+       "note": "section technique"
+      },
+      {
+       "type": "recup",
+       "duree": 120,
+       "intensite": [
+        45,
+        55
+       ],
+       "note": "retour au départ"
+      }
+     ]
+    },
+    {
+     "type": "retour",
+     "duree": 300,
+     "intensite": [
+      45,
+      55
+     ]
+    }
+   ],
+   "variantes": [
+    "Virages et appuis",
+    "Montées techniques",
+    "Descente : lignes et freinage",
+    "Avec un chrono une fois la section maîtrisée"
+   ],
+   "quand": {
+    "phases": [
+     "toutes"
+    ],
+    "parSemaine": "1",
+    "recuperation": "< 24 h"
+   },
+   "conseils": [
+    "Peu de watts mais une vraie fatigue (bras, attention) : compte-la avec ton effort perçu.",
+    "Répéter la même section avec un retour réfléchi vaut mieux qu'un long parcours."
+   ],
+   "preuve": {
+    "niveau": "pratique",
+    "resultat": "La technique pèse lourd en VTT (l'aérobie n'explique qu'environ 40 % de la performance en XC ; en enduro, les vainqueurs se distinguent en descente technique). Aucune étude contrôlée sur l'entraînement technique.",
+    "references": [
+     {
+      "auteurs": "Impellizzeri FM, Marcora SM, Rampinini E, Mognoni P, Sassi A",
+      "annee": 2005,
+      "titre": "Correlations between physiological variables and performance in high level cross country off road cyclists",
+      "revue": "Br J Sports Med",
+      "pmid": "16183772"
+     },
+     {
+      "auteurs": "Impellizzeri FM, Marcora SM",
+      "annee": 2007,
+      "titre": "The physiology of mountain biking",
+      "revue": "Sports Med",
+      "doi": "10.2165/00007256-200737010-00005"
+     },
+     {
+      "auteurs": "Kirkwood L, Ingram L, Cunningham D, Malone E, Florida-James G",
+      "annee": 2017,
+      "titre": "Physiological characteristics and performance in elite enduro mountain biking",
+      "revue": "J Sci Cycling"
+     }
+    ]
+   }
+  },
+  {
+   "id": "vtt-test-sprints-repetes",
+   "sport": "vtt",
+   "famille": "test",
+   "nom": "Test 5 × 30 s",
+   "objectif": "Mesurer la puissance et la tenue sur sprints répétés",
+   "resume": "5 × 30 s à fond, récupération 30 s : puissance max et moyenne en W/kg, baisse entre le 1er et le 5e.",
+   "disciplines": [
+    "xco",
+    "xcc"
+   ],
+   "unite": "%CP",
+   "zone": "test",
+   "rpe": "10",
+   "niveau": "confirmé",
+   "dureeMin": 40,
+   "travailMin": 2.5,
+   "deroule": [
+    {
+     "type": "echauffement",
+     "duree": 1200,
+     "intensite": [
+      50,
+      75
+     ],
+     "note": "avec 2 sprints de 6 s"
+    },
+    {
+     "type": "repetition",
+     "fois": 5,
+     "etapes": [
+      {
+       "type": "effort",
+       "duree": 30,
+       "max": true,
+       "cadence": "100-120"
+      },
+      {
+       "type": "recup",
+       "duree": 30,
+       "intensite": [
+        40,
+        50
+       ]
+      }
+     ]
+    },
+    {
+     "type": "retour",
+     "duree": 900,
+     "intensite": [
+      45,
+      55
+     ]
+    }
+   ],
+   "variantes": [
+    "4 × 30 s (Bejder)",
+    "Refaire toutes les 8-12 semaines, dans les mêmes conditions"
+   ],
+   "quand": {
+    "phases": [
+     "début et fin de phase"
+    ],
+    "parSemaine": "toutes les 8-12 semaines",
+    "recuperation": "48 h"
+   },
+   "conseils": [
+    "Complète le test CP, ne le remplace pas.",
+    "Ce test n'a pas été validé pour suivre une progression : compare-toi à toi-même."
+   ],
+   "preuve": {
+    "niveau": "plausible",
+    "resultat": "Chez 10 coureurs XCO, le temps de course est lié à la puissance max sur 5 × 30 s (r = −0,79) ; chez des élites, VO2pic et résistance à la fatigue sur des 30 s expliquent la plus grande partie des écarts. Corrélations, pas un test validé pour le suivi.",
+    "references": [
+     {
+      "auteurs": "Inoue A, Sá Filho AS, Mello FCM, Santos TM",
+      "annee": 2012,
+      "titre": "Relationship between anaerobic cycling tests and mountain bike cross-country performance",
+      "revue": "J Strength Cond Res",
+      "doi": "10.1519/JSC.0b013e318234eb89"
+     },
+     {
+      "auteurs": "Bejder J, Bonne TC, Nyberg M, Sjøberg KA, Nordsborg NB",
+      "annee": 2019,
+      "titre": "Physiological determinants of elite mountain bike cross-country Olympic performance",
+      "revue": "J Sports Sci",
+      "pmid": "30430912"
      }
     ]
    }
@@ -5831,7 +7090,15 @@
       "pmid": "34757594"
      }
     ]
-   }
+   },
+   "disciplines": [
+    "route",
+    "xco",
+    "xcc",
+    "xcm",
+    "enduro",
+    "dh"
+   ]
   },
   {
    "id": "force-maxi-coureur",
@@ -6881,6 +8148,459 @@
       "titre": "2023 International Olympic Committee's (IOC) consensus statement on Relative Energy Deficiency in Sport (REDs)",
       "revue": "Br J Sports Med",
       "doi": "10.1136/bjsports-2023-106994"
+     }
+    ]
+   }
+  },
+  {
+   "id": "profil-xco",
+   "sport": "methode",
+   "famille": "profil",
+   "nom": "Profil : cross-country olympique (XCO)",
+   "objectif": "Savoir quoi travailler pour un objectif XCO",
+   "resume": "≈ 1 h 20-1 h 35 de course à ≈ 76 % de la CP en moyenne, mais ≈ 40 % du temps au-dessus, en centaines d'efforts de quelques secondes. Base polarisée ou pyramidale, intervalles longs, sprints de 30 s, relances, technique.",
+   "disciplines": [
+    "xco"
+   ],
+   "zone": "—",
+   "rpe": "—",
+   "niveau": "—",
+   "variantes": [],
+   "quand": {
+    "phases": [
+     "toutes"
+    ],
+    "parSemaine": "",
+    "recuperation": ""
+   },
+   "conseils": [
+    "Semaine type en construction : 2 séances dures (intervalles longs + sprints ou relances), 1 séance technique, le reste en endurance.",
+    "Le poids compte : le W/kg sépare les vététistes des routiers (profil de grimpeur).",
+    "La FC suit mal l'effort en VTT : juge les séances sur les watts et l'effort perçu."
+   ],
+   "preuve": {
+    "niveau": "plausible",
+    "resultat": "Études descriptives solides : 76 % de la CP en moyenne et 40 % du temps au-dessus (Næss), 26-30 % au-dessus de la PMA (Granier, Prinz), départ très rapide. Ce qui prédit la performance : W/kg au 2e seuil, VO2max relative, tenue sur des sprints répétés. Essais chez des vététistes : intervalles de 4-6 min et sprints de 30 s font progresser, les longs un peu plus sur le temps de course ; le polarisé a fait plus progresser la VO2max qu'un bloc, mais pas plus qu'un entraînement à basse intensité sur la performance. Les courses sont jusqu'à 40 % plus courtes qu'en 1996, avec plus d'anaérobie.",
+    "references": [
+     {
+      "auteurs": "Næss S, Sollie O, Gløersen ØN, Losnegard T",
+      "annee": 2021,
+      "titre": "Exercise intensity and pacing pattern during a cross-country Olympic mountain bike race",
+      "revue": "Front Physiol",
+      "doi": "10.3389/fphys.2021.702415"
+     },
+     {
+      "auteurs": "Granier C, Abbiss CR, Aubry A, et al.",
+      "annee": 2018,
+      "titre": "Power output and pacing during international cross-country mountain bike cycling",
+      "revue": "Int J Sports Physiol Perform",
+      "pmid": "29688109"
+     },
+     {
+      "auteurs": "Prinz B, Simon D, Tschan H, Nimmerichter A",
+      "annee": 2021,
+      "titre": "Aerobic and anaerobic power distribution during cross-country mountain bike racing",
+      "revue": "Int J Sports Physiol Perform",
+      "doi": "10.1123/ijspp.2020-0758"
+     },
+     {
+      "auteurs": "Hays A, Devys S, Bertin D, Marquet LA, Brisswalter J",
+      "annee": 2018,
+      "titre": "Understanding the physiological requirements of the mountain bike cross-country Olympic race format",
+      "revue": "Front Physiol",
+      "pmid": "30158873"
+     },
+     {
+      "auteurs": "Impellizzeri FM, Marcora SM, Rampinini E, Mognoni P, Sassi A",
+      "annee": 2005,
+      "titre": "Correlations between physiological variables and performance in high level cross country off road cyclists",
+      "revue": "Br J Sports Med",
+      "pmid": "16183772"
+     },
+     {
+      "auteurs": "Bejder J, Bonne TC, Nyberg M, Sjøberg KA, Nordsborg NB",
+      "annee": 2019,
+      "titre": "Physiological determinants of elite mountain bike cross-country Olympic performance",
+      "revue": "J Sports Sci",
+      "pmid": "30430912"
+     },
+     {
+      "auteurs": "Inoue A, Impellizzeri FM, Pires FO, Pompeu FAMS, Deslandes AC, Santos TM",
+      "annee": 2016,
+      "titre": "Effects of sprint versus high-intensity aerobic interval training on cross-country mountain biking performance: a randomized controlled trial",
+      "revue": "PLoS One",
+      "pmid": "26789124"
+     },
+     {
+      "auteurs": "Hebisz P, Hebisz R, Drelak M",
+      "annee": 2021,
+      "titre": "Comparison of aerobic capacity changes as a result of a polarized or block training program among trained mountain bike cyclists",
+      "revue": "Int J Environ Res Public Health",
+      "pmid": "34444612"
+     },
+     {
+      "auteurs": "Schneeweiss P, et al.",
+      "annee": 2022,
+      "titre": "Effect of two different training interventions on cycling performance in mountain bike cross-country Olympic athletes",
+      "revue": "Sports",
+      "doi": "10.3390/sports10040053"
+     },
+     {
+      "auteurs": "Protzen G, Inoue A, Buzzachera C, et al.",
+      "annee": 2026,
+      "titre": "The physiology of contemporary Olympic cross-country mountain biking: a systematic review",
+      "revue": "Sports Med Open",
+      "doi": "10.1186/s40798-026-00976-4"
+     },
+     {
+      "auteurs": "Arriel RA, et al.",
+      "annee": 2022,
+      "titre": "Current perspectives of cross-country mountain biking: physiological and mechanical aspects, evolution of bikes, accidents and injuries",
+      "revue": "Int J Environ Res Public Health",
+      "pmid": "36231848"
+     }
+    ]
+   }
+  },
+  {
+   "id": "profil-xcc",
+   "sport": "methode",
+   "famille": "profil",
+   "nom": "Profil : short track (XCC)",
+   "objectif": "Savoir quoi travailler pour un objectif short track",
+   "resume": "≈ 20 min très intenses (≈ 21 % de puissance en plus que le XCO), allure variable, parcours peu technique. Seuil, VO2max et relances.",
+   "disciplines": [
+    "xcc"
+   ],
+   "zone": "—",
+   "rpe": "—",
+   "niveau": "—",
+   "variantes": [],
+   "quand": {
+    "phases": [
+     "spécifique"
+    ],
+    "parSemaine": "",
+    "recuperation": ""
+   },
+   "conseils": [
+    "Base identique au XCO ; en spécifique, ajoute les « 20 min à relances »."
+   ],
+   "preuve": {
+    "niveau": "pratique",
+    "resultat": "Une seule étude descriptive (12 élites en Coupe du monde) : XCC 21 min à ≈ 365 W contre XCO 84 min à ≈ 301 W, départ moins explosif. Aucun essai d'entraînement : on extrapole du XCO.",
+    "references": [
+     {
+      "auteurs": "Arriel RA, Meireles A, Souza HLR, Leite LHR, Marocolo M",
+      "annee": 2023,
+      "titre": "Mechanical demands and pacing profile adopted by elite mountain bikers during different cross-country events",
+      "revue": "J Phys Educ (Maringá)"
+     },
+     {
+      "auteurs": "Næss S, Sollie O, Gløersen ØN, Losnegard T",
+      "annee": 2021,
+      "titre": "Exercise intensity and pacing pattern during a cross-country Olympic mountain bike race",
+      "revue": "Front Physiol",
+      "doi": "10.3389/fphys.2021.702415"
+     }
+    ]
+   }
+  },
+  {
+   "id": "profil-xcm",
+   "sport": "methode",
+   "famille": "profil",
+   "nom": "Profil : marathon (XCM, courses par étapes)",
+   "objectif": "Savoir quoi travailler pour un objectif marathon",
+   "resume": "3 à 5 h (ou plusieurs jours) proches de la sortie longue sur route : volume, puissance au 2e seuil, durabilité, nutrition. Plus proche de la route que du XCO.",
+   "disciplines": [
+    "xcm"
+   ],
+   "zone": "—",
+   "rpe": "—",
+   "niveau": "—",
+   "variantes": [],
+   "quand": {
+    "phases": [
+     "toutes"
+    ],
+    "parSemaine": "",
+    "recuperation": ""
+   },
+   "conseils": [
+    "Sorties longues en côtes, sweet spot et seuil : les séances route du catalogue servent directement.",
+    "Entraîne les glucides (60-90 g/h) sur les sorties longues.",
+    "Garde 1 sortie VTT par semaine pour la technique et les bras."
+   ],
+   "preuve": {
+    "niveau": "plausible",
+    "resultat": "Transalp (7 amateurs, 8 jours) : FC ≈ 85 % de la FC max, ≈ 36 % du temps en zones hautes. Cape Epic : puissance normalisée ≈ 3 W/kg par étape ; puissance absolue au 2e seuil liée au temps total (r = −0,80). Sur 4 h, la force de préhension et la prise de décision ressortent aussi (8 coureurs seulement). Répartition pyramidale proposée, pas testée.",
+    "references": [
+     {
+      "auteurs": "Wirnitzer KC, Kornexl E",
+      "annee": 2008,
+      "titre": "Exercise intensity during an 8-day mountain bike marathon race",
+      "revue": "Eur J Appl Physiol",
+      "pmid": "18777040"
+     },
+     {
+      "auteurs": "Engelbrecht L, Terblanche E",
+      "annee": 2018,
+      "titre": "Physiological performance predictors in mountain bike multi-stage races",
+      "revue": "J Sports Med Phys Fitness",
+      "doi": "10.23736/S0022-4707.17.07139-0"
+     },
+     {
+      "auteurs": "Reinpõld K, Bossi AH, Hopker J",
+      "annee": 2022,
+      "titre": "What does it take to complete the Cape Epic?",
+      "revue": "J Strength Cond Res",
+      "doi": "10.1519/JSC.0000000000004121"
+     },
+     {
+      "auteurs": "Novak AR, Bennett KJM, Fransen J, Dascombe BJ",
+      "annee": 2018,
+      "titre": "Predictors of performance in a 4-h mountain-bike race",
+      "revue": "J Sports Sci",
+      "doi": "10.1080/02640414.2017.1313999"
+     }
+    ]
+   }
+  },
+  {
+   "id": "profil-enduro",
+   "sport": "methode",
+   "famille": "profil",
+   "nom": "Profil : enduro",
+   "objectif": "Savoir quoi travailler pour un objectif enduro",
+   "resume": "Journée de 3 à 9 h avec des spéciales chronométrées de quelques minutes très intenses ; la descente technique fait la différence. Base aérobie, puissance de relance, haut du corps, technique.",
+   "disciplines": [
+    "enduro"
+   ],
+   "zone": "—",
+   "rpe": "—",
+   "niveau": "—",
+   "variantes": [],
+   "quand": {
+    "phases": [
+     "toutes"
+    ],
+    "parSemaine": "",
+    "recuperation": ""
+   },
+   "conseils": [
+    "Les qualités physiques sont un prérequis : endurance et seuil sur route ou home trainer, puis spéciales et technique en VTT.",
+    "Musculation lourde des jambes et haut du corps l'hiver ; la puissance ne compte pas toute la charge (vibrations)."
+   ],
+   "preuve": {
+    "niveau": "pratique",
+    "resultat": "Peu d'études et toutes descriptives : en spéciale, FC au-dessus de 90 % et lactate ≈ 15 mmol/L ; les élites ont plus de puissance, mais gagnent surtout en descente technique. Charge mesurée plus forte sur le vélo que sur le coureur. Blessures surtout en course (38 pour 1000 h). Aucun essai d'entraînement.",
+    "references": [
+     {
+      "auteurs": "Kirkwood L, Ingram L, Cunningham D, Malone E, Florida-James G",
+      "annee": 2017,
+      "titre": "Physiological characteristics and performance in elite enduro mountain biking",
+      "revue": "J Sci Cycling"
+     },
+     {
+      "auteurs": "West DW",
+      "annee": 2021,
+      "titre": "Enduro mountain bike racing: physiological characteristics related to performance, and training recommendations",
+      "revue": "J Aust Strength Cond"
+     },
+     {
+      "auteurs": "Palmer D, Florida-James G, Ball C",
+      "annee": 2021,
+      "titre": "Enduro World Series (EWS) mountain biking injuries: a 2-year prospective study of 2010 riders",
+      "revue": "Int J Sports Med",
+      "pmid": "33348388"
+     }
+    ]
+   }
+  },
+  {
+   "id": "profil-dh",
+   "sport": "methode",
+   "famille": "profil",
+   "nom": "Profil : descente (DH)",
+   "objectif": "Savoir quoi travailler pour un objectif descente",
+   "resume": "2 à 5 min de descente : puissance moyenne faible, pics très hauts, bras et préhension très sollicités. La technique prime ; physique : force, puissance courte, haut du corps.",
+   "disciplines": [
+    "dh"
+   ],
+   "zone": "—",
+   "rpe": "—",
+   "niveau": "—",
+   "variantes": [],
+   "quand": {
+    "phases": [
+     "toutes"
+    ],
+    "parSemaine": "",
+    "recuperation": ""
+   },
+   "conseils": [
+    "Ne juge pas une descente sur la FC : elle est gonflée par le stress.",
+    "La musculation (jambes, haut du corps, préhension) et le pilotage passent avant le volume aérobie."
+   ],
+   "preuve": {
+    "niveau": "pratique",
+    "resultat": "Puissance moyenne ≈ 75 W avec des pics de ≈ 830 W, sans lien avec le temps de descente ; ≈ 52 % de la VO2max mais FC au-dessus de 90 % sur 80 % du run (stress) ; préhension en baisse après le run. Profil plus anaérobie que les vététistes XC (VO2max plus basse, pic de puissance plus haut). Aucun essai d'entraînement.",
+    "references": [
+     {
+      "auteurs": "Hurst HT, Atkins S",
+      "annee": 2006,
+      "titre": "Power output of field-based downhill mountain biking",
+      "revue": "J Sports Sci",
+      "pmid": "17115519"
+     },
+     {
+      "auteurs": "Burr JF, Drury CT, Ivey AC, Warburton DER",
+      "annee": 2012,
+      "titre": "Physiological demands of downhill mountain biking",
+      "revue": "J Sports Sci",
+      "pmid": "23025296"
+     },
+     {
+      "auteurs": "Sperlich B, Achtzehn S, Buhr M, Zinner C, Zelle S, Holmberg HC",
+      "annee": 2012,
+      "titre": "Salivary cortisol, heart rate, and blood lactate responses during elite downhill mountain bike racing",
+      "revue": "Int J Sports Physiol Perform",
+      "pmid": "22461462"
+     },
+     {
+      "auteurs": "Novak AR, Dascombe BJ",
+      "annee": 2014,
+      "titre": "Physiological and performance characteristics of road, mountain bike and BMX cyclists",
+      "revue": "J Sci Cycling"
+     },
+     {
+      "auteurs": "Becker J, Runer A, Neunhäuserer D, Frick N, Resch H, Moroder P",
+      "annee": 2013,
+      "titre": "A prospective study of downhill mountain biking injuries",
+      "revue": "Br J Sports Med",
+      "pmid": "23329619"
+     }
+    ]
+   }
+  },
+  {
+   "id": "methode-vtt-route",
+   "sport": "methode",
+   "famille": "profil",
+   "nom": "VTT et route : combiner",
+   "objectif": "Placer la route ou le home trainer dans une préparation VTT",
+   "resume": "Intervalles à puissance précise sur home trainer ou route ; relances, technique et spécifique en VTT. Plus la discipline est longue et roulante (XCM, XCC), plus la route sert.",
+   "disciplines": [
+    "route",
+    "xco",
+    "xcc",
+    "xcm",
+    "enduro"
+   ],
+   "zone": "—",
+   "rpe": "—",
+   "niveau": "—",
+   "variantes": [],
+   "quand": {
+    "phases": [
+     "toutes"
+    ],
+    "parSemaine": "",
+    "recuperation": ""
+   },
+   "conseils": [
+    "XCO : 1-2 sorties VTT par semaine (technique, relances), le reste où tu veux.",
+    "XCM : la route peut porter l'essentiel du volume.",
+    "Enduro et DH : le physique sur route ou home trainer, le reste sur le terrain."
+   ],
+   "preuve": {
+    "niveau": "pratique",
+    "resultat": "Aucune étude ne compare le travail en VTT et sur route chez des vététistes. Dehors, puissance et FC sont plus hautes qu'au labo à effort perçu égal (route) ; au labo, les vététistes pédalent plus vite à puissance égale. Les essais VTT ont souvent fait leurs intervalles sans préciser le terrain. Choix d'entraîneur, cohérent avec les profils de course.",
+    "references": [
+     {
+      "auteurs": "Mieras ME, Heesch MW, Slivka DR",
+      "annee": 2014,
+      "titre": "Physiological and psychological responses to outdoor vs. laboratory cycling",
+      "revue": "J Strength Cond Res",
+      "pmid": "24476776"
+     },
+     {
+      "auteurs": "Schneeweiss P, et al.",
+      "annee": 2020,
+      "titre": "Cycling performance in short-term efforts: laboratory and field-based data in XCO athletes",
+      "revue": "Sports Med Int Open",
+      "pmid": "32232124"
+     },
+     {
+      "auteurs": "Inoue A, Impellizzeri FM, Pires FO, Pompeu FAMS, Deslandes AC, Santos TM",
+      "annee": 2016,
+      "titre": "Effects of sprint versus high-intensity aerobic interval training on cross-country mountain biking performance: a randomized controlled trial",
+      "revue": "PLoS One",
+      "pmid": "26789124"
+     }
+    ]
+   }
+  },
+  {
+   "id": "methode-charge-vtt",
+   "sport": "methode",
+   "famille": "organisation",
+   "nom": "Mesurer la charge en VTT",
+   "objectif": "Ne pas sous-estimer une sortie VTT",
+   "resume": "En VTT, la FC suit mal l'effort et les watts oublient les bras, les vibrations et la concentration. Juger sur les watts quand il y en a, ajouter l'effort perçu.",
+   "disciplines": [
+    "xco",
+    "xcc",
+    "xcm",
+    "enduro",
+    "dh"
+   ],
+   "zone": "—",
+   "rpe": "—",
+   "niveau": "—",
+   "variantes": [],
+   "quand": {
+    "phases": [
+     "toutes"
+    ],
+    "parSemaine": "",
+    "recuperation": ""
+   },
+   "conseils": [
+    "Pour les séances techniques, d'enduro ou de descente, l'effort perçu × la durée est le repère le plus simple."
+   ],
+   "preuve": {
+    "niveau": "plausible",
+    "resultat": "En XC, la puissance varie énormément alors que la FC reste stable ; FC et lactate sont trop peu sensibles pour estimer la dépense. En descente, FC et effort perçu sont gonflés par rapport à la dépense. Une montée avant une descente rend la descente plus coûteuse sans changer la puissance. Aucune validation de l'effort perçu ou du TRIMP propre au VTT.",
+    "references": [
+     {
+      "auteurs": "Stapelfeldt B, Schwirtz A, Schumacher YO, Hillebrecht M",
+      "annee": 2004,
+      "titre": "Workload demands in mountain bike racing",
+      "revue": "Int J Sports Med",
+      "pmid": "15162249"
+     },
+     {
+      "auteurs": "Smekal G, von Duvillard SP, Hörmandinger M, et al.",
+      "annee": 2015,
+      "titre": "Physiological demands of simulated off-road cycling competition",
+      "revue": "J Sports Sci Med",
+      "pmid": "26664277"
+     },
+     {
+      "auteurs": "Burr JF, Drury CT, Ivey AC, Warburton DER",
+      "annee": 2012,
+      "titre": "Physiological demands of downhill mountain biking",
+      "revue": "J Sports Sci",
+      "pmid": "23025296"
+     },
+     {
+      "auteurs": "Bourdon PC, Cardinale M, Murray A, et al.",
+      "annee": 2017,
+      "titre": "Monitoring athlete training loads: consensus statement",
+      "revue": "Int J Sports Physiol Perform",
+      "doi": "10.1123/IJSPP.2017-0208"
      }
     ]
    }

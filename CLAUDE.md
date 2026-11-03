@@ -4,7 +4,8 @@ PWA en français (iPhone d'abord, thème sombre) : un accueil, puis des modules.
 (vélo + course, système kJ, CP, feu du jour par VFC) ; **Budget** est construit (saisie manuelle, plafonds, patrimoine) ;
 **Révision CAPEPS** est construit (41 notions, rappels J+1…J+90 en feuille blanche, sujets ; concours le 2/03/2027) ;
 **Muscu** est construit (développé couché 5/3/1 adapté, pas encore relié à l'Entraînement ni à la nutrition) ;
-**Catalogue** affiche le catalogue scientifique de séances (`catalogue/`, pas encore relié au reste).
+**Catalogue** affiche le catalogue scientifique de séances (`catalogue/` : route, VTT par discipline, course, renfo, méthodes ;
+l'Entraînement y pioche ses formats d'intensité vélo).
 En ligne : https://titouandeoliveira16.github.io/coach/ (GitHub Pages, déployé à chaque push sur `main`).
 
 ## Façon de travailler avec Titouan
