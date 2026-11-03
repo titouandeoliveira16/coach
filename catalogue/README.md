@@ -15,8 +15,9 @@ et la séance prévue affiche sa fiche. Pour ajouter une séance au programme : 
 
 | Champ | Contenu |
 |---|---|
-| `sport` | `velo`, `course`, `force` (renforcement), `methode` (organisation de l'entraînement) |
-| `famille` | ce que la séance travaille : `recuperation`, `endurance`, `durabilite`, `tempo`, `seuil`, `vo2max`, `anaerobie`, `sprint`, `force`, `specifique`, `test`, `force-lourde`, `force-explosive`, `prevention`, `organisation` |
+| `sport` | `velo` (route, home trainer), `vtt`, `course`, `force` (renforcement), `methode` (organisation de l'entraînement, profils de discipline) |
+| `disciplines` | (facultatif) où la séance sert : `route`, `xco` (olympique), `xcc` (short track), `xcm` (marathon), `enduro`, `dh` (descente). Les séances route utiles en VTT portent aussi les disciplines VTT (`DISC_EN_PLUS` dans `generer.py`) |
+| `famille` | ce que la séance travaille : `recuperation`, `endurance`, `durabilite`, `tempo`, `seuil`, `vo2max`, `anaerobie`, `sprint`, `force`, `specifique`, `test`, `force-lourde`, `force-explosive`, `prevention`, `organisation`, `repetition-efforts`, `technique`, `profil` (une fiche par discipline VTT) |
 | `objectif` | la qualité physiologique visée, en une ligne |
 | `zone`, `rpe` | zone d'intensité (Z1 à Z7) et effort perçu (0-10) |
 | `niveau` | `tous`, `intermédiaire`, `confirmé` |
