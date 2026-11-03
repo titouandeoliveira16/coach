@@ -23,6 +23,26 @@ const PASTILLE = { vert: '🟢', orange: '🟠', rouge: '🔴' }
 const TITRE = { vert: 'Feu vert', orange: 'Prudence', rouge: 'Récupère' }
 const COULEUR = { vert: '#4ade80', orange: '#fb923c', rouge: '#f87171' }
 
+/** Choix bien visible entre la version conseillée par le feu et la séance prévue. */
+function ChoixSeance({ maintenue, conseil, prevu, couleur, onChoisir }: {
+  maintenue: boolean; conseil: string; prevu: string; couleur: string; onChoisir: (maintenir: boolean) => void
+}) {
+  const bouton = (actif: boolean) =>
+    `flex-1 rounded-xl border-2 px-2 py-2.5 text-sm font-semibold leading-tight ${actif ? 'text-fond' : 'border-bordure bg-surface text-texte-3'}`
+  return (
+    <div className="mt-2 flex gap-2" role="radiogroup" aria-label="Séance à faire">
+      <button type="button" role="radio" aria-checked={!maintenue} className={bouton(!maintenue)}
+        style={!maintenue ? { background: couleur, borderColor: couleur } : undefined} onClick={() => onChoisir(false)}>
+        {conseil}<span className="block text-xs font-normal">conseillé</span>
+      </button>
+      <button type="button" role="radio" aria-checked={maintenue} className={bouton(maintenue)}
+        style={maintenue ? { background: '#4ade80', borderColor: '#4ade80' } : undefined} onClick={() => onChoisir(true)}>
+        {prevu}<span className="block text-xs font-normal">je me sens bien</span>
+      </button>
+    </div>
+  )
+}
+
 /** Signal du jour, raison, séance prévue et recommandation. */
 export function CarteAujourdhui() {
   const jour = aujourdhui()
@@ -61,6 +81,16 @@ export function CarteAujourdhui() {
   const adaptation = prevue ? adapterDuJour(prevue, signal.couleur) : undefined
   const malade = indispo?.raison === 'Malade' || indispo?.raison === 'Douleur / blessure'
   const troisJours = [signal, ...a.signauxPrecedents].every((s) => s.couleur !== 'vert' && s.alertes.some((x) => x.code === 'malade'))
+
+  // Pourquoi la séance est adaptée : les signaux en alerte ce matin, en clair
+  const enAlerte = signal.alertes.filter((x) => x.compte || x.code === 'saturation')
+  const pourquoi = enAlerte.length
+    ? `${enAlerte.length === 1 ? '1 signal en alerte' : `${enAlerte.length} signaux en alerte`} ce matin : ${enAlerte.map((x) => x.texte.replace(/^./, (c) => c.toLowerCase())).join(' ; ')}.`
+    : ''
+  const regle = signal.couleur === 'orange'
+    ? 'Règle : 1 signal en alerte = séance raccourcie, mêmes watts (une série ou un tiers des répétitions en moins). Si tu te sens très bien, tu peux garder la séance complète.'
+    : 'Règle : 2 signaux en alerte ou plus (ou malade) = pas d’intensité aujourd’hui. Si tu te sens vraiment bien et que tu n’es pas malade, tu peux garder la séance prévue.'
+  const choisir = (maintenir: boolean) => enregistrer(db.decisions, { date: jour, couleur: signal.couleur, force: maintenir })
 
   const signaler = async (raison: Raison) => {
     if (indispo?.raison === raison) await supprimer(db.indispos, jour)
@@ -102,8 +132,17 @@ export function CarteAujourdhui() {
           <>
             <p className="font-semibold">{iconeSport(prevue.sport)} {prevue.titre} · {prevue.dureeMin} min{prevue.kjPrevu ? ` · ${prevue.kjPrevu} kJ` : ''}</p>
             {prevue.detail && <p className="mt-1 text-xs text-texte-2">{prevue.detail}</p>}
-            <p className="mt-2 font-semibold" style={{ color: decision?.force ? undefined : COULEUR[signal.couleur] }}>
-              {decision?.force ? '✋ Tu as choisi de maintenir ta séance.' : adaptation!.texte}
+            {adaptation?.modifiee && (
+              <div className="mt-2 rounded-lg border p-2.5 text-sm" style={{ borderColor: `${COULEUR[signal.couleur]}66` }}>
+                <p><b style={{ color: COULEUR[signal.couleur] }}>Pourquoi {signal.couleur === 'orange' ? 'une version raccourcie' : 'pas d’intensité'} ?</b> {pourquoi}</p>
+                <p className="mt-1 text-xs text-texte-3">{regle}</p>
+                <ChoixSeance maintenue={!!decision?.force} couleur={COULEUR[signal.couleur]} onChoisir={choisir}
+                  conseil={signal.couleur === 'orange' ? 'Version raccourcie' : 'Très facile ou repos'}
+                  prevu={signal.couleur === 'orange' ? 'Séance complète' : 'Séance prévue'} />
+              </div>
+            )}
+            <p className="mt-2 font-semibold" style={{ color: decision?.force ? '#4ade80' : COULEUR[signal.couleur] }}>
+              {decision?.force ? '✋ Séance complète maintenue : arrête-toi si les watts ne tiennent pas.' : adaptation!.texte}
             </p>
             {(decision?.force ? prevue.velo?.etapes : adaptation!.etapes) && <Deroule etapes={(decision?.force ? prevue.velo?.etapes : adaptation!.etapes)!} />}
             {prevue.sport === 'velo' && (decision?.force ? prevue.velo?.etapes : adaptation!.etapes) && <BoutonsEnvoi p={prevue} etapes={(decision?.force ? prevue.velo?.etapes : adaptation!.etapes)!} />}
@@ -121,16 +160,11 @@ export function CarteAujourdhui() {
           </p>
         )}
         {reportee && !prevue && (
-          <button type="button" className="mt-2 text-sm text-texte-3 underline"
-            onClick={() => enregistrer(db.decisions, { date: jour, couleur: signal.couleur, force: true })}>
-            Je maintiens quand même ma séance aujourd'hui
-          </button>
-        )}
-        {adaptation?.modifiee && (
-          <button type="button" className="mt-2 text-sm text-texte-3 underline"
-            onClick={() => enregistrer(db.decisions, { date: jour, couleur: signal.couleur, force: !decision?.force })}>
-            {decision?.force ? 'Annuler : suivre la recommandation' : 'Je maintiens quand même ma séance'}
-          </button>
+          <div className="mt-2 text-sm">
+            {pourquoi && <p><b style={{ color: COULEUR.rouge }}>Pourquoi ?</b> {pourquoi}</p>}
+            <p className="mt-1 text-xs text-texte-3">{regle}</p>
+            <ChoixSeance maintenue={false} couleur={COULEUR.rouge} onChoisir={choisir} conseil="Reporter la séance" prevu="La faire aujourd’hui" />
+          </div>
         )}
       </div>
 
