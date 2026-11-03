@@ -24,6 +24,8 @@ export function categorieDe(s: Seance, prevue: SeancePrevue | undefined, domaine
   // Seulement le vélo et la course : la FC d'une séance de renfo ne se juge pas ainsi
   if (s.sport !== 'velo' && s.sport !== 'course') return 'sans'
   const f = prevue?.velo?.famille
+  // VTT sur le terrain : FC gonflée par le stress et les bras (Burr 2012, Stapelfeldt 2004), pas de verdict
+  if (f === 'vtt-terrain' || f === 'vtt-speciales' || s.terrainVtt) return 'sans'
   if (f === 'z2' || f === 'z2-long') return 'facile'
   if (f === 'seuil' || f === 'sweet-spot' || f === 'tempo') return 'plateau'
   if (f === 'vo2-longs') return 'vo2'

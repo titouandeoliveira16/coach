@@ -46,9 +46,10 @@ describe('banque de séances', () => {
     expect(e.at(-1)!.debutSec + e.at(-1)!.dureeSec).toBe(seuil.dureeMin * 60)
   })
 
-  it('banque piochée dans le catalogue : 16 formats, chacun relié à sa fiche', () => {
-    expect(FORMATS).toHaveLength(16)
-    expect(new Set(FORMATS.map((f) => f.id)).size).toBe(16)
+  it('banque piochée dans le catalogue : 21 formats (dont 5 VTT), chacun relié à sa fiche', () => {
+    expect(FORMATS).toHaveLength(21)
+    expect(new Set(FORMATS.map((f) => f.id)).size).toBe(21)
+    expect(FORMATS.filter((f) => !f.disciplines.includes('route')).map((f) => f.id)).toEqual(['inoue', 'relances-xco', 'relances-xcc', 'sit-series', 'sprints-courts'])
     for (const f of FORMATS) expect(catalogue.seances.some((s) => s.id === f.catalogueId)).toBe(true)
     expect(formatDe('30-15')!.catalogueId).toBe('velo-vo2-30-15-ronnestad')
   })
@@ -80,8 +81,8 @@ describe('banque de séances', () => {
     expect(palierPossible(formatDe('30-15')!, 3, 60)).toBe(3)
   })
 
-  it('tous les formats tiennent dans 75 min au 1er palier, la plupart au dernier', () => {
-    for (const f of FORMATS) expect(dureeFormat(f, 0).totalSec).toBeLessThanOrEqual(75 * 60)
+  it('formats route dans 75 min au 1er palier ; VTT dans 90 min (intervalles longs d’Inoue : 7 × 4 min, 4 min de récup)', () => {
+    for (const f of FORMATS) expect(dureeFormat(f, 0).totalSec).toBeLessThanOrEqual((f.disciplines.includes('route') ? 75 : 90) * 60)
   })
 
   it('palier réduit si le créneau est trop court', () => {

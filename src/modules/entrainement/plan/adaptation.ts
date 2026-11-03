@@ -10,7 +10,7 @@ export interface Adaptation {
   modifiee: boolean
 }
 
-const INTENSITES = ['vo2-courts', 'vo2-longs', 'seuil', 'seuil-variable', 'sweet-spot', 'tempo']
+const INTENSITES = ['vo2-courts', 'vo2-longs', 'seuil', 'seuil-variable', 'sweet-spot', 'tempo', 'relances', 'sprints']
 const arrondi5 = (n: number) => Math.round(n / 5) * 5
 
 /**
@@ -28,7 +28,7 @@ export function adapterDuJour(p: SeancePrevue, couleur: Couleur): Adaptation {
   const intensiteVelo = p.velo && INTENSITES.includes(p.velo.famille)
   // Watts « très facile » : moitié de la CP, retrouvée depuis la cible de la séance
   const f = p.velo?.formatId ? formatDe(p.velo.formatId) : undefined
-  const cpEff = f && p.velo?.cibleW ? p.velo.cibleW / (f.pct / 100) : undefined
+  const cpEff = p.velo?.cpW ?? (f && p.velo?.cibleW ? p.velo.cibleW / (f.pct / 100) : undefined)
   const tresFacile = (min: number): Etape[] => [{ debutSec: 0, dureeSec: min * 60, libelle: 'Très facile, pédale souple (RPE ≤ 2)', w: cpEff ? arrondi5(cpEff * 0.5) : p.velo?.cibleW ? arrondi5(p.velo.cibleW * 0.8) : undefined }]
 
   if (couleur === 'rouge') {
@@ -39,6 +39,8 @@ export function adapterDuJour(p: SeancePrevue, couleur: Couleur): Adaptation {
 
   // Orange
   if (p.velo?.famille === 'test') return { texte: 'Feu orange : reporte le test (il faut être frais pour qu’il soit juste). Fais 45 min de Z2 à la place.', modifiee: true }
+  // Spéciales d'enduro : très intenses et engagées techniquement, jamais un jour orange
+  if (p.velo?.famille === 'vtt-speciales') return { texte: 'Feu orange : pas de spéciales aujourd’hui (effort très intense et engagé). 45 min de VTT technique tranquille ou de Z2 à la place.', modifiee: true }
   if (intensiteVelo && f && cpEff) {
     const court = construireIntervalles(f, palierRaccourci(f, p.velo!.palier ?? 0), cpEff, 0)
     return { texte: `Feu orange : version raccourcie, mêmes watts (${court.titre}, ${court.dureeMin} min).`, etapes: court.velo.etapes, modifiee: true }

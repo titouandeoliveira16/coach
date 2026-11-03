@@ -13,7 +13,12 @@
 import catalogue from '../../catalogue/seances.json'
 import { decaler } from './vfc'
 
-export type Famille = 'vo2-courts' | 'vo2-longs' | 'seuil' | 'seuil-variable' | 'sweet-spot' | 'tempo'
+export type Famille = 'vo2-courts' | 'vo2-longs' | 'seuil' | 'seuil-variable' | 'sweet-spot' | 'tempo' | 'relances' | 'sprints'
+/** Discipline visée : route (programme d'origine) ou une discipline VTT (catalogue, profils de discipline). */
+export type Discipline = 'route' | 'xco' | 'xcc' | 'xcm' | 'enduro' | 'dh'
+export const NOMS_DISCIPLINES: Record<Discipline, string> = {
+  route: 'Route', xco: 'VTT cross-country (XCO)', xcc: 'VTT short track (XCC)', xcm: 'VTT marathon (XCM)', enduro: 'VTT enduro', dh: 'VTT descente',
+}
 export type TypePhase = 'reprise' | 'vo2' | 'seuil' | 'entretien'
 /** Rôle d'un jour dans la semaine type */
 export type Role = 'course' | 'renfo' | 'velo-dur' | 'velo-z2' | 'velo-long' | 'libre'
@@ -43,10 +48,14 @@ export interface Format {
   source: string
   /** Fiche du catalogue scientifique d'où vient le format */
   catalogueId: string
+  /** Efforts à fond : pas de cible en watts (allure libre sur Zwift), `pct` sert seulement à estimer les kJ */
+  aFond?: boolean
+  /** Disciplines où le format sert (catalogue) */
+  disciplines: string[]
 }
 
 /** Paramètres « programme » d'une séance du catalogue (catalogue/generer.py, fonction prog). */
-interface ProgrammeCatalogue extends Omit<Format, 'paliers' | 'catalogueId'> {
+interface ProgrammeCatalogue extends Omit<Format, 'paliers' | 'catalogueId' | 'disciplines'> {
   paliers: [number, number, number?][]
   ordre: number
 }
@@ -56,15 +65,17 @@ interface ProgrammeCatalogue extends Omit<Format, 'paliers' | 'catalogueId'> {
  * qui ont des paramètres « programme ». Une séance ajoutée au catalogue avec ces paramètres entre dans le programme.
  * Les % de CP sont des points de départ, ajustés ensuite par la progression.
  */
-export const FORMATS: Format[] = (catalogue.seances as { id: string; programme?: ProgrammeCatalogue }[])
+export const FORMATS: Format[] = (catalogue.seances as { id: string; disciplines?: string[]; programme?: ProgrammeCatalogue }[])
   .filter((s) => s.programme)
   .sort((x, y) => x.programme!.ordre - y.programme!.ordre)
   .map((s) => {
-    const { ordre: _ordre, paliers, recupSerieSec, continu, ...f } = s.programme!
+    const { ordre: _ordre, paliers, recupSerieSec, continu, aFond, ...f } = s.programme!
     return {
       ...f,
       ...(recupSerieSec !== undefined ? { recupSerieSec } : {}),
       ...(continu ? { continu } : {}),
+      ...(aFond ? { aFond } : {}),
+      disciplines: s.disciplines ?? ['route'],
       paliers: paliers.map(([series, reps, travailSec]) => ({ series, reps, travailSec })) as Format['paliers'],
       catalogueId: s.id,
     }
@@ -83,7 +94,7 @@ export type Preparation = 'seuil' | 'vo2'
 /** Repère de cadence (Hansen & Rønnestad 2017, Lucía 2004 : plus haute sur les efforts durs, jamais imposée). */
 export const CADENCE_VO2 = '90-105'
 export const CADENCE_SEUIL = '85-95'
-export const preparationDe = (f: Format): Preparation => (f.famille.startsWith('vo2') ? 'vo2' : 'seuil')
+export const preparationDe = (f: Format): Preparation => (f.famille.startsWith('vo2') || f.famille === 'relances' || f.famille === 'sprints' ? 'vo2' : 'seuil')
 type Morceau = [dureeSec: number, pctCp: number, libelle: string]
 const BASE: Morceau[] = [[300, 0.5, 'Échauffement, très facile'], [240, 0.65, 'Échauffement, facile'], [180, 0.8, 'Échauffement, modéré']]
 const CADENCES_ECHAUFFEMENT: Record<number, string> = { 0.95: CADENCE_SEUIL, 1.1: CADENCE_VO2 }
@@ -167,22 +178,26 @@ export function deplier(etapes: Etape[]): Etape[] {
  */
 const PLAGES: Record<Famille | 'z2', [number, number]> = {
   'vo2-courts': [-0.03, 0.05], 'vo2-longs': [-0.03, 0.05], seuil: [-0.02, 0.03], 'seuil-variable': [-0.03, 0.03],
-  'sweet-spot': [-0.03, 0.03], tempo: [-0.03, 0.03], z2: [-0.05, 0.05],
+  'sweet-spot': [-0.03, 0.03], tempo: [-0.03, 0.03], relances: [-0.03, 0.05], sprints: [0, 0], z2: [-0.05, 0.05],
 }
 /** Familles où dépasser la plage compte comme « pas tenu » (on passerait au-dessus du seuil). */
 export const FAMILLES_PLAFONNEES = new Set<string>(['seuil', 'sweet-spot', 'tempo'])
 export const plage = (w: number, famille: Famille | 'z2') =>
   ({ wMin: arrondi5(w * (1 + PLAGES[famille][0])), wMax: arrondi5(w * (1 + PLAGES[famille][1])) })
-const cadenceDe = (f: Famille) => (f.startsWith('vo2') ? CADENCE_VO2 : CADENCE_SEUIL)
+const cadenceDe = (f: Famille) => (f === 'sprints' ? CADENCE_SPRINT : f.startsWith('vo2') || f === 'relances' ? CADENCE_VO2 : CADENCE_SEUIL)
+export const CADENCE_SPRINT = '100-120'
 
 /** Une séance vélo générée (stockée dans la séance prévue). */
 export interface SeanceVelo {
-  famille: Famille | 'z2' | 'z2-long' | 'test'
+  /** vtt-terrain : sortie VTT technique ; vtt-speciales : spéciales d'enduro (sur le terrain, sans cible en watts) */
+  famille: Famille | 'z2' | 'z2-long' | 'test' | 'vtt-terrain' | 'vtt-speciales'
   formatId?: string
   palier?: number
   allegee?: boolean
   /** Watts du travail (intervalles) ou de la Z2 */
   cibleW?: number
+  /** CP utilisée pour construire la séance (version raccourcie d'un jour orange) */
+  cpW?: number
   /** Explication du choix (phase, alternance, progression) */
   pourquoi?: string
   /** Déroulé détaillé */
@@ -236,7 +251,8 @@ export function construireIntervalles(f: Format, palier: number | Palier, cpW: n
   const pa = lePalier(f, palier)
   const t = pa.travailSec ?? f.travailSec
   const { totalSec, corpsSec, travailSec } = dureeFormat(f, palier)
-  const wT = arrondi5(cpW * (f.pct / 100) * (1 + bonus))
+  // À fond : pas de bonus de watts (on progresse par les répétitions) ; la cible sert seulement aux kJ
+  const wT = arrondi5(cpW * (f.pct / 100) * (f.aFond ? 1 : 1 + bonus))
   const wR = arrondi5(cpW * (f.pctRecup / 100) * (f.continu ? 1 + bonus : 1))
   const wFacile = arrondi5(cpW * 0.5)
   const pr = preparationDe(f)
@@ -247,15 +263,25 @@ export function construireIntervalles(f: Format, palier: number | Palier, cpW: n
   const etapes = echauffement(pr, cpW)
   let h = echauffementSec(pr)
   const ajouter = (dureeSec: number, libelle: string, w?: number, effort?: boolean) => {
-    etapes.push({ debutSec: h, dureeSec, libelle, w, ...(effort ? { ...(w ? plage(w, f.famille) : {}), cadence: cadenceDe(f.famille) } : {}) })
+    etapes.push({ debutSec: h, dureeSec, libelle, ...(w !== undefined ? { w } : {}), ...(effort ? { ...(w ? plage(w, f.famille) : {}), cadence: cadenceDe(f.famille) } : {}) })
     h += dureeSec
   }
   const recupSerie = f.recupSerieSec ?? 0
   for (let si = 1; si <= pa.series; si++) {
     const effort = (dureeSec: number, w: number, libelle: string): SousEtape => ({ dureeSec, libelle, w, ...plage(w, f.famille), cadence: cadenceDe(f.famille) })
+    const relances = f.famille === 'relances'
     if (f.continu) {
-      ajouter(pa.reps * (t + f.recupSec), `Bloc ${si}/${pa.series} : ${pa.reps} × (${enDuree(f.recupSec)} à ${wR} W puis ${enDuree(t)} à ${wT} W), sans pause`, wT, true)
-      etapes[etapes.length - 1].repetition = { fois: pa.reps, etapes: [effort(f.recupSec, wR, 'Sous la CP'), effort(t, wT, 'Au-dessus')] }
+      ajouter(pa.reps * (t + f.recupSec), relances
+        ? `Bloc ${si}/${pa.series} : ${enMin(pa.reps * (t + f.recupSec))} à ${wR} W avec une relance de ${enDuree(t)} à ${wT} W toutes les ${enDuree(t + f.recupSec)}`
+        : `Bloc ${si}/${pa.series} : ${pa.reps} × (${enDuree(f.recupSec)} à ${wR} W puis ${enDuree(t)} à ${wT} W), sans pause`, wT, true)
+      etapes[etapes.length - 1].repetition = { fois: pa.reps, etapes: [effort(f.recupSec, wR, relances ? 'Fond' : 'Sous la CP'), relances ? { dureeSec: t, libelle: 'Relance', w: wT, cadence: CADENCE_VO2 } : effort(t, wT, 'Au-dessus')] }
+    } else if (f.aFond) {
+      const bloc = pa.reps * t + (pa.reps - 1) * f.recupSec
+      ajouter(bloc, `${pa.series > 1 ? `Série ${si}/${pa.series} : ` : ''}${pa.reps} × ${enDuree(t)} à fond, ${enDuree(f.recupSec)} très facile entre`, undefined, true)
+      etapes[etapes.length - 1].repetition = {
+        fois: pa.reps, derniere: 1,
+        etapes: [{ dureeSec: t, libelle: 'Sprint à fond', cadence: CADENCE_SPRINT }, { dureeSec: f.recupSec, libelle: 'Très facile', w: wR }],
+      }
     } else if (f.famille === 'vo2-courts') {
       const bloc = pa.reps * t + (pa.reps - 1) * f.recupSec
       ajouter(bloc, `Série ${si}/${pa.series} : ${pa.reps} × (${enDuree(t)} à ${wT} W puis ${enDuree(f.recupSec)} à ${wR} W)`, wT, true)
@@ -272,7 +298,13 @@ export function construireIntervalles(f: Format, palier: number | Palier, cpW: n
 
   let titre: string
   let corps: string
-  if (f.continu) {
+  if (f.aFond) {
+    titre = `${pa.series > 1 ? `${pa.series} × ` : ''}${pa.reps} sprints de ${enDuree(t)}`
+    corps = `${pa.series > 1 ? `${pa.series} séries de ` : ''}${pa.reps} × ${enDuree(t)} à fond (allure libre), ${enDuree(f.recupSec)} très facile entre${pa.series > 1 ? `, ${enMin(recupSerie)} facile entre les séries` : ''}`
+  } else if (f.famille === 'relances') {
+    titre = `${pa.series} × ${enMin(pa.reps * (t + f.recupSec))} à relances`
+    corps = `${pa.series} × ${enMin(pa.reps * (t + f.recupSec))} à ${wR} W avec ${pa.reps} relances de ${enDuree(t)} à ${wT} W, ${enMin(recupSerie)} facile entre les blocs`
+  } else if (f.continu) {
     titre = `${pa.series} × ${pa.reps} cycles over-unders`
     corps = `${pa.series} × [${pa.reps} × (${enDuree(f.recupSec)} à ${wR} W + ${enDuree(t)} à ${wT} W)], ${enMin(recupSerie)} facile entre les blocs`
   } else if (f.famille === 'vo2-courts') {
@@ -288,7 +320,7 @@ export function construireIntervalles(f: Format, palier: number | Palier, cpW: n
   const detail = `Échauffement ${enMin(echauffementSec(pr))} · ${corps} · Retour au calme ${enMin(retourSec(pr))}`
   return {
     titre, detail, dureeMin: Math.round(totalSec / 60), kj: Math.round(kj),
-    velo: { famille: f.famille, formatId: f.id, palier: typeof palier === 'number' ? palier : undefined, cibleW: wT, etapes },
+    velo: { famille: f.famille, formatId: f.id, palier: typeof palier === 'number' ? palier : undefined, ...(f.aFond ? {} : { cibleW: wT }), cpW, etapes },
   }
 }
 
@@ -296,6 +328,92 @@ export function construireIntervalles(f: Format, palier: number | Palier, cpW: n
 export const SPRINTS = [
   { n: 6, sec: 10 }, { n: 8, sec: 10 }, { n: 6, sec: 15 }, { n: 8, sec: 15 },
 ]
+
+/** Montées de la sortie longue en côtes (marathon VTT) : plus nombreuses puis plus longues d'une sortie à l'autre. */
+export const COTES = [
+  { n: 4, min: 8 }, { n: 4, min: 10 }, { n: 5, min: 12 }, { n: 6, min: 15 },
+]
+/** Montées de la n-ième sortie en côtes : 6 × 15' seulement dans les 3 semaines avant une course. */
+export const cotesDe = (nLongs: number, courseProche: boolean) => COTES[courseProche ? 3 : Math.min(nLongs, 2)]
+
+/**
+ * Sortie longue en côtes (marathon VTT : Engelbrecht 2018, Reinpõld 2022) : Z2 avec des montées à 85-95 % de la CP,
+ * régulièrement espacées (au moins 10 min de Z2 entre deux montées ; moins de montées si la sortie est courte).
+ */
+export function construireLongueCotes(duree: number, z2W: number, cpW: number, cotes: { n: number; min: number }): SeanceConstruite {
+  const dureeMin = Math.round(duree)
+  let n = cotes.n
+  const libre = dureeMin - 15
+  while (n > 1 && (libre - n * cotes.min) / (n + 1) < 10) n--
+  const ecart = Math.floor((libre - n * cotes.min) / (n + 1))
+  const fin = dureeMin * 60
+  const wEch = arrondi5(z2W * 0.85)
+  const wM = arrondi5(cpW * 0.9)
+  const montee = { wMin: arrondi5(cpW * 0.85), wMax: arrondi5(cpW * 0.95) }
+  const etapes: Etape[] = [{ debutSec: 0, dureeSec: 600, libelle: 'Mise en route progressive', w: wEch }]
+  let h = 600
+  etapes.push({
+    debutSec: h, dureeSec: n * (ecart + cotes.min) * 60, w: z2W,
+    libelle: `${n} montées de ${cotes.min}' à ${montee.wMin}-${montee.wMax} W, ${ecart}' de Z2 entre (en côte dehors, ou en résistance sur le home trainer)`,
+    repetition: {
+      fois: n,
+      etapes: [
+        { dureeSec: ecart * 60, libelle: 'Z2', w: z2W, ...plage(z2W, 'z2') },
+        { dureeSec: cotes.min * 60, libelle: 'Montée', w: wM, ...montee, cadence: '70-90' },
+      ],
+    },
+  })
+  h += n * (ecart + cotes.min) * 60
+  etapes.push({ debutSec: h, dureeSec: fin - h - 300, libelle: 'Z2 régulière', w: z2W, ...plage(z2W, 'z2') })
+  etapes.push({ debutSec: fin - 300, dureeSec: 300, libelle: 'Retour au calme', w: wEch })
+  const kj = etapes.reduce((t, e) => t + (e.repetition ? e.repetition.etapes.reduce((a, x) => a + x.dureeSec * (x.w ?? 0), 0) * e.repetition.fois : e.dureeSec * (e.w ?? 0)), 0) / 1000
+  return {
+    titre: `Sortie longue en côtes ${Math.floor(dureeMin / 60)} h ${String(dureeMin % 60).padStart(2, '0')}`,
+    detail: `Z2 à ${z2W} W avec ${n} montées de ${cotes.min}' à ${montee.wMin}-${montee.wMax} W · tiens les dernières montées aussi bien que les premières · 60-90 g de glucides par heure`,
+    dureeMin, kj: Math.round(kj),
+    velo: { famille: 'z2-long', cibleW: z2W, etapes },
+  }
+}
+
+/** Sorties VTT sur le terrain : pas de cible en watts (monotrace), jugées sur l'effort perçu. */
+const TERRAIN: Record<Exclude<Discipline, 'route'>, string> = {
+  xco: 'virages, relances en sortie de virage, montées et descentes techniques',
+  xcc: 'virages rapides, départs et relances',
+  xcm: 'pilotage sur un long parcours varié, en mangeant comme en course',
+  enduro: 'virages, freinage, lignes en descente, remontées tranquilles',
+  dh: 'lignes, freinage, sauts et virages, en répétant une même section',
+}
+
+/**
+ * Sortie VTT technique (une Z2 de la semaine) : 60 min au plus de technique (fiche du catalogue : 45-60 min),
+ * complétée en Z2 si le créneau est plus long. kJ prévus estimés plus bas qu'une Z2 (arrêts, retours au départ).
+ */
+export function construireTerrain(discipline: Exclude<Discipline, 'route'>, duree: number, z2W: number): SeanceConstruite {
+  const dureeMin = Math.round(duree)
+  const tech = Math.min(60, dureeMin)
+  const z2 = dureeMin - tech
+  return {
+    titre: `VTT technique ${tech}'${z2 >= 10 ? ` + ${z2}' Z2` : ''}`,
+    detail: `Sur le terrain, intensité basse (tu peux parler) : ${TERRAIN[discipline]}. Répète les passages plutôt qu'un long parcours${z2 >= 10 ? `, puis ${z2}' de Z2 tranquille` : ''}. Note ton effort perçu à la fin.`,
+    dureeMin, kj: Math.round((tech * 60 * z2W * 0.6 + z2 * 60 * z2W) / 1000),
+    velo: { famille: 'vtt-terrain', pourquoi: 'Une sortie Z2 sur le terrain : la technique compte beaucoup en VTT (Impellizzeri 2005, Kirkwood 2017).' },
+  }
+}
+
+/** Spéciales d'enduro (une semaine sur deux à la place des intervalles) : 4 à 6 descentes chronométrées. */
+export const SPECIALES = [
+  { n: 4, min: 3 }, { n: 5, min: 4 }, { n: 5, min: 6 }, { n: 6, min: 8 },
+]
+export function construireSpeciales(palier: number, cpW: number): SeanceConstruite {
+  const { n, min } = SPECIALES[Math.min(3, Math.max(0, palier))]
+  const dureeMin = 20 + n * (min + 12) + 10
+  return {
+    titre: `${n} spéciales de ${min}'`,
+    detail: `Échauffement 20' · ${n} spéciales chronométrées de ${min}' : relances à fond, descente technique engagée · remontées tranquilles (≈ 12') entre · retour au calme 10'. Le chrono compte plus que les watts. Protections !`,
+    dureeMin, kj: Math.round((dureeMin * 60 * cpW * 0.6) / 1000),
+    velo: { famille: 'vtt-speciales', palier, pourquoi: 'Spéciales d’enduro : effort court très intense, chrono en descente technique (Kirkwood 2017, West 2021).' },
+  }
+}
 
 /** Séance d'endurance (Z2), avec sprints pour la sortie longue. */
 export function construireZ2(duree: number, z2W: number, sprints?: { n: number; sec: number }): SeanceConstruite {
@@ -417,8 +535,36 @@ export interface HistoIntensite {
   resultat?: 'reussie' | 'ratee'
 }
 
+/**
+ * Famille de la séance selon la dominante et la discipline visée (profils de discipline du catalogue, relus le 3/11/2026) :
+ *  - route, marathon : programme d'origine ;
+ *  - XCO, short track : VO2 courts → VO2 longs (dont les intervalles longs d'Inoue 2016) → sprints de 30" en séries ;
+ *    au seuil, 1 séance sur 3 en relances (à la place des over-unders) ;
+ *  - enduro : VO2 courts et sprints courts en alternance ; seuil inchangé ;
+ *  - descente : sprints courts, et VO2 courts les semaines « seuil » (entretien aérobie).
+ */
+function familleVtt(discipline: Discipline, dominante: 'vo2' | 'seuil', avant: HistoIntensite[]): Famille | undefined {
+  const derniere = (l: Famille[]) => [...avant].reverse().find((h) => l.includes(h.famille))?.famille
+  const suivante = (l: Famille[]) => l[(l.indexOf(derniere(l) ?? l[l.length - 1]) + 1) % l.length]
+  if (discipline === 'xco' || discipline === 'xcc') {
+    if (dominante === 'vo2') return suivante(['vo2-courts', 'vo2-longs', 'sprints'])
+    const nSeuil = avant.filter((h) => h.famille === 'seuil' || h.famille === 'relances').length
+    return nSeuil % 3 === 2 ? 'relances' : 'seuil'
+  }
+  if (discipline === 'enduro' && dominante === 'vo2') return suivante(['vo2-courts', 'sprints'])
+  if (discipline === 'dh') return dominante === 'vo2' ? 'sprints' : 'vo2-courts'
+  return undefined
+}
+
+/** Formats d'une famille pour la discipline (s'il n'y en a aucun, tous ceux de la famille). */
+export function formatsPour(famille: Famille, discipline: Discipline = 'route') {
+  const tous = FORMATS.filter((f) => f.famille === famille)
+  const siens = tous.filter((f) => f.disciplines.includes(discipline))
+  return siens.length ? siens : tous
+}
+
 /** Choisit la famille et le format de la séance d'intensité de la semaine. */
-export function choisirFormat(lundi: string, phases: Phase[], histo: HistoIntensite[]) {
+export function choisirFormat(lundi: string, phases: Phase[], histo: HistoIntensite[], discipline: Discipline = 'route') {
   const { phase } = phaseDe(lundi, phases)
   const avant = histo.filter((h) => h.date < lundi).sort((a, b) => a.date.localeCompare(b.date))
   const dansPhase = avant.filter((h) => h.date >= phase.debut)
@@ -427,7 +573,9 @@ export function choisirFormat(lundi: string, phases: Phase[], histo: HistoIntens
   const derniere = (f: (h: HistoIntensite) => boolean) => [...avant].reverse().find(f)
 
   let famille: Famille
-  if (dominante === 'sous-seuil') {
+  const vtt = dominante !== 'sous-seuil' && phase.type !== 'reprise' ? familleVtt(discipline, dominante, avant) : undefined
+  if (vtt) famille = vtt
+  else if (dominante === 'sous-seuil') {
     famille = derniere((h) => h.famille === 'sweet-spot' || h.famille === 'tempo')?.famille === 'sweet-spot' ? 'tempo' : 'sweet-spot'
   } else if (dominante === 'vo2') {
     // En reprise : uniquement des VO2 courts (30/15 « léger »), sinon alternance courts / longs
@@ -439,7 +587,7 @@ export function choisirFormat(lundi: string, phases: Phase[], histo: HistoIntens
   }
 
   // Formats de la famille à tour de rôle (jamais deux fois le même d'affilée)
-  const formats = FORMATS.filter((f) => f.famille === famille)
+  const formats = formatsPour(famille, discipline)
   const dernier = derniere((h) => h.famille === famille)
   const i = dernier ? (formats.findIndex((f) => f.id === dernier.formatId) + 1) % formats.length : 0
   // En reprise, on commence par le 30/15
@@ -660,6 +808,7 @@ export interface SemaineSaison {
 
 export const NOMS_FAMILLES: Record<Famille, string> = {
   'vo2-courts': 'VO2 courts', 'vo2-longs': 'VO2 longs', seuil: 'Seuil', 'seuil-variable': 'Seuil variable', 'sweet-spot': 'Sweet spot', tempo: 'Tempo',
+  relances: 'Relances', sprints: 'Sprints',
 }
 
 /**
@@ -678,6 +827,7 @@ export function projeterSaison(o: {
   plafond: number
   /** Plafond propre à une semaine (reprise progressive) */
   plafondDe?: (lundi: string) => number
+  discipline?: Discipline
 }): SemaineSaison[] {
   const triees = [...o.phases].sort((a, b) => a.debut.localeCompare(b.debut))
   const histo = [...o.histo]
@@ -699,7 +849,7 @@ export function projeterSaison(o: {
     let intensite: string
     if (test) intensite = o.testsCourts?.includes(test) ? "Test CP court 3' + 12'" : 'Test CP complet 12-7-3'
     else {
-      const choix = choisirFormat(l, triees, histo)
+      const choix = choisirFormat(l, triees, histo, o.discipline)
       const famille = NOMS_FAMILLES[choix.famille]
       intensite = famille.toLowerCase() === choix.format.nom ? famille : `${famille} · ${choix.format.nom}`
       histo.push({ date: decaler(l, 1), famille: choix.famille, formatId: choix.format.id, palier: 0 })

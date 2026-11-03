@@ -4490,7 +4490,7 @@
    "famille": "vo2max",
    "nom": "Intervalles longs du vététiste (Inoue)",
    "objectif": "Temps de course en cross-country : VO2max et puissance au seuil",
-   "resume": "7 à 10 × 4-6 min au plus fort tenable sur toutes les répétitions, récupération 3 min.",
+   "resume": "7 à 10 × 4-6 min au plus fort tenable sur toutes les répétitions, récupération active 4 min (4-6 dans l'étude).",
    "disciplines": [
     "xco",
     "xcc",
@@ -4500,7 +4500,7 @@
    "zone": "Z5",
    "rpe": "8-9",
    "niveau": "confirmé",
-   "dureeMin": 89,
+   "dureeMin": 97,
    "travailMin": 40.0,
    "deroule": [
     {
@@ -4527,7 +4527,7 @@
       },
       {
        "type": "recup",
-       "duree": 180,
+       "duree": 240,
        "intensite": [
         45,
         55
@@ -4559,8 +4559,9 @@
    },
    "conseils": [
     "Sur home trainer ou en côte régulière : la puissance y est plus facile à tenir qu'en monotrace.",
-    "La récupération de 3 min est un choix d'entraîneur (non précisée dans le résumé de l'étude).",
-    "Repère en % de la CP converti par nous : l'étude dosait à l'effort maximal tenable."
+    "Récupération active de 4 à 6 min dans l'étude (fiche d'essai NCT01944865).",
+    "Repère en % de la CP converti par nous : l'étude dosait à l'effort maximal tenable.",
+    "L'étude en faisait 3 par semaine, en plus de l'entraînement habituel : à 1 par semaine, l'effet sera plus lent."
    ],
    "preuve": {
     "niveau": "prouvé",
@@ -4574,6 +4575,38 @@
       "pmid": "26789124"
      }
     ]
+   },
+   "programme": {
+    "id": "inoue",
+    "famille": "vo2-longs",
+    "nom": "intervalles longs du vététiste",
+    "travailSec": 300,
+    "pct": 105,
+    "recupSec": 240,
+    "pctRecup": 50,
+    "paliers": [
+     [
+      1,
+      7,
+      240
+     ],
+     [
+      1,
+      8,
+      240
+     ],
+     [
+      1,
+      8
+     ],
+     [
+      1,
+      10
+     ]
+    ],
+    "preuve": "bonne",
+    "source": "Inoue et al. 2016 : essai randomisé chez 16 vététistes, 7-10 × 4-6 min ; meilleur temps de course qu'avec des sprints de 30 s.",
+    "ordre": 16
    }
   },
   {
@@ -4696,6 +4729,38 @@
       "pmid": "26789124"
      }
     ]
+   },
+   "programme": {
+    "id": "sit-series",
+    "famille": "sprints",
+    "nom": "sprints de 30\" en séries",
+    "travailSec": 30,
+    "pct": 200,
+    "recupSec": 90,
+    "pctRecup": 50,
+    "recupSerieSec": 600,
+    "aFond": true,
+    "paliers": [
+     [
+      2,
+      4
+     ],
+     [
+      3,
+      4
+     ],
+     [
+      3,
+      5
+     ],
+     [
+      4,
+      4
+     ]
+    ],
+    "preuve": "bonne",
+    "source": "Hebisz 2016, 2021 ; Inoue 2016 : les sprints de 30 s font progresser VO2max et puissance anaérobie chez des vététistes.",
+    "ordre": 19
    }
   },
   {
@@ -4704,10 +4769,9 @@
    "famille": "repetition-efforts",
    "nom": "Relances sur fond de tempo (surges XCO)",
    "objectif": "Répéter des efforts au-dessus de la CP comme en course : vider et recharger le W′",
-   "resume": "3 × 10 min à 80-90 % de la CP avec, toutes les 30 s, une relance de 8 s à 150-180 % ; 5 min faciles entre les blocs.",
+   "resume": "3 × 10 min à 80-90 % de la CP avec, toutes les 30 s, une relance de 8 s à 150-180 % ; 5 min faciles entre les blocs. Démarre bas dans les plages.",
    "disciplines": [
-    "xco",
-    "xcc"
+    "xco"
    ],
    "unite": "%CP",
    "zone": "Z3 + Z6-Z7",
@@ -4787,6 +4851,7 @@
    },
    "conseils": [
     "Si la puissance du tempo s'écroule après les relances, réduis leur nombre plutôt que leur intensité.",
+    "Plus dur qu'il n'y paraît : la moyenne d'un bloc est autour de la CP ou au-dessus (le haut des plages vide ta réserve W′ dès le 1er bloc).",
     "En VTT, « au-dessus de la PMA » ≈ au-dessus de 120 % de la CP (Z6) : dans Næss 2021, la CP vaut ≈ 83 % de la PMA.",
     "Sans ERG : choisis ton braquet avant chaque effort (un ou deux pignons plus dur), lance les 5 premières secondes un peu au-dessus de la cible puis stabilise."
    ],
@@ -4829,6 +4894,38 @@
       "pmid": "32244222"
      }
     ]
+   },
+   "programme": {
+    "id": "relances-xco",
+    "famille": "relances",
+    "nom": "relances XCO",
+    "travailSec": 8,
+    "pct": 155,
+    "recupSec": 22,
+    "pctRecup": 80,
+    "recupSerieSec": 300,
+    "continu": true,
+    "paliers": [
+     [
+      2,
+      16
+     ],
+     [
+      3,
+      16
+     ],
+     [
+      3,
+      20
+     ],
+     [
+      4,
+      20
+     ]
+    ],
+    "preuve": "plus faible",
+    "source": "Næss 2021, Prinz 2021 : en XCO, ≈ 40 % du temps au-dessus de la CP en efforts de quelques secondes ; format qui copie la course, pas d'essai dédié.",
+    "ordre": 17
    }
   },
   {
@@ -5042,6 +5139,38 @@
       "revue": "J Phys Educ (Maringá)"
      }
     ]
+   },
+   "programme": {
+    "id": "relances-xcc",
+    "famille": "relances",
+    "nom": "relances short track",
+    "travailSec": 12,
+    "pct": 140,
+    "recupSec": 48,
+    "pctRecup": 97,
+    "recupSerieSec": 360,
+    "continu": true,
+    "paliers": [
+     [
+      2,
+      8
+     ],
+     [
+      2,
+      10
+     ],
+     [
+      3,
+      8
+     ],
+     [
+      3,
+      10
+     ]
+    ],
+    "preuve": "plus faible",
+    "source": "Arriel 2023 : le short track dure ≈ 20 min à une puissance plus haute que le XCO, allure variable ; pas d'essai dédié.",
+    "ordre": 18
    }
   },
   {
@@ -5112,8 +5241,9 @@
    ],
    "variantes": [
     "3 h avec 4 montées de 8 min",
+    "3 h 30 avec 4 montées de 10 min",
     "4 h avec 5 montées de 12 min",
-    "5 h avec 6 montées de 15 min (2-3 semaines avant l'objectif)"
+    "5 h avec 6 montées de 15 min (seulement 2-3 semaines avant l'objectif)"
    ],
    "quand": {
     "phases": [
@@ -5124,6 +5254,7 @@
     "recuperation": "48 h"
    },
    "conseils": [
+    "C'est une séance dure (jusqu'à 90 min près du seuil) : 48 h avant et après sans autre intensité.",
     "Mange 60-90 g de glucides par heure dès la 1re heure : on entraîne aussi l'estomac.",
     "Garde les dernières montées aussi fortes que les premières : c'est le but (durabilité)."
    ],
@@ -5362,6 +5493,37 @@
       "pmid": "22461462"
      }
     ]
+   },
+   "programme": {
+    "id": "sprints-courts",
+    "famille": "sprints",
+    "nom": "sprints courts",
+    "travailSec": 7,
+    "pct": 250,
+    "recupSec": 150,
+    "pctRecup": 45,
+    "aFond": true,
+    "paliers": [
+     [
+      1,
+      6
+     ],
+     [
+      1,
+      8
+     ],
+     [
+      1,
+      10
+     ],
+     [
+      1,
+      12
+     ]
+    ],
+    "preuve": "plus faible",
+    "source": "Hurst & Atkins 2006, Burr 2012 : descente = pics de puissance très courts ; pratique d'entraîneur, la technique prime.",
+    "ordre": 20
    }
   },
   {
@@ -5373,6 +5535,7 @@
    "resume": "45 à 60 min à intensité basse, en répétant une même section (virages, racines, marches).",
    "disciplines": [
     "xco",
+    "xcc",
     "xcm",
     "enduro",
     "dh"
@@ -8174,7 +8337,8 @@
     "recuperation": ""
    },
    "conseils": [
-    "Semaine type en construction : 2 séances dures (intervalles longs + sprints ou relances), 1 séance technique, le reste en endurance.",
+    "Les essais faisaient 2 à 3 séances dures par semaine ; avec 1 seule, l'effet est plus lent (dose non étudiée).",
+    "Semaine type : intervalles longs, sprints ou relances en alternance, 1 sortie technique, le reste en endurance.",
     "Le poids compte : le W/kg sépare les vététistes des routiers (profil de grimpeur).",
     "La FC suit mal l'effort en VTT : juge les séances sur les watts et l'effort perçu."
    ],

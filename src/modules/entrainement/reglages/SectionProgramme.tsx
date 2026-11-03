@@ -4,7 +4,7 @@ import { depuisJour } from '../../../core/dates'
 import { Aide } from '../../../core/ui/Aide'
 import { Carte } from '../../../core/ui/Carte'
 import { ChampNombre } from '../../../core/ui/ChampNombre'
-import { NOMS_PHASES, type Role } from '../../../metrics/programme'
+import { NOMS_DISCIPLINES, NOMS_PHASES, type Discipline, type Role } from '../../../metrics/programme'
 import { AIDES } from '../aides'
 import { z2Actuel } from '../plan/programme'
 import { programmeDe, useReglagesEntrainement } from '../reglagesEntrainement'
@@ -56,6 +56,13 @@ export function ProgrammeAvance() {
 
   return (
     <Carte titre="Programme vélo">
+      <label className="flex items-center justify-between gap-2 py-1">
+        <span className="text-texte-2">Discipline visée<Aide titre="Discipline visée" texte={AIDES.discipline} /></span>
+        <select value={p.discipline ?? 'route'} className={select} onChange={(e) => changer({ discipline: e.target.value as Discipline })}>
+          {Object.entries(NOMS_DISCIPLINES).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+        </select>
+      </label>
+      {(p.discipline ?? 'route') !== 'route' && <p className="pb-1 text-xs text-texte-3">Régénère ta semaine (onglet Semaine) pour appliquer le changement.</p>}
       <ChampNombre libelle="Z2 de départ" unite="W" decimales={0} valeur={p.z2W} onValider={(z2W) => changer({ z2W })} />
       {z2 && (
         <p className="py-1 text-right text-xs text-texte-3">
