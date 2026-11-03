@@ -183,10 +183,10 @@ async function importerActivites(depuis: string, surProgression?: (n: number) =>
 }
 
 /**
- * Contrôle des séances recalculé avec la dernière version des règles (v0.71 : arrêts exclus des moyennes),
+ * Contrôle des séances recalculé avec la dernière version des règles (v0.71 : arrêts exclus ; v0.72 : circuits de la montre),
  * pour les séances des 14 derniers jours qui en ont un. Une seule fois par version.
  */
-const VERSION_CONTROLE = 2
+const VERSION_CONTROLE = 3
 export async function recontrolerRecentes() {
   const cle = 'controle-version'
   if (((await db.reglages.get(cle))?.valeur as number | undefined) === VERSION_CONTROLE) return

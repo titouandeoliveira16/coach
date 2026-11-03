@@ -94,7 +94,7 @@ describe('arrêt pendant un bloc (pause pour parler, roue libre)', () => {
     expect(c.lignes[0].w).toBe(bloc1.w)
   })
 
-  it('tours allongés par l’arrêt : reconnus, et la moyenne du tour est recalculée sans l’arrêt', () => {
+  it('tours allongés par l’arrêt : reconnus, moyenne du tour telle quelle (comme sur la montre)', () => {
     const w = avecArret(true)
     let h = 0
     const tours = plat.map((e) => {
@@ -105,8 +105,37 @@ describe('arrêt pendant un bloc (pause pour parler, roue libre)', () => {
     })
     const c = controlerSeance({ etapes, famille: 'sweet-spot', w1Hz: w, cpW: 235, tours })!
     expect(c.parTours).toBe(true)
-    expect(c.lignes[0].w).toBe(bloc1.w)
+    expect(c.lignes[0].w).toBe(Math.round(tours[plat.indexOf(bloc1)].w))
     expect(c.arretSec).toBe(60)
+  })
+
+  it('circuits de la montre (un par grand morceau) : chaque bloc prend la moyenne de son circuit', () => {
+    const w = avecArret(true)
+    const bloc2 = plat.find((e) => e.libelle.startsWith('Répétition 2'))!
+    const i1 = plat.indexOf(bloc1)
+    const i2 = plat.indexOf(bloc2)
+    const duree = (a: number, b: number) => plat.slice(a, b).reduce((t, e) => t + e.dureeSec, 0)
+    // Échauffement en un circuit, bloc 1 (+ 60 s de pause), récup, bloc 2, retour au calme
+    const tours = [
+      { dureeSec: duree(0, i1), w: 150 },
+      { dureeSec: bloc1.dureeSec + 60, w: 208, fc: 156 },
+      { dureeSec: duree(i1 + 1, i2), w: 120 },
+      { dureeSec: bloc2.dureeSec, w: 210, fc: 165 },
+      { dureeSec: duree(i2 + 1, plat.length), w: 110 },
+    ]
+    const c = controlerSeance({ etapes, famille: 'sweet-spot', w1Hz: w, cpW: 235, tours })!
+    expect(c.parTours).toBeUndefined()
+    expect(c.blocsParTours).toBe(2)
+    expect(c.lignes.map((l) => [l.w, l.fc])).toEqual([[208, 156], [210, 165]])
+    // Sans le fichier : même résultat, par l'ordre et la durée des circuits
+    expect(controlerSeance({ etapes, famille: 'sweet-spot', w1Hz: [], cpW: 235, tours })!.lignes.map((l) => l.w)).toEqual([208, 210])
+  })
+
+  it('un seul grand circuit : pas de tour pour les blocs, calcul sur le fichier', () => {
+    const w = avecArret(true)
+    const c = controlerSeance({ etapes, famille: 'sweet-spot', w1Hz: w, cpW: 235, tours: [{ dureeSec: w.length, w: 180 }] })!
+    expect(c.blocsParTours).toBeUndefined()
+    expect(c.lignes[0].w).toBe(bloc1.w)
   })
 })
 
