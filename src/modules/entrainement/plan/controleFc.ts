@@ -73,10 +73,12 @@ export function controleFc(s: Seance, categorie: Categorie, fcMax: number): Verd
  * Question « en réserve » selon le type de séance (proximité de l'échec ; test de la parole pour le facile).
  * Seuil, sweet spot : 1 à 3 en réserve (0 = trop dur) ; VO2 et intervalles : 0 à 1.
  */
-export function questionReserve(categorie: Categorie) {
-  if (categorie === 'facile') return { question: 'Tu pouvais parler en phrases complètes tout du long ?', choix: { ok: 'Oui', moyen: 'Par moments', non: 'Non' } }
-  if (categorie === 'plateau') return { question: 'Combien de minutes en réserve à la fin des blocs ?', choix: { ok: '1 à 3', moyen: '0, à bloc', non: '4 et +' } }
-  return { question: 'Combien de répétitions en réserve à la fin ?', choix: { ok: '0 à 1', moyen: '2', non: '3 et +' } }
+type Reponse = 'ok' | 'moyen' | 'non'
+/** Question « en réserve » ; `ordre` : les réponses dans l'ordre logique (de la moins à la plus en réserve). */
+export function questionReserve(categorie: Categorie): { question: string; choix: Record<Reponse, string>; ordre: Reponse[] } {
+  if (categorie === 'facile') return { question: 'Tu pouvais parler en phrases complètes tout du long ?', choix: { ok: 'Oui', moyen: 'Par moments', non: 'Non' }, ordre: ['ok', 'moyen', 'non'] }
+  if (categorie === 'plateau') return { question: 'Combien de minutes en réserve à la fin des blocs ?', choix: { ok: '1 à 3', moyen: '0, à bloc', non: '4 et +' }, ordre: ['moyen', 'ok', 'non'] }
+  return { question: 'Combien de répétitions en réserve à la fin ?', choix: { ok: '0 à 1', moyen: '2', non: '3 et +' }, ordre: ['ok', 'moyen', 'non'] }
 }
 
 /** Ce que veut dire la réponse « en réserve ». */
