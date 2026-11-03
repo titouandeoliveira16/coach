@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Aide } from '../../../core/ui/Aide'
 import { Carte } from '../../../core/ui/Carte'
 import { AIDES } from '../aides'
@@ -22,6 +23,9 @@ export function SectionReglagesEntrainement() {
       <SectionIntervals />
       <SectionVelo />
       <SectionAgenda />
+      <Link to="/catalogue" className="flex items-center justify-between rounded-2xl border border-bordure bg-surface p-4 font-semibold active:opacity-60">
+        <span>📖 Catalogue scientifique des séances</span><span className="text-texte-3">›</span>
+      </Link>
       <button type="button" onClick={() => setAvance(!avance)} className="w-full py-2 text-left text-sm font-semibold text-texte-3">
         {avance ? '▾ Avancé' : '▸ Avancé (zones, phases, tests, analyse)'}
       </button>
