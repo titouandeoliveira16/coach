@@ -25,6 +25,24 @@ export interface Controle {
   auDessusSeuil1?: number
   /** Moyennes prises sur les tours de l'activité (sinon : fichier recalé sur la séance prévue) */
   parTours?: boolean
+  /** Secondes d'arrêt (pause, roue libre prolongée) exclues des moyennes */
+  arretSec?: number
+}
+
+/** Arrêt : au moins 10 s de suite sous 10 W (pause pour parler, roue libre prolongée). Exclu des moyennes des blocs. */
+export const ARRET_MIN_SEC = 10
+export function secondesArret(w: number[]): boolean[] {
+  const arret = w.map(() => false)
+  let debut = -1
+  for (let i = 0; i <= w.length; i++) {
+    if (i < w.length && w[i] < 10) {
+      if (debut < 0) debut = i
+    } else {
+      if (debut >= 0 && i - debut >= ARRET_MIN_SEC) for (let j = debut; j < i; j++) arret[j] = true
+      debut = -1
+    }
+  }
+  return arret
 }
 
 /** Familles où dépasser la plage change le domaine (on passerait au-dessus du seuil). */
@@ -36,8 +54,19 @@ const moyenne = (x: number[]) => (x.length ? x.reduce((a, b) => a + b, 0) / x.le
 
 /** Décalage (s) entre le début de la séance prévue et le fichier : celui qui fait le mieux coïncider les deux profils. */
 export function aligner(plan: number[], reel: number[]) {
+  return alignerAvecScore(plan, reel).off
+}
+
+/**
+ * Même chose, avec la qualité de la coïncidence (corrélation, −1 à 1) pour comparer deux lectures du fichier.
+ * `ignore` : secondes du fichier laissées de côté (arrêts).
+ */
+export function alignerAvecScore(plan: number[], reel: number[], ignore?: boolean[]) {
   const mp = moyenne(plan)
-  const mr = moyenne(reel)
+  const utiles = ignore ? reel.filter((_, j) => !ignore[j]) : reel
+  const mr = moyenne(utiles)
+  const ep = Math.sqrt(moyenne(plan.map((x) => (x - mp) ** 2))) || 1
+  const er = Math.sqrt(moyenne(utiles.map((x) => (x - mr) ** 2))) || 1
   let meilleur = 0
   let score = -Infinity
   for (let off = -60; off <= Math.min(900, reel.length - plan.length / 2); off++) {
@@ -45,7 +74,7 @@ export function aligner(plan: number[], reel: number[]) {
     let n = 0
     for (let i = 0; i < plan.length; i += 2) {
       const j = i + off
-      if (j < 0 || j >= reel.length) continue
+      if (j < 0 || j >= reel.length || ignore?.[j]) continue
       s += (plan[i] - mp) * (reel[j] - mr)
       n++
     }
@@ -54,7 +83,7 @@ export function aligner(plan: number[], reel: number[]) {
       meilleur = off
     }
   }
-  return meilleur
+  return { off: meilleur, score: score / (ep * er) }
 }
 
 /** Un tour (lap) de l'activité, tel qu'Intervals le donne : Zwift en crée un par étape de la séance. */
@@ -66,13 +95,20 @@ export interface Tour {
 
 /**
  * Position des tours qui correspondent à la séance prévue (mêmes durées, à 3 s près, pour au moins 80 % des étapes).
- * Undefined si les tours ne suivent pas la séance (sortie libre, séance arrêtée en route).
+ * Un tour allongé par un arrêt compte aussi (sa durée moins l'arrêt). Undefined si les tours ne suivent pas la séance.
+ * `arretDans(debut, duree)` : secondes d'arrêt dans ce morceau du fichier (les tours se suivent depuis le début).
  */
-export function trouverTours(plat: { dureeSec: number }[], tours: Tour[]) {
+export function trouverTours(plat: { dureeSec: number }[], tours: Tour[], arretDans?: (debut: number, duree: number) => number) {
   const n = plat.length
+  const debuts = tours.map((_, i) => tours.slice(0, i).reduce((a, t) => a + t.dureeSec, 0))
   for (let k = 0; k + n <= tours.length + 1 && k <= 3; k++) {
     let bons = 0
-    for (let i = 0; i < n; i++) if (tours[k + i] && Math.abs(tours[k + i].dureeSec - plat[i].dureeSec) <= 3) bons++
+    for (let i = 0; i < n; i++) {
+      const t = tours[k + i]
+      if (!t) continue
+      const ecart = t.dureeSec - plat[i].dureeSec
+      if (Math.abs(ecart) <= 3 || (ecart > 3 && arretDans && Math.abs(ecart - arretDans(debuts[k + i], t.dureeSec)) <= 3)) bons++
+    }
     if (bons >= 0.8 * n) return k
   }
   return undefined
@@ -90,25 +126,53 @@ export function controlerSeance(o: {
   const { etapes, famille, w1Hz, fc1Hz, cpW } = o
   if (famille === 'test' || (!w1Hz.length && !o.tours?.length)) return undefined
   const plat = deplier(etapes).filter((e) => e.dureeSec > 0)
-  const k = o.tours?.length ? trouverTours(plat, o.tours) : undefined
+  // Arrêts (pause, roue libre prolongée) : jamais comptés à 0 W dans un bloc
+  const arretBrut = secondesArret(w1Hz)
+  const arretDans = (debut: number, duree: number) => arretBrut.slice(debut, debut + duree).filter(Boolean).length
+  const k = o.tours?.length ? trouverTours(plat, o.tours, w1Hz.length ? arretDans : undefined) : undefined
+  const debutsTours = (o.tours ?? []).map((_, i) => o.tours!.slice(0, i).reduce((a, t) => a + t.dureeSec, 0))
   const fin = plat.length ? plat[plat.length - 1].debutSec + plat[plat.length - 1].dureeSec : 0
   let off = 0
+  // Fichier utilisé : tel quel (arrêts exclus des moyennes), ou sans ses arrêts si le minuteur de la séance s'était mis en pause
+  let W = w1Hz
+  let FC = fc1Hz
+  let arret = arretBrut
   if (k === undefined) {
     if (!w1Hz.length) return undefined
     // Sans tours : on recale le fichier sur la séance prévue (décalage de départ)
     const plan = Array.from({ length: fin }, () => 0)
     for (const e of plat) for (let t = e.debutSec; t < e.debutSec + e.dureeSec; t++) plan[t] = e.w ?? cpW * 2
-    off = aligner(plan, w1Hz)
+    // Deux lectures : le minuteur a continué pendant l'arrêt (arrêt ignoré), ou il s'est mis en pause (arrêt retiré)
+    const brut = alignerAvecScore(plan, w1Hz, arretBrut)
+    off = brut.off
+    if (arretBrut.some(Boolean)) {
+      const garde = w1Hz.map((_, i) => i).filter((i) => !arretBrut[i])
+      const sans = garde.map((i) => w1Hz[i])
+      const a = alignerAvecScore(plan, sans)
+      if (a.score > brut.score) {
+        W = sans
+        FC = fc1Hz?.length ? garde.map((i) => fc1Hz[i] ?? 0) : fc1Hz
+        arret = sans.map(() => false)
+        off = a.off
+      }
+    }
   }
   const fenetre = (debut: number, duree: number, v: number[]) => v.slice(Math.max(0, debut + off), Math.max(0, debut + off + duree))
-  /** Moyennes (watts, FC) d'une étape à plat : son tour, sinon sa fenêtre dans le fichier. */
+  let arretSec = 0
+  /** Moyennes (watts, FC) d'une étape à plat, arrêts exclus : sur le fichier aux bornes de son tour, sinon sa fenêtre recalée. */
   const mesure = (i: number) => {
     const t = k !== undefined ? o.tours![k + i] : undefined
-    if (t) return { w: t.w, fc: t.fc, duree: t.dureeSec }
-    const e = plat[i]
-    const w = fenetre(e.debutSec, e.dureeSec, w1Hz)
-    const f = fc1Hz?.length ? fenetre(e.debutSec, e.dureeSec, fc1Hz).filter((x) => x > 0) : []
-    return { w: moyenne(w), fc: f.length ? moyenne(f) : undefined, duree: w.length }
+    if (t && !w1Hz.length) return { w: t.w, fc: t.fc, duree: t.dureeSec }
+    const [debut, duree] = t ? [debutsTours[k! + i], t.dureeSec] : [plat[i].debutSec + off, plat[i].dureeSec]
+    const depart = Math.max(0, debut)
+    const garder = (_: number, j: number) => !arret[depart + j]
+    const wTout = W.slice(depart, Math.max(0, debut + duree))
+    const w = wTout.filter(garder)
+    arretSec += wTout.length - w.length
+    // Tour sans arrêt : la moyenne du tour (calculée par Intervals sur le fichier complet)
+    if (t && w.length === wTout.length) return { w: t.w, fc: t.fc, duree: t.dureeSec }
+    const f = FC?.length ? FC.slice(depart, Math.max(0, debut + duree)).filter(garder).filter((x) => x > 0) : []
+    return { w: moyenne(w), fc: f.length ? moyenne(f) : t?.fc, duree: w.length }
   }
   /** Moyenne pondérée par la durée de plusieurs étapes. */
   const groupe = (idx: number[]) => {
@@ -178,11 +242,15 @@ export function controlerSeance(o: {
     const limite = Math.max(0.7 * cpW, ...z2.map((e) => e.wMax ?? 0))
     auDessusSeuil1 = 0
     for (const e of z2) {
-      const w = fenetre(e.debutSec, e.dureeSec, w1Hz)
+      const w = fenetre(e.debutSec, e.dureeSec, W)
       for (let i = 30; i <= w.length; i++) if (moyenne(w.slice(i - 30, i)) > limite) auDessusSeuil1++
     }
   }
-  return { lignes, ...(auDessusSeuil1 !== undefined ? { auDessusSeuil1 } : {}), ...(k !== undefined ? { parTours: true } : {}) }
+  if (W !== w1Hz) arretSec = w1Hz.length - W.length
+  return {
+    lignes, ...(auDessusSeuil1 !== undefined ? { auDessusSeuil1 } : {}), ...(k !== undefined ? { parTours: true } : {}),
+    ...(arretSec >= ARRET_MIN_SEC ? { arretSec } : {}),
+  }
 }
 
 /** Tous les blocs tenus (et une Z2 restée sous le 1er seuil) : la séance a fait le travail prévu. */

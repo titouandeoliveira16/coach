@@ -13,6 +13,8 @@ demarrerSynchro()
 setTimeout(() => synchroniserRappels(), 5000)
 // Après la première synchro : séances à venir remises au format avec répétitions (v0.62)
 setTimeout(() => import('./modules/entrainement/plan/programme').then((m) => m.mettreAJourFormatSeances()).catch(() => {}), 8000)
+// Contrôle des séances récentes recalculé avec les règles du moment (ex. arrêts exclus des moyennes, v0.71)
+setTimeout(() => import('./modules/entrainement/import/intervals').then((m) => m.recontrolerRecentes()).catch(() => {}), 12000)
 
 // Mises à jour : on vérifie s'il existe une nouvelle version à chaque retour
 // sur l'appli (iPhone : l'appli est souvent « réveillée » plutôt que relancée)

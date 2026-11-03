@@ -182,6 +182,38 @@ async function importerActivites(depuis: string, surProgression?: (n: number) =>
   return { n, viaStrava }
 }
 
+/**
+ * Contrôle des séances recalculé avec la dernière version des règles (v0.71 : arrêts exclus des moyennes),
+ * pour les séances des 14 derniers jours qui en ont un. Une seule fois par version.
+ */
+const VERSION_CONTROLE = 2
+export async function recontrolerRecentes() {
+  const cle = 'controle-version'
+  if (((await db.reglages.get(cle))?.valeur as number | undefined) === VERSION_CONTROLE) return
+  const c = await chargerContexte()
+  const seances = (await db.seances.where('date').aboveOrEqual(decalerJour(aujourdhui(), -14)).toArray())
+    .filter((s) => s.controle && s.prevueId && s.idExterne && s.source === 'intervals')
+  if (seances.length && c.cpW) {
+    const { flux } = await appeler<{ flux: Record<string, { time?: number[]; heartrate?: number[]; watts?: number[]; tours?: Tour[] }> }>('flux', { ids: seances.map((s) => s.idExterne) })
+    for (const s of seances) {
+      const f = flux[s.idExterne!]
+      const prevue = await db.prevues.get(s.prevueId!)
+      if (!f?.time?.length || !f.watts?.length || !prevue?.velo?.etapes) continue
+      const controle = controlerSeance({
+        etapes: prevue.velo.etapes, famille: prevue.velo.famille, w1Hz: reechantillonner1Hz(f.time, f.watts),
+        fc1Hz: f.heartrate?.length ? reechantillonner1Hz(f.time, f.heartrate) : undefined, cpW: c.cpW, tours: f.tours,
+      })
+      if (!controle) continue
+      // Ressenti déjà noté sur un bloc : on le garde
+      controle.lignes.forEach((l, i) => { const avant = s.controle!.lignes[i]; if (avant?.rpe !== undefined && avant.libelle === l.libelle) l.rpe = avant.rpe })
+      await enregistrer(db.seances, { ...(await db.seances.get(s.id))!, controle })
+      const intensite = !['z2', 'z2-long', 'test'].includes(prevue.velo.famille)
+      if (intensite && !prevue.resultat && controleTenu(controle)) await enregistrer(db.prevues, { ...prevue, resultat: 'reussie' })
+    }
+  }
+  await enregistrer(db.reglages, { id: cle, valeur: VERSION_CONTROLE })
+}
+
 /** Import complet (séances + données Garmin). Première fois : 90 derniers jours. */
 export async function importerIntervals(surProgression?: (n: number) => void) {
   const etat = await lireEtat()
