@@ -1,5 +1,11 @@
 /** Textes des « ? » : une phrase par chiffre affiché, pour savoir comment il est calculé. */
 export const AIDES = {
+  discipline:
+    "Route : ton programme habituel. VTT : l'appli choisit les séances selon le profil de la discipline (fiches du Catalogue). XCO et short track : intervalles longs du vététiste (7 à 10 × 4-6 min ; dans un essai, ils ont fait plus baisser le chrono que les sprints de 30 s, qui font aussi progresser), sprints de 30 s en séries, et au seuil 1 séance sur 3 en relances (copie de la course : ≈ 40 % du temps au-dessus de la CP, en efforts de quelques secondes ; jamais testé en essai). Les études faisaient 2 à 3 séances dures par semaine, toi une : l'effet sera plus lent. Marathon : comme la route, mais la sortie longue se fait en côtes (montées à 85-95 % de la CP) ; elle compte comme une séance dure, et ce format est un choix d'entraîneur. Enduro : une semaine sur deux, des spéciales sur le terrain remplacent les intervalles ; ce qui fait gagner, c'est surtout la descente technique, aucune étude n'a testé ce rythme. Descente : les watts ne font pas le chrono, les sprints courts ne sont qu'un complément au pilotage et à la musculation. Pour toutes les disciplines VTT, une Z2 par semaine devient une sortie technique sur le terrain (choix d'entraîneur : la technique compte beaucoup, aucune étude ne dit comment l'entraîner). Pas de sprints ni de relances pendant la reprise : du volume d'abord (Hebisz 2019).",
+  vttTerrain:
+    "Sur le terrain, les watts oublient tes bras et la FC s'emballe avec le stress (Stapelfeldt 2004, Burr 2012). On ne juge donc ni la FC ni les watts bloc par bloc : la charge est ton effort perçu × la durée (méthode de Foster), le repère le plus simple, validé dans beaucoup de sports mais pas encore en VTT. Les kJ prévus sont une estimation.",
+  aFond:
+    "À fond, il n'y a pas de watts à viser : tu donnes tout (allure libre sur Zwift, sans ERG), et la progression vient du nombre de sprints, pas d'un bonus de watts.",
   srpe: 'sRPE (Foster) = ton RPE (0 à 10) × la durée en minutes. Marche pour tous les sports, même sans capteur.',
   trimp:
     'TRIMP (Banister) = pour chaque minute, part de ta réserve de FC utilisée × 0,64 × e^(1,92 × cette part). Calculé seconde par seconde avec un fichier, sinon depuis ta FC moyenne (ou estimé depuis le RPE si pas de FC).',

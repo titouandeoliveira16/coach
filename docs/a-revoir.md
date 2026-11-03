@@ -40,11 +40,15 @@ Points décidés ou mis de côté, à reprendre au bon moment.
 - Quand il s'y met : choisir le jour (le mercredi avec le renfo genoux ?) et vérifier la durée (~35 min).
 
 ## Plus tard
-- VTT (3/11/2026, demande de Titouan pour ses élèves) : section VTT du catalogue (10 séances, profils XCO, XCC, XCM, enduro,
-  descente, « VTT et route », « mesurer la charge en VTT »), filtre par discipline. **Pas encore relié au moteur** : à proposer
-  ensuite (objectif VTT par discipline dans le programme, famille « répétition d'efforts », W/kg, lecture d'une sortie VTT
-  sans se fier à la FC, effort perçu pour les séances techniques). Littérature mince : 4 petits essais en XCO, aucun en XCC,
-  XCM, enduro, descente. À vérifier : PMID manquants (PubMed bloqué), Inoue 2026 et Protzen 2026 lus seulement en notice.
+- VTT (3/11/2026, demande de Titouan pour ses élèves) : section VTT du catalogue (v0.66.0) puis **moteur** (v0.67.0) :
+  réglage « Discipline visée » (Réglages → Avancé → Programme vélo ; route par défaut). XCO/XCC : intervalles longs d'Inoue,
+  sprints de 30" en séries (à fond, allure libre), relances 1 séance de seuil sur 3 ; marathon : sortie longue en côtes
+  (comptée comme dure) ; enduro : spéciales une semaine sur deux ; descente : sprints courts ; une Z2 par semaine en VTT
+  technique (charge à l'effort perçu, ni FC ni watts jugés). Relu par le relecteur scientifique.
+  **Gardé en tête (Titouan : « ça dépendra du temps qu'on prévoit ») :** 2 séances dures par semaine (les essais XCO en
+  faisaient 2-3 ; le moteur n'en met qu'une), muscu reliée à l'Entraînement (conseillée en enduro et descente), W/kg dans Progrès.
+  Littérature mince : 4 petits essais en XCO, aucun en XCC, XCM, enduro, descente. À vérifier : PMID manquants (PubMed bloqué),
+  Inoue 2026 et Protzen 2026 lus seulement en notice.
 - Repère pour l'avenir (infographie montrée par Titouan le 28/10, « on reste comme ça ») : répartition pyramidale par mois
   ~12 sorties Z1-Z2 (45′-2 h 30), 4 sorties longues 3-6 h avec effort en fin de sortie, 3-4 intervalles Z3 (20-60 min),
   2 intervalles Z4-Z5 (10-25 min), muscu lourde des jambes l'hiver 4-8×/mois. Pistes : effort en fin de sortie longue

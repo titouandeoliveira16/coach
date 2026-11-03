@@ -36,7 +36,8 @@ En ligne : https://titouandeoliveira16.github.io/coach/ (GitHub Pages, déployé
   synchro « local d'abord » avec Supabase (`synchro.ts`), notifications (`notifications.ts`), composants `ui/`.
 - `src/metrics/` : formules pures et testées (charge, VFC, signal du jour, programme vélo, planification).
 - `src/modules/entrainement/` : écrans Aujourd'hui · Semaine · Saison · Progrès, programme vélo
-  (`plan/programme.ts`), imprévus (panne, report d'intensité), import Intervals.icu / .FIT.
+  (`plan/programme.ts`, discipline visée route ou VTT : `familleVtt`, `formatsPour`), imprévus (panne, report d'intensité),
+  import Intervals.icu / .FIT.
 - `src/modules/budget/` : écrans Mois · Liste · Patrimoine · Analyses, saisie rapide (`Saisie.tsx`), calculs purs et
   testés (`calculs.ts`, montants en centimes), plafonds par mois (`plafonds`, repris les mois suivants), relevés d'investissement.
 - `src/modules/revision/` : écrans Aujourd'hui · Notions · Semaine · Sujets ; planification pure et testée

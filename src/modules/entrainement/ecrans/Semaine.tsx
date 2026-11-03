@@ -234,12 +234,14 @@ function DetailSeance({ p, jours, prevues, onFermer, onMessage }: {
       {p.velo?.etapes && p.statut === 'prevue' && p.date >= aujourdhui() && <BoutonsEnvoi p={p} etapes={p.velo.etapes} />}
       <NutritionSeance p={p} />
       {p.velo?.pourquoi && <p className="mt-2 text-xs text-texte-3">Pourquoi cette séance : {p.velo.pourquoi}</p>}
+      {p.velo?.famille?.startsWith('vtt') && <p className="mt-1 text-xs text-texte-3">Sur le terrain : jugée sur ton effort perçu, pas sur la FC ni les watts.<Aide titre="Sortie VTT sur le terrain" texte={AIDES.vttTerrain} /></p>}
+      {p.velo?.famille === 'sprints' && <p className="mt-1 text-xs text-texte-3">Sprints à fond : pas de watts à viser.<Aide titre="Sprints à fond" texte={AIDES.aFond} /></p>}
       <FicheSeance velo={p.velo} />
       {mode === 'actions' ? (
         <div className="mt-4 space-y-2">
           {p.statut === 'prevue' && (
             <Bouton onClick={() => {
-              const seance: Seance = { id: nouvelId(), date: p.date <= aujourdhui() ? p.date : aujourdhui(), sport: p.sport, type: p.type, titre: p.titre, dureeSec: p.dureeMin * 60, source: 'manuel', prevueId: p.id }
+              const seance: Seance = { id: nouvelId(), date: p.date <= aujourdhui() ? p.date : aujourdhui(), sport: p.sport, type: p.type, titre: p.titre, dureeSec: p.dureeMin * 60, source: 'manuel', prevueId: p.id, ...(p.velo?.famille?.startsWith('vtt') ? { terrainVtt: true } : {}) }
               navigate('/entrainement/seance/nouvelle', { state: { seance } })
             }}>✓ Faite : saisir</Bouton>
           )}

@@ -80,7 +80,7 @@ export function trouverTours(plat: { dureeSec: number }[], tours: Tour[]) {
 
 export function controlerSeance(o: {
   etapes: Etape[]
-  famille: Famille | 'z2' | 'z2-long' | 'test'
+  famille: Famille | 'z2' | 'z2-long' | 'test' | 'vtt-terrain' | 'vtt-speciales'
   w1Hz: number[]
   fc1Hz?: number[]
   cpW: number
@@ -144,7 +144,11 @@ export function controlerSeance(o: {
       if (famille === 'z2-long') {
         const j = sous.findIndex((x) => x.libelle === 'Z2')
         const g = j >= 0 ? groupe(parSous[j]) : undefined
-        if (g && sous[j].wMin && sous[j].wMax) lignes.push(ligne('Z2 entre les sprints', g.w, sous[j].wMin!, sous[j].wMax!, g.fc))
+        if (g && sous[j].wMin && sous[j].wMax) lignes.push(ligne(sous.some((x) => x.libelle === 'Montée') ? 'Z2 entre les montées' : 'Z2 entre les sprints', g.w, sous[j].wMin!, sous[j].wMax!, g.fc))
+        // Sortie longue en côtes : les montées sont contrôlées ensemble (85-95 % de la CP, sans dépasser)
+        const m = sous.findIndex((x) => x.libelle === 'Montée')
+        const gm = m >= 0 ? groupe(parSous[m]) : undefined
+        if (gm && sous[m].wMin && sous[m].wMax) lignes.push(ligne('Montées', gm.w, sous[m].wMin!, sous[m].wMax!, gm.fc))
         continue
       }
       serie++

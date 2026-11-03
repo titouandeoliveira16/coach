@@ -534,11 +534,11 @@ PMA_Z6 = "En VTT, « au-dessus de la PMA » ≈ au-dessus de 120 % de la CP (Z6)
 VT = dict(sport="vtt", unite="%CP")
 
 seance("vtt-hit-inoue", famille="vo2max", nom="Intervalles longs du vététiste (Inoue)",
-       objectif="Temps de course en cross-country : VO2max et puissance au seuil", resume="7 à 10 × 4-6 min au plus fort tenable sur toutes les répétitions, récupération 3 min.",
-       zone="Z5", rpe="8-9", niveau="confirmé", deroule=[ECH(15), X(8, E(5, 100, 110, note="le plus fort possible en tenant toutes les répétitions"), R(3)), CALME(10)],
+       objectif="Temps de course en cross-country : VO2max et puissance au seuil", resume="7 à 10 × 4-6 min au plus fort tenable sur toutes les répétitions, récupération active 4 min (4-6 dans l'étude).",
+       zone="Z5", rpe="8-9", niveau="confirmé", deroule=[ECH(15), X(8, E(5, 100, 110, note="le plus fort possible en tenant toutes les répétitions"), R(4)), CALME(10)],
        variantes=["7 × 4 min", "8 × 5 min", "10 × 6 min (fin de bloc)"], phases=["construction", "spécifique"], parSemaine="1-2 (3 dans l'étude, en plus de l'entraînement habituel)",
        recuperation="48 h", disciplines=["xco", "xcc", "xcm"],
-       conseils=["Sur home trainer ou en côte régulière : la puissance y est plus facile à tenir qu'en monotrace.", "La récupération de 3 min est un choix d'entraîneur (non précisée dans le résumé de l'étude).", "Repère en % de la CP converti par nous : l'étude dosait à l'effort maximal tenable."],
+       conseils=["Sur home trainer ou en côte régulière : la puissance y est plus facile à tenir qu'en monotrace.", "Récupération active de 4 à 6 min dans l'étude (fiche d'essai NCT01944865).", "Repère en % de la CP converti par nous : l'étude dosait à l'effort maximal tenable.", "L'étude en faisait 3 par semaine, en plus de l'entraînement habituel : à 1 par semaine, l'effet sera plus lent."],
        preuve=P("prouvé", "Essai randomisé chez 16 vététistes entraînés (6 semaines, 3 séances par semaine ajoutées à leur entraînement) : 7-10 × 4-6 min à l'intensité maximale tenable ou 8-12 × 30 s à fond font tous deux progresser ; le temps de course a davantage baissé avec les intervalles longs (« probablement plus bénéfique »).", INOUE_2016), **VT)
 
 seance("vtt-sit-series", famille="anaerobie", nom="Sprints de 30 s en séries (vététistes)",
@@ -550,12 +550,12 @@ seance("vtt-sit-series", famille="anaerobie", nom="Sprints de 30 s en séries (v
        preuve=P("prouvé", "Chez 26 vététistes (8 semaines), sprints de 30 s + intervalles de 4 min : VO2max de 57,9 à 66,6 ml/kg/min, seulement dans le groupe intervalles. En polarisé (2 séances de sprints par semaine), la puissance anaérobie a progressé. Sur le temps de course, les intervalles longs ont fait un peu mieux que les sprints (Inoue 2016).", HEBISZ_2016, HEBISZ_2019, HEBISZ_2021_SIT, INOUE_2016), **VT)
 
 seance("vtt-relances-xco", famille="repetition-efforts", nom="Relances sur fond de tempo (surges XCO)",
-       objectif="Répéter des efforts au-dessus de la CP comme en course : vider et recharger le W′", resume="3 × 10 min à 80-90 % de la CP avec, toutes les 30 s, une relance de 8 s à 150-180 % ; 5 min faciles entre les blocs.",
+       objectif="Répéter des efforts au-dessus de la CP comme en course : vider et recharger le W′", resume="3 × 10 min à 80-90 % de la CP avec, toutes les 30 s, une relance de 8 s à 150-180 % ; 5 min faciles entre les blocs. Démarre bas dans les plages.",
        zone="Z3 + Z6-Z7", rpe="8", niveau="confirmé",
        deroule=[ECH(15), X(3, X(20, E(0, 80, 90, sec=22), E(0, 150, 180, sec=8, cad="90-110", note="relance")), R(5)), CALME(10)],
        variantes=["2 × 8 min (reprise)", "3 × 10 min", "Relance toutes les 20 s (plus dense)", "Dehors : relances en sortie de virage ou de bosse"],
-       phases=["spécifique"], parSemaine="1", recuperation="48 h", disciplines=["xco", "xcc"],
-       conseils=["Si la puissance du tempo s'écroule après les relances, réduis leur nombre plutôt que leur intensité.", PMA_Z6, SANS_ERG],
+       phases=["spécifique"], parSemaine="1", recuperation="48 h", disciplines=["xco"],
+       conseils=["Si la puissance du tempo s'écroule après les relances, réduis leur nombre plutôt que leur intensité.", "Plus dur qu'il n'y paraît : la moyenne d'un bloc est autour de la CP ou au-dessus (le haut des plages vide ta réserve W′ dès le 1er bloc).", PMA_Z6, SANS_ERG],
        preuve=P("plausible", "Le format copie la course : en XCO, ≈ 40 % du temps au-dessus de la CP, en efforts d'environ 8 s à ≈ 120 % (Næss) ; plus de 300 efforts au-dessus de la PMA de ≈ 4 s, toutes les ≈ 11 s (Prinz) ; un pic toutes les 32 s (Macdermid). Faire varier la puissance dans un intervalle augmente le temps près de la VO2max (effet aigu). Aucun essai d'entraînement sur ce format.", NAESS_2021, PRINZ_2021, MACDERMID_2012, STAPELFELDT_2004, BOSSI_2020), **VT)
 
 seance("vtt-depart-xco", famille="specifique", nom="Simulation de départ XCO",
@@ -580,9 +580,9 @@ seance("vtt-marathon-cotes", famille="endurance", nom="Sortie longue en côtes (
        objectif="Puissance au 2e seuil et durabilité sur plusieurs heures", resume="3 à 5 h en Z2 avec 4 à 6 montées de 8-15 min à 85-95 % de la CP.",
        zone="Z2 + Z3-Z4", rpe="4-6", niveau="confirmé",
        deroule=[ECH(15, 50, 65), X(5, E(25, 56, 70), E(12, 85, 95, note="montée")), E(25, 56, 70), CALME(10)],
-       variantes=["3 h avec 4 montées de 8 min", "4 h avec 5 montées de 12 min", "5 h avec 6 montées de 15 min (2-3 semaines avant l'objectif)"],
+       variantes=["3 h avec 4 montées de 8 min", "3 h 30 avec 4 montées de 10 min", "4 h avec 5 montées de 12 min", "5 h avec 6 montées de 15 min (seulement 2-3 semaines avant l'objectif)"],
        phases=["construction", "spécifique"], parSemaine="1", recuperation="48 h", disciplines=["xcm"],
-       conseils=["Mange 60-90 g de glucides par heure dès la 1re heure : on entraîne aussi l'estomac.", "Garde les dernières montées aussi fortes que les premières : c'est le but (durabilité)."],
+       conseils=["C'est une séance dure (jusqu'à 90 min près du seuil) : 48 h avant et après sans autre intensité.", "Mange 60-90 g de glucides par heure dès la 1re heure : on entraîne aussi l'estomac.", "Garde les dernières montées aussi fortes que les premières : c'est le but (durabilité)."],
        preuve=P("plausible", "En course par étapes, la puissance absolue au 2e seuil lactique est le meilleur prédicteur du temps (r = −0,80, 24 amateurs) ; il faut tenir une puissance élevée des heures et répéter des efforts (Cape Epic, répartition pyramidale proposée). FC ≈ 85 % de la FC max sur la Transalp. Le format exact est un choix d'entraîneur.", ENGELBRECHT_2018, REINPOLD_2022, WIRNITZER_2008, JONES_KIRBY_2025), **VT)
 
 seance("vtt-enduro-speciales", famille="specifique", nom="Spéciales d'enduro",
@@ -605,7 +605,7 @@ seance("vtt-technique", famille="technique", nom="Séance technique",
        objectif="Pilotage : virages, passages, lignes, freinage", resume="45 à 60 min à intensité basse, en répétant une même section (virages, racines, marches).",
        zone="Z1-Z2", rpe="3-5", niveau="tous", deroule=[ECH(10, 50, 65), X(10, E(2, 56, 75, note="section technique"), R(2, 45, 55, note="retour au départ")), CALME(5)],
        variantes=["Virages et appuis", "Montées techniques", "Descente : lignes et freinage", "Avec un chrono une fois la section maîtrisée"],
-       phases=["toutes"], parSemaine="1", recuperation="< 24 h", disciplines=["xco", "xcm", "enduro", "dh"],
+       phases=["toutes"], parSemaine="1", recuperation="< 24 h", disciplines=["xco", "xcc", "xcm", "enduro", "dh"],
        conseils=["Peu de watts mais une vraie fatigue (bras, attention) : compte-la avec ton effort perçu.", "Répéter la même section avec un retour réfléchi vaut mieux qu'un long parcours."],
        preuve=PRATIQUE("La technique pèse lourd en VTT (l'aérobie n'explique qu'environ 40 % de la performance en XC ; en enduro, les vainqueurs se distinguent en descente technique). Aucune étude contrôlée sur l'entraînement technique.", IMPELLIZZERI_2005, IMPELLIZZERI_2007, KIRKWOOD_2017), **VT)
 
@@ -874,7 +874,7 @@ methode("profil-xco", "Profil : cross-country olympique (XCO)", "Savoir quoi tra
         "≈ 1 h 20-1 h 35 de course à ≈ 76 % de la CP en moyenne, mais ≈ 40 % du temps au-dessus, en centaines d'efforts de quelques secondes. Base polarisée ou pyramidale, intervalles longs, sprints de 30 s, relances, technique.",
         P("plausible", "Études descriptives solides : 76 % de la CP en moyenne et 40 % du temps au-dessus (Næss), 26-30 % au-dessus de la PMA (Granier, Prinz), départ très rapide. Ce qui prédit la performance : W/kg au 2e seuil, VO2max relative, tenue sur des sprints répétés. Essais chez des vététistes : intervalles de 4-6 min et sprints de 30 s font progresser, les longs un peu plus sur le temps de course ; le polarisé a fait plus progresser la VO2max qu'un bloc, mais pas plus qu'un entraînement à basse intensité sur la performance. Les courses sont jusqu'à 40 % plus courtes qu'en 1996, avec plus d'anaérobie.", NAESS_2021, GRANIER_2018, PRINZ_2021, HAYS_2018, IMPELLIZZERI_2005, BEJDER_2019, INOUE_2016, HEBISZ_2021_BLOC, SCHNEEWEISS_2022, PROTZEN_2026, ARRIEL_2022),
         phases=["toutes"], famille="profil", disciplines=["xco"],
-        conseils=["Semaine type en construction : 2 séances dures (intervalles longs + sprints ou relances), 1 séance technique, le reste en endurance.",
+        conseils=["Les essais faisaient 2 à 3 séances dures par semaine ; avec 1 seule, l'effet est plus lent (dose non étudiée).", "Semaine type : intervalles longs, sprints ou relances en alternance, 1 sortie technique, le reste en endurance.",
                   "Le poids compte : le W/kg sépare les vététistes des routiers (profil de grimpeur).",
                   "La FC suit mal l'effort en VTT : juge les séances sur les watts et l'effort perçu."])
 methode("profil-xcc", "Profil : short track (XCC)", "Savoir quoi travailler pour un objectif short track",
@@ -914,11 +914,12 @@ methode("methode-charge-vtt", "Mesurer la charge en VTT", "Ne pas sous-estimer u
 # ════════════════════════ PROGRAMME (séances que l'Entraînement pioche) ════════════════════════
 # id du format (gardé : l'historique s'y réfère), famille du programme, travail (s), % CP, récup (s), % CP récup,
 # récup entre séries (s), over-unders continus, 4 paliers (séries, répétitions[, durée du travail en s]), preuve, source.
-def prog(cid, id, famille, nom, travailSec, pct, recupSec, pctRecup, paliers, preuve, source, recupSerieSec=None, continu=False):
+def prog(cid, id, famille, nom, travailSec, pct, recupSec, pctRecup, paliers, preuve, source, recupSerieSec=None, continu=False, afond=False):
     s = next(x for x in S if x["id"] == cid)
     d = {"id": id, "famille": famille, "nom": nom, "travailSec": travailSec, "pct": pct, "recupSec": recupSec, "pctRecup": pctRecup}
     if recupSerieSec is not None: d["recupSerieSec"] = recupSerieSec
     if continu: d["continu"] = True
+    if afond: d["aFond"] = True  # efforts à fond : pas de cible (allure libre sur Zwift), pct sert seulement à estimer les kJ
     d.update({"paliers": [list(p) for p in paliers], "preuve": preuve, "source": source, "ordre": sum(1 for x in S if "programme" in x)})
     s["programme"] = d
 
@@ -954,6 +955,21 @@ prog("velo-sweet-spot-3x15", "sweet-spot", "sweet-spot", "sweet spot", 900, 91, 
      "Peu étudié : utile en reprise pour accumuler du travail sous le seuil.")
 prog("velo-tempo-2x20", "tempo", "tempo", "tempo", 900, 83, 300, 50, [(1, 2), (1, 2, 1080), (1, 2, 1200), (1, 1, 2700)], "plus faible",
      "Zone 3 (« moyenne ») : utile en reprise, à doser (modèle pyramidal).")
+
+# Formats VTT (discipline visée XCO, XCC, XCM, enduro, descente ; relus le 3/11/2026)
+prog("vtt-hit-inoue", "inoue", "vo2-longs", "intervalles longs du vététiste", 300, 105, 240, 50, [(1, 7, 240), (1, 8, 240), (1, 8), (1, 10)], "bonne",
+     "Inoue et al. 2016 : essai randomisé chez 16 vététistes, 7-10 × 4-6 min ; meilleur temps de course qu'avec des sprints de 30 s.")
+prog("vtt-relances-xco", "relances-xco", "relances", "relances XCO", 8, 155, 22, 80, [(2, 16), (3, 16), (3, 20), (4, 20)], "plus faible",
+     "Næss 2021, Prinz 2021 : en XCO, ≈ 40 % du temps au-dessus de la CP en efforts de quelques secondes ; format qui copie la course, pas d'essai dédié.",
+     recupSerieSec=300, continu=True)
+prog("vtt-xcc-variable", "relances-xcc", "relances", "relances short track", 12, 140, 48, 97, [(2, 8), (2, 10), (3, 8), (3, 10)], "plus faible",
+     "Arriel 2023 : le short track dure ≈ 20 min à une puissance plus haute que le XCO, allure variable ; pas d'essai dédié.",
+     recupSerieSec=360, continu=True)
+prog("vtt-sit-series", "sit-series", "sprints", "sprints de 30\" en séries", 30, 200, 90, 50, [(2, 4), (3, 4), (3, 5), (4, 4)], "bonne",
+     "Hebisz 2016, 2021 ; Inoue 2016 : les sprints de 30 s font progresser VO2max et puissance anaérobie chez des vététistes.",
+     recupSerieSec=600, afond=True)
+prog("vtt-dh-sprints", "sprints-courts", "sprints", "sprints courts", 7, 250, 150, 45, [(1, 6), (1, 8), (1, 10), (1, 12)], "plus faible",
+     "Hurst & Atkins 2006, Burr 2012 : descente = pics de puissance très courts ; pratique d'entraîneur, la technique prime.", afond=True)
 
 # ——— Repère de cadence (pas une consigne) sur les efforts vélo qui n'en ont pas ———
 def cadence_repere(etapes):

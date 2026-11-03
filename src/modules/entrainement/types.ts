@@ -1,5 +1,5 @@
 import type { Note } from '../../core/ui/ChoixNote'
-import type { Phase, Role, SeanceVelo } from '../../metrics/programme'
+import type { Discipline, Phase, Role, SeanceVelo } from '../../metrics/programme'
 
 export type { Note }
 
@@ -64,6 +64,8 @@ export interface ReglagesEntrainement {
 
 /** Programme vélo automatique : semaine type, phases, tests et compétitions. */
 export interface ReglagesProgramme {
+  /** Discipline visée (absent : route) : choisit les séances (profils de discipline du catalogue) */
+  discipline?: Discipline
   /** Rôle de chaque jour, du lundi au dimanche */
   semaineType: Role[]
   /** Durée maximale d'une séance vélo en semaine et le jour de la sortie longue (min) */
@@ -165,6 +167,8 @@ export interface Seance {
   autresIds?: string[]
   /** Séance prévue à laquelle elle correspond */
   prevueId?: string
+  /** Sortie VTT sur le terrain (technique, spéciales) : charge comptée sur l'effort perçu, ni FC ni watts bloc par bloc */
+  terrainVtt?: boolean
   /** Nombre d'activités enchaînées regroupées dans cette séance (ex. échauffement, test, retour au calme) */
   parties?: number
   /** Watts moyens de chaque bloc de travail, comparés à la cible de la séance prévue (et montée de FC dans chaque bloc, %) */

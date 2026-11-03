@@ -78,7 +78,8 @@ export function chargeDe(s: Seance, c: Pick<Contexte, 'chargeRef'>): number {
   if (s.sport === 'renfo') return 0
   const min = s.dureeSec / 60
   if (c.chargeRef === 'srpe') return s.rpe !== undefined ? srpe(s.rpe, min) : 0
-  if (s.trimp !== undefined) return s.trimp
+  // VTT sur le terrain : la FC est gonflée (stress, bras) et les watts oublient les bras → effort perçu × durée
+  if (s.trimp !== undefined && !(s.terrainVtt && s.rpe !== undefined)) return s.trimp
   if (s.rpe !== undefined) {
     const x = Math.min(1, 0.4 + 0.05 * s.rpe)
     return min * x * 0.64 * Math.exp(1.92 * x)
@@ -194,6 +195,7 @@ export async function enregistrerSeance(s: Seance) {
       // La séance prévue suit la date réelle
       if (prevue.date !== s.date) await enregistrer(db.prevues, { ...prevue, date: s.date })
       complete.prevueId = prevue.id
+      if (prevue.velo?.famille?.startsWith('vtt')) complete.terrainVtt = true
       // Séance importée (montre, Intervals) : elle prend le nom de la séance prévue (ex. « Seuil 30 »)
       if (s.source !== 'manuel') {
         complete.titre = prevue.titre

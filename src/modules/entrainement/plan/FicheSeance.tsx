@@ -3,7 +3,7 @@ import { CATALOGUE } from '../../catalogue/donnees'
 import { Fiche } from '../../catalogue/Fiche'
 
 /** Fiche du catalogue scientifique d'où vient une séance vélo du programme. */
-const AUTRES: Partial<Record<SeanceVelo['famille'], string>> = { z2: 'velo-endurance-courte', 'z2-long': 'velo-endurance-sprints', test: 'velo-test-cp-3-7-12' }
+const AUTRES: Partial<Record<SeanceVelo['famille'], string>> = { z2: 'velo-endurance-courte', 'z2-long': 'velo-endurance-sprints', test: 'velo-test-cp-3-7-12', 'vtt-terrain': 'vtt-technique', 'vtt-speciales': 'vtt-enduro-speciales' }
 
 export function FicheSeance({ velo }: { velo?: SeanceVelo }) {
   if (!velo) return null
