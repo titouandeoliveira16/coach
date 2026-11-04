@@ -2,7 +2,8 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { db } from '../../../core/db'
-import { aujourdhui, depuisJour } from '../../../core/dates'
+import { aujourdhui, decalerJour, depuisJour } from '../../../core/dates'
+import { formatNombre } from '../../../core/format'
 import { enregistrer, supprimer } from '../../../core/stockage'
 import { Aide } from '../../../core/ui/Aide'
 import { Carte } from '../../../core/ui/Carte'
@@ -16,7 +17,7 @@ import { Deroule, Profil } from '../plan/Deroule'
 import { useReglagesEntrainement } from '../reglagesEntrainement'
 import { NutritionSeance } from '../plan/NutritionSeance'
 import { iconeSport } from '../sports'
-import { basculerSansMontre } from './donnees'
+import { basculerSansMontre, QUESTIONS, scoreRessenti } from './donnees'
 import { SeancesFaites } from './SeancesFaites'
 import type { Raison } from '../types'
 
@@ -44,7 +45,7 @@ function ChoixSeance({ maintenue, conseil, prevu, couleur, onChoisir }: {
 }
 
 /** Signal du jour, raison, séance prévue et recommandation. */
-export function CarteAujourdhui() {
+export function CarteAujourdhui({ onModifierMatin }: { onModifierMatin?: () => void } = {}) {
   const jour = aujourdhui()
   const [voir, setVoir] = useState<'deroule' | 'nutrition'>()
   const [r] = useReglagesEntrainement()
@@ -103,7 +104,17 @@ export function CarteAujourdhui() {
   const etapesDuJour = prevue && (decision?.force ? prevue.velo?.etapes : adaptation!.etapes)
   const cases = (['recuperation', 'pouls', 'sommeil', 'ressenti'] as const).map((cle) => ({ cle, d: signal.details.find((x) => x.cle === cle) }))
   const autres = signal.details.filter((x) => !x.cle || x.cle === 'charge')
-  const NOMS_CASES = { recuperation: 'Récupération (VFC)', pouls: 'Pouls au repos', sommeil: 'Sommeil', ressenti: 'Ressenti' }
+  const NOMS_CASES = { recuperation: 'Récupération', pouls: 'Pouls au repos', sommeil: 'Sommeil', ressenti: 'Ressenti' }
+  // Chiffres du matin sous chaque case (ex-carte « Ton matin »)
+  const enHeures = (h: number) => `${Math.floor(h)} h ${String(Math.round((h % 1) * 60)).padStart(2, '0')}`
+  const nuits7 = a.mesures.filter((m) => m.date > decalerJour(jour, -7) && m.sommeilH !== undefined).map((m) => m.sommeilH!)
+  const ressenti = mesure ? scoreRessenti(mesure) : undefined
+  const chiffres: Record<(typeof cases)[number]['cle'], string | undefined> = {
+    recuperation: mesure?.vfcMs !== undefined && !mesure.sansMontre ? `VFC ${mesure.vfcMs} ms` : undefined,
+    pouls: mesure?.fcRepos !== undefined && !mesure.sansMontre ? `${mesure.fcRepos} bpm` : undefined,
+    sommeil: [mesure?.sommeilH !== undefined && !mesure.sansMontre ? enHeures(mesure.sommeilH) : undefined, nuits7.length >= 3 ? `7 j : ${enHeures(nuits7.reduce((x, y) => x + y, 0) / nuits7.length)}` : undefined].filter(Boolean).join(' · ') || undefined,
+    ressenti: ressenti !== undefined ? `${formatNombre(ressenti, 1)} / 5 en moyenne` : undefined,
+  }
   const couleurEtat = (e?: 'ok' | 'alerte' | 'info') => (e === 'alerte' ? COULEUR[signal.couleur === 'vert' ? 'orange' : signal.couleur] : e === 'ok' ? COULEUR.vert : '#a3abb7')
   const petitBouton = (actif: boolean) => `min-h-11 flex-1 rounded-xl border px-1 text-[13px] font-semibold ${actif ? 'border-[#f87171] bg-[#f87171] text-fond' : 'border-bordure text-texte-2'}`
 
@@ -123,9 +134,18 @@ export function CarteAujourdhui() {
             <div key={cle} className="rounded-xl bg-surface-2 p-2.5" style={d?.etat === 'alerte' ? { boxShadow: `inset 0 0 0 1px ${couleurEtat('alerte')}` } : undefined}>
               <p className="text-xs text-texte-3">{NOMS_CASES[cle]}</p>
               <p className="font-semibold" style={{ color: couleurEtat(d?.etat) }}>{d?.court ?? '—'}</p>
+              {chiffres[cle] && <p className="text-[13px] text-texte-2">{chiffres[cle]}</p>}
             </div>
           ))}
         </div>
+        {mesure && (
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            {QUESTIONS.filter((q) => mesure[q.cle] !== undefined).map((q) => (
+              <span key={q.cle} className="rounded-full bg-surface-2 px-2.5 py-1 text-xs text-texte-2">{q.libelle} {mesure[q.cle]}</span>
+            ))}
+            {onModifierMatin && <button type="button" onClick={onModifierMatin} className="px-1 py-1 text-xs font-semibold text-accent">Modifier</button>}
+          </div>
+        )}
         {autres.length > 0 && (
           <ul className="mt-2 space-y-0.5 text-sm">
             {autres.map((x) => (

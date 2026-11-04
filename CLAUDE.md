@@ -49,7 +49,7 @@ En ligne : https://titouandeoliveira16.github.io/coach/ (GitHub Pages, déployé
 - `src/modules/muscu/` : écrans Séance · Progrès ; règles pures et testées (`programme.ts`) ; tout l'état dans le réglage `muscu`.
 - Séances : activités enchaînées regroupées (`seances/enchainements.ts`), watts par bloc vs cible (`plan/blocs.ts`),
   contrôle FC et question « en réserve » selon le type de séance (`plan/controleFc.ts`, repères d'entraîneur).
-- Journal des repas du soir (Entraînement) : table `repas`, carte `forme/CarteRepas.tsx`, suivi dans Progrès.
+- Journal des repas du soir (Entraînement) : table `repas`, carte « Nutrition du jour » `forme/CarteNutrition.tsx` (besoin / mangé / écart ; formulaire dans `forme/CarteRepas.tsx`), suivi dans Progrès.
 - Nommage en français dans le code (`seance`, `prevue`, `enregistrer`…) : garder ce style.
 - Nouveau module : un dossier dans `src/modules/`, déclaré dans `src/app/modules.ts`.
 
