@@ -4,8 +4,7 @@ import { aujourdhui, decalerJour } from '../../../core/dates'
 import { CarteBilan } from '../plan/CarteBilan'
 import { lundiDe } from '../seances/donnees'
 import { CarteAujourdhui } from '../forme/CarteAujourdhui'
-import { CarteBesoins } from '../forme/CarteBesoins'
-import { CarteRepas } from '../forme/CarteRepas'
+import { CarteNutrition } from '../forme/CarteNutrition'
 import { CarteCalibration } from '../forme/CarteCalibration'
 import { CarteCpEnHausse } from '../forme/CarteCpEnHausse'
 import { CarteHorsPlan } from '../forme/CarteHorsPlan'
@@ -16,7 +15,6 @@ import { CartePesee } from '../forme/CartePesee'
 import { CartePlanCampus } from '../forme/CartePlanCampus'
 import { CarteRemise } from '../forme/CarteRemise'
 import { CarteResultat } from '../forme/CarteResultat'
-import { ResumeMatin } from '../forme/ResumeMatin'
 import { SaisieMatin } from '../forme/SaisieMatin'
 import { QUESTIONS, mesuresRecentes } from '../forme/donnees'
 
@@ -46,15 +44,13 @@ export function Aujourdhui() {
       {jourSemaine === 1 && <CarteBilan lundi={decalerJour(lundiDe(aujourdhui()), -7)} />}
       {complet && !edition ? (
         <>
-          <CarteAujourdhui />
-          <ResumeMatin mesure={duJour!} onModifier={() => setEdition(true)} />
+          <CarteAujourdhui onModifierMatin={() => setEdition(true)} />
         </>
       ) : (
         <SaisieMatin key={duJour?.modifieLe} existante={duJour} onTermine={() => setEdition(false)} />
       )}
-      <CarteRepas />
+      <CarteNutrition />
       <CarteBilanNutrition />
-      <CarteBesoins />
       <CarteCalibration />
       <CartePanne />
       <CartePesee />
