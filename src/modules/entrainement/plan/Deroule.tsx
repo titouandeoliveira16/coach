@@ -15,7 +15,7 @@ const horloge = (sec: number) => {
 const duree = (sec: number) => (sec >= 60 ? `${Math.floor(sec / 60)}'${sec % 60 ? String(sec % 60).padStart(2, '0') : ''}` : `${sec}"`)
 
 /** Profil de la séance comme sur Zwift : une barre par étape, hauteur = watts, couleur = zone (en % de la CP). */
-export function Profil({ etapes, cpW }: { etapes: Etape[]; cpW?: number }) {
+export function Profil({ etapes, cpW, extensible = false }: { etapes: Etape[]; cpW?: number; extensible?: boolean }) {
   // Répétitions déroulées : une barre par effort et par récup, comme sur Zwift
   const blocs = deplier(etapes).filter((e) => e.dureeSec > 0)
   const total = blocs.reduce((t, e) => t + e.dureeSec, 0)
@@ -24,7 +24,7 @@ export function Profil({ etapes, cpW }: { etapes: Etape[]; cpW?: number }) {
   const largeurs = blocs.map((e) => (e.dureeSec / total) * 1000)
   const departs = largeurs.map((_, i) => largeurs.slice(0, i).reduce((a, w) => a + w, 0))
   return (
-    <svg viewBox="0 0 1000 60" preserveAspectRatio="none" className="mt-2 block h-14 w-full rounded-lg bg-surface-2" aria-hidden>
+    <svg viewBox="0 0 1000 60" preserveAspectRatio="none" className={`mt-2 block w-full rounded-lg bg-surface-2 ${extensible ? 'h-auto min-h-14 flex-1' : 'h-14'}`} aria-hidden>
       {blocs.map((e, i) => {
         const h = e.w ? Math.max(0.12, e.w / wMax) * 56 : 56
         return <rect key={i} x={departs[i]} y={60 - h} width={Math.max(largeurs[i] - 1, 1)} height={h} fill={couleur(e, cpW)} />

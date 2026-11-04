@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { aujourdhui, decalerJour } from '../../../core/dates'
 import { CarteBilan } from '../plan/CarteBilan'
 import { lundiDe } from '../seances/donnees'
@@ -18,10 +18,29 @@ import { CarteResultat } from '../forme/CarteResultat'
 import { SaisieMatin } from '../forme/SaisieMatin'
 import { QUESTIONS, mesuresRecentes } from '../forme/donnees'
 
-/** Aujourd'hui : saisie du matin → feu du jour → séance du jour. */
+/** Hauteur pour remplir l'écran jusqu'à la barre du bas (112 px réservés par la coquille), recalculée si l'écran change. */
+function useHauteurEcran(pret: boolean) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [h, setH] = useState<number>()
+  useEffect(() => {
+    const calculer = () => {
+      if (!ref.current) return
+      const haut = ref.current.getBoundingClientRect().top + window.scrollY
+      setH(Math.max(0, window.innerHeight - haut - 112))
+    }
+    calculer()
+    window.addEventListener('resize', calculer)
+    return () => window.removeEventListener('resize', calculer)
+  }, [pret])
+  return { ref, h }
+}
+
+/** Aujourd'hui sur un seul écran : ta forme, la séance (la plus grande), la nutrition, puis pesée et imprévu en bas.
+ *  Les cartes se partagent toute la hauteur ; ce qu'on ouvre prend sa place, et la page ne défile qu'ensuite. */
 export function Aujourdhui() {
   const recentes = useLiveQuery(() => mesuresRecentes(1))
   const [edition, setEdition] = useState(false)
+  const { ref, h } = useHauteurEcran(recentes !== undefined)
 
   if (!recentes) return null
   const jourSemaine = new Date(`${aujourdhui()}T12:00:00`).getDay()
@@ -31,7 +50,7 @@ export function Aujourdhui() {
   const dateDuJour = new Date(`${aujourdhui()}T12:00:00`).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
 
   return (
-    <div className="space-y-3 pb-20">
+    <div ref={ref} className="flex flex-col gap-3" style={h ? { minHeight: h } : undefined}>
       <p className="text-lg capitalize text-texte-2">{dateDuJour}</p>
       <CarteRemise />
       <CartePlanCampus />
@@ -43,17 +62,18 @@ export function Aujourdhui() {
       {jourSemaine === 0 && <CarteBilan lundi={lundiDe(aujourdhui())} />}
       {jourSemaine === 1 && <CarteBilan lundi={decalerJour(lundiDe(aujourdhui()), -7)} />}
       {complet && !edition ? (
-        <>
-          <CarteAujourdhui onModifierMatin={() => setEdition(true)} />
-        </>
+        <CarteAujourdhui onModifierMatin={() => setEdition(true)} />
       ) : (
         <SaisieMatin key={duJour?.modifieLe} existante={duJour} onTermine={() => setEdition(false)} />
       )}
       <CarteNutrition />
       <CarteBilanNutrition />
       <CarteCalibration />
-      <CartePanne />
-      <CartePesee />
+      {/* En bas : pesée et imprévu sur une ligne (la marge à droite laisse la place au bouton +) */}
+      <div className="flex gap-2 pr-[76px]">
+        <CartePesee compact />
+        <CartePanne compact />
+      </div>
     </div>
   )
 }

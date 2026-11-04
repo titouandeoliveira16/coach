@@ -27,11 +27,12 @@ export function CarteNutrition() {
   const nutrition = useLiveQuery(lireReglagesNutrition)
   const [saisie, setSaisie] = useState<'jour' | 'hier'>()
   const [detail, setDetail] = useState(false)
+  const [ouverte, setOuverte] = useState(false)
   if (!b || mange === undefined) return null
 
-  // Rattrapage de la veille : l'assiette d'hier pas encore notée
+  // Rattrapage de la veille : l'assiette d'hier pas encore notée (un bouton dans la carte)
   const hierAFaire = cible?.jour === hier && !cible.saisie
-  if (saisie || hierAFaire) {
+  if (saisie) {
     const j = saisie === 'jour' ? jour : hier
     return (
       <Formulaire key={j} jour={j} titre={j === jour ? '🍽️ Ton assiette du jour' : "🍽️ Ton assiette d'hier"}
@@ -55,9 +56,29 @@ export function CarteNutrition() {
     && !nutrition.etalements?.some((e) => e.date === d) && !nutrition.etalementsRefuses?.includes(d))
 
   return (
-    <Carte>
-      <p className="text-xs font-semibold uppercase tracking-wider text-texte-3">Nutrition du jour<Aide titre="Besoins du jour" texte={AIDES.besoins} /></p>
-      <div className="mt-2 grid grid-cols-4 text-sm">
+    <Carte className="flex flex-[1_0_auto] flex-col gap-2">
+      <button type="button" onClick={() => setOuverte(!ouverte)} className="flex items-center justify-between text-left">
+        <span className="text-xs font-semibold uppercase tracking-wider text-texte-3">Nutrition du jour</span>
+        <span className="text-sm">
+          {m?.kcal !== undefined ? <b>{formatNombre(m.kcal)}</b> : <span className="text-texte-3">—</span>}
+          <span className="text-texte-2"> / {formatNombre(b.kcal)} kcal</span> <span className="text-texte-3">{ouverte ? '▴' : '▾'}</span>
+        </span>
+      </button>
+      {!ouverte && (
+        <button type="button" onClick={() => setOuverte(true)} className="grid min-h-11 flex-1 grid-cols-3 gap-1.5 text-center text-sm text-texte-2">
+          {([['G', b.glucides, m?.glucides], ['P', b.proteines, m?.proteines], ['L', b.lipides, m?.lipides]] as const).map(([n, besoin, v]) => (
+            <span key={n} className="flex items-center justify-center rounded-xl bg-surface-2">{n} {v !== undefined ? `${formatNombre(v)} / ` : ''}{formatNombre(besoin)} g</span>
+          ))}
+        </button>
+      )}
+      {hierAFaire && (
+        <button type="button" onClick={() => setSaisie('hier')} className="min-h-11 rounded-xl border border-accent text-sm font-semibold text-accent">
+          Noter mon assiette d'hier
+        </button>
+      )}
+      {ouverte && <>
+      <p className="text-right"><Aide titre="Besoins du jour" texte={AIDES.besoins} /></p>
+      <div className="grid grid-cols-4 text-sm">
         <span />
         <span className="py-1 text-right text-texte-3">Besoin</span>
         <span className="py-1 text-right text-texte-3">Mangé</span>
@@ -146,6 +167,7 @@ export function CarteNutrition() {
           )}
         </div>
       )}
+      </>}
     </Carte>
   )
 }

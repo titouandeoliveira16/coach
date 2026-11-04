@@ -6,10 +6,11 @@ import { useProfil } from '../../../core/profil'
 import { Bouton } from '../../../core/ui/Bouton'
 import { Carte } from '../../../core/ui/Carte'
 import { ChampNombre } from '../../../core/ui/ChampNombre'
+import { Feuille } from '../../../core/ui/Feuille'
 import { effacerPesee, enregistrerPesee, lireSansPesee, marquerSansPesee, peseesValides } from './pesees'
 
 /** Poids : une ligne avec la dernière pesée ; on se pèse quand on veut (toucher pour saisir ou effacer). */
-export function CartePesee() {
+export function CartePesee({ compact = false }: { compact?: boolean } = {}) {
   const [profil] = useProfil()
   const dernieres = useLiveQuery(peseesValides)
   const sansPesee = useLiveQuery(async () => (await lireSansPesee()).includes(aujourdhui()))
@@ -20,6 +21,29 @@ export function CartePesee() {
   const [derniere, precedente] = dernieres
   const duJour = derniere?.date === aujourdhui() ? derniere : undefined
   const ecart = derniere && precedente ? derniere.poidsKg - precedente.poidsKg : undefined
+
+  const bouton = 'min-h-12 flex-1 whitespace-nowrap rounded-xl border px-1 text-[13px] font-semibold'
+  // Version compacte (bas de l'écran Aujourd'hui) : deux boutons, la saisie monte du bas
+  if (compact && !ouverte) {
+    if (sansPesee)
+      return (
+        <button type="button" className={`${bouton} border-bordure bg-surface text-texte-3`} onClick={() => marquerSansPesee(aujourdhui(), false)}>
+          Pas de pesée ✓ <span className="font-normal underline">annuler</span>
+        </button>
+      )
+    return (
+      <>
+        <button type="button" onClick={() => setOuverte(true)} className={`${bouton} border-bordure bg-surface`}>
+          {duJour ? `${formatNombre(duJour.poidsKg, 1)} kg` : 'Me peser'}
+        </button>
+        {!duJour && (
+          <button type="button" onClick={() => marquerSansPesee(aujourdhui(), true)} className={`${bouton} border-[#f87171]/50 bg-[#f87171]/10 text-[#f87171]`}>
+            Pas de pesée
+          </button>
+        )}
+      </>
+    )
+  }
 
   if (sansPesee && !ouverte) {
     return (
@@ -54,8 +78,8 @@ export function CartePesee() {
   }
 
   const kg = poids ?? duJour?.poidsKg ?? profil.poidsKg
-  return (
-    <Carte titre="⚖️ Pesée du jour">
+  const contenu = (
+    <>
       <p className="mb-1 text-xs text-texte-3">Le matin, à jeun, après être passé aux toilettes.</p>
       <ChampNombre libelle="Poids" unite="kg" valeur={kg} onValider={setPoids} />
       <Bouton className="mt-2" disabled={!kg} onClick={async () => {
@@ -70,6 +94,9 @@ export function CartePesee() {
         }}>Supprimer la pesée d'aujourd'hui</button>
       )}
       <button type="button" className="w-full py-2 text-sm text-texte-3" onClick={() => setOuverte(false)}>Fermer</button>
-    </Carte>
+    </>
   )
+  return compact
+    ? <Feuille titre="⚖️ Pesée du jour" onFermer={() => setOuverte(false)}>{contenu}</Feuille>
+    : <Carte titre="⚖️ Pesée du jour">{contenu}</Carte>
 }
