@@ -3,8 +3,8 @@
 Points décidés ou mis de côté, à reprendre au bon moment.
 
 ## À lui rappeler au début de la prochaine conversation (demandé le 3/11/2026)
-- **Supabase : redéployer la fonction `rappels`** (version de la v0.69.0 : relevés le 5, plus rien le 1er). Il n'y est pas
-  arrivé seul : l'accompagner pas à pas (copier le fichier brut sur GitHub → Edge Functions → rappels → Code → Deploy).
+- ~~Supabase : redéployer `rappels`~~ fait le 4/11/2026. Piste proposée : déploiement automatique des fonctions par GitHub
+  (clé d'accès Supabase rangée par lui dans les secrets GitHub), s'il le souhaite.
 - **Budget : comparer l'appli avec sa banque.** Lui demander l'export CSV (Budget → Réglages → Exporter) ou des captures
   (« Voir le détail » du reste à vivre, liste des mouvements), et ses captures de relevé depuis le début du suivi. Comparer
   ligne par ligne dans le scratchpad, corriger (fichier d'import si besoin), puis effacer les fichiers. Rien de tout ça dans le dépôt.
