@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { db } from '../../../core/db'
 import { aujourdhui, depuisJour } from '../../../core/dates'
@@ -10,16 +10,16 @@ import { AIDES } from '../aides'
 import { analyser } from '../analyse/donnees'
 import { adapterDuJour } from '../plan/adaptation'
 import { JOURS_REPRISE, annulerReport, repriseApresMaladie, reporterIntensite } from '../plan/imprevus'
-import { estIntensite } from '../plan/programme'
+import { CP_DEFAUT, estIntensite } from '../plan/programme'
 import { BoutonsEnvoi } from '../plan/BoutonsEnvoi'
-import { Deroule } from '../plan/Deroule'
+import { Deroule, Profil } from '../plan/Deroule'
+import { useReglagesEntrainement } from '../reglagesEntrainement'
 import { NutritionSeance } from '../plan/NutritionSeance'
 import { iconeSport } from '../sports'
 import { basculerSansMontre } from './donnees'
 import { SeancesFaites } from './SeancesFaites'
 import type { Raison } from '../types'
 
-const PASTILLE = { vert: '🟢', orange: '🟠', rouge: '🔴' }
 const TITRE = { vert: 'Feu vert', orange: 'Prudence', rouge: 'Récupère' }
 const COULEUR = { vert: '#4ade80', orange: '#fb923c', rouge: '#f87171' }
 
@@ -46,6 +46,9 @@ function ChoixSeance({ maintenue, conseil, prevu, couleur, onChoisir }: {
 /** Signal du jour, raison, séance prévue et recommandation. */
 export function CarteAujourdhui() {
   const jour = aujourdhui()
+  const [voir, setVoir] = useState<'deroule' | 'nutrition'>()
+  const [r] = useReglagesEntrainement()
+  const cpW = r.cpW ?? CP_DEFAUT
   const a = useLiveQuery(() => analyser(jour), [jour])
   const prevues = useLiveQuery(() => db.prevues.where('date').equals(jour).toArray(), [jour])
   // null = pas encore de décision ; undefined = lecture en cours
@@ -97,59 +100,113 @@ export function CarteAujourdhui() {
     else await enregistrer(db.indispos, { date: jour, raison })
   }
 
+  const etapesDuJour = prevue && (decision?.force ? prevue.velo?.etapes : adaptation!.etapes)
+  const cases = (['recuperation', 'pouls', 'sommeil', 'ressenti'] as const).map((cle) => ({ cle, d: signal.details.find((x) => x.cle === cle) }))
+  const autres = signal.details.filter((x) => !x.cle || x.cle === 'charge')
+  const NOMS_CASES = { recuperation: 'Récupération (VFC)', pouls: 'Pouls au repos', sommeil: 'Sommeil', ressenti: 'Ressenti' }
+  const couleurEtat = (e?: 'ok' | 'alerte' | 'info') => (e === 'alerte' ? COULEUR[signal.couleur === 'vert' ? 'orange' : signal.couleur] : e === 'ok' ? COULEUR.vert : '#a3abb7')
+  const petitBouton = (actif: boolean) => `min-h-11 flex-1 rounded-xl border px-1 text-[13px] font-semibold ${actif ? 'border-[#f87171] bg-[#f87171] text-fond' : 'border-bordure text-texte-2'}`
+
   return (
-    <Carte>
-      <div className="flex items-center gap-3">
-        <span className="text-4xl">{PASTILLE[signal.couleur]}</span>
-        <div className="flex-1">
-          <p className="text-xl font-bold" style={{ color: COULEUR[signal.couleur] }}>{TITRE[signal.couleur]}</p>
-          {signal.calibrationVfc && <p className="text-xs text-texte-3">VFC en calibration ({a.vfc.nBase}/14 jours)</p>}
+    <>
+      {/* Ta forme : le feu et ses indicateurs */}
+      <Carte>
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-semibold uppercase tracking-wider text-texte-3">Ta forme</p>
+          <p className="flex items-center gap-1.5 font-bold" style={{ color: COULEUR[signal.couleur] }}>
+            <span className="h-2.5 w-2.5 rounded-full" style={{ background: COULEUR[signal.couleur] }} />{TITRE[signal.couleur]}
+          </p>
         </div>
-      </div>
+        {signal.calibrationVfc && <p className="mt-0.5 text-xs text-texte-3">VFC en calibration ({a.vfc.nBase}/14 jours)</p>}
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          {cases.map(({ cle, d }) => (
+            <div key={cle} className="rounded-xl bg-surface-2 p-2.5" style={d?.etat === 'alerte' ? { boxShadow: `inset 0 0 0 1px ${couleurEtat('alerte')}` } : undefined}>
+              <p className="text-xs text-texte-3">{NOMS_CASES[cle]}</p>
+              <p className="font-semibold" style={{ color: couleurEtat(d?.etat) }}>{d?.court ?? '—'}</p>
+            </div>
+          ))}
+        </div>
+        {autres.length > 0 && (
+          <ul className="mt-2 space-y-0.5 text-sm">
+            {autres.map((x) => (
+              <li key={x.texte} style={{ color: x.etat === 'alerte' ? couleurEtat('alerte') : undefined }} className={x.etat === 'alerte' ? '' : 'text-texte-3'}>{x.texte}</li>
+            ))}
+          </ul>
+        )}
+        {signal.details.some((x) => x.etat === 'alerte' && x.cle && x.cle !== 'charge' && x.texte !== x.court) && (
+          <p className="mt-2 text-sm" style={{ color: couleurEtat('alerte') }}>
+            {signal.details.filter((x) => x.etat === 'alerte' && x.cle && x.cle !== 'charge' && x.texte !== x.court).map((x) => x.texte).join(' · ')}
+          </p>
+        )}
+        <div className="mt-3 flex gap-2">
+          <button type="button" onClick={() => basculerSansMontre(jour)} className={`${petitBouton(false)} ${mesure?.sansMontre ? 'border-accent text-accent' : ''}`}>
+            {mesure?.sansMontre ? '✓ Sans montre' : 'Nuit sans montre'}
+          </button>
+          {(['Malade', 'Douleur / blessure'] as Raison[]).map((r) => (
+            <button key={r} type="button" onClick={() => signaler(r)} className={petitBouton(indispo?.raison === r)}>
+              {r === 'Malade' ? 'Malade' : 'Douleur'}
+            </button>
+          ))}
+          <span className="shrink-0 self-center"><Aide titre="Nuit sans montre" texte={AIDES.nuitSansMontre} /></span>
+        </div>
+        {malade && <p className="mt-1 text-xs text-texte-3">Noté pour aujourd'hui : la journée est marquée indisponible.</p>}
+        {troisJours && (
+          <p className="mt-2 rounded-xl border border-[#f87171]/40 bg-[#f87171]/10 p-3 text-sm">
+            3 jours de suite en alerte avec une maladie ou une douleur : prends l'avis d'un médecin avant de reprendre.
+          </p>
+        )}
+      </Carte>
 
-      <ul className="mt-2 space-y-0.5 text-sm">
-        {signal.details.map((x) => (
-          <li key={x.texte} className={x.etat === 'alerte' ? 'text-[#fb923c]' : x.etat === 'info' ? 'text-texte-3' : 'text-texte-2'}>
-            <span className="mr-1.5">{x.icone}</span>{x.texte}
-          </li>
-        ))}
-      </ul>
-      <button type="button" onClick={() => basculerSansMontre(jour)} className="mt-1.5 text-xs text-texte-3 underline">
-        {mesure?.sansMontre ? '⌚ Annuler « nuit sans montre »' : '⌚ J’ai dormi sans ma montre (ou pas toute la nuit)'}
-      </button>
-      <Aide titre="Nuit sans montre" texte={AIDES.nuitSansMontre} />
-      {reprise ? (
-        <p className="mt-2 rounded-xl bg-surface-2 p-3 text-sm">
-          💪 <b>Reprise après maladie (jour {reprise}/{JOURS_REPRISE})</b> : pas d'intensité, sorties très faciles de 45 min au plus. L'intensité revient ensuite, si le feu est vert.
-        </p>
-      ) : null}
-
-      <div className="mt-3 rounded-xl bg-surface-2 p-3">
-        <p className="text-xs uppercase tracking-wider text-texte-3">Séance du jour</p>
+      {/* Séance du jour */}
+      <Carte>
+        <p className="text-xs font-semibold uppercase tracking-wider text-texte-3">Séance du jour</p>
+        {reprise ? (
+          <p className="mt-2 rounded-xl bg-surface-2 p-3 text-sm">
+            💪 <b>Reprise après maladie (jour {reprise}/{JOURS_REPRISE})</b> : pas d'intensité, sorties très faciles de 45 min au plus. L'intensité revient ensuite, si le feu est vert.
+          </p>
+        ) : null}
         {faites ? <SeancesFaites jour={jour} /> : null}
         {faites && prevue && <p className="mt-3 text-xs uppercase tracking-wider text-texte-3">Encore prévu</p>}
         {prevue ? (
           <>
-            <p className="font-semibold">{iconeSport(prevue.sport)} {prevue.titre} · {prevue.dureeMin} min{prevue.kjPrevu ? ` · ${prevue.kjPrevu} kJ` : ''}</p>
-            {prevue.detail && <p className="mt-1 text-xs text-texte-2">{prevue.detail}</p>}
+            <p className="mt-1 text-2xl font-bold leading-tight">{iconeSport(prevue.sport)} {prevue.titre}</p>
+            <p className="mt-0.5 text-sm text-texte-2">{prevue.dureeMin} min{prevue.kjPrevu ? ` · ${prevue.kjPrevu} kJ` : ''}</p>
             {adaptation?.modifiee && (
-              <div className="mt-2 rounded-lg border p-2.5 text-sm" style={{ borderColor: `${COULEUR[signal.couleur]}66` }}>
-                <p><b style={{ color: COULEUR[signal.couleur] }}>Pourquoi {signal.couleur === 'orange' ? 'une version raccourcie' : 'pas d’intensité'} ?</b> {pourquoi}</p>
-                <p className="mt-1 text-xs text-texte-3">{regle}</p>
+              <>
+                <p className="mt-2 text-sm"><b style={{ color: COULEUR[signal.couleur] }}>Pourquoi {signal.couleur === 'orange' ? 'raccourcie' : 'pas d’intensité'} ?</b> {pourquoi}</p>
                 <ChoixSeance maintenue={!!decision?.force} couleur={COULEUR[signal.couleur]} onChoisir={choisir}
-                  conseil={signal.couleur === 'orange' ? 'Version raccourcie' : 'Très facile ou repos'}
-                  prevu={signal.couleur === 'orange' ? 'Séance complète' : 'Séance prévue'} />
-              </div>
+                  conseil={signal.couleur === 'orange' ? 'Raccourcie' : 'Très facile ou repos'}
+                  prevu={signal.couleur === 'orange' ? 'Complète' : 'Séance prévue'} />
+                <p className="mt-1 text-xs text-texte-3">{regle}</p>
+              </>
             )}
-            <p className="mt-2 font-semibold" style={{ color: decision?.force ? '#4ade80' : COULEUR[signal.couleur] }}>
-              {decision?.force ? '✋ Séance complète maintenue : arrête-toi si les watts ne tiennent pas.' : adaptation!.texte}
-            </p>
-            {(decision?.force ? prevue.velo?.etapes : adaptation!.etapes) && <Deroule etapes={(decision?.force ? prevue.velo?.etapes : adaptation!.etapes)!} />}
-            {prevue.sport === 'velo' && (decision?.force ? prevue.velo?.etapes : adaptation!.etapes) && <BoutonsEnvoi p={prevue} etapes={(decision?.force ? prevue.velo?.etapes : adaptation!.etapes)!} />}
-            {!(adaptation?.modifiee && !decision?.force && signal.couleur === 'rouge') && <NutritionSeance p={prevue} />}
+            {(adaptation?.modifiee || decision?.force) && (
+              <p className="mt-2 text-sm font-semibold" style={{ color: decision?.force ? COULEUR.vert : COULEUR[signal.couleur] }}>
+                {decision?.force ? 'Séance complète maintenue : arrête-toi si les watts ne tiennent pas.' : adaptation!.texte}
+              </p>
+            )}
+            {etapesDuJour && <Profil etapes={etapesDuJour} cpW={cpW} />}
+            {prevue.detail && !adaptation?.modifiee && <p className="mt-2 text-sm text-texte-2">{prevue.detail}</p>}
+            {prevue.sport === 'velo' && etapesDuJour && <BoutonsEnvoi p={prevue} etapes={etapesDuJour} />}
+            <div className="mt-2 flex gap-2">
+              {etapesDuJour && (
+                <button type="button" onClick={() => setVoir(voir === 'deroule' ? undefined : 'deroule')}
+                  className={`min-h-11 flex-1 rounded-xl border text-sm font-semibold ${voir === 'deroule' ? 'border-accent text-accent' : 'border-bordure bg-surface-2'}`}>
+                  {voir === 'deroule' ? 'Masquer le déroulé' : 'Déroulé complet'}
+                </button>
+              )}
+              {!(adaptation?.modifiee && !decision?.force && signal.couleur === 'rouge') && (
+                <button type="button" onClick={() => setVoir(voir === 'nutrition' ? undefined : 'nutrition')}
+                  className={`min-h-11 flex-1 rounded-xl border text-sm font-semibold ${voir === 'nutrition' ? 'border-accent text-accent' : 'border-bordure bg-surface-2'}`}>
+                  {voir === 'nutrition' ? 'Masquer la nutrition' : 'Nutrition'}
+                </button>
+              )}
+            </div>
+            {voir === 'deroule' && etapesDuJour && <Deroule etapes={etapesDuJour} sansProfil />}
+            {voir === 'nutrition' && <NutritionSeance p={prevue} />}
           </>
         ) : faites ? null : (
-          <p className="text-texte-2">
+          <p className="mt-1 text-texte-2">
             {reportee && (
               <span className="mb-1 block font-semibold" style={{ color: COULEUR.rouge }}>
                 Feu rouge : {reportee.titre} {reportee.statut === 'reportee' ? 'est à reporter (plus de jour possible cette semaine)' : `reportée au ${depuisJour(reportee.date).toLocaleDateString('fr-FR', { weekday: 'long' })}`}.
@@ -162,27 +219,11 @@ export function CarteAujourdhui() {
         {reportee && !prevue && (
           <div className="mt-2 text-sm">
             {pourquoi && <p><b style={{ color: COULEUR.rouge }}>Pourquoi ?</b> {pourquoi}</p>}
-            <p className="mt-1 text-xs text-texte-3">{regle}</p>
             <ChoixSeance maintenue={false} couleur={COULEUR.rouge} onChoisir={choisir} conseil="Reporter la séance" prevu="La faire aujourd’hui" />
+            <p className="mt-1 text-xs text-texte-3">{regle}</p>
           </div>
         )}
-      </div>
-
-      {troisJours && (
-        <p className="mt-3 rounded-xl border border-[#f87171]/40 bg-[#f87171]/10 p-3 text-sm">
-          3 jours de suite en alerte avec une maladie ou une douleur : prends l'avis d'un médecin avant de reprendre.
-        </p>
-      )}
-
-      <div className="mt-3 flex gap-2">
-        {(['Malade', 'Douleur / blessure'] as Raison[]).map((r) => (
-          <button key={r} type="button" onClick={() => signaler(r)}
-            className={`flex-1 rounded-xl border py-2 text-sm font-semibold ${indispo?.raison === r ? 'border-[#f87171] bg-[#f87171] text-fond' : 'border-bordure text-texte-2'}`}>
-            {r === 'Malade' ? '🤒 Malade' : '🤕 Douleur'}
-          </button>
-        ))}
-      </div>
-      {malade && <p className="mt-2 text-xs text-texte-3">Noté pour aujourd'hui : la journée est marquée indisponible.</p>}
-    </Carte>
+      </Carte>
+    </>
   )
 }

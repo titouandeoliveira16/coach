@@ -15,7 +15,7 @@ const horloge = (sec: number) => {
 const duree = (sec: number) => (sec >= 60 ? `${Math.floor(sec / 60)}'${sec % 60 ? String(sec % 60).padStart(2, '0') : ''}` : `${sec}"`)
 
 /** Profil de la séance comme sur Zwift : une barre par étape, hauteur = watts, couleur = zone (en % de la CP). */
-function Profil({ etapes, cpW }: { etapes: Etape[]; cpW?: number }) {
+export function Profil({ etapes, cpW }: { etapes: Etape[]; cpW?: number }) {
   // Répétitions déroulées : une barre par effort et par récup, comme sur Zwift
   const blocs = deplier(etapes).filter((e) => e.dureeSec > 0)
   const total = blocs.reduce((t, e) => t + e.dureeSec, 0)
@@ -36,13 +36,13 @@ function Profil({ etapes, cpW }: { etapes: Etape[]; cpW?: number }) {
 const couleur = (e: Pick<Etape, 'w'>, cpW?: number) => (e.w && cpW ? couleurPctCP((e.w / cpW) * 100) : e.w ? '#8b949e' : couleurPctCP(undefined))
 
 /** Déroulé minute par minute d'une séance vélo (à suivre sur le compteur), en couleurs de zones comme sur Zwift. */
-export function Deroule({ etapes }: { etapes: Etape[] }) {
+export function Deroule({ etapes, sansProfil = false }: { etapes: Etape[]; sansProfil?: boolean }) {
   const [r] = useReglagesEntrainement()
   // Même CP que celle qui a servi à calculer les watts (CP provisoire tant qu'aucun test n'est saisi)
   const cpW = r.cpW ?? CP_DEFAUT
   return (
     <>
-      <Profil etapes={etapes} cpW={cpW} />
+      {!sansProfil && <Profil etapes={etapes} cpW={cpW} />}
       {etapes.some((e) => e.wMin) && (
         <p className="mt-1.5 text-xs text-texte-3">
           Vise la plage : c'est la moyenne de chaque répétition qui compte. La cadence est un repère, pas une consigne.
