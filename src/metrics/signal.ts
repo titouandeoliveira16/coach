@@ -83,6 +83,9 @@ export interface Detail {
   icone: string
   texte: string
   etat: 'ok' | 'alerte' | 'info'
+  /** Indicateur (case de la carte « Ta forme ») et sa valeur en un ou deux mots */
+  cle?: 'recuperation' | 'pouls' | 'sommeil' | 'ressenti' | 'charge'
+  court?: string
 }
 
 export interface Signal {
@@ -162,42 +165,43 @@ export function calculerSignal(e: EntreeSignal, s: Seuils = SEUILS_DEFAUT): Sign
 function detailsSignal(e: EntreeSignal, alertes: Alerte[], calibration: boolean, s: Seuils): Detail[] {
   const a = (code: Alerte['code']) => alertes.some((x) => x.code === code)
   const d: Detail[] = []
-  const ok = (icone: string, texte: string) => d.push({ icone, texte, etat: 'ok' })
-  const alerte = (icone: string, texte: string) => d.push({ icone, texte, etat: 'alerte' })
-  const info = (icone: string, texte: string) => d.push({ icone, texte, etat: 'info' })
+  type Case = [Detail['cle'], string]
+  const ok = (icone: string, texte: string, c?: Case) => d.push({ icone, texte, etat: 'ok', ...(c ? { cle: c[0], court: c[1] } : {}) })
+  const alerte = (icone: string, texte: string, c?: Case) => d.push({ icone, texte, etat: 'alerte', ...(c ? { cle: c[0], court: c[1] } : {}) })
+  const info = (icone: string, texte: string, c?: Case) => d.push({ icone, texte, etat: 'info', ...(c ? { cle: c[0], court: c[1] } : {}) })
 
   if (a('malade')) alerte('🤒', 'Malade ou douleur signalée : le corps passe avant le plan')
 
   // Récupération (VFC)
   if (e.sansMontre) info('⌚', 'Nuit sans montre : on se fie aux nuits d’avant')
   else if (e.vfc.lnJour === undefined) info('⌚', 'Mesure de la nuit pas (encore) arrivée : on se fie aux nuits d’avant')
-  if (a('vfc')) alerte('💓', 'Récupération plus basse que d’habitude sur la semaine')
-  else if (calibration) info('💓', 'Récupération : l’appli apprend encore ta normale')
-  else if (e.vfc.ln7 !== undefined) ok('💓', 'Récupération normale')
+  if (a('vfc')) alerte('💓', 'Récupération plus basse que d’habitude sur la semaine', ['recuperation', 'Plus basse'])
+  else if (calibration) info('💓', 'Récupération : l’appli apprend encore ta normale', ['recuperation', 'En calibration'])
+  else if (e.vfc.ln7 !== undefined) ok('💓', 'Récupération normale', ['recuperation', 'Normale'])
   if (a('cv')) info('〰️', 'Récupération irrégulière cette semaine (pour info)')
   if (a('saturation')) info('🔋', 'Récupération très haute en plein bloc chargé : écoute tes sensations')
 
   // Pouls au repos
-  if (a('fc-repos')) alerte('❤️', 'Pouls au repos plus haut que d’habitude')
-  else if (e.vfc.fcRepos7 !== undefined && e.vfc.fcReposBase !== undefined) ok('❤️', 'Pouls au repos normal')
+  if (a('fc-repos')) alerte('❤️', 'Pouls au repos plus haut que d’habitude', ['pouls', 'Plus haut'])
+  else if (e.vfc.fcRepos7 !== undefined && e.vfc.fcReposBase !== undefined) ok('❤️', 'Pouls au repos normal', ['pouls', 'Normal'])
 
   // Sommeil
   const h = e.sommeilH
   const dette = h?.moyenne7 !== undefined && (h.moyenne7 < s.moyenne7MinH || (h.moyenne30 !== undefined && h.moyenne7 < h.moyenne30 - s.ecartPersoH))
-  if (h?.nuit !== undefined && h.nuit < s.nuitMinH) alerte('😴', dette ? 'Nuit courte, et manque de sommeil sur la semaine' : 'Nuit courte')
-  else if (dette) alerte('😴', 'Manque de sommeil accumulé sur la semaine')
-  else if (e.sommeil !== undefined && e.sommeil <= s.sommeilMax) alerte('😴', 'Mauvaise nuit d’après toi')
-  else if (h?.nuit !== undefined || h?.moyenne7 !== undefined) ok('😴', 'Sommeil suffisant')
+  if (h?.nuit !== undefined && h.nuit < s.nuitMinH) alerte('😴', dette ? 'Nuit courte, et manque de sommeil sur la semaine' : 'Nuit courte', ['sommeil', 'Nuit courte'])
+  else if (dette) alerte('😴', 'Manque de sommeil accumulé sur la semaine', ['sommeil', 'En retard'])
+  else if (e.sommeil !== undefined && e.sommeil <= s.sommeilMax) alerte('😴', 'Mauvaise nuit d’après toi', ['sommeil', 'Mauvaise nuit'])
+  else if (h?.nuit !== undefined || h?.moyenne7 !== undefined) ok('😴', 'Sommeil suffisant', ['sommeil', 'Suffisant'])
 
   // Ressenti du matin
-  if (e.ressenti === undefined) info('🙂', 'Ressenti du matin pas encore noté')
-  else if (e.ressenti < s.ressentiMin) alerte('🙂', 'Ressenti en baisse ce matin')
-  else ok('🙂', 'Bon ressenti ce matin')
+  if (e.ressenti === undefined) info('🙂', 'Ressenti du matin pas encore noté', ['ressenti', 'Pas noté'])
+  else if (e.ressenti < s.ressentiMin) alerte('🙂', 'Ressenti en baisse ce matin', ['ressenti', 'En baisse'])
+  else ok('🙂', 'Bon ressenti ce matin', ['ressenti', 'Bon'])
 
   // Charge d'entraînement
-  if (a('pic')) alerte('🏋️', 'Hausse brutale de ta charge d’entraînement')
-  if (a('tsb')) alerte('🏋️', 'Fatigue d’entraînement accumulée')
-  if (!a('pic') && !a('tsb') && (e.tsb !== undefined || e.ratioPic !== undefined)) ok('🏋️', 'Charge d’entraînement bien dosée')
+  if (a('pic')) alerte('🏋️', 'Hausse brutale de ta charge d’entraînement', ['charge', 'Hausse brutale'])
+  if (a('tsb')) alerte('🏋️', 'Fatigue d’entraînement accumulée', ['charge', 'Fatigue'])
+  if (!a('pic') && !a('tsb') && (e.tsb !== undefined || e.ratioPic !== undefined)) ok('🏋️', 'Charge d’entraînement bien dosée', ['charge', 'Bien dosée'])
   return d
 }
 
