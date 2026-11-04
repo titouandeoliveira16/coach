@@ -42,9 +42,12 @@ export function CartePesee() {
         </span>
       </button>
       {!duJour && (
-        <button type="button" className="w-full py-1 text-right text-sm text-texte-3" onClick={() => marquerSansPesee(aujourdhui(), true)}>
-          Pas de pesée aujourd'hui (oubli)
-        </button>
+        <div className="flex justify-end">
+          <button type="button" className="rounded-xl border border-[#f87171]/50 bg-[#f87171]/10 px-3.5 py-2 text-sm font-semibold text-[#f87171] active:opacity-60"
+            onClick={() => marquerSansPesee(aujourdhui(), true)}>
+            ✕ Pas de pesée aujourd'hui
+          </button>
+        </div>
       )}
       </div>
     )
