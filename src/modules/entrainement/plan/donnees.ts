@@ -94,6 +94,33 @@ export async function changerDeJour(p: SeancePrevue, vers: string, ensemble = fa
     : [`${p.titre} passe au ${nom(vers)}.`]
 }
 
+/**
+ * Jours où déplacer une séance plutôt que l'annuler : de demain (ou aujourd'hui si elle était prévue avant) à dimanche,
+ * jours libres sans indisponibilité. Pour une séance dure : « conseillé » s'il n'y a pas de séance dure la veille ni le lendemain.
+ */
+export async function joursPourDeplacer(p: SeancePrevue) {
+  const jour = aujourdhui()
+  const semaine = joursDe(lundiDe(p.date))
+  const debut = p.date < jour ? jour : decalerJour(jour, 1)
+  const autour = (await db.prevues.where('date').between(decalerJour(semaine[0], -1), decalerJour(semaine[6], 1), true, true).toArray())
+    .filter((x) => x.id !== p.id && (x.statut === 'prevue' || x.statut === 'faite'))
+  const indispos = new Set((await db.indispos.where('date').between(semaine[0], semaine[6], true, true).toArray()).map((i) => i.date))
+  if (p.sport === 'velo') for (const d of await joursPanneVelo()) indispos.add(d)
+  const dur = (d: string) => autour.some((x) => x.date === d && x.intensite === 'haute')
+  return semaine
+    .filter((d) => d >= debut && d !== p.date && !indispos.has(d) && !autour.some((x) => x.date === d))
+    .map((d) => {
+      const voisinDur = p.intensite === 'haute' && (dur(decalerJour(d, -1)) || dur(decalerJour(d, 1)))
+      return { date: d, conseille: !voisinDur, note: voisinDur ? 'séance dure juste avant ou après' : 'libre' }
+    })
+}
+
+/** Annuler vraiment une séance (sans la replacer) : elle reste notée « pas faite », avec la raison. */
+export async function annulerPrevue(p: SeancePrevue, raison: Raison) {
+  await enregistrer(db.prevues, { ...p, statut: 'non-faite', raison })
+  return [`${p.titre} annulée (${raison}) : elle n'est pas rattrapée.`]
+}
+
 export const enregistrerPrevue = (p: SeancePrevue) => enregistrer(db.prevues, p)
 export const supprimerPrevue = (id: string) => supprimer(db.prevues, id)
 

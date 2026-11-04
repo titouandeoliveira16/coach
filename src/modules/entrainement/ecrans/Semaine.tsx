@@ -17,7 +17,7 @@ import { NutritionSeance } from '../plan/NutritionSeance'
 import { joursPanneVelo } from '../plan/imprevus'
 import { annulerSemaineChargee, lireSemaineChargee, passerSemaineChargee } from '../plan/semaineChargee'
 import { FormulairePrevue } from '../plan/FormulairePrevue'
-import { changerDeJour, chargesSemaine, declarerNonFaite, joursDe, supprimerPrevue } from '../plan/donnees'
+import { annulerPrevue, changerDeJour, chargesSemaine, joursDe, joursPourDeplacer, supprimerPrevue } from '../plan/donnees'
 import { alertesCumul, estIntensite, genererSemaineVelo, lireMeta, noterResultat } from '../plan/programme'
 import { programmeDe, useReglagesEntrainement } from '../reglagesEntrainement'
 import { lundiDe, nouvelId } from '../seances/donnees'
@@ -216,8 +216,11 @@ function DetailSeance({ p, jours, prevues, onFermer, onMessage }: {
   p: SeancePrevue; jours: string[]; prevues: SeancePrevue[]; onFermer: () => void; onMessage: (m: string[]) => void
 }) {
   const navigate = useNavigate()
-  const [mode, setMode] = useState<'actions' | 'non-faite' | 'modifier' | 'jour'>('actions')
+  const [mode, setMode] = useState<'actions' | 'annuler' | 'confirmer' | 'modifier' | 'jour'>('actions')
   const [raison, setRaison] = useState<Raison>()
+  const [supprimerOk, setSupprimerOk] = useState(false)
+  const possibles = useLiveQuery(() => (mode === 'annuler' ? joursPourDeplacer(p) : Promise.resolve([])), [mode, p.id, p.date])
+  const nomJour = (d: string) => depuisJour(d).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric' })
 
   if (mode === 'modifier')
     return (
@@ -259,9 +262,19 @@ function DetailSeance({ p, jours, prevues, onFermer, onMessage }: {
             </div>
           )}
           {p.statut === 'prevue' && <Bouton variante="secondaire" onClick={() => setMode('jour')}>↔ Changer de jour</Bouton>}
-          {p.statut === 'prevue' && <Bouton variante="secondaire" onClick={() => setMode('non-faite')}>✗ Pas faite</Bouton>}
+          {p.statut === 'prevue' && <Bouton variante="secondaire" onClick={() => setMode('annuler')}>✗ Je ne peux pas la faire</Bouton>}
           <Bouton variante="secondaire" onClick={() => setMode('modifier')}>Modifier</Bouton>
-          <button type="button" className="w-full py-2 text-[#f87171]" onClick={async () => { await supprimerPrevue(p.id); onFermer() }}>Supprimer</button>
+          {supprimerOk ? (
+            <div className="rounded-xl border border-[#f87171]/50 p-3 text-sm">
+              <p>Supprimer la séance pour de bon (ex. ajoutée par erreur) ? Elle disparaît de ta semaine.</p>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <button type="button" className="rounded-lg border border-bordure py-2 font-semibold" onClick={() => setSupprimerOk(false)}>Non</button>
+                <button type="button" className="rounded-lg bg-[#f87171] py-2 font-semibold text-fond" onClick={async () => { await supprimerPrevue(p.id); onFermer() }}>Oui, supprimer</button>
+              </div>
+            </div>
+          ) : (
+            <button type="button" className="w-full py-2 text-[#f87171]" onClick={() => setSupprimerOk(true)}>Supprimer</button>
+          )}
         </div>
       ) : mode === 'jour' ? (
         <div className="mt-4 space-y-2">
@@ -291,14 +304,40 @@ function DetailSeance({ p, jours, prevues, onFermer, onMessage }: {
           })}
           <button type="button" onClick={() => setMode('actions')} className="w-full py-2 text-sm text-texte-3">Annuler</button>
         </div>
+      ) : mode === 'annuler' ? (
+        <div className="mt-4 space-y-2">
+          <p className="font-semibold">Plutôt la déplacer ?</p>
+          {possibles === undefined ? null : possibles.length ? (
+            <>
+              <p className="text-sm text-texte-2">Jours libres cette semaine{p.intensite === 'haute' ? ' (conseillé : pas de séance dure la veille ni le lendemain)' : ''} :</p>
+              {possibles.map((j) => (
+                <button key={j.date} type="button" onClick={async () => { onMessage(await changerDeJour(p, j.date)); onFermer() }}
+                  className={`flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-left text-sm ${j.conseille ? 'border-accent' : 'border-bordure'}`}>
+                  <span className="font-semibold capitalize">{nomJour(j.date)}</span>
+                  <span className={j.conseille ? 'text-accent' : 'text-texte-3'}>{j.conseille ? (p.intensite === 'haute' ? 'conseillé' : 'libre') : j.note}</span>
+                </button>
+              ))}
+              <p className="text-xs text-texte-3">Un jour déjà pris ? « ↔ Changer de jour » permet aussi d'échanger deux séances.</p>
+            </>
+          ) : (
+            <p className="text-sm text-texte-2">Pas de jour libre d'ici dimanche pour la déplacer.</p>
+          )}
+          <button type="button" onClick={() => setMode('confirmer')} className="w-full rounded-xl border border-[#f87171]/50 py-2.5 text-sm font-semibold text-[#f87171]">Non, l'annuler</button>
+          <button type="button" onClick={() => setMode('actions')} className="w-full py-2 text-sm text-texte-3">Retour</button>
+        </div>
       ) : (
         <div className="mt-4 space-y-3">
+          <p className="font-semibold">Tu es sûr de l'annuler ?</p>
+          <p className="text-sm text-texte-2">
+            Elle ne sera pas rattrapée cette semaine{p.sport === 'velo' && p.kjPrevu ? ` : ${p.kjPrevu} kJ de moins sur ton budget, la semaine suivante reste stable au lieu d'augmenter si le budget n'est pas atteint` : ''}.
+            {p.priorite === 'cle' ? ' C’est une séance clé : si tu peux, déplace-la plutôt.' : ''}
+          </p>
           <p className="text-texte-2">Pourquoi ?</p>
           <Puces options={RAISONS} valeur={raison} onChoisir={setRaison} />
-          <Bouton disabled={!raison} onClick={async () => {
-            onMessage(await declarerNonFaite(p, raison!))
-            onFermer()
-          }}>Valider (la séance est replacée si possible)</Bouton>
+          <div className="grid grid-cols-2 gap-2">
+            <Bouton variante="secondaire" onClick={() => setMode('annuler')}>Non, retour</Bouton>
+            <Bouton disabled={!raison} onClick={async () => { onMessage(await annulerPrevue(p, raison!)); onFermer() }}>Oui, annuler</Bouton>
+          </div>
         </div>
       )}
     </Feuille>
