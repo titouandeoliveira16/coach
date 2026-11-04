@@ -47,7 +47,8 @@ function ChoixSeance({ maintenue, conseil, prevu, couleur, onChoisir }: {
 /** Signal du jour, raison, séance prévue et recommandation. */
 export function CarteAujourdhui({ onModifierMatin }: { onModifierMatin?: () => void } = {}) {
   const jour = aujourdhui()
-  const [voir, setVoir] = useState<'deroule' | 'nutrition'>()
+  const [voir, setVoir] = useState<'deroule'>()
+  const [formeOuverte, setFormeOuverte] = useState(false)
   const [r] = useReglagesEntrainement()
   const cpW = r.cpW ?? CP_DEFAUT
   const a = useLiveQuery(() => analyser(jour), [jour])
@@ -102,13 +103,20 @@ export function CarteAujourdhui({ onModifierMatin }: { onModifierMatin?: () => v
   }
 
   const etapesDuJour = prevue && (decision?.force ? prevue.velo?.etapes : adaptation!.etapes)
+  const minutesAdaptees = adaptation?.etapes ? Math.round(adaptation.etapes.reduce((t, e) => t + e.dureeSec, 0) / 60) : undefined
   const cases = (['recuperation', 'pouls', 'sommeil', 'ressenti'] as const).map((cle) => ({ cle, d: signal.details.find((x) => x.cle === cle) }))
   const autres = signal.details.filter((x) => !x.cle || x.cle === 'charge')
-  const NOMS_CASES = { recuperation: 'Récupération', pouls: 'Pouls au repos', sommeil: 'Sommeil', ressenti: 'Ressenti' }
+  const NOMS_CASES = { recuperation: 'Récup.', pouls: 'Pouls', sommeil: 'Sommeil', ressenti: 'Ressenti' }
   // Chiffres du matin sous chaque case (ex-carte « Ton matin »)
   const enHeures = (h: number) => `${Math.floor(h)} h ${String(Math.round((h % 1) * 60)).padStart(2, '0')}`
   const nuits7 = a.mesures.filter((m) => m.date > decalerJour(jour, -7) && m.sommeilH !== undefined).map((m) => m.sommeilH!)
   const ressenti = mesure ? scoreRessenti(mesure) : undefined
+  const resumes: Record<(typeof cases)[number]['cle'], string | undefined> = {
+    recuperation: mesure?.vfcMs !== undefined && !mesure.sansMontre ? `${mesure.vfcMs} ms` : undefined,
+    pouls: mesure?.fcRepos !== undefined && !mesure.sansMontre ? `${mesure.fcRepos} bpm` : undefined,
+    sommeil: mesure?.sommeilH !== undefined && !mesure.sansMontre ? enHeures(mesure.sommeilH) : undefined,
+    ressenti: ressenti !== undefined ? `${formatNombre(ressenti, 1)} / 5` : undefined,
+  }
   const chiffres: Record<(typeof cases)[number]['cle'], string | undefined> = {
     recuperation: mesure?.vfcMs !== undefined && !mesure.sansMontre ? `VFC ${mesure.vfcMs} ms` : undefined,
     pouls: mesure?.fcRepos !== undefined && !mesure.sansMontre ? `${mesure.fcRepos} bpm` : undefined,
@@ -120,65 +128,73 @@ export function CarteAujourdhui({ onModifierMatin }: { onModifierMatin?: () => v
 
   return (
     <>
-      {/* Ta forme : le feu et ses indicateurs */}
-      <Carte>
-        <div className="flex items-center justify-between">
-          <p className="text-xs font-semibold uppercase tracking-wider text-texte-3">Ta forme</p>
-          <p className="flex items-center gap-1.5 font-bold" style={{ color: COULEUR[signal.couleur] }}>
+      {/* Ta forme : le feu et ses 4 indicateurs, détail à ouvrir */}
+      <Carte className="flex flex-[1_0_auto] flex-col gap-3">
+        <button type="button" onClick={() => setFormeOuverte(!formeOuverte)} className="flex items-center justify-between text-left">
+          <span className="text-xs font-semibold uppercase tracking-wider text-texte-3">Ta forme</span>
+          <span className="flex items-center gap-1.5 font-bold" style={{ color: COULEUR[signal.couleur] }}>
             <span className="h-2.5 w-2.5 rounded-full" style={{ background: COULEUR[signal.couleur] }} />{TITRE[signal.couleur]}
-          </p>
-        </div>
-        {signal.calibrationVfc && <p className="mt-0.5 text-xs text-texte-3">VFC en calibration ({a.vfc.nBase}/14 jours)</p>}
-        <div className="mt-3 grid grid-cols-2 gap-2">
+            <span className="font-normal text-texte-3">{formeOuverte ? '▴' : '▾'}</span>
+          </span>
+        </button>
+        <div className="grid min-h-16 flex-1 grid-cols-4 gap-1.5 text-center">
           {cases.map(({ cle, d }) => (
-            <div key={cle} className="rounded-xl bg-surface-2 p-2.5" style={d?.etat === 'alerte' ? { boxShadow: `inset 0 0 0 1px ${couleurEtat('alerte')}` } : undefined}>
-              <p className="text-xs text-texte-3">{NOMS_CASES[cle]}</p>
-              <p className="font-semibold" style={{ color: couleurEtat(d?.etat) }}>{d?.court ?? '—'}</p>
-              {chiffres[cle] && <p className="text-[13px] text-texte-2">{chiffres[cle]}</p>}
-            </div>
-          ))}
-        </div>
-        {mesure && (
-          <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            {QUESTIONS.filter((q) => mesure[q.cle] !== undefined).map((q) => (
-              <span key={q.cle} className="rounded-full bg-surface-2 px-2.5 py-1 text-xs text-texte-2">{q.libelle} {mesure[q.cle]}</span>
-            ))}
-            {onModifierMatin && <button type="button" onClick={onModifierMatin} className="px-1 py-1 text-xs font-semibold text-accent">Modifier</button>}
-          </div>
-        )}
-        {autres.length > 0 && (
-          <ul className="mt-2 space-y-0.5 text-sm">
-            {autres.map((x) => (
-              <li key={x.texte} style={{ color: x.etat === 'alerte' ? couleurEtat('alerte') : undefined }} className={x.etat === 'alerte' ? '' : 'text-texte-3'}>{x.texte}</li>
-            ))}
-          </ul>
-        )}
-        {signal.details.some((x) => x.etat === 'alerte' && x.cle && x.cle !== 'charge' && x.texte !== x.court) && (
-          <p className="mt-2 text-sm" style={{ color: couleurEtat('alerte') }}>
-            {signal.details.filter((x) => x.etat === 'alerte' && x.cle && x.cle !== 'charge' && x.texte !== x.court).map((x) => x.texte).join(' · ')}
-          </p>
-        )}
-        <div className="mt-3 flex gap-2">
-          <button type="button" onClick={() => basculerSansMontre(jour)} className={`${petitBouton(false)} ${mesure?.sansMontre ? 'border-accent text-accent' : ''}`}>
-            {mesure?.sansMontre ? '✓ Sans montre' : 'Nuit sans montre'}
-          </button>
-          {(['Malade', 'Douleur / blessure'] as Raison[]).map((r) => (
-            <button key={r} type="button" onClick={() => signaler(r)} className={petitBouton(indispo?.raison === r)}>
-              {r === 'Malade' ? 'Malade' : 'Douleur'}
+            <button key={cle} type="button" onClick={() => setFormeOuverte(!formeOuverte)} className="flex flex-col items-center justify-center gap-0.5 rounded-xl bg-surface-2 px-0.5 py-2"
+              style={d?.etat === 'alerte' ? { boxShadow: `inset 0 0 0 1px ${couleurEtat('alerte')}` } : undefined}>
+              <span className="text-[11px] text-texte-3">{NOMS_CASES[cle]}</span>
+              <span className="text-sm font-semibold leading-tight" style={{ color: couleurEtat(d?.etat) }}>{d?.court ?? '—'}</span>
+              {resumes[cle] && <span className="text-[11px] leading-tight text-texte-2">{resumes[cle]}</span>}
             </button>
           ))}
-          <span className="shrink-0 self-center"><Aide titre="Nuit sans montre" texte={AIDES.nuitSansMontre} /></span>
         </div>
-        {malade && <p className="mt-1 text-xs text-texte-3">Noté pour aujourd'hui : la journée est marquée indisponible.</p>}
+        {signal.calibrationVfc && !formeOuverte && <p className="-mt-1 text-[11px] text-texte-3">VFC en calibration ({a.vfc.nBase}/14 jours)</p>}
+        {formeOuverte && (
+          <div className="space-y-2">
+            {signal.calibrationVfc && <p className="text-xs text-texte-3">VFC en calibration ({a.vfc.nBase}/14 jours)</p>}
+            {Object.values(chiffres).some(Boolean) && <p className="text-sm text-texte-2">{Object.values(chiffres).filter(Boolean).join(' · ')}</p>}
+            {mesure && (
+              <div className="flex flex-wrap items-center gap-1.5">
+                {QUESTIONS.filter((q) => mesure[q.cle] !== undefined).map((q) => (
+                  <span key={q.cle} className="rounded-full bg-surface-2 px-2.5 py-1 text-xs text-texte-2">{q.libelle} {mesure[q.cle]}</span>
+                ))}
+                {onModifierMatin && <button type="button" onClick={onModifierMatin} className="px-1 py-1 text-xs font-semibold text-accent">Modifier</button>}
+              </div>
+            )}
+            {signal.details.some((x) => x.etat === 'alerte' && x.cle && x.cle !== 'charge' && x.texte !== x.court) && (
+              <p className="text-sm" style={{ color: couleurEtat('alerte') }}>
+                {signal.details.filter((x) => x.etat === 'alerte' && x.cle && x.cle !== 'charge' && x.texte !== x.court).map((x) => x.texte).join(' · ')}
+              </p>
+            )}
+            {autres.length > 0 && (
+              <ul className="space-y-0.5 text-sm">
+                {autres.map((x) => (
+                  <li key={x.texte} style={{ color: x.etat === 'alerte' ? couleurEtat('alerte') : undefined }} className={x.etat === 'alerte' ? '' : 'text-texte-3'}>{x.texte}</li>
+                ))}
+              </ul>
+            )}
+            <div className="flex gap-2">
+              <button type="button" onClick={() => basculerSansMontre(jour)} className={`${petitBouton(false)} ${mesure?.sansMontre ? 'border-accent text-accent' : ''}`}>
+                {mesure?.sansMontre ? '✓ Sans montre' : 'Nuit sans montre'}
+              </button>
+              {(['Malade', 'Douleur / blessure'] as Raison[]).map((r) => (
+                <button key={r} type="button" onClick={() => signaler(r)} className={petitBouton(indispo?.raison === r)}>
+                  {r === 'Malade' ? 'Malade' : 'Douleur'}
+                </button>
+              ))}
+              <span className="shrink-0 self-center"><Aide titre="Nuit sans montre" texte={AIDES.nuitSansMontre} /></span>
+            </div>
+          </div>
+        )}
+        {malade && <p className="text-xs text-texte-3">Noté pour aujourd'hui : la journée est marquée indisponible.</p>}
         {troisJours && (
-          <p className="mt-2 rounded-xl border border-[#f87171]/40 bg-[#f87171]/10 p-3 text-sm">
+          <p className="rounded-xl border border-[#f87171]/40 bg-[#f87171]/10 p-3 text-sm">
             3 jours de suite en alerte avec une maladie ou une douleur : prends l'avis d'un médecin avant de reprendre.
           </p>
         )}
       </Carte>
 
       {/* Séance du jour */}
-      <Carte>
+      <Carte className="flex flex-[2_0_auto] flex-col">
         <p className="text-xs font-semibold uppercase tracking-wider text-texte-3">Séance du jour</p>
         {reprise ? (
           <p className="mt-2 rounded-xl bg-surface-2 p-3 text-sm">
@@ -193,11 +209,10 @@ export function CarteAujourdhui({ onModifierMatin }: { onModifierMatin?: () => v
             <p className="mt-0.5 text-sm text-texte-2">{prevue.dureeMin} min{prevue.kjPrevu ? ` · ${prevue.kjPrevu} kJ` : ''}</p>
             {adaptation?.modifiee && (
               <>
-                <p className="mt-2 text-sm"><b style={{ color: COULEUR[signal.couleur] }}>Pourquoi {signal.couleur === 'orange' ? 'raccourcie' : 'pas d’intensité'} ?</b> {pourquoi}</p>
+                <p className="mt-2 text-sm"><b style={{ color: COULEUR[signal.couleur] }}>Pourquoi {signal.couleur === 'orange' ? 'raccourcie' : 'pas d’intensité'} ?</b> {pourquoi}<Aide titre="Règle du feu" texte={regle} /></p>
                 <ChoixSeance maintenue={!!decision?.force} couleur={COULEUR[signal.couleur]} onChoisir={choisir}
-                  conseil={signal.couleur === 'orange' ? 'Raccourcie' : 'Très facile ou repos'}
-                  prevu={signal.couleur === 'orange' ? 'Complète' : 'Séance prévue'} />
-                <p className="mt-1 text-xs text-texte-3">{regle}</p>
+                  conseil={signal.couleur === 'orange' ? `Raccourcie${minutesAdaptees ? ` · ${minutesAdaptees} min` : ''}` : 'Très facile ou repos'}
+                  prevu={signal.couleur === 'orange' ? `Complète · ${prevue.dureeMin} min` : 'Séance prévue'} />
               </>
             )}
             {(adaptation?.modifiee || decision?.force) && (
@@ -205,25 +220,16 @@ export function CarteAujourdhui({ onModifierMatin }: { onModifierMatin?: () => v
                 {decision?.force ? 'Séance complète maintenue : arrête-toi si les watts ne tiennent pas.' : adaptation!.texte}
               </p>
             )}
-            {etapesDuJour && <Profil etapes={etapesDuJour} cpW={cpW} />}
+            {etapesDuJour && <Profil etapes={etapesDuJour} cpW={cpW} extensible />}
+            {!etapesDuJour && <div className="flex-1" />}
             {prevue.detail && !adaptation?.modifiee && <p className="mt-2 text-sm text-texte-2">{prevue.detail}</p>}
             {prevue.sport === 'velo' && etapesDuJour && <BoutonsEnvoi p={prevue} etapes={etapesDuJour} />}
-            <div className="mt-2 flex gap-2">
-              {etapesDuJour && (
-                <button type="button" onClick={() => setVoir(voir === 'deroule' ? undefined : 'deroule')}
-                  className={`min-h-11 flex-1 rounded-xl border text-sm font-semibold ${voir === 'deroule' ? 'border-accent text-accent' : 'border-bordure bg-surface-2'}`}>
-                  {voir === 'deroule' ? 'Masquer le déroulé' : 'Déroulé complet'}
-                </button>
-              )}
-              {!(adaptation?.modifiee && !decision?.force && signal.couleur === 'rouge') && (
-                <button type="button" onClick={() => setVoir(voir === 'nutrition' ? undefined : 'nutrition')}
-                  className={`min-h-11 flex-1 rounded-xl border text-sm font-semibold ${voir === 'nutrition' ? 'border-accent text-accent' : 'border-bordure bg-surface-2'}`}>
-                  {voir === 'nutrition' ? 'Masquer la nutrition' : 'Nutrition'}
-                </button>
-              )}
-            </div>
+            <button type="button" onClick={() => setVoir(voir === 'deroule' ? undefined : 'deroule')}
+              className={`mt-2 min-h-11 w-full rounded-xl border text-sm font-semibold ${voir === 'deroule' ? 'border-accent text-accent' : 'border-bordure bg-surface-2'}`}>
+              {etapesDuJour ? 'Déroulé et nutrition' : 'Nutrition de la séance'} {voir === 'deroule' ? '▴' : '▾'}
+            </button>
             {voir === 'deroule' && etapesDuJour && <Deroule etapes={etapesDuJour} sansProfil />}
-            {voir === 'nutrition' && <NutritionSeance p={prevue} />}
+            {voir === 'deroule' && !(adaptation?.modifiee && !decision?.force && signal.couleur === 'rouge') && <NutritionSeance p={prevue} />}
           </>
         ) : faites ? null : (
           <p className="mt-1 text-texte-2">
