@@ -4,12 +4,13 @@ import { useReglage } from '../../../core/reglages'
 import { ChampNombre } from '../../../core/ui/ChampNombre'
 import { Repliable } from '../../../core/ui/Repliable'
 import { NOMS_DISCIPLINES, type Discipline } from '../../../metrics/programme'
+import { AIDES } from '../aides'
 import { programmeDe, useReglagesEntrainement } from '../reglagesEntrainement'
 import type { ReglagesProgramme } from '../types'
 
 /**
  * Profil sportif : les réponses qui te décrivent (comme le questionnaire d'une appli de coaching).
- * Discipline, objectifs (courses) et temps disponibles règlent déjà le programme ; le reste est noté pour l'adapter ensuite.
+ * Toutes les réponses règlent le programme (niveau, heures, genoux, muscu, course) ; seul le matériel est noté pour plus tard.
  */
 export interface ProfilSportif {
   sports: string[]
@@ -75,6 +76,7 @@ export function SectionProfilSportif() {
       <p className="mb-1 text-xs text-texte-3">Tes réponses règlent le programme. Touche une ligne pour la changer.</p>
       <Ligne {...props('sports')} libelle="Sports pratiqués" valeur={ps.sports.join(', ')}>
         {choixMultiple(SPORTS, ps.sports, (sports) => modifierPs({ sports }))}
+        {ps.sports.includes('Course à pied') && <p className="mt-1.5 text-xs text-texte-3">{AIDES.profilCourse}</p>}
       </Ligne>
       <Ligne {...props('discipline')} libelle="Discipline visée" valeur={NOMS_DISCIPLINES[discipline]}>
         {choixUnique(Object.values(NOMS_DISCIPLINES), NOMS_DISCIPLINES[discipline], (nom) => {
@@ -101,8 +103,14 @@ export function SectionProfilSportif() {
         </div>
         <p className="mt-1.5 text-xs text-texte-3">La semaine d'une course est allégée toute seule.</p>
       </Ligne>
-      <Ligne {...props('niveau')} libelle="Niveau" valeur={ps.niveau ?? ''}>{choixUnique(NIVEAUX, ps.niveau, (niveau) => modifierPs({ niveau }))}</Ligne>
-      <Ligne {...props('heures')} libelle="Temps par semaine" valeur={ps.heuresSemaine ?? ''}>{choixUnique(HEURES, ps.heuresSemaine, (heuresSemaine) => modifierPs({ heuresSemaine }))}</Ligne>
+      <Ligne {...props('niveau')} libelle="Niveau" valeur={ps.niveau ?? ''}>
+        {choixUnique(NIVEAUX, ps.niveau, (niveau) => modifierPs({ niveau }))}
+        <p className="mt-1.5 text-xs text-texte-3">{AIDES.profilNiveau}</p>
+      </Ligne>
+      <Ligne {...props('heures')} libelle="Temps par semaine" valeur={ps.heuresSemaine ?? ''}>
+        {choixUnique(HEURES, ps.heuresSemaine, (heuresSemaine) => modifierPs({ heuresSemaine }))}
+        <p className="mt-1.5 text-xs text-texte-3">{AIDES.profilTemps}</p>
+      </Ligne>
       <Ligne {...props('semaine')} libelle="Vélo en semaine, au plus" valeur={heures(prog.maxSemaineMin)}>
         <ChampNombre libelle="Durée max" unite="min" decimales={0} valeur={prog.maxSemaineMin} onValider={(v) => v && changerProg({ maxSemaineMin: v })} />
       </Ligne>
@@ -114,8 +122,12 @@ export function SectionProfilSportif() {
       <Ligne {...props('sensibles')} libelle="Points sensibles" valeur={ps.pointsSensibles ?? ''}>
         <input defaultValue={ps.pointsSensibles} placeholder="Ex. genoux, tendon d'Achille…" onBlur={(e) => modifierPs({ pointsSensibles: e.target.value.trim() || undefined })}
           className="w-full rounded-lg border border-bordure bg-surface-2 px-3 py-2 text-sm" />
+        {/genou/i.test(ps.pointsSensibles ?? '') && <p className="mt-1.5 text-xs text-texte-3">{AIDES.profilGenoux}</p>}
       </Ligne>
-      <Ligne {...props('muscu')} libelle="Musculation" valeur={ps.muscu ?? ''}>{choixUnique(MUSCU, ps.muscu, (muscu) => modifierPs({ muscu }))}</Ligne>
+      <Ligne {...props('muscu')} libelle="Musculation" valeur={ps.muscu ?? ''}>
+        {choixUnique(MUSCU, ps.muscu, (muscu) => modifierPs({ muscu }))}
+        <p className="mt-1.5 text-xs text-texte-3">{AIDES.profilMuscu}</p>
+      </Ligne>
     </Repliable>
   )
 }

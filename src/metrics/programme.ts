@@ -643,7 +643,7 @@ export interface BilanSemaine {
  * @param nominal semaine type (séance d'intensité + Z2 1 h + Z2 longue 1 h 40)
  * @param plafond tout au maximum du créneau
  */
-export function budgetSemaine(prec: BilanSemaine | undefined, nominal: number, plafond: number, allegee: boolean, raisonAllegee = 'semaine allégée (1 sur 4)') {
+export function budgetSemaine(prec: BilanSemaine | undefined, nominal: number, plafond: number, allegee: boolean, raisonAllegee = 'semaine allégée (1 sur 4)', hausse = 0.075) {
   let ref: number
   let raison: string
   if (!prec) {
@@ -664,8 +664,8 @@ export function budgetSemaine(prec: BilanSemaine | undefined, nominal: number, p
       ref = prec.budgetRef
       raison = `Stable : budget de la semaine dernière réalisé à ${Math.round(part * 100)} % (validé à partir de 90 %)`
     } else if (prec.rouges === 0 && prec.oranges <= 1) {
-      ref = prec.budgetRef * 1.075
-      raison = '+7,5 % : budget validé et signaux au vert'
+      ref = prec.budgetRef * (1 + hausse)
+      raison = `+${(hausse * 100).toLocaleString('fr-FR')} % : budget validé et signaux au vert`
     } else {
       ref = prec.budgetRef
       raison = `Stable : budget validé mais ${prec.rouges ? `${prec.rouges} jour rouge, ` : ''}${prec.oranges} jour(s) orange`
@@ -788,6 +788,44 @@ export function placer(semaine: string[], roles: Role[], autres: Occupation[], i
     if (libre(d) && !utilises.has(d)) z2.push(prendre(d)!)
   }
   return { intensite, long, z2: z2.sort() }
+}
+
+/**
+ * Profil sportif (réponses du questionnaire) : ce qui règle le moteur (relecture scientifique du 5/11/2026).
+ *  - niveau : un débutant monte son budget de +5 % par semaine au lieu de +7,5 % (choix d'entraîneur, Buist 2008 :
+ *    aucun pourcentage n'est validé) ;
+ *  - confirmé ou expert, au moins 6 h par semaine : 2 séances dures par semaine au total (vélo + course), donc une
+ *    2e intensité vélo seulement les semaines sans séance dure de course (Mølmen 2025 : la fréquence compte) ;
+ *  - moins de 4 h : pas de sprints en séries, les blocs longs font mieux en contre-la-montre (Rosenblat 2020) ;
+ *  - plafond du vélo : le haut de la tranche d'heures, moins la course prévue.
+ */
+export type Niveau = 'debutant' | 'intermediaire' | 'confirme' | 'expert'
+export function niveauDe(texte?: string): Niveau {
+  if (!texte) return 'intermediaire'
+  if (/^Débutant/.test(texte)) return 'debutant'
+  if (/^Confirmé/.test(texte)) return 'confirme'
+  if (/^Expert/.test(texte)) return 'expert'
+  return 'intermediaire'
+}
+/** Tranche d'heures par semaine → [min, max] (valeur par défaut prudente : 4 à 6 h). */
+export function heuresDe(texte?: string): [number, number] {
+  const t: Record<string, [number, number]> = {
+    'Moins de 4 h': [2, 4], '4 à 6 h': [4, 6], '6 à 8 h': [6, 8], '8 à 10 h': [8, 10], '10 à 12 h': [10, 12], 'Plus de 12 h': [12, 16],
+  }
+  return (texte && t[texte]) || [4, 6]
+}
+/** Hausse du budget kJ quand la semaine est validée et les signaux au vert. */
+export const hausseBudget = (niveau: Niveau) => (niveau === 'debutant' ? 0.05 : 0.075)
+/** 2 séances dures par semaine au total possibles (confirmé ou expert, 6 h et plus). */
+export const deuxIntensitesPossibles = (niveau: Niveau, heures: [number, number]) => (niveau === 'confirme' || niveau === 'expert') && heures[0] >= 6
+
+/**
+ * Jour de la 2e intensité vélo : une des sorties Z2 prévues, à au moins 2 jours de toute séance dure
+ * (48 h entre deux séances dures) et pas la veille de la sortie longue. Undefined si aucun jour ne convient.
+ */
+export function jourDeuxiemeIntensite(z2: string[], dures: string[], long?: string) {
+  const ecart = (a: string, b: string) => Math.abs(Date.parse(a) - Date.parse(b)) / 86_400_000
+  return z2.find((d) => dures.every((x) => ecart(d, x) >= 2) && (!long || decaler(d, 1) !== long))
 }
 
 // ——— Vision de la saison ———

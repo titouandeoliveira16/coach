@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Aide } from '../../../core/ui/Aide'
 import { Carte } from '../../../core/ui/Carte'
 import { Tuile } from '../../../core/ui/Repliable'
@@ -16,6 +16,32 @@ import { SectionVelo } from './SectionVelo'
 import { ZonesVelo } from './ZonesVelo'
 
 /**
+ * Hauteur pour que les carrés descendent jusqu'au menu du bas quand rien n'est ouvert au-dessus
+ * (72 px au moins). Recalculée quand un encart au-dessus s'ouvre ou se réduit.
+ */
+function useHauteurJusquABarre() {
+  const ref = useRef<HTMLDivElement>(null)
+  const [hauteur, setHauteur] = useState<number>()
+  useEffect(() => {
+    const el = ref.current
+    if (!el?.parentElement) return
+    const calculer = () => {
+      const nav = [...document.querySelectorAll('nav')].find((n) => getComputedStyle(n).position === 'fixed')
+      const hautBarre = (nav?.getBoundingClientRect().top ?? window.innerHeight - 90) + window.scrollY
+      const haut = el.getBoundingClientRect().top + window.scrollY
+      const h = Math.max(72, Math.floor(hautBarre - 12 - haut))
+      setHauteur((avant) => (avant === h ? avant : h))
+    }
+    calculer()
+    const obs = new ResizeObserver(calculer)
+    obs.observe(el.parentElement)
+    window.addEventListener('resize', calculer)
+    return () => { obs.disconnect(); window.removeEventListener('resize', calculer) }
+  }, [])
+  return { ref, hauteur }
+}
+
+/**
  * Réglages du module Entraînement, en encarts courts qu'on ouvre et qu'on réduit :
  * profil, profil sportif, vélo (CP et semaine type), Intervals.icu, puis trois carrés (agenda, catalogue, zones).
  * Le programme, la charge de référence et l'historique des tests ne se règlent plus ici (l'appli les gère ; tests dans Progrès).
@@ -29,13 +55,14 @@ export function SectionReglagesEntrainement() {
   const sports = [...new Set([...(ps.sports.length ? ps.sports.map((x) => VERS_CATALOGUE[x]).filter(Boolean) : ['velo', 'course']), 'force'])] as SeanceCatalogue['sport'][]
   const [agenda, setAgenda] = useState(false)
   const [avance, setAvance] = useState(false)
+  const { ref: grille, hauteur } = useHauteurJusquABarre()
   return (
     <>
       <SectionProfil />
       <SectionProfilSportif />
       <SectionVelo />
       <SectionIntervals />
-      <div className="grid grid-cols-3 gap-2">
+      <div ref={grille} className="grid grid-cols-3 gap-2" style={{ height: hauteur }}>
         <Tuile titre="Google Agenda" ouvert={agenda} onClick={() => setAgenda(!agenda)} />
         <Tuile titre="Catalogue scientifique" ouvert={catalogue} onClick={() => setCatalogue(!catalogue)} />
         <Tuile titre="Avancé : zones" ouvert={avance} onClick={() => setAvance(!avance)} />

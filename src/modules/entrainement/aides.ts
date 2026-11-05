@@ -1,5 +1,15 @@
 /** Textes des « ? » : une phrase par chiffre affiché, pour savoir comment il est calculé. */
 export const AIDES = {
+  profilNiveau:
+    "Plus tu débutes, plus tu progresses vite avec peu d'intensité : en débutant, ton budget vélo monte de 5 % par semaine au lieu de 7,5 %. Confirmé ou expert avec au moins 6 h par semaine : une 2e séance dure peut s'ajouter les semaines sans course à pied dure (2 séances dures au total, Rosenblat 2025). Ces chiffres sont des choix d'entraîneur.",
+  profilTemps:
+    "Ton budget vélo ne dépasse pas le haut de ta tranche d'heures (moins le temps de course à pied). Moins de 4 h : pas de sprints en séries, les blocs longs restent les plus efficaces (Rosenblat 2020).",
+  profilGenoux:
+    "Genoux : garde une cadence d'au moins 80 tr/min (la charge sur le genou baisse quand la cadence monte, Kutzner 2012 ; résultats mitigés) et renforce-toi : la muscu réduit nettement les blessures (Lauersen 2018). Une douleur qui dure, c'est pour un pro de santé, pas pour l'appli.",
+  profilMuscu:
+    "La muscu ne freine pas ton endurance (Schumann 2022), mais on l'écarte de ta séance dure (au moins 3 h après) et de la veille d'une grosse séance : l'appli t'alerte dans Semaine. Elle compte dans ta fatigue (ressenti × durée), pas dans tes kJ vélo.",
+  profilCourse:
+    "Course à pied : ne fais pas une sortie de plus de 10 % au-delà de ta plus longue du mois ; au-delà, le risque de blessure monte (Frandsen 2025, étude d'observation). L'appli t'alerte dans Semaine.",
   discipline:
     "Route : ton programme habituel. VTT : l'appli choisit les séances selon le profil de la discipline (fiches du Catalogue). XCO et short track : intervalles longs du vététiste (7 à 10 × 4-6 min ; dans un essai, ils ont fait plus baisser le chrono que les sprints de 30 s, qui font aussi progresser), sprints de 30 s en séries, et au seuil 1 séance sur 3 en relances (copie de la course : ≈ 40 % du temps au-dessus de la CP, en efforts de quelques secondes ; jamais testé en essai). Les études faisaient 2 à 3 séances dures par semaine, toi une : l'effet sera plus lent. Marathon : comme la route, mais la sortie longue se fait en côtes (montées à 85-95 % de la CP) ; elle compte comme une séance dure, et ce format est un choix d'entraîneur. Enduro : une semaine sur deux, des spéciales sur le terrain remplacent les intervalles ; ce qui fait gagner, c'est surtout la descente technique, aucune étude n'a testé ce rythme. Descente : les watts ne font pas le chrono, les sprints courts ne sont qu'un complément au pilotage et à la musculation. Pour toutes les disciplines VTT, une Z2 par semaine devient une sortie technique sur le terrain (choix d'entraîneur : la technique compte beaucoup, aucune étude ne dit comment l'entraîner). Pas de sprints ni de relances pendant la reprise : du volume d'abord (Hebisz 2019).",
   vttTerrain:

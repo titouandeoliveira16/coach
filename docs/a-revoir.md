@@ -60,8 +60,14 @@ Points décidés ou mis de côté, à reprendre au bon moment.
   ouverts, composant `core/ui/Repliable.tsx`), profil sportif (réglage `profil-sportif` : sports, niveau, temps, matériel,
   points sensibles, muscu ; discipline, courses et créneaux dans le programme). Retirés de l'écran : rappels, programme
   (phases, dates de tests, Z2 de départ : gérés par l'appli, plus d'écran pour les changer), charge de référence, historique
-  des tests. À faire : appliquer le même style d'encart au Budget et à la Révision ; décider comment niveau / matériel /
-  points sensibles adaptent les séances (avec le relecteur scientifique).
+  des tests. Même style d'encart au Budget et à la Révision (v0.80.0).
+- Profil sportif branché sur le moteur (v0.81.0, 5/11/2026, règles du relecteur validées par Titouan) : débutant +5 %/sem.
+  (sinon +7,5 %) ; confirmé/expert ≥ 6 h : 2e intensité vélo les semaines sans course dure (2 séances dures au total) ;
+  < 4 h : pas de sprints en séries ; budget plafonné au haut de la tranche d'heures moins la course ; genoux : cadence ≥ 80
+  dans le détail des séances ; muscu (si 1-2 séances) : alerte le jour de l'intensité ou la veille d'une séance dure / longue,
+  renfo compté au RPE × durée quand le RPE est noté ; course : alerte si une sortie dépasse de 10 % la plus longue des 30 j
+  (Frandsen 2025). Défauts : intermédiaire, 4-6 h. **Reste à faire : mode sans capteur (FC / RPE, charge en sRPE, pas de
+  contrôle bloc par bloc)** pour ses élèves ; débutant « palier 1 et reprise 4 semaines » pas encore codé.
 - VTT (3/11/2026, demande de Titouan pour ses élèves) : section VTT du catalogue (v0.66.0) puis **moteur** (v0.67.0) :
   réglage « Discipline visée » (Réglages → Avancé → Programme vélo ; route par défaut). XCO/XCC : intervalles longs d'Inoue,
   sprints de 30" en séries (à fond, allure libre), relances 1 séance de seuil sur 3 ; marathon : sortie longue en côtes

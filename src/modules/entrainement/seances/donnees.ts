@@ -72,14 +72,15 @@ export function completerMetriques(s: Seance, c: Contexte): Seance {
  * Charge d'une séance dans l'unité de référence.
  * TRIMP : si la FC manque, il est estimé depuis le RPE (relation approximative RPE ↔ % de réserve
  * de FC : x ≈ 0,4 + 0,05 × RPE).
- * Le renfo ne compte pas dans la charge (choix de Titouan) : il ne joue que sur les calories du jour.
+ * Renfo / muscu : hors budget kJ, compté avec ton ressenti × la durée (la FC monte peu en muscu) ;
+ * sans RPE noté, il ne compte pas (relecteur : muscu comptée en sRPE dans la charge totale).
  */
 export function chargeDe(s: Seance, c: Pick<Contexte, 'chargeRef'>): number {
-  if (s.sport === 'renfo') return 0
+  if (s.sport === 'renfo' && s.rpe === undefined) return 0
   const min = s.dureeSec / 60
   if (c.chargeRef === 'srpe') return s.rpe !== undefined ? srpe(s.rpe, min) : 0
   // VTT sur le terrain : la FC est gonflée (stress, bras) et les watts oublient les bras → effort perçu × durée
-  if (s.trimp !== undefined && !(s.terrainVtt && s.rpe !== undefined)) return s.trimp
+  if (s.trimp !== undefined && !(s.rpe !== undefined && (s.terrainVtt || s.sport === 'renfo'))) return s.trimp
   if (s.rpe !== undefined) {
     const x = Math.min(1, 0.4 + 0.05 * s.rpe)
     return min * x * 0.64 * Math.exp(1.92 * x)
