@@ -77,7 +77,7 @@ export function Mois() {
       )}
 
       {reste ? (
-        <Carte>
+        <Carte className={voirReste ? 'border-accent!' : ''}>
           <p className="text-sm text-texte-2">
             Reste à vivre ce mois-ci
             <Aide titre="Reste à vivre" texte="L'argent que tu as vraiment aujourd'hui (compte courant + espèces), moins ce qui doit encore sortir ce mois-ci (charges fixes pas encore payées, abonnements pas encore passés), plus les revenus réguliers attendus avant le 25 (Réglages → Abonnements et revenus). Un revenu du 25 ou après (salaire de fin de mois) sert au mois suivant : il n'est pas compté ici. Ce que tu mets de côté sur un livret sort tout de suite de ton compte, donc du reste à vivre. Le contrôle recale ton compte sur ta banque." />
@@ -90,7 +90,7 @@ export function Mois() {
             {reste.revenusAttendus > 0 && ` + ${formatEuros(reste.revenusAttendus)} de revenus attendus`}
           </p>
           {(reste.fixesRestantes > 0 || reste.abonnements > 0 || reste.revenusAttendus > 0) && (
-            <button type="button" onClick={() => setVoirReste(!voirReste)} className="mt-1 text-sm font-semibold text-accent">{voirReste ? 'Masquer le détail' : 'Voir le détail'}</button>
+            <button type="button" onClick={() => setVoirReste(!voirReste)} className="mt-1 text-sm font-semibold text-accent">{voirReste ? 'Réduire ▴' : 'Voir le détail ›'}</button>
           )}
           {voirReste && (
             <ul className="mt-2 space-y-1 border-t border-bordure pt-2 text-sm">

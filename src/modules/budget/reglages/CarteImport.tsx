@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { formatEuros } from '../../../core/format'
 import { Bouton } from '../../../core/ui/Bouton'
-import { Carte } from '../../../core/ui/Carte'
+import { Repliable } from '../../../core/ui/Repliable'
 import { importer, lireImport, resumeImport, type FichierImport } from '../importer'
 
 /** Importer un fichier de mouvements (ex. un mois passé préparé par Claude). Il reste sur le téléphone. */
@@ -21,7 +21,7 @@ export function CarteImport() {
   const r = fichier && resumeImport(fichier)
 
   return (
-    <Carte titre="Importer des mouvements">
+    <Repliable titre="Importer des mouvements" libelle="Ouvrir" resume="Un fichier préparé pour toi">
       <p className="text-sm text-texte-2">Un fichier préparé pour toi (ex. un mois passé). Réimporter le même fichier n'ajoute rien en double.</p>
       <input type="file" accept=".json,application/json,text/plain" className="mt-2 w-full text-sm text-texte-2"
         onChange={async (e) => { const f = e.target.files?.[0]; if (f) lire(await f.text()) }} />
@@ -40,6 +40,6 @@ export function CarteImport() {
         </div>
       )}
       {message && <p className="mt-2 text-sm text-texte-2">{message}</p>}
-    </Carte>
+    </Repliable>
   )
 }

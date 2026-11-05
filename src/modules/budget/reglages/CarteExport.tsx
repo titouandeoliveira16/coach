@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { aujourdhui } from '../../../core/dates'
 import { Bouton } from '../../../core/ui/Bouton'
-import { Carte } from '../../../core/ui/Carte'
+import { Repliable } from '../../../core/ui/Repliable'
 import { exporterCsv } from '../exporter'
 import type { Donnees } from '../calculs'
 
@@ -28,10 +28,10 @@ export function CarteExport({ d }: { d: Donnees }) {
     }
   }
   return (
-    <Carte titre="Exporter mes mouvements">
+    <Repliable titre="Exporter mes mouvements" libelle="Ouvrir" resume="Un fichier pour comparer avec ta banque">
       <p className="text-sm text-texte-2">Un fichier CSV avec tes comptes (solde du jour), tes contrôles et tous tes mouvements : pour comparer avec le relevé de ta banque.</p>
       <Bouton className="mt-2" onClick={exporter}>Exporter (CSV)</Bouton>
       {message && <p className="mt-1 text-sm text-texte-3">{message}</p>}
-    </Carte>
+    </Repliable>
   )
 }

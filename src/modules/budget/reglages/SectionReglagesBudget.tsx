@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Bouton } from '../../../core/ui/Bouton'
-import { Carte } from '../../../core/ui/Carte'
+import { Repliable } from '../../../core/ui/Repliable'
 import { Feuille } from '../../../core/ui/Feuille'
 import { COULEURS } from '../categoriesDepart'
 import { enregistrerCategorie, nouvelId, useBudget, useReglagesBudget } from '../donnees'
@@ -30,7 +30,8 @@ export function SectionReglagesBudget() {
 
   return (
     <>
-      <Carte titre="Rappel de saisie (Budget)">
+      <Repliable titre="Rappels"
+        resume={[r.rappelActif ? `saisie à ${r.rappelHeure.replace(':', ' h ')}` : 'pas de rappel de saisie', r.rappelReleves !== false && 'relevés le 5', r.rappelControle !== false && 'contrôle le dimanche'].filter(Boolean).join(' · ')}>
         <label className="flex items-center justify-between py-1.5">
           <span className="text-texte-2">Rappel chaque jour</span>
           <input type="checkbox" checked={r.rappelActif} onChange={(e) => modifier({ rappelActif: e.target.checked })} className="h-6 w-6 accent-[#facc15]" />
@@ -52,13 +53,13 @@ export function SectionReglagesBudget() {
           <input type="checkbox" checked={r.rappelControle !== false} onChange={(e) => modifier({ rappelControle: e.target.checked })} className="h-6 w-6 shrink-0 accent-[#facc15]" />
         </label>
         <p className="text-xs text-texte-3">Pas de rappel si tu as déjà saisi quelque chose ce jour-là. Le 1er du mois, tu reçois aussi l'annonce de ton bilan. Les notifications doivent être activées une fois pour toute l'appli : Accueil → ⚙️.</p>
-      </Carte>
+      </Repliable>
 
       <CarteAbonnements d={d} />
       <CarteExport d={d} />
 
       {(['depense', 'revenu'] as const).map((genre) => (
-        <Carte key={genre} titre={genre === 'depense' ? 'Catégories de dépenses' : 'Catégories de revenus'}>
+        <Repliable key={genre} titre={genre === 'depense' ? 'Catégories de dépenses' : 'Catégories de revenus'} resume={liste(genre).map((c) => `${c.emoji} ${c.nom}`).join(' · ')}>
           {liste(genre).map((c) => {
             const sous = d.categories.filter((s) => s.parentId === c.id && !s.archive)
             return (
@@ -73,23 +74,23 @@ export function SectionReglagesBudget() {
             )
           })}
           <button type="button" onClick={() => setOuverte(nouvelle(genre))} className="mt-1 w-full py-2 text-sm font-semibold text-accent">+ Ajouter une catégorie</button>
-        </Carte>
+        </Repliable>
       ))}
 
       {d.categories.some((c) => c.archive && !c.parentId) && (
-        <>
-          <button type="button" onClick={() => setArchivees(!archivees)} className="w-full py-2 text-left text-sm font-semibold text-texte-3">{archivees ? '▾' : '▸'} Catégories archivées</button>
+        <Repliable titre="Catégories archivées" libelle="Voir" ouvert={archivees} onBasculer={setArchivees}
+          resume={`${d.categories.filter((c) => c.archive && !c.parentId).length} catégorie(s)`}>
           {archivees && (
-            <Carte>
+            <div>
               {d.categories.filter((c) => c.archive && !c.parentId).map((c) => (
                 <div key={c.id} className="flex items-center justify-between py-1.5">
                   <span className="text-texte-2">{c.emoji} {c.nom}</span>
                   <button type="button" onClick={() => enregistrerCategorie({ ...c, archive: false })} className="text-sm font-semibold text-accent">Réactiver</button>
                 </div>
               ))}
-            </Carte>
+            </div>
           )}
-        </>
+        </Repliable>
       )}
 
       <CarteImport />

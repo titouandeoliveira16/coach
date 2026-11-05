@@ -4,6 +4,7 @@ import { formatDate, formatEuros, lireNombre } from '../../../core/format'
 import { Aide } from '../../../core/ui/Aide'
 import { Bouton } from '../../../core/ui/Bouton'
 import { Carte } from '../../../core/ui/Carte'
+import { Repliable } from '../../../core/ui/Repliable'
 import { Feuille } from '../../../core/ui/Feuille'
 import { GraphiqueLignes } from '../../../core/ui/graphiques'
 import { ageReleve, dernierReleve, derniersMois, moisCourt, moisDe, patrimoineAu, patrimoineParMois, soldeAu, verseAu, type Donnees } from '../calculs'
@@ -67,10 +68,9 @@ export function Patrimoine() {
 
       <Bouton variante="secondaire" onClick={() => setOuvert('nouveau')}>+ Ajouter un compte</Bouton>
       {d.comptes.some((c) => c.archive) && (
-        <>
-          <button type="button" onClick={() => setArchives(!archives)} className="w-full py-2 text-sm text-texte-3">{archives ? '▾' : '▸'} Comptes archivés</button>
-          {archives && <Carte>{d.comptes.filter((c) => c.archive).map((c) => <LigneCompte key={c.id} c={c} d={d} jour={jour} onToucher={() => setOuvert(c)} />)}</Carte>}
-        </>
+        <Repliable titre="Comptes archivés" libelle="Voir" ouvert={archives} onBasculer={setArchives} resume={`${d.comptes.filter((c) => c.archive).length} compte(s)`}>
+          {d.comptes.filter((c) => c.archive).map((c) => <LigneCompte key={c.id} c={c} d={d} jour={jour} onToucher={() => setOuvert(c)} />)}
+        </Repliable>
       )}
 
       {ouvert === 'nouveau' && <NouveauCompte ordre={d.comptes.length} onFermer={() => setOuvert(undefined)} />}
@@ -172,7 +172,9 @@ function FicheCompte({ c, d, onFermer }: { c: Compte; d: Donnees; onFermer: () =
         </div>
       )}
 
-      <button type="button" onClick={() => setAvance(!avance)} className="mt-4 w-full py-1 text-left text-sm font-semibold text-texte-3">{avance ? '▾' : '▸'} Modifier le compte</button>
+      <button type="button" onClick={() => setAvance(!avance)} className={`mt-4 flex w-full items-center justify-between border-t border-bordure pt-3 text-sm font-semibold ${avance ? 'text-accent' : 'text-texte-2'}`}>
+        <span>Modifier le compte</span><span className="text-accent">{avance ? 'Réduire ▴' : 'Modifier ›'}</span>
+      </button>
       {avance && (
         <div className="space-y-2">
           <label className="block text-sm text-texte-2">Nom
