@@ -11,7 +11,7 @@ const DUREES_MIN = [12, 7, 3]
  * Calculateur du test CP 12-7-3 : on saisit la puissance moyenne
  * de chaque effort, on obtient CP et W′, puis on les enregistre.
  */
-export function CalculateurCP({ onUtiliser }: { onUtiliser: (cpW: number, wPrimeKj: number) => void }) {
+export function CalculateurCP({ onUtiliser }: { onUtiliser: (cpW: number, wPrimeKj: number, complet: boolean) => void }) {
   const [puissances, setPuissances] = useState<(number | undefined)[]>([undefined, undefined, undefined])
 
   const efforts = DUREES_MIN.flatMap((min, i) => {
@@ -47,7 +47,7 @@ export function CalculateurCP({ onUtiliser }: { onUtiliser: (cpW: number, wPrime
               R² un peu bas : un des efforts n'était peut-être pas tout à fait maximal.
             </p>
           )}
-          <Bouton onClick={() => onUtiliser(Math.round(resultat.cpW), Math.round(resultat.wPrimeKj * 10) / 10)}>
+          <Bouton onClick={() => onUtiliser(Math.round(resultat.cpW), Math.round(resultat.wPrimeKj * 10) / 10, efforts.length === 3)}>
             Utiliser ces valeurs
           </Bouton>
         </div>

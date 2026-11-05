@@ -41,7 +41,9 @@ export const lireMeta = async (lundi: string) => (await db.reglages.get(cleSemai
 
 async function lireReglages() {
   const r = (await db.reglages.get('entrainement'))?.valeur as Partial<ReglagesEntrainement> | undefined
-  return { cpW: r?.cpW ?? CP_DEFAUT, zones: r?.zonesVelo, tests: r?.tests ?? [], programme: programmeDe(r?.programme) }
+  // W' utilisé seulement s'il vient d'un test complet 12-7-3 et pas du tout premier test CP (Triska 2017, Karsten 2014)
+  const wPrimeKj = r?.wPrimeComplet && (r.tests ?? []).filter((t) => t.type === 'cp').length >= 2 ? r.wPrimeKj : undefined
+  return { cpW: r?.cpW ?? CP_DEFAUT, wPrimeKj, zones: r?.zonesVelo, tests: r?.tests ?? [], programme: programmeDe(r?.programme) }
 }
 
 /** Dates des tests CP réalisés (résultats saisis). */
@@ -222,7 +224,7 @@ export async function genererSemaineVelo(lundi: string) {
       const palier = palierPossible(choix.format, vise, maxDuJour(placement.intensite))
       // Enduro : une semaine sur deux (hors reprise), les spéciales sur le terrain remplacent les intervalles
       const speciales = discipline === 'enduro' && phase.type !== 'reprise' && nSemaine % 2 === 1
-      intensite = speciales ? construireSpeciales(nSemaine >> 1, r.cpW) : construireIntervalles(choix.format, palier, r.cpW, etat.bonus)
+      intensite = speciales ? construireSpeciales(nSemaine >> 1, r.cpW) : construireIntervalles(choix.format, palier, r.cpW, etat.bonus, r.wPrimeKj)
       if (speciales) intensite.velo.pourquoi = `${NOMS_PHASES[phase.type]} · enduro : spéciales une semaine sur deux${allegee ? ` · ${raisonAllegee}` : ''}`
       else {
         const bonus = etat.bonus && !choix.format.aFond ? ` · ${etat.bonus > 0 ? '+' : ''}${(etat.bonus * 100).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} % de watts (progression)` : ''
@@ -252,7 +254,7 @@ export async function genererSemaineVelo(lundi: string) {
       const choix2 = choisirFormat(lundi, prog.phases, histo2, discipline)
       const etat2 = etatProgression(histo, datesTests(r.tests))[choix2.famille]
       const palier2 = palierPossible(choix2.format, etat2.palier, maxDuJour(jour2))
-      const s2 = construireIntervalles(choix2.format, palier2, r.cpW, etat2.bonus)
+      const s2 = construireIntervalles(choix2.format, palier2, r.cpW, etat2.bonus, r.wPrimeKj)
       s2.velo.pourquoi = `2e séance dure de la semaine (niveau ${niveau === 'expert' ? 'expert' : 'confirmé'}, ${heures[0]} h et plus, pas de séance dure de course) · palier ${palier2 + 1}/4`
       intensite2 = { date: jour2, s: s2 }
       placement.z2 = placement.z2.filter((d) => d !== jour2)
@@ -511,7 +513,7 @@ export async function bilanDimanche(lundi: string) {
     const choix = choisirFormat(suivant, prog.phases, histo, prog.discipline)
     const etat = etatProgression(histo, datesTests(r.tests))[choix.famille]
     const palier = palierPossible(choix.format, allegee ? Math.max(0, etat.palier - 1) : etat.palier, prog.maxSemaineMin)
-    const s = construireIntervalles(choix.format, palier, r.cpW, etat.bonus)
+    const s = construireIntervalles(choix.format, palier, r.cpW, etat.bonus, r.wPrimeKj)
     intensite = `${s.titre} (palier ${palier + 1}/4)`
     kjIntensite = s.kj
   }

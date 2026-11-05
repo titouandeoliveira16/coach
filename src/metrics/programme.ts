@@ -198,6 +198,8 @@ export interface SeanceVelo {
   cibleW?: number
   /** CP utilisée pour construire la séance (version raccourcie d'un jour orange) */
   cpW?: number
+  /** W' (kJ) qui a limité les watts du travail (garde-fou : une répétition ne vide pas plus de 80 % du W') */
+  wPrimeKj?: number
   /** Explication du choix (phase, alternance, progression) */
   pourquoi?: string
   /** Déroulé détaillé */
@@ -213,6 +215,25 @@ export interface SeanceConstruite {
 }
 
 const lePalier = (f: Format, palier: number | Palier) => (typeof palier === 'number' ? f.paliers[palier] : palier)
+
+/** Part du W' qu'une répétition peut vider au plus (choix d'entraîneur, relecteur scientifique du 5/11/2026). */
+export const PART_WPRIME_MAX = 0.8
+
+/**
+ * Garde-fou W' : travail au-dessus de la CP d'une répétition = (P − CP) × durée. S'il dépasse 80 % du W',
+ * les watts baissent juste assez (jamais sous la CP). Over-unders et relances avec une récupération à 90 % de la CP
+ * ou plus : le W' ne se recharge presque pas, on compte tout le bloc. Pas de modèle de recharge (W'bal) :
+ * trop variable d'une personne à l'autre (Bartram 2018, Caen 2019, Chorley 2022).
+ */
+export function plafondWPrime(f: Format, palier: number | Palier, cpW: number, wT: number, wR: number, wPrimeKj?: number) {
+  if (!wPrimeKj || wPrimeKj <= 0 || f.aFond || wT <= cpW) return wT
+  const pa = lePalier(f, palier)
+  const t = pa.travailSec ?? f.travailSec
+  const n = f.continu && wR >= cpW * 0.9 ? pa.reps : 1
+  const max = PART_WPRIME_MAX * wPrimeKj * 1000
+  if ((wT - cpW) * t * n <= max) return wT
+  return Math.max(Math.ceil(cpW / 5) * 5, Math.floor((cpW + max / (t * n)) / 5) * 5)
+}
 
 /** Durée totale (s) d'un format à un palier. */
 export function dureeFormat(f: Format, palier: number | Palier) {
@@ -247,13 +268,14 @@ function echauffement(pr: Preparation, cpW: number): Etape[] {
 }
 
 /** Construit une séance d'intervalles : structure, déroulé, watts, durée, kJ. */
-export function construireIntervalles(f: Format, palier: number | Palier, cpW: number, bonus: number): SeanceConstruite {
+export function construireIntervalles(f: Format, palier: number | Palier, cpW: number, bonus: number, wPrimeKj?: number): SeanceConstruite {
   const pa = lePalier(f, palier)
   const t = pa.travailSec ?? f.travailSec
   const { totalSec, corpsSec, travailSec } = dureeFormat(f, palier)
   // À fond : pas de bonus de watts (on progresse par les répétitions) ; la cible sert seulement aux kJ
-  const wT = arrondi5(cpW * (f.pct / 100) * (f.aFond ? 1 : 1 + bonus))
   const wR = arrondi5(cpW * (f.pctRecup / 100) * (f.continu ? 1 + bonus : 1))
+  const wPrevu = arrondi5(cpW * (f.pct / 100) * (f.aFond ? 1 : 1 + bonus))
+  const wT = plafondWPrime(f, palier, cpW, wPrevu, wR, wPrimeKj)
   const wFacile = arrondi5(cpW * 0.5)
   const pr = preparationDe(f)
   const kjEncadrement = [...ECHAUFFEMENTS[pr], ...RETOURS[pr]].reduce((t, [d, x]) => t + d * cpW * x, 0)
@@ -317,10 +339,11 @@ export function construireIntervalles(f: Format, palier: number | Palier, cpW: n
     titre = `${pa.reps} × ${enMin(t)} ${f.famille === 'seuil' ? 'seuil' : f.nom.replace(/^intervalles de .*/, 'VO2')}`
     corps = `${pa.reps} × ${enMin(t)} à ${wT} W, ${enMin(f.recupSec)} à ${wR} W entre`
   }
-  const detail = `Échauffement ${enMin(echauffementSec(pr))} · ${corps} · Retour au calme ${enMin(retourSec(pr))}`
+  const limite = wT < wPrevu
+  const detail = `Échauffement ${enMin(echauffementSec(pr))} · ${corps} · Retour au calme ${enMin(retourSec(pr))}${limite ? ` · Watts ramenés de ${wPrevu} à ${wT} W : sinon chaque effort viderait presque toute ta réserve au-dessus de la CP (W')` : ''}`
   return {
     titre, detail, dureeMin: Math.round(totalSec / 60), kj: Math.round(kj),
-    velo: { famille: f.famille, formatId: f.id, palier: typeof palier === 'number' ? palier : undefined, ...(f.aFond ? {} : { cibleW: wT }), cpW, etapes },
+    velo: { famille: f.famille, formatId: f.id, palier: typeof palier === 'number' ? palier : undefined, ...(f.aFond ? {} : { cibleW: wT }), cpW, ...(limite ? { wPrimeKj } : {}), etapes },
   }
 }
 

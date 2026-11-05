@@ -42,7 +42,7 @@ export function adapterDuJour(p: SeancePrevue, couleur: Couleur): Adaptation {
   // Spéciales d'enduro : très intenses et engagées techniquement, jamais un jour orange
   if (p.velo?.famille === 'vtt-speciales') return { texte: 'Feu orange : pas de spéciales aujourd’hui (effort très intense et engagé). 45 min de VTT technique tranquille ou de Z2 à la place.', modifiee: true }
   if (intensiteVelo && f && cpEff) {
-    const court = construireIntervalles(f, palierRaccourci(f, p.velo!.palier ?? 0), cpEff, 0)
+    const court = construireIntervalles(f, palierRaccourci(f, p.velo!.palier ?? 0), cpEff, 0, p.velo!.wPrimeKj)
     return { texte: `Feu orange : version raccourcie, mêmes watts (${court.titre}, ${court.dureeMin} min).`, etapes: court.velo.etapes, modifiee: true }
   }
   if (p.sport === 'course' && p.intensite === 'haute') return { texte: 'Feu orange : un tiers des fractions en moins, mêmes allures.', modifiee: true }

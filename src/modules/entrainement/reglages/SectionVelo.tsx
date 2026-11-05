@@ -50,11 +50,11 @@ export function SectionVelo() {
           </button>
           {calculateur && (
             <CalculateurCP
-              onUtiliser={async (cpW, wPrimeKj) => {
+              onUtiliser={async (cpW, wPrimeKj, wPrimeComplet) => {
                 // Zones de puissance recalculées en % de la nouvelle CP ; les bornes de FC restent
                 const zonesVelo = zonesDepuisCp(cpW, reglages.zonesVelo)
                 const poidsKg = await poidsAu(aujourdhui())
-                await modifier({ cpW, wPrimeKj, zonesVelo, tests: [...reglages.tests, { date: aujourdhui(), type: 'cp', valeur: cpW, poidsKg }] })
+                await modifier({ cpW, wPrimeKj, wPrimeComplet, zonesVelo, tests: [...reglages.tests, { date: aujourdhui(), type: 'cp', valeur: cpW, poidsKg }] })
                 setCalculateur(false)
                 await recalculerApresTest()
                 setMessage(`CP ${cpW} W enregistrée : zones et watts de tes séances à venir recalculés. Pense à mettre ta FTP Zwift à ${cpW} W (Zwift → Menu → Paramètres → FTP) et à renvoyer tes séances déjà envoyées.`)
