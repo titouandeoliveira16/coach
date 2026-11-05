@@ -49,6 +49,8 @@ export interface ReglagesEntrainement {
   cpW?: number
   /** Capacité de travail au-dessus de la CP (kJ) */
   wPrimeKj?: number
+  /** W' issu d'un test complet (3 efforts) : seul celui-là sert au garde-fou des intervalles */
+  wPrimeComplet?: boolean
   zonesVelo: ZoneVelo[]
   /** Allure seuil en % de VMA (rTSS) */
   seuilCoursePct: number

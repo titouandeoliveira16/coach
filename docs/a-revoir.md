@@ -68,6 +68,10 @@ Points décidés ou mis de côté, à reprendre au bon moment.
   renfo compté au RPE × durée quand le RPE est noté ; course : alerte si une sortie dépasse de 10 % la plus longue des 30 j
   (Frandsen 2025). Défauts : intermédiaire, 4-6 h. **Reste à faire : mode sans capteur (FC / RPE, charge en sRPE, pas de
   contrôle bloc par bloc)** pour ses élèves ; débutant « palier 1 et reprise 4 semaines » pas encore codé.
+- Garde-fou W' (v0.82.0, 5/11/2026, relecteur) : une répétition ne vide pas plus de 80 % du W' (sinon watts baissés, jamais
+  sous la CP) ; W' utilisé seulement après un test complet 12-7-3 et pas le 1er test CP (actif à partir de son prochain test
+  complet). Pmax : rien de plus (déjà dans Progrès, Titouan n'en veut pas davantage). Pas de W'bal en direct.
+  Kcal vélo : 1 kcal/kJ gardé (rendement ~20 %, repos déjà compté).
 - VTT (3/11/2026, demande de Titouan pour ses élèves) : section VTT du catalogue (v0.66.0) puis **moteur** (v0.67.0) :
   réglage « Discipline visée » (Réglages → Avancé → Programme vélo ; route par défaut). XCO/XCC : intervalles longs d'Inoue,
   sprints de 30" en séries (à fond, allure libre), relances 1 séance de seuil sur 3 ; marathon : sortie longue en côtes
