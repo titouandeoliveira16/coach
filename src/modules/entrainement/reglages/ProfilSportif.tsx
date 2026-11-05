@@ -18,6 +18,8 @@ export interface ProfilSportif extends ReponsesNiveau {
   materiel: string[]
   pointsSensibles?: string
   muscu?: string
+  /** Suivi de la nutrition (carte « Nutrition du jour ») : absent = suivi */
+  nutrition?: boolean
 }
 const DEFAUT: ProfilSportif = { sports: [], materiel: [] }
 
@@ -131,6 +133,10 @@ export function SectionProfilSportif() {
         <input defaultValue={ps.pointsSensibles} placeholder="Ex. genoux, tendon d'Achille…" onBlur={(e) => modifierPs({ pointsSensibles: e.target.value.trim() || undefined })}
           className="w-full rounded-lg border border-bordure bg-surface-2 px-3 py-2 text-sm" />
         {/genou/i.test(ps.pointsSensibles ?? '') && <p className="mt-1.5 text-xs text-texte-3">{AIDES.profilGenoux}</p>}
+      </Ligne>
+      <Ligne {...props('nutrition')} libelle="Nutrition" valeur={ps.nutrition === false ? 'Pas suivie' : 'Suivie'}>
+        {choixUnique(['Suivie', 'Pas suivie'], ps.nutrition === false ? 'Pas suivie' : 'Suivie', (v) => modifierPs({ nutrition: v === 'Suivie' }))}
+        <p className="mt-1.5 text-xs text-texte-3">Suivie : tes besoins du jour et le repas du soir dans Aujourd'hui.</p>
       </Ligne>
       <Ligne {...props('muscu')} libelle="Musculation" valeur={ps.muscu ?? ''}>
         {choixUnique(MUSCU, ps.muscu, (muscu) => modifierPs({ muscu }))}

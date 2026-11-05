@@ -7,19 +7,19 @@ import { Carte } from '../../../core/ui/Carte'
 import { ANCIENNETES, DISCIPLINES_PROPOSEES, HEURES_RECENTES, NOMS_DISCIPLINES, NOMS_PHASES, type Role } from '../../../metrics/programme'
 import { AIDES } from '../aides'
 import { importerIntervals, relierIntervals } from '../import/intervals'
-import { enregistrerArrivee, preparerArrivee, SEMAINE_TYPE_DEPART, type EtatArrivee, type ReponsesArrivee } from './donnees'
+import { enregistrerArrivee, preparerArrivee, SEMAINE_TYPE_DEPART, semaineDepuisHeures, type EtatArrivee, type ReponsesArrivee } from './donnees'
 
 const HEURES = ['Moins de 4 h', '4 à 6 h', '6 à 8 h', '8 à 10 h', '10 à 12 h', 'Plus de 12 h']
 const MUSCU = ['Pas pour l’instant', '1 séance par semaine', '2 séances par semaine']
 const ARRETS: [string, number][] = [['Non', 0], ['2 à 3 semaines', 2], ['1 mois ou plus', 4]]
 const ROLES: { role: Role; court: string }[] = [
-  { role: 'libre', court: '—' }, { role: 'velo-dur', court: 'dur' }, { role: 'velo-z2', court: 'Z2' }, { role: 'velo-long', court: 'long' }, { role: 'renfo', court: 'renfo' },
+  { role: 'libre', court: '—' }, { role: 'velo-z2', court: 'Z2' }, { role: 'velo-dur', court: 'dur' }, { role: 'velo-long', court: 'long' }, { role: 'renfo', court: 'renfo' },
 ]
 const LONGUES: [string, number, number][] = [['1 h à 1 h 30', 60, 90], ['1 h 30 à 2 h', 90, 120], ['2 h à 3 h', 120, 180], ['2 h 30 à 4 h', 150, 240]]
 const COULEURS_PHASES: Record<string, string> = {
   reprise: '#60a5fa', entretien: '#34d399', vo2: '#4ade80', seuil: '#facc15', specifique: '#fb923c', affutage: '#f87171',
 }
-const champ = 'w-full rounded-xl border border-bordure bg-surface-2 px-3 py-2.5 outline-none focus:border-accent'
+const champ = 'block h-12 w-full min-w-0 rounded-xl border border-bordure bg-surface-2 px-3 text-base outline-none focus:border-accent'
 const puce = (actif: boolean) => `rounded-full border px-3 py-1.5 text-sm ${actif ? 'border-accent bg-accent text-fond font-semibold' : 'border-bordure text-texte-2'}`
 
 function Choix<T extends string | number | boolean>({ options, valeur, onChoisir }: { options: [string, T][]; valeur?: T; onChoisir: (v: T) => void }) {
@@ -46,8 +46,9 @@ const nombre = (t: string) => (t.trim() === '' ? undefined : Number(t.replace(',
 /** Questionnaire d'arrivée d'un compte créé avec un code : 4 étapes, la saison calculée, puis la montre (Intervals.icu). */
 export function QuestionnaireArrivee({ montreSeulement = false }: { montreSeulement?: boolean }) {
   const [etape, setEtape] = useState(montreSeulement ? 4 : 0)
-  const [r, setR] = useState<Partial<ReponsesArrivee>>({ sexe: 'homme', discipline: 'route', arretSemaines: 0, semaineType: SEMAINE_TYPE_DEPART, maxSemaineMin: 75, minLongMin: 90, maxLongMin: 120 })
+  const [r, setR] = useState<Partial<ReponsesArrivee>>({ sexe: 'homme', discipline: 'route', arretSemaines: 0, semaineType: SEMAINE_TYPE_DEPART, nutrition: true, maxSemaineMin: 75, minLongMin: 90, maxLongMin: 120 })
   const [textes, setTextes] = useState({ taille: '', poids: '', cp: '', fc: '' })
+  const [semaineTouchee, setSemaineTouchee] = useState(false)
   const [occupe, setOccupe] = useState(false)
   const [message, setMessage] = useState<string>()
   const maj = (c: Partial<ReponsesArrivee>) => setR({ ...r, ...c })
@@ -118,10 +119,13 @@ export function QuestionnaireArrivee({ montreSeulement = false }: { montreSeulem
               <Choix options={ARRETS} valeur={r.arretSemaines} onChoisir={(arretSemaines) => maj({ arretSemaines })} />
             </Question>
             <Question libelle="Temps disponible par semaine, à partir de maintenant">
-              <Choix options={HEURES.map((x) => [x, x])} valeur={r.heuresSemaine} onChoisir={(heuresSemaine) => maj({ heuresSemaine })} />
+              <Choix options={HEURES.map((x) => [x, x])} valeur={r.heuresSemaine} onChoisir={(heuresSemaine) => maj({ heuresSemaine, ...(semaineTouchee ? {} : { semaineType: semaineDepuisHeures(heuresSemaine) }) })} />
             </Question>
             <Question libelle="Points sensibles (facultatif)">
               <input value={r.pointsSensibles ?? ''} placeholder="Ex. genoux, dos…" onChange={(e) => maj({ pointsSensibles: e.target.value })} className={champ} />
+            </Question>
+            <Question libelle="Suivre ta nutrition ?" aide="Tes besoins du jour selon tes séances, et le repas du soir. Tu pourras changer d'avis dans Réglages.">
+              <Choix options={[['Oui', true], ['Non', false]]} valeur={r.nutrition} onChoisir={(nutrition) => maj({ nutrition })} />
             </Question>
             <Question libelle="Musculation">
               <Choix options={MUSCU.map((x) => [x, x])} valeur={r.muscu} onChoisir={(muscu) => maj({ muscu })} />
@@ -139,8 +143,9 @@ export function QuestionnaireArrivee({ montreSeulement = false }: { montreSeulem
                 <button key={i} type="button" className={`rounded-lg border py-2 ${role === 'velo-dur' ? 'border-accent text-accent' : 'border-bordure'} ${role === 'libre' ? 'text-texte-3' : ''}`}
                   onClick={() => {
                     const suivant = ROLES[(ROLES.indexOf(x) + 1) % ROLES.length].role
-                    // Une seule séance dure et une seule sortie longue : l'ancien jour redevient libre
-                    const t = (r.semaineType ?? SEMAINE_TYPE_DEPART).map((v, j) => (j === i ? suivant : (suivant === 'velo-dur' || suivant === 'velo-long') && v === suivant ? 'libre' : v))
+                    // Un seul jour dur et une seule sortie longue : l'ancien jour devient une Z2
+                    const t = (r.semaineType ?? SEMAINE_TYPE_DEPART).map((v, j) => (j === i ? suivant : (suivant === 'velo-dur' || suivant === 'velo-long') && v === suivant ? 'velo-z2' : v))
+                    setSemaineTouchee(true)
                     maj({ semaineType: t })
                   }}>
                   <span className="block text-texte-3">{'LMMJVSD'[i]}</span>{x.court}
@@ -148,7 +153,7 @@ export function QuestionnaireArrivee({ montreSeulement = false }: { montreSeulem
               )
             })}
           </div>
-          <p className="mt-2 text-xs text-texte-3">dur = séance d'intensité · Z2 = endurance · long = sortie longue · renfo · — = repos ou autre sport. Il faut un jour « dur » et un jour « long ».</p>
+          <p className="mt-2 text-xs text-texte-3">Préparée selon ton temps disponible : 1 jour dur, 1 sortie longue, le reste en Z2 (endurance). — = repos ou autre sport. Si ton profil le permet, l'appli ajoute toute seule une 2e séance dure sur une Z2.</p>
           <div className="mt-3 space-y-3">
             <Question libelle="Vélo en semaine, au plus">
               <Choix options={[45, 60, 75, 90, 120].map((m) => [`${m} min`, m])} valeur={r.maxSemaineMin} onChoisir={(maxSemaineMin) => maj({ maxSemaineMin })} />
