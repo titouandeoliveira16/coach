@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { mesCodes, nouveauCode, type CodeInvitation } from '../core/inscription'
+import { mesCodes, nouveauCode, type CodeInvitation, type ReglageCompte } from '../core/inscription'
+import { useReglage } from '../core/reglages'
 import { Repliable } from '../core/ui/Repliable'
 
 /** Pour Titouan seulement (comptes « coach » sur le serveur) : créer un code d'inscription pour un élève, son frère… */
@@ -7,11 +8,24 @@ export function SectionCodes() {
   const [codes, setCodes] = useState<CodeInvitation[]>()
   const [pour, setPour] = useState('')
   const [message, setMessage] = useState<string>()
+  const [erreur, setErreur] = useState<string>()
+  const [compte] = useReglage<ReglageCompte>('compte', {})
   useEffect(() => {
-    mesCodes().then((r) => setCodes(r.codes)).catch(() => setCodes(undefined))
+    mesCodes().then((r) => setCodes(r.codes)).catch((e: Error) => setErreur(e.message))
   }, [])
-  // Pas coach (ou fonction pas encore installée) : rien à afficher
-  if (!codes) return null
+  // Compte créé avec un code (élève, frère) : jamais cet encart
+  if (compte.invite) return null
+  // Le serveur refuse ou ne répond pas : on dit pourquoi (sinon l'encart disparaîtrait sans explication)
+  if (!codes)
+    return erreur ? (
+      <Repliable titre="Inviter quelqu'un" resume="Pas disponible">
+        <p className="text-sm text-texte-2">Le serveur répond : « {erreur} »</p>
+        <p className="mt-1 text-xs text-texte-3">
+          « Réservé au coach » : ton compte n'est pas dans la table « coachs » (vérifie l'email de la ligne « insert »). « Pas encore installée » :
+          la fonction ne s'appelle pas exactement « inscription ».
+        </p>
+      </Repliable>
+    ) : null
   const libres = codes.filter((c) => !c.utilise_le).length
   return (
     <Repliable titre="Inviter quelqu'un" resume={`${codes.length} code${codes.length > 1 ? 's' : ''} créé${codes.length > 1 ? 's' : ''}, ${libres} pas encore utilisé${libres > 1 ? 's' : ''}`}>
