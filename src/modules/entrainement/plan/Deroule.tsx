@@ -24,7 +24,7 @@ export function Profil({ etapes, cpW, extensible = false }: { etapes: Etape[]; c
   const largeurs = blocs.map((e) => (e.dureeSec / total) * 1000)
   const departs = largeurs.map((_, i) => largeurs.slice(0, i).reduce((a, w) => a + w, 0))
   return (
-    <svg viewBox="0 0 1000 60" preserveAspectRatio="none" className={`mt-2 block w-full rounded-lg bg-surface-2 ${extensible ? 'h-auto min-h-14 flex-1' : 'h-14'}`} aria-hidden>
+    <svg viewBox="0 0 1000 60" preserveAspectRatio="none" className={`mt-2 block w-full rounded-lg bg-surface-2 ${extensible ? 'h-auto min-h-8 flex-1' : 'h-14'}`} aria-hidden>
       {blocs.map((e, i) => {
         const h = e.w ? Math.max(0.12, e.w / wMax) * 56 : 56
         return <rect key={i} x={departs[i]} y={60 - h} width={Math.max(largeurs[i] - 1, 1)} height={h} fill={couleur(e, cpW)} />

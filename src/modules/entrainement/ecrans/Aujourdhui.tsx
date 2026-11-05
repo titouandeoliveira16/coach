@@ -19,25 +19,35 @@ import { SaisieMatin } from '../forme/SaisieMatin'
 import { BandeauAVoir } from '../forme/BandeauAVoir'
 import { QUESTIONS, mesuresRecentes } from '../forme/donnees'
 
-/** Hauteur pour remplir l'écran jusqu'à la barre du bas, recalculée si l'écran change. */
-function useHauteurEcran(pret: boolean) {
+/**
+ * Zone de l'écran entre le haut de la page (sous les onglets) et la barre du bas : l'écran Aujourd'hui y est posé
+ * en position fixe, comme l'Accueil. La page elle-même ne défile ni ne « rebondit » (sur iPhone, le rebond d'une page
+ * à la hauteur de l'écran faisait remonter la barre du bas).
+ */
+function useZoneEcran(pret: boolean) {
   const ref = useRef<HTMLDivElement>(null)
-  const [h, setH] = useState<number>()
-  const [bas, setBas] = useState(112)
+  const [zone, setZone] = useState<{ haut: number; bas: number }>()
   useEffect(() => {
     const calculer = () => {
       if (!ref.current) return
-      const haut = ref.current.getBoundingClientRect().top + window.scrollY
-      // Barre du bas fixe : on s'arrête juste au-dessus (8 px d'air)
-      const barre = ([...document.querySelectorAll('nav')].find((n) => getComputedStyle(n).position === 'fixed')?.getBoundingClientRect().height ?? 104) + 8
-      setBas(barre)
-      setH(Math.max(0, window.innerHeight - haut - barre))
+      const haut = ref.current.getBoundingClientRect().top
+      const nav = [...document.querySelectorAll('nav')].find((n) => getComputedStyle(n).position === 'fixed')
+      const hautBarre = nav?.getBoundingClientRect().top ?? window.innerHeight - 90
+      setZone({ haut, bas: window.innerHeight - hautBarre + 8 })
     }
+    window.scrollTo(0, 0)
+    // Pas de défilement de la page derrière (rendu en quittant l'écran)
+    document.documentElement.style.overflow = 'hidden'
+    document.body.style.overflow = 'hidden'
     calculer()
     window.addEventListener('resize', calculer)
-    return () => window.removeEventListener('resize', calculer)
+    return () => {
+      window.removeEventListener('resize', calculer)
+      document.documentElement.style.overflow = ''
+      document.body.style.overflow = ''
+    }
   }, [pret])
-  return { ref, h, bas }
+  return { ref, zone }
 }
 
 /** Aujourd'hui sur un seul écran : ta forme, la séance (la plus grande), la nutrition, puis pesée et imprévu en bas.
@@ -45,7 +55,7 @@ function useHauteurEcran(pret: boolean) {
 export function Aujourdhui() {
   const recentes = useLiveQuery(() => mesuresRecentes(1))
   const [edition, setEdition] = useState(false)
-  const { ref, h, bas } = useHauteurEcran(recentes !== undefined)
+  const { ref, zone } = useZoneEcran(recentes !== undefined)
 
   if (!recentes) return null
   const jourSemaine = new Date(`${aujourdhui()}T12:00:00`).getDay()
@@ -54,8 +64,11 @@ export function Aujourdhui() {
   const complet = duJour !== undefined && QUESTIONS.some((q) => duJour[q.cle] !== undefined)
 
   return (
-    <div ref={ref} className="flex flex-col gap-2.5 overflow-y-auto" style={h ? { height: h, marginBottom: bas - 112 } : undefined}>
-      {/* (la coquille réserve 112 px sous le contenu : la marge négative les ramène à la hauteur de la barre, la page ne défile pas) */}
+    <>
+    {/* Repère : là où commence l'écran sous les onglets */}
+    <div ref={ref} />
+    <div className="fixed inset-x-0 mx-auto flex max-w-lg flex-col gap-2.5 overflow-y-auto overscroll-contain px-4"
+      style={zone ? { top: zone.haut, bottom: zone.bas } : { visibility: 'hidden' }}>
       {/* Cartes ponctuelles : un seul bandeau qui les ouvre */}
       <BandeauAVoir>
         <CarteRemise />
@@ -82,5 +95,6 @@ export function Aujourdhui() {
         <CartePanne compact />
       </div>
     </div>
+    </>
   )
 }
