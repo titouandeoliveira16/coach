@@ -62,12 +62,12 @@ export function CarteNutrition({ ouverte: ouverteParent, onBasculer }: {
     && !nutrition.etalements?.some((e) => e.date === d) && !nutrition.etalementsRefuses?.includes(d))
 
   return (
-    <Carte className="flex shrink-0 flex-col gap-2 p-3!">
+    <Carte className={`flex shrink-0 flex-col gap-2 p-3! ${ouverte ? 'border-accent!' : ''}`}>
       <button type="button" onClick={() => setOuverte(!ouverte)} className="flex items-center justify-between text-left">
         <span className="text-xs font-semibold uppercase tracking-wider text-texte-3">Nutrition du jour</span>
         <span className="text-sm">
           {m?.kcal !== undefined ? <b>{formatNombre(m.kcal)}</b> : <span className="text-texte-3">—</span>}
-          <span className="text-texte-2"> / {formatNombre(b.kcal)} kcal</span> <span className="text-texte-3">{ouverte ? '▴' : '▾'}</span>
+          <span className="text-texte-2"> / {formatNombre(b.kcal)} kcal</span> <span className={ouverte ? 'font-semibold text-accent' : 'text-texte-3'}>{ouverte ? 'Réduire ▴' : '▾'}</span>
         </span>
       </button>
       {!ouverte && !hierAFaire && (

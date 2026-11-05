@@ -56,6 +56,12 @@ Points décidés ou mis de côté, à reprendre au bon moment.
 - Quand il s'y met : choisir le jour (le mercredi avec le renfo genoux ?) et vérifier la durée (~35 min).
 
 ## Plus tard
+- Réglages Entraînement refaits (v0.79.0, 5/11/2026) : encarts réductibles (« Modifier › » / « Réduire ▴ », entourés d'orange
+  ouverts, composant `core/ui/Repliable.tsx`), profil sportif (réglage `profil-sportif` : sports, niveau, temps, matériel,
+  points sensibles, muscu ; discipline, courses et créneaux dans le programme). Retirés de l'écran : rappels, programme
+  (phases, dates de tests, Z2 de départ : gérés par l'appli, plus d'écran pour les changer), charge de référence, historique
+  des tests. À faire : appliquer le même style d'encart au Budget et à la Révision ; décider comment niveau / matériel /
+  points sensibles adaptent les séances (avec le relecteur scientifique).
 - VTT (3/11/2026, demande de Titouan pour ses élèves) : section VTT du catalogue (v0.66.0) puis **moteur** (v0.67.0) :
   réglage « Discipline visée » (Réglages → Avancé → Programme vélo ; route par défaut). XCO/XCC : intervalles longs d'Inoue,
   sprints de 30" en séries (à fond, allure libre), relances 1 séance de seuil sur 3 ; marathon : sortie longue en côtes

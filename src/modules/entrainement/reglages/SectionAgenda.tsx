@@ -11,7 +11,7 @@ import { Carte } from '../../../core/ui/Carte'
 const nouvelleCle = () => Array.from(crypto.getRandomValues(new Uint8Array(16)), (o) => o.toString(16).padStart(2, '0')).join('')
 
 /** Google Agenda : un lien iCal privé avec les séances prévues (fonction serveur « agenda »), mis à jour tout seul. */
-export function SectionAgenda() {
+export function SectionAgenda({ className = '' }: { className?: string } = {}) {
   const { session } = useSynchro()
   const cle = useLiveQuery(async () => ((await db.reglages.get('agenda'))?.valeur as { cle?: string } | undefined)?.cle ?? null)
   const [message, setMessage] = useState<string>()
@@ -23,7 +23,7 @@ export function SectionAgenda() {
   }
 
   return (
-    <Carte titre="📅 Google Agenda">
+    <Carte titre="Google Agenda" className={className}>
       {!session ? (
         <p className="text-sm text-texte-2">Connecte-toi à ton compte (Accueil → ⚙️) : le lien lit tes séances sauvegardées en ligne.</p>
       ) : !lien ? (

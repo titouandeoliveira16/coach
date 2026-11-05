@@ -161,12 +161,12 @@ export function CarteAujourdhui({ onModifierMatin, autreOuvert = false }: {
   return (
     <>
       {/* Ta forme : le feu et ses 4 indicateurs, détail à ouvrir */}
-      <Carte className="flex shrink-0 flex-col gap-2.5 p-3!">
+      <Carte className={`flex shrink-0 flex-col gap-2.5 p-3! ${formeOuverte ? 'border-accent!' : ''}`}>
         <button type="button" onClick={basculerForme} className="flex items-center justify-between text-left">
           <span className="text-xs font-semibold uppercase tracking-wider text-texte-3">Ta forme</span>
           <span className="flex items-center gap-1.5 font-bold" style={{ color: COULEUR[signal.couleur] }}>
             <span className="h-2.5 w-2.5 rounded-full" style={{ background: COULEUR[signal.couleur] }} />{TITRE[signal.couleur]}
-            <span className="font-normal text-texte-3">{formeOuverte ? '▴' : '▾'}</span>
+            <span className={`text-sm ${formeOuverte ? 'text-accent' : 'font-normal text-texte-3'}`}>{formeOuverte ? 'Réduire ▴' : '▾'}</span>
           </span>
         </button>
         <div className="grid grid-cols-4 gap-1.5 text-center">
@@ -231,7 +231,7 @@ export function CarteAujourdhui({ onModifierMatin, autreOuvert = false }: {
       </Carte>
 
       {/* Séance du jour : la carte qui prend toute la place restante (elle défile seule si besoin) */}
-      <Carte ref={seanceRef} className={`flex flex-col p-3! ${faites || detailOuvert ? 'shrink-0' : toutFerme ? 'min-h-0 flex-1 overflow-hidden' : 'shrink-0 overflow-hidden'}`}
+      <Carte ref={seanceRef} className={`flex flex-col p-3! ${detailOuvert ? 'border-accent!' : ''} ${faites || detailOuvert ? 'shrink-0' : toutFerme ? 'min-h-0 flex-1 overflow-hidden' : 'shrink-0 overflow-hidden'}`}
         style={!toutFerme && !detailOuvert && !faites && hauteurSeance ? { height: hauteurSeance } : undefined}>
         <div className="flex items-baseline justify-between gap-2">
           <p className="text-xs font-semibold uppercase tracking-wider text-texte-3">Séance du jour</p>
@@ -281,13 +281,13 @@ export function CarteAujourdhui({ onModifierMatin, autreOuvert = false }: {
                 }}>Faite</button>
                 <button type="button" onClick={() => setDetailOuvert(!detailOuvert)}
                   className={`min-h-10 flex-1 rounded-xl border text-sm font-semibold ${detailOuvert ? 'border-accent text-accent' : 'border-bordure bg-surface-2 text-texte-2'}`}>
-                  Nutrition {detailOuvert ? '▴' : '▾'}
+                  {detailOuvert ? 'Réduire ▴' : 'Nutrition ▾'}
                 </button>
               </div>
             ) : (
               <button type="button" onClick={() => setDetailOuvert(!detailOuvert)}
                 className={`mt-2 flex min-h-9 w-full shrink-0 items-center justify-between border-t border-bordure pt-2 text-sm font-semibold ${detailOuvert ? 'text-accent' : 'text-texte-2'}`}>
-                <span>Détail et nutrition</span><span>{detailOuvert ? '▴' : '▾'}</span>
+                <span>Détail et nutrition</span><span>{detailOuvert ? 'Réduire ▴' : '▾'}</span>
               </button>
             )}
             {detailOuvert && (
