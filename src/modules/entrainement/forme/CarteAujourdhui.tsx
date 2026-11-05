@@ -220,7 +220,7 @@ export function CarteAujourdhui({ onModifierMatin }: { onModifierMatin?: () => v
                   conseil={signal.couleur === 'orange' ? `Raccourcie${minutesAdaptees ? ` · ${minutesAdaptees} min` : ''}` : 'Très facile ou repos'}
                   prevu={signal.couleur === 'orange' ? `Complète · ${prevue.dureeMin} min` : 'Séance prévue'} />
                 {decision?.force && <p className="mt-1.5 text-sm font-semibold" style={{ color: COULEUR.vert }}>Séance complète maintenue : arrête-toi si les watts ne tiennent pas.</p>}
-                {!decision?.force && !etapesDuJour && <p className="mt-1.5 text-sm" style={{ color: COULEUR[signal.couleur] }}>{adaptation.texte.replace(/^Feu \w+ : /, '').replace(/^./, (c) => c.toUpperCase())}</p>}
+                {!decision?.force && !etapesDuJour && <p className="mt-1.5 text-[13px] leading-snug" style={{ color: COULEUR[signal.couleur] }}>{adaptation.texte.replace(/^Feu \w+ : /, '').replace(/^./, (c) => c.toUpperCase())}</p>}
               </>
             ) : (
               <p className="mt-1 text-sm" style={{ color: signal.couleur === 'vert' ? COULEUR.vert : COULEUR[signal.couleur] }}>
@@ -240,7 +240,7 @@ export function CarteAujourdhui({ onModifierMatin }: { onModifierMatin?: () => v
               </div>
             )}
             {prevue.sport !== 'velo' && (
-              <button type="button" className="mt-2 min-h-11 w-full rounded-xl bg-accent text-sm font-bold text-fond" onClick={() => {
+              <button type="button" className="mt-2 min-h-11 w-full shrink-0 rounded-xl bg-accent text-sm font-bold text-fond" onClick={() => {
                 const seance: Seance = { id: nouvelId(), date: jour, sport: prevue.sport, type: prevue.type, titre: prevue.titre, dureeSec: prevue.dureeMin * 60, source: 'manuel', prevueId: prevue.id }
                 navigate('/entrainement/seance/nouvelle', { state: { seance } })
               }}>Faite</button>

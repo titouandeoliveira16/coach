@@ -21,8 +21,9 @@ import { QUESTIONS, mesuresRecentes } from '../forme/donnees'
 
 /**
  * Zone de l'écran entre le haut de la page (sous les onglets) et la barre du bas : l'écran Aujourd'hui y est posé
- * en position fixe, comme l'Accueil. La page elle-même ne défile ni ne « rebondit » (sur iPhone, le rebond d'une page
- * à la hauteur de l'écran faisait remonter la barre du bas).
+ * en position fixe. Sous lui, la page garde une hauteur plus grande que l'écran : sur iPhone (appli installée), une
+ * page qui ne peut pas défiler fait remonter la barre du bas fixe en laissant un vide dessous (comme Semaine, qui
+ * défile, la barre reste alors collée en bas). Faire défiler cette page ne déplace rien à l'écran.
  */
 function useZoneEcran(pret: boolean) {
   const ref = useRef<HTMLDivElement>(null)
@@ -36,16 +37,9 @@ function useZoneEcran(pret: boolean) {
       setZone({ haut, bas: window.innerHeight - hautBarre + 8 })
     }
     window.scrollTo(0, 0)
-    // Pas de défilement de la page derrière (rendu en quittant l'écran)
-    document.documentElement.style.overflow = 'hidden'
-    document.body.style.overflow = 'hidden'
     calculer()
     window.addEventListener('resize', calculer)
-    return () => {
-      window.removeEventListener('resize', calculer)
-      document.documentElement.style.overflow = ''
-      document.body.style.overflow = ''
-    }
+    return () => window.removeEventListener('resize', calculer)
   }, [pret])
   return { ref, zone }
 }
@@ -65,8 +59,8 @@ export function Aujourdhui() {
 
   return (
     <>
-    {/* Repère : là où commence l'écran sous les onglets */}
-    <div ref={ref} />
+    {/* Repère (là où commence l'écran sous les onglets) et hauteur de page plus grande que l'écran */}
+    <div ref={ref} style={{ height: zone ? window.innerHeight - zone.haut + 40 : '100vh' }} aria-hidden />
     <div className="fixed inset-x-0 mx-auto flex max-w-lg flex-col gap-2.5 overflow-y-auto overscroll-contain px-4"
       style={zone ? { top: zone.haut, bottom: zone.bas } : { visibility: 'hidden' }}>
       {/* Cartes ponctuelles : un seul bandeau qui les ouvre */}
