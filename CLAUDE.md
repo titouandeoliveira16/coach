@@ -6,7 +6,8 @@ PWA en français (iPhone d'abord, thème sombre) : un accueil, puis des modules.
 **Muscu** est construit (développé couché 5/3/1 adapté, pas encore relié à l'Entraînement ni à la nutrition ; mis de côté,
 plus sur l'accueil) ;
 **Catalogue** affiche le catalogue scientifique de séances (`catalogue/` : route, VTT par discipline, course, renfo, méthodes ;
-l'Entraînement y pioche ses formats d'intensité vélo ; plus sur l'accueil, ouvert depuis Entraînement → Réglages).
+l'Entraînement y pioche ses formats d'intensité vélo ; plus sur l'accueil : encart dépliable dans Entraînement → Réglages,
+limité aux sports du profil sportif, `catalogue/ListeCatalogue.tsx`).
 L'accueil n'affiche que Entraînement, Révision CAPEPS et Budget (modules `masque` dans `src/app/modules.ts`).
 En ligne : https://titouandeoliveira16.github.io/coach/ (GitHub Pages, déployé à chaque push sur `main`).
 

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { decalerJour, depuisJour, NOMS_JOURS } from '../../../core/dates'
-import { Carte } from '../../../core/ui/Carte'
+import { Repliable } from '../../../core/ui/Repliable'
 import { useParametres } from '../donnees'
 import { PARAMETRES_DEFAUT, creneauxDu, enVacances, type Capacites, type Creneau, type Parametres } from '../programme'
 import { LIBELLES_CRENEAUX } from '../ui'
@@ -20,21 +20,19 @@ export function SectionReglagesRevision() {
 
   return (
     <>
-      <Carte titre="Révision CAPEPS">
-        <Titre ouvert={ouvert === 'dates'} onClick={() => bascule('dates')}>Dates (concours, vacances, phases)</Titre>
-        {ouvert === 'dates' && <Dates p={p} modifier={modifier} />}
-        <Titre ouvert={ouvert === 'capacites'} onClick={() => bascule('capacites')}>Temps de rappels par jour</Titre>
-        {ouvert === 'capacites' && <TableCapacites p={p} modifier={modifier} />}
-        <Titre ouvert={ouvert === 'stage'} onClick={() => bascule('stage')}>Nouveau stage (après-midis et soirées)</Titre>
-        {ouvert === 'stage' && <NouveauStage p={p} modifier={modifier} />}
-      </Carte>
+      <Repliable titre="Dates" resume="Concours, vacances, phases" ouvert={ouvert === 'dates'} onBasculer={() => bascule('dates')}>
+        <Dates p={p} modifier={modifier} />
+      </Repliable>
+      <Repliable titre="Temps de rappels par jour" resume="Minutes de rappels selon la période" ouvert={ouvert === 'capacites'} onBasculer={() => bascule('capacites')}>
+        <TableCapacites p={p} modifier={modifier} />
+      </Repliable>
+      <Repliable titre="Nouveau stage" resume="Après-midis et soirées" ouvert={ouvert === 'stage'} onBasculer={() => bascule('stage')}>
+        <NouveauStage p={p} modifier={modifier} />
+      </Repliable>
     </>
   )
 }
 
-function Titre({ ouvert, onClick, children }: { ouvert: boolean; onClick: () => void; children: string }) {
-  return <button type="button" onClick={onClick} className="w-full py-2.5 text-left font-semibold">{ouvert ? '▾' : '▸'} {children}</button>
-}
 
 type Props = { p: Parametres; modifier: (c: Partial<Parametres>) => void }
 
