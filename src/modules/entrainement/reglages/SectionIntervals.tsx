@@ -4,7 +4,7 @@ import { db } from '../../../core/db'
 import { depuis } from '../../../core/format'
 import { useSynchro } from '../../../core/synchro'
 import { Bouton } from '../../../core/ui/Bouton'
-import { Carte } from '../../../core/ui/Carte'
+import { Repliable } from '../../../core/ui/Repliable'
 import { delierIntervals, etatIntervalsServeur, importerIntervals, relierIntervals, type EtatIntervals } from '../import/intervals'
 
 const champ = 'w-full rounded-xl border border-bordure bg-surface-2 px-4 py-3 outline-none focus:border-accent'
@@ -45,7 +45,7 @@ export function SectionIntervals() {
     })
 
   return (
-    <Carte titre="Intervals.icu">
+    <Repliable titre="Intervals.icu" libelle="Gérer" resume={!session ? 'Connecte-toi à ton compte' : connecte ? <span className="text-nutrition">✓ Relié{etat?.dernierImport ? ` · dernier import ${depuis(etat.dernierImport)}` : ''}</span> : connecte === false ? 'Pas encore relié' : ''}>
       {!session ? (
         <p className="text-sm text-texte-2">Connecte-toi à ton compte (Accueil → ⚙️) pour relier Intervals.icu.</p>
       ) : connecte ? (
@@ -80,6 +80,6 @@ export function SectionIntervals() {
         </div>
       )}
       {message && <p className="mt-2 text-sm text-texte-2">{message}</p>}
-    </Carte>
+    </Repliable>
   )
 }
