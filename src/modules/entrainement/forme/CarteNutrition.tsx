@@ -16,7 +16,11 @@ import { jourARemplir } from './repas'
  * Nutrition du jour, en une carte : besoin estimé, ce que tu as mangé (noté le soir) et l'écart, ligne par ligne.
  * Le matin, rattrapage de l'assiette d'hier si elle n'a pas été notée. Le détail du calcul s'ouvre à la demande.
  */
-export function CarteNutrition() {
+export function CarteNutrition({ ouverte: ouverteParent, onBasculer }: {
+  /** Dépliée ou non (géré par l'écran Aujourd'hui, pour que les autres encarts descendent sans se déformer) */
+  ouverte?: boolean
+  onBasculer?: (ouverte: boolean) => void
+} = {}) {
   const jour = aujourdhui()
   const hier = decalerJour(jour, -1)
   const b = useLiveQuery(() => besoinsDe(jour), [jour])
@@ -27,7 +31,9 @@ export function CarteNutrition() {
   const nutrition = useLiveQuery(lireReglagesNutrition)
   const [saisie, setSaisie] = useState<'jour' | 'hier'>()
   const [detail, setDetail] = useState(false)
-  const [ouverte, setOuverte] = useState(false)
+  const [ouverteLocale, setOuverteLocale] = useState(false)
+  const ouverte = ouverteParent ?? ouverteLocale
+  const setOuverte = (v: boolean) => (onBasculer ? onBasculer(v) : setOuverteLocale(v))
   if (!b || mange === undefined) return null
 
   // Rattrapage de la veille : l'assiette d'hier pas encore notée (un bouton dans la carte)

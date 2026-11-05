@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { db } from '../../../core/db'
 import { aujourdhui, decalerJour, depuisJour } from '../../../core/dates'
@@ -13,7 +13,8 @@ import { adapterDuJour } from '../plan/adaptation'
 import { JOURS_REPRISE, annulerReport, repriseApresMaladie, reporterIntensite } from '../plan/imprevus'
 import { CP_DEFAUT, estIntensite } from '../plan/programme'
 import { BoutonsEnvoi } from '../plan/BoutonsEnvoi'
-import { Profil } from '../plan/Deroule'
+import { Deroule, Profil } from '../plan/Deroule'
+import { NutritionSeance } from '../plan/NutritionSeance'
 import { useReglagesEntrainement } from '../reglagesEntrainement'
 import { iconeSport } from '../sports'
 import { basculerSansMontre, QUESTIONS, scoreRessenti } from './donnees'
@@ -45,9 +46,33 @@ function ChoixSeance({ maintenue, conseil, prevu, couleur, onChoisir }: {
 }
 
 /** Signal du jour, raison, séance prévue et recommandation. */
-export function CarteAujourdhui({ onModifierMatin }: { onModifierMatin?: () => void } = {}) {
+export function CarteAujourdhui({ onModifierMatin, autreOuvert = false }: {
+  onModifierMatin?: () => void
+  /** Un autre encart (Nutrition du jour) est déplié : la séance garde sa taille et descend */
+  autreOuvert?: boolean
+} = {}) {
   const jour = aujourdhui()
   const [formeOuverte, setFormeOuverte] = useState(false)
+  const [detailOuvert, setDetailOuvert] = useState(false)
+  // Tout fermé : la séance remplit la place libre, et on retient sa hauteur. Un encart ouvert : elle garde
+  // cette hauteur (intacte) et descend ; son propre détail ouvert : elle s'allonge.
+  const seanceRef = useRef<HTMLElement>(null)
+  const [hauteurSeance, setHauteurSeance] = useState<number>()
+  const toutFerme = !formeOuverte && !autreOuvert && !detailOuvert
+  /** Au moment d'ouvrir un encart : on fige la hauteur exacte de la séance telle qu'elle est à l'écran */
+  const basculerForme = () => {
+    if (toutFerme && seanceRef.current) setHauteurSeance(seanceRef.current.getBoundingClientRect().height)
+    setFormeOuverte(!formeOuverte)
+  }
+  useLayoutEffect(() => {
+    const el = seanceRef.current
+    if (!el || !toutFerme) return
+    const lire = () => setHauteurSeance(el.getBoundingClientRect().height)
+    lire()
+    const obs = new ResizeObserver(lire)
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [toutFerme])
   const navigate = useNavigate()
   // Jour de repos : on montre la séance de demain
   const demain = useLiveQuery(async () => (await db.prevues.where('date').equals(decalerJour(jour, 1)).toArray()).filter((p) => p.statut === 'prevue'), [jour])
@@ -128,13 +153,16 @@ export function CarteAujourdhui({ onModifierMatin }: { onModifierMatin?: () => v
     ressenti: ressenti !== undefined ? `${formatNombre(ressenti, 1)} / 5 en moyenne` : undefined,
   }
   const couleurEtat = (e?: 'ok' | 'alerte' | 'info') => (e === 'alerte' ? COULEUR[signal.couleur === 'vert' ? 'orange' : signal.couleur] : e === 'ok' ? COULEUR.vert : '#a3abb7')
+  /** Fond plein de chaque case (teintes foncées pour que le texte blanc se lise) ; gris si pas encore d'avis */
+  const FOND_CASE = { vert: '#15803d', orange: '#c2410c', rouge: '#b91c1c' }
+  const fondCase = (e?: 'ok' | 'alerte' | 'info') => (e === 'alerte' ? FOND_CASE[signal.couleur === 'vert' ? 'orange' : signal.couleur] : e === 'ok' ? FOND_CASE.vert : undefined)
   const petitBouton = (actif: boolean) => `min-h-11 flex-1 rounded-xl border px-1 text-[13px] font-semibold ${actif ? 'border-[#f87171] bg-[#f87171] text-fond' : 'border-bordure text-texte-2'}`
 
   return (
     <>
       {/* Ta forme : le feu et ses 4 indicateurs, détail à ouvrir */}
       <Carte className="flex shrink-0 flex-col gap-2.5 p-3!">
-        <button type="button" onClick={() => setFormeOuverte(!formeOuverte)} className="flex items-center justify-between text-left">
+        <button type="button" onClick={basculerForme} className="flex items-center justify-between text-left">
           <span className="text-xs font-semibold uppercase tracking-wider text-texte-3">Ta forme</span>
           <span className="flex items-center gap-1.5 font-bold" style={{ color: COULEUR[signal.couleur] }}>
             <span className="h-2.5 w-2.5 rounded-full" style={{ background: COULEUR[signal.couleur] }} />{TITRE[signal.couleur]}
@@ -143,11 +171,12 @@ export function CarteAujourdhui({ onModifierMatin }: { onModifierMatin?: () => v
         </button>
         <div className="grid grid-cols-4 gap-1.5 text-center">
           {cases.map(({ cle, d }) => (
-            <button key={cle} type="button" onClick={() => setFormeOuverte(!formeOuverte)} className="flex flex-col items-center justify-center gap-0.5 rounded-xl bg-surface-2 px-0.5 py-1.5"
-              style={d?.etat === 'alerte' ? { boxShadow: `inset 0 0 0 1px ${couleurEtat('alerte')}` } : undefined}>
-              <span className="text-[11px] text-texte-3">{NOMS_CASES[cle]}</span>
-              <span className="text-sm font-semibold leading-tight" style={{ color: couleurEtat(d?.etat) }}>{d?.court ?? '—'}</span>
-              {resumes[cle] && <span className="text-[11px] leading-tight text-texte-2">{resumes[cle]}</span>}
+            <button key={cle} type="button" onClick={basculerForme}
+              className={`flex flex-col items-center justify-center gap-0.5 rounded-xl px-0.5 py-1.5 ${fondCase(d?.etat) ? 'text-white' : 'bg-surface-2 text-texte-2'}`}
+              style={fondCase(d?.etat) ? { background: fondCase(d?.etat) } : undefined}>
+              <span className="text-[11px] opacity-85">{NOMS_CASES[cle]}</span>
+              <span className="text-sm font-semibold leading-tight">{d?.court ?? '—'}</span>
+              {resumes[cle] && <span className="text-[11px] leading-tight opacity-85">{resumes[cle]}</span>}
             </button>
           ))}
         </div>
@@ -156,11 +185,16 @@ export function CarteAujourdhui({ onModifierMatin }: { onModifierMatin?: () => v
             {signal.calibrationVfc && <p className="text-xs text-texte-3">VFC en calibration ({a.vfc.nBase}/14 jours)</p>}
             {Object.values(chiffres).some(Boolean) && <p className="text-sm text-texte-2">{Object.values(chiffres).filter(Boolean).join(' · ')}</p>}
             {mesure && (
-              <div className="flex flex-wrap items-center gap-1.5">
-                {QUESTIONS.filter((q) => mesure[q.cle] !== undefined).map((q) => (
-                  <span key={q.cle} className="rounded-full bg-surface-2 px-2.5 py-1 text-xs text-texte-2">{q.libelle} {mesure[q.cle]}</span>
-                ))}
-                {onModifierMatin && <button type="button" onClick={onModifierMatin} className="px-1 py-1 text-xs font-semibold text-accent">Modifier</button>}
+              <div className="space-y-1">
+                <div className="grid grid-cols-5 gap-1 text-center">
+                  {QUESTIONS.map((q) => (
+                    <span key={q.cle} className="rounded-lg bg-surface-2 py-1">
+                      <span className="block text-[10px] text-texte-3">{q.libelle}</span>
+                      <b className="text-sm">{mesure[q.cle] ?? '–'}</b>
+                    </span>
+                  ))}
+                </div>
+                {onModifierMatin && <button type="button" onClick={onModifierMatin} className="text-xs font-semibold text-accent">Modifier mes notes du matin</button>}
               </div>
             )}
             {signal.details.some((x) => x.etat === 'alerte' && x.cle && x.cle !== 'charge' && x.texte !== x.court) && (
@@ -197,7 +231,8 @@ export function CarteAujourdhui({ onModifierMatin }: { onModifierMatin?: () => v
       </Carte>
 
       {/* Séance du jour : la carte qui prend toute la place restante (elle défile seule si besoin) */}
-      <Carte className={`flex flex-col p-3! ${faites ? 'shrink-0' : 'min-h-0 flex-1 overflow-hidden'}`}>
+      <Carte ref={seanceRef} className={`flex flex-col p-3! ${faites || detailOuvert ? 'shrink-0' : toutFerme ? 'min-h-0 flex-1 overflow-hidden' : 'shrink-0 overflow-hidden'}`}
+        style={!toutFerme && !detailOuvert && !faites && hauteurSeance ? { height: hauteurSeance } : undefined}>
         <div className="flex items-baseline justify-between gap-2">
           <p className="text-xs font-semibold uppercase tracking-wider text-texte-3">Séance du jour</p>
           {prevue && <span className="text-xs text-texte-2">{prevue.sport === 'velo' ? 'vélo' : prevue.sport}</span>}
@@ -237,6 +272,16 @@ export function CarteAujourdhui({ onModifierMatin }: { onModifierMatin?: () => v
               // Renfo, course, séance sans déroulé : le détail est visible directement
               <div className="mt-2 min-h-0 flex-1 overflow-hidden whitespace-pre-line rounded-xl bg-surface-2 p-3 text-sm text-texte-2">
                 {prevue.detail || `${prevue.dureeMin} min`}
+              </div>
+            )}
+            <button type="button" onClick={() => setDetailOuvert(!detailOuvert)}
+              className={`mt-2 min-h-10 w-full shrink-0 rounded-xl border text-sm font-semibold ${detailOuvert ? 'border-accent text-accent' : 'border-bordure bg-surface-2 text-texte-2'}`}>
+              Détail et nutrition {detailOuvert ? '▴' : '▾'}
+            </button>
+            {detailOuvert && (
+              <div className="shrink-0">
+                {etapesDuJour && <Deroule etapes={etapesDuJour} sansProfil />}
+                {!(adaptation?.modifiee && !decision?.force && signal.couleur === 'rouge') && <NutritionSeance p={prevue} />}
               </div>
             )}
             {prevue.sport !== 'velo' && (
