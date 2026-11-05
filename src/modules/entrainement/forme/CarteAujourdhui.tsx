@@ -13,9 +13,8 @@ import { adapterDuJour } from '../plan/adaptation'
 import { JOURS_REPRISE, annulerReport, repriseApresMaladie, reporterIntensite } from '../plan/imprevus'
 import { CP_DEFAUT, estIntensite } from '../plan/programme'
 import { BoutonsEnvoi } from '../plan/BoutonsEnvoi'
-import { Deroule, Profil } from '../plan/Deroule'
+import { Profil } from '../plan/Deroule'
 import { useReglagesEntrainement } from '../reglagesEntrainement'
-import { NutritionSeance } from '../plan/NutritionSeance'
 import { iconeSport } from '../sports'
 import { basculerSansMontre, QUESTIONS, scoreRessenti } from './donnees'
 import { SeancesFaites } from './SeancesFaites'
@@ -48,7 +47,6 @@ function ChoixSeance({ maintenue, conseil, prevu, couleur, onChoisir }: {
 /** Signal du jour, raison, séance prévue et recommandation. */
 export function CarteAujourdhui({ onModifierMatin }: { onModifierMatin?: () => void } = {}) {
   const jour = aujourdhui()
-  const [voir, setVoir] = useState<'deroule'>()
   const [formeOuverte, setFormeOuverte] = useState(false)
   const navigate = useNavigate()
   // Jour de repos : on montre la séance de demain
@@ -202,11 +200,7 @@ export function CarteAujourdhui({ onModifierMatin }: { onModifierMatin?: () => v
       <Carte className="flex min-h-40 flex-1 flex-col overflow-y-auto p-3!">
         <div className="flex items-baseline justify-between gap-2">
           <p className="text-xs font-semibold uppercase tracking-wider text-texte-3">Séance du jour</p>
-          {prevue && etapesDuJour ? (
-            <button type="button" onClick={() => setVoir(voir === 'deroule' ? undefined : 'deroule')} className="text-sm font-semibold text-accent">
-              Déroulé {voir === 'deroule' ? '▴' : '▾'}
-            </button>
-          ) : prevue ? <span className="text-xs text-texte-2">{prevue.sport}</span> : null}
+          {prevue && <span className="text-xs text-texte-2">{prevue.sport === 'velo' ? 'vélo' : prevue.sport}</span>}
         </div>
         {reprise ? (
           <p className="mt-2 rounded-xl bg-surface-2 p-3 text-sm">
@@ -251,8 +245,6 @@ export function CarteAujourdhui({ onModifierMatin }: { onModifierMatin?: () => v
                 navigate('/entrainement/seance/nouvelle', { state: { seance } })
               }}>Faite</button>
             )}
-            {voir === 'deroule' && etapesDuJour && <Deroule etapes={etapesDuJour} sansProfil />}
-            {voir === 'deroule' && etapesDuJour && !(adaptation?.modifiee && !decision?.force && signal.couleur === 'rouge') && <NutritionSeance p={prevue} />}
           </>
         ) : faites ? null : reportee ? (
           <div className="mt-1 text-sm">

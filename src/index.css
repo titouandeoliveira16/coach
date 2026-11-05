@@ -49,8 +49,7 @@ body {
 .pb-sur {
   padding-bottom: max(env(safe-area-inset-bottom), 8px);
 }
-/* Appli installée où l'iPhone garde déjà le bas de l'écran pour lui (la page s'arrête au-dessus de la barre d'accueil) :
-   pas de marge en plus, sinon la barre du bas flotte avec un grand vide dessous (main.tsx pose la classe) */
-.bas-reserve .pb-sur {
-  padding-bottom: 6px;
+/* Barre du bas : collée en bas comme une barre d'iPhone, les libellés juste au-dessus de la barre d'accueil */
+.pb-barre {
+  padding-bottom: max(calc(env(safe-area-inset-bottom) - 22px), 6px);
 }
