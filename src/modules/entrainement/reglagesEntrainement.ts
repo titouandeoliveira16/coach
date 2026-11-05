@@ -34,7 +34,7 @@ export function programmeDe(p?: Partial<ReglagesProgramme>): ReglagesProgramme {
 }
 
 /** Valeurs neutres de départ : les vraies zones vivent dans tes données (Réglages → Avancé → Zones), jamais dans le code. */
-const DEFAUT: ReglagesEntrainement = {
+export const DEFAUT_ENTRAINEMENT: ReglagesEntrainement = {
   vmaKmh: 18.5,
   zonesVelo: [
     { nom: 'Z1', wMin: 0, wMax: 110, fcMin: 0, fcMax: 130 },
@@ -51,4 +51,4 @@ const DEFAUT: ReglagesEntrainement = {
   programme: PROGRAMME_DEFAUT,
 }
 
-export const useReglagesEntrainement = () => useReglage<ReglagesEntrainement>('entrainement', DEFAUT)
+export const useReglagesEntrainement = () => useReglage<ReglagesEntrainement>('entrainement', DEFAUT_ENTRAINEMENT)

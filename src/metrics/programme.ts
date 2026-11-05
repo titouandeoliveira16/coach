@@ -21,7 +21,7 @@ export const NOMS_DISCIPLINES: Record<Discipline, string> = {
 }
 /** Disciplines proposées (enduro et descente mis de côté le 5/11/2026 : le code reste, on ne les propose plus). */
 export const DISCIPLINES_PROPOSEES: Discipline[] = ['route', 'xco', 'xcc', 'xcm']
-export type TypePhase = 'reprise' | 'vo2' | 'seuil' | 'entretien'
+export type TypePhase = 'reprise' | 'vo2' | 'seuil' | 'entretien' | 'specifique' | 'affutage' | 'recuperation'
 /** Rôle d'un jour dans la semaine type */
 export type Role = 'course' | 'renfo' | 'velo-dur' | 'velo-z2' | 'velo-long' | 'libre'
 
@@ -529,6 +529,9 @@ export const NOMS_PHASES: Record<TypePhase, string> = {
   vo2: 'Dominante VO2max',
   seuil: 'Dominante seuil',
   entretien: 'Entretien (VO2 / seuil)',
+  specifique: 'Proche de ta course',
+  affutage: 'Affûtage',
+  recuperation: 'Récupération',
 }
 
 /** Phase d'une semaine et numéro de la semaine dans la phase (0 = première). */
@@ -539,8 +542,32 @@ export function phaseDe(lundi: string, phases: Phase[]) {
   return { phase, semaine }
 }
 
-/** Semaine allégée : 1 sur 4 dans chaque phase. */
-export const estSemaineAllegee = (semaineDansPhase: number) => semaineDansPhase % 4 === 3
+/**
+ * Semaine allégée : 1 sur 4, comptée sur toute la saison (depuis le début de la 1re phase) et non plus phase par phase :
+ * avec des phases courtes, on pouvait enchaîner 8 semaines sans allègement (relecteur, 5/11/2026).
+ * Jamais près de la course, en affûtage ni en récupération (le volume y baisse déjà).
+ */
+export function estSemaineAllegee(lundi: string, phases: Phase[]) {
+  const triees = [...phases].sort((a, b) => a.debut.localeCompare(b.debut))
+  if (!triees.length) return false
+  const { phase } = phaseDe(lundi, triees)
+  if (phase.type === 'specifique' || phase.type === 'affutage' || phase.type === 'recuperation') return false
+  const rang = Math.floor((Date.parse(lundi) - Date.parse(triees[0].debut)) / (7 * 86_400_000))
+  return rang >= 0 && rang % 4 === 3
+}
+
+/**
+ * Volume de l'affûtage et de la récupération, en part du budget de référence (sans hausse ni −35 % en plus) :
+ * affûtage 0,65 puis 0,45 la semaine de la course (Bosquet 2007 : volume −41 à −60 %, intensité gardée ;
+ * coefficients : choix d'entraîneur) ; récupération après la course 0,6, sans intensité.
+ */
+export function coefficientPhase(lundi: string, phases: Phase[], competitions: { date: string }[]) {
+  const { phase } = phaseDe(lundi, phases)
+  const fin = decaler(lundi, 6)
+  if (phase.type === 'affutage') return competitions.some((c) => c.date >= lundi && c.date <= fin) ? 0.45 : 0.65
+  if (phase.type === 'recuperation') return 0.6
+  return undefined
+}
 
 /** Dominante de chaque phase : enchaînement des types de séance d'une semaine sur l'autre. */
 const CYCLES: Record<TypePhase, ('vo2' | 'seuil' | 'sous-seuil')[]> = {
@@ -548,6 +575,9 @@ const CYCLES: Record<TypePhase, ('vo2' | 'seuil' | 'sous-seuil')[]> = {
   vo2: ['vo2', 'vo2', 'seuil'],
   seuil: ['seuil', 'seuil', 'vo2'],
   entretien: ['vo2', 'seuil'],
+  specifique: ['vo2', 'seuil'],
+  affutage: ['vo2', 'seuil'],
+  recuperation: ['sous-seuil'],
 }
 
 /** Une séance d'intensité passée (ou déjà prévue), pour l'alternance et la progression. */
@@ -593,7 +623,8 @@ export function choisirFormat(lundi: string, phases: Phase[], histo: HistoIntens
   const { phase } = phaseDe(lundi, phases)
   const avant = histo.filter((h) => h.date < lundi).sort((a, b) => a.date.localeCompare(b.date))
   const dansPhase = avant.filter((h) => h.date >= phase.debut)
-  const cycle = CYCLES[phase.type]
+  // Marathon VTT près de la course : seuil et sous le seuil (sortie longue au maximum à côté)
+  const cycle = phase.type === 'specifique' && discipline === 'xcm' ? (['seuil', 'sous-seuil'] as const) : CYCLES[phase.type]
   const dominante = cycle[dansPhase.length % cycle.length]
   const derniere = (f: (h: HistoIntensite) => boolean) => [...avant].reverse().find(f)
 
@@ -700,6 +731,12 @@ export function budgetSemaine(prec: BilanSemaine | undefined, nominal: number, p
   if (borne < ref) raison += ' (plafonné par tes créneaux)'
   ref = Math.round(borne)
   return { budgetRef: ref, budget: Math.round(allegee ? ref * 0.65 : ref), raison: allegee ? `${raison} · ${raisonAllegee} : −35 %` : raison }
+}
+
+/** Affûtage / récupération : budget = part fixe du budget de référence d'avant (pas de hausse, pas de −35 % en plus). */
+export function budgetDePhase(prec: BilanSemaine | undefined, nominal: number, coef: number, nomPhase: string) {
+  const ref = Math.round(prec?.budgetRef ?? nominal)
+  return { budgetRef: ref, budget: Math.round(ref * coef), raison: `${nomPhase} : ${Math.round(coef * 100)} % de ton budget habituel` }
 }
 
 /**
@@ -825,6 +862,25 @@ export function placer(semaine: string[], roles: Role[], autres: Occupation[], i
  *  - plafond du vélo : le haut de la tranche d'heures, moins la course prévue.
  */
 export type Niveau = 'debutant' | 'intermediaire' | 'confirme' | 'expert'
+/** Les 3 questions concrètes qui remplacent « Niveau » (relecteur, 5/11/2026 ; seuils : choix d'entraîneur). */
+export const ANCIENNETES = ['Moins d’un an', '1 à 3 ans', '3 à 5 ans', 'Plus de 5 ans']
+export const HEURES_RECENTES = ['Moins de 3 h', '3 à 6 h', '6 à 10 h', 'Plus de 10 h']
+export interface ReponsesNiveau {
+  /** Depuis combien de temps tu roules au moins 2 fois par semaine, sans arrêt de plus de 2 mois */
+  anciennete?: string
+  /** Heures de vélo par semaine en moyenne ces 3 derniers mois */
+  heuresRecentes?: string
+  /** Déjà suivi un plan avec des intervalles pendant au moins 6 semaines */
+  intervalles?: boolean
+  /** Ancienne réponse (Débutant, Intermédiaire…), gardée tant que les 3 questions ne sont pas remplies */
+  niveau?: string
+}
+/** Score 0 à 7 : 0-1 débutant, 2-3 intermédiaire, 4-5 confirmé, 6-7 expert. Sans réponse : intermédiaire (prudent). */
+export function niveauDuProfil(r?: ReponsesNiveau): Niveau {
+  if (!r || r.anciennete === undefined || r.heuresRecentes === undefined || r.intervalles === undefined) return niveauDe(r?.niveau)
+  const score = Math.max(0, ANCIENNETES.indexOf(r.anciennete)) + Math.max(0, HEURES_RECENTES.indexOf(r.heuresRecentes)) + (r.intervalles ? 1 : 0)
+  return score <= 1 ? 'debutant' : score <= 3 ? 'intermediaire' : score <= 5 ? 'confirme' : 'expert'
+}
 export function niveauDe(texte?: string): Niveau {
   if (!texte) return 'intermediaire'
   if (/^Débutant/.test(texte)) return 'debutant'
@@ -903,14 +959,16 @@ export function projeterSaison(o: {
     const suivante = triees.find((p) => p.debut > phase.debut)
     const competition = o.competitions.find((c) => c.date >= l && c.date <= fin)
     const test = o.testsCp.find((d) => d >= l && d <= fin)
-    const allegee = estSemaineAllegee(semaine) || !!competition
+    const coef = coefficientPhase(l, triees, o.competitions)
+    const allegee = coef === undefined && (estSemaineAllegee(l, triees) || !!competition)
     const plafond = o.plafondDe?.(l) ?? o.plafond
-    if (semaines.length && !precedenteAllegee) ref = ref * 1.075
+    if (semaines.length && !precedenteAllegee && coef === undefined) ref = ref * 1.075
     ref = Math.min(plafond, ref)
-    precedenteAllegee = allegee
+    precedenteAllegee = allegee || coef !== undefined
 
     let intensite: string
     if (test) intensite = o.testsCourts?.includes(test) ? "Test CP court 3' + 12'" : 'Test CP complet 12-7-3'
+    else if (phase.type === 'recuperation') intensite = 'Pas d’intensité (récupération)'
     else {
       const choix = choisirFormat(l, triees, histo, o.discipline)
       const famille = NOMS_FAMILLES[choix.famille]
@@ -921,7 +979,7 @@ export function projeterSaison(o: {
       lundi: l, phase: phase.type, numero: semaine + 1,
       total: suivante ? Math.round((Date.parse(suivante.debut) - Date.parse(phase.debut)) / (7 * 86_400_000)) : undefined,
       type: competition ? 'competition' : test ? 'test' : allegee ? 'allegee' : 'normale',
-      budget: Math.round((allegee ? ref * 0.65 : ref) / 50) * 50,
+      budget: Math.round((coef !== undefined ? ref * coef : allegee ? ref * 0.65 : ref) / 50) * 50,
       intensite, competition: competition?.nom,
     })
   }

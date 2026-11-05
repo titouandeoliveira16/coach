@@ -1,7 +1,11 @@
 /** Textes des « ? » : une phrase par chiffre affiché, pour savoir comment il est calculé. */
 export const AIDES = {
   profilNiveau:
-    "Plus tu débutes, plus tu progresses vite avec peu d'intensité : en débutant, ton budget vélo monte de 5 % par semaine au lieu de 7,5 %. Confirmé ou expert avec au moins 6 h par semaine : une 2e séance dure peut s'ajouter les semaines sans course à pied dure (2 séances dures au total, Rosenblat 2025). Ces chiffres sont des choix d'entraîneur.",
+    "On te demande depuis quand tu roules régulièrement, combien d'heures tu as faites ces 3 derniers mois et si tu as déjà suivi des intervalles : c'est plus fiable qu'un mot comme « confirmé ». Ça règle seulement la vitesse de hausse de ta charge (+5 % par semaine en débutant, +7,5 % sinon) et le nombre de séances dures (2 par semaine possibles en confirmé ou expert avec 6 h et plus, les semaines sans course à pied dure). Les seuils sont des choix d'entraîneur.",
+  saisonCalculee:
+    "Ta saison part de la date de ta course et se calcule à l'envers : 2 semaines d'affûtage (moins de volume, même intensité : c'est le mieux prouvé, Bosquet 2007), 3 semaines proches de ta course, puis des blocs VO2 et seuil, et une reprise au début. L'ordre VO2 puis seuil change peu de chose (Sylta 2016) : ce qui compte, c'est de tenir la charge. Une semaine allégée sur 4 (sauf près de la course), un test CP au début de chaque bloc.",
+  testDepart:
+    "Sans CP connue, ta 1re semaine se fait aux sensations (tu peux parler en roulant), puis un test fixe tes watts. Une FTP Zwift peut servir de point de départ en attendant.",
   profilTemps:
     "Ton budget vélo ne dépasse pas le haut de ta tranche d'heures (moins le temps de course à pied). Moins de 4 h : pas de sprints en séries, les blocs longs restent les plus efficaces (Rosenblat 2020).",
   profilGenoux:

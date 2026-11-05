@@ -3,7 +3,7 @@ import { jourCourt } from '../../../core/dates'
 import { useReglage } from '../../../core/reglages'
 import { ChampNombre } from '../../../core/ui/ChampNombre'
 import { Repliable } from '../../../core/ui/Repliable'
-import { DISCIPLINES_PROPOSEES, NOMS_DISCIPLINES, type Discipline } from '../../../metrics/programme'
+import { ANCIENNETES, DISCIPLINES_PROPOSEES, HEURES_RECENTES, NOMS_DISCIPLINES, niveauDuProfil, type Discipline, type ReponsesNiveau } from '../../../metrics/programme'
 import { AIDES } from '../aides'
 import { programmeDe, useReglagesEntrainement } from '../reglagesEntrainement'
 import type { ReglagesProgramme } from '../types'
@@ -12,9 +12,8 @@ import type { ReglagesProgramme } from '../types'
  * Profil sportif : les réponses qui te décrivent (comme le questionnaire d'une appli de coaching).
  * Toutes les réponses règlent le programme (niveau, heures, genoux, muscu, course) ; seul le matériel est noté pour plus tard.
  */
-export interface ProfilSportif {
+export interface ProfilSportif extends ReponsesNiveau {
   sports: string[]
-  niveau?: string
   heuresSemaine?: string
   materiel: string[]
   pointsSensibles?: string
@@ -23,9 +22,9 @@ export interface ProfilSportif {
 const DEFAUT: ProfilSportif = { sports: [], materiel: [] }
 
 const SPORTS = ['Vélo route', 'VTT', 'Course à pied', 'Natation', 'Musculation']
-const NIVEAUX = ['Débutant (moins d’un an)', 'Intermédiaire (1 à 3 ans)', 'Confirmé (3 à 5 ans)', 'Expert (plus de 5 ans)']
 const HEURES = ['Moins de 4 h', '4 à 6 h', '6 à 8 h', '8 à 10 h', '10 à 12 h', 'Plus de 12 h']
 const MATERIEL = ['Home trainer connecté', 'Capteur de puissance', 'Ceinture cardio', 'Montre GPS']
+const NOMS_NIVEAUX = { debutant: 'débutant', intermediaire: 'intermédiaire', confirme: 'confirmé', expert: 'expert' }
 const MUSCU = ['Pas pour l’instant', '1 séance par semaine', '2 séances par semaine']
 
 const heures = (min: number) => (min >= 60 ? `${Math.floor(min / 60)} h${min % 60 ? ` ${String(min % 60).padStart(2, '0')}` : ''}` : `${min} min`)
@@ -103,9 +102,18 @@ export function SectionProfilSportif() {
         </div>
         <p className="mt-1.5 text-xs text-texte-3">La semaine d'une course est allégée toute seule.</p>
       </Ligne>
-      <Ligne {...props('niveau')} libelle="Niveau" valeur={ps.niveau ?? ''}>
-        {choixUnique(NIVEAUX, ps.niveau, (niveau) => modifierPs({ niveau }))}
-        <p className="mt-1.5 text-xs text-texte-3">{AIDES.profilNiveau}</p>
+      <Ligne {...props('anciennete')} libelle="Vélo régulier depuis" valeur={ps.anciennete ?? ''}>
+        <p className="mb-1.5 text-xs text-texte-3">Au moins 2 fois par semaine, sans arrêt de plus de 2 mois.</p>
+        {choixUnique(ANCIENNETES, ps.anciennete, (anciennete) => modifierPs({ anciennete }))}
+      </Ligne>
+      <Ligne {...props('recentes')} libelle="Ces 3 derniers mois" valeur={ps.heuresRecentes ? `${ps.heuresRecentes}/sem.` : ''}>
+        <p className="mb-1.5 text-xs text-texte-3">Heures de vélo par semaine, en moyenne.</p>
+        {choixUnique(HEURES_RECENTES, ps.heuresRecentes, (heuresRecentes) => modifierPs({ heuresRecentes }))}
+      </Ligne>
+      <Ligne {...props('intervalles')} libelle="Déjà suivi un plan à intervalles" valeur={ps.intervalles === undefined ? '' : ps.intervalles ? 'Oui' : 'Non'}>
+        <p className="mb-1.5 text-xs text-texte-3">Pendant au moins 6 semaines.</p>
+        {choixUnique(['Oui', 'Non'], ps.intervalles === undefined ? undefined : ps.intervalles ? 'Oui' : 'Non', (v) => modifierPs({ intervalles: v === 'Oui' }))}
+        <p className="mt-1.5 text-xs text-texte-3">Niveau retenu : <b>{NOMS_NIVEAUX[niveauDuProfil(ps)]}</b>. {AIDES.profilNiveau}</p>
       </Ligne>
       <Ligne {...props('heures')} libelle="Temps par semaine" valeur={ps.heuresSemaine ?? ''}>
         {choixUnique(HEURES, ps.heuresSemaine, (heuresSemaine) => modifierPs({ heuresSemaine }))}

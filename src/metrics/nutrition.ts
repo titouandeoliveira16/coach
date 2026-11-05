@@ -62,7 +62,8 @@ const MET_NETS: Record<ActiviteJour['sport'], Record<Intensite, number>> = {
   autre: { basse: 2.5, moyenne: 4, haute: 6 },
 }
 
-export const metabolismeBase = (kg: number, cm: number, age: number) => 10 * kg + 6.25 * cm - 5 * age + 5
+/** Mifflin-St Jeor : +5 pour un homme, −161 pour une femme. */
+export const metabolismeBase = (kg: number, cm: number, age: number, sexe: 'homme' | 'femme' = 'homme') => 10 * kg + 6.25 * cm - 5 * age + (sexe === 'femme' ? -161 : 5)
 
 /** Dépense d'une séance (kcal). */
 export function kcalActivite(a: ActiviteJour, kg: number) {
@@ -110,6 +111,7 @@ export const FACTEUR_QUOTIDIEN = 1.4
 
 export function besoinsDuJour(o: {
   kg: number; cm: number; age: number; activites: ActiviteJour[]; objectif?: Objectif
+  sexe?: 'homme' | 'femme'
   /** Écart entre ton maintien mesuré (repas + poids) et la formule, en kcal/j */
   correction?: number
   /** Excès d'un jour récent étalé sur ce jour (kcal en moins) */
@@ -117,7 +119,7 @@ export function besoinsDuJour(o: {
   /** Déficit de base en perte de gras (500 par défaut, ajusté par le bilan du dimanche, 200 à 600) */
   deficitBase?: number
 }): Besoins {
-  const base = metabolismeBase(o.kg, o.cm, o.age)
+  const base = metabolismeBase(o.kg, o.cm, o.age, o.sexe)
   const quotidien = base * FACTEUR_QUOTIDIEN + (o.correction ?? 0)
   const seances = o.activites.reduce((s, a) => s + kcalActivite(a, o.kg), 0)
   const kcalGlucides = o.activites.reduce((s, a) => s + kcalGlucidesSeance(a, o.kg), 0)

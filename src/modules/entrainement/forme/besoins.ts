@@ -76,7 +76,7 @@ export async function besoinsDe(jour: string, o: { sansCorrection?: boolean; san
   // Pause au maintien (bilan du dimanche) : pas de déficit jusqu'à la fin de la pause
   const pause = profil.objectif === 'perte' && !!n.pauseJusquau && jour <= n.pauseJusquau
   const b = besoinsDuJour({
-    kg, cm: profil.tailleCm ?? PROFIL_DEFAUT.tailleCm!, age: profil.naissance ? ageAu(profil.naissance, jour) : AGE_DEFAUT, activites: [...faites, ...aFaire],
+    kg, cm: profil.tailleCm ?? PROFIL_DEFAUT.tailleCm!, age: profil.naissance ? ageAu(profil.naissance, jour) : AGE_DEFAUT, activites: [...faites, ...aFaire], sexe: profil.sexe,
     objectif: pause ? 'maintien' : profil.objectif, deficitBase: n.deficitBase ?? DEFICIT_BASE,
     correction: o.sansCorrection ? 0 : n.correction,
     reduction: o.sansEtalement ? 0 : await reductionDuJour(jour, n),

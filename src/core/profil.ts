@@ -8,6 +8,8 @@ export interface Profil {
   /** Taille (cm) et date de naissance : métabolisme de base (besoins du jour) */
   tailleCm?: number
   naissance?: string
+  /** Métabolisme de base (Mifflin-St Jeor) : homme par défaut */
+  sexe?: 'homme' | 'femme'
   /** Objectif nutritionnel : garder son poids, ou perte de gras légère */
   objectif?: 'maintien' | 'perte'
 }
