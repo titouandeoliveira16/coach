@@ -5,6 +5,8 @@ import { CarteBilan } from '../plan/CarteBilan'
 import { lundiDe } from '../seances/donnees'
 import { CarteAujourdhui } from '../forme/CarteAujourdhui'
 import { CarteNutrition } from '../forme/CarteNutrition'
+import { useReglage } from '../../../core/reglages'
+import type { ProfilSportif } from '../reglages/ProfilSportif'
 import { CarteCalibration } from '../forme/CarteCalibration'
 import { CarteCpEnHausse } from '../forme/CarteCpEnHausse'
 import { CarteHorsPlan } from '../forme/CarteHorsPlan'
@@ -50,6 +52,8 @@ export function Aujourdhui() {
   const recentes = useLiveQuery(() => mesuresRecentes(1))
   const [edition, setEdition] = useState(false)
   const [nutriOuverte, setNutriOuverte] = useState(false)
+  // Nutrition en option (Réglages → Mon profil sportif)
+  const [ps] = useReglage<ProfilSportif>('profil-sportif', { sports: [], materiel: [] })
   const { ref, zone } = useZoneEcran(recentes !== undefined)
 
   if (!recentes) return null
@@ -83,7 +87,7 @@ export function Aujourdhui() {
       ) : (
         <SaisieMatin key={duJour?.modifieLe} existante={duJour} onTermine={() => setEdition(false)} />
       )}
-      <CarteNutrition ouverte={nutriOuverte} onBasculer={setNutriOuverte} />
+      {ps.nutrition !== false && <CarteNutrition ouverte={nutriOuverte} onBasculer={setNutriOuverte} />}
       {/* En bas : pesée et imprévu sur une ligne */}
       <div className="flex shrink-0 gap-2">
         <CartePesee compact />
