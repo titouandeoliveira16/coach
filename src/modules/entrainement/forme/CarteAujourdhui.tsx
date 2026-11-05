@@ -197,7 +197,7 @@ export function CarteAujourdhui({ onModifierMatin }: { onModifierMatin?: () => v
       </Carte>
 
       {/* Séance du jour : la carte qui prend toute la place restante (elle défile seule si besoin) */}
-      <Carte className="flex min-h-40 flex-1 flex-col overflow-y-auto p-3!">
+      <Carte className={`flex flex-col p-3! ${faites ? 'shrink-0' : 'min-h-0 flex-1 overflow-hidden'}`}>
         <div className="flex items-baseline justify-between gap-2">
           <p className="text-xs font-semibold uppercase tracking-wider text-texte-3">Séance du jour</p>
           {prevue && <span className="text-xs text-texte-2">{prevue.sport === 'velo' ? 'vélo' : prevue.sport}</span>}
@@ -235,7 +235,7 @@ export function CarteAujourdhui({ onModifierMatin }: { onModifierMatin?: () => v
               </>
             ) : (
               // Renfo, course, séance sans déroulé : le détail est visible directement
-              <div className="mt-2 min-h-16 flex-1 overflow-y-auto whitespace-pre-line rounded-xl bg-surface-2 p-3 text-sm text-texte-2">
+              <div className="mt-2 min-h-0 flex-1 overflow-hidden whitespace-pre-line rounded-xl bg-surface-2 p-3 text-sm text-texte-2">
                 {prevue.detail || `${prevue.dureeMin} min`}
               </div>
             )}
