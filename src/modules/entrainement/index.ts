@@ -1,7 +1,6 @@
 import type { ModuleApp } from '../../app/modules'
 import { IconeEntrainement } from '../../core/ui/icones'
 import { EcranEntrainement } from './EcranEntrainement'
-import { ModeEmploi } from './ModeEmploi'
 import { SectionReglagesEntrainement } from './reglages/SectionReglages'
 
 /** Déclaration du module Entraînement auprès de l'appli. */
@@ -14,5 +13,5 @@ export const moduleEntrainement: ModuleApp = {
   Icone: IconeEntrainement,
   Ecran: EcranEntrainement,
   SectionReglages: SectionReglagesEntrainement,
-  ModeEmploi,
+  // Mode d'emploi retiré de la barre du bas (demande du 5/11/2026) : ModeEmploi.tsx reste disponible
 }
