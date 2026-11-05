@@ -3,6 +3,8 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Bouton } from '../../../core/ui/Bouton'
 import { Carte } from '../../../core/ui/Carte'
+import { useReglage } from '../../../core/reglages'
+import type { ReglageCompte } from '../../../core/inscription'
 import { ajouterPlanCampus, planDisponible, planFait } from '../plan/planCampus'
 
 /** Carte unique : ajoute le plan Campus des 3 prochaines semaines et génère le vélo autour. */
@@ -10,6 +12,8 @@ export function CartePlanCampus() {
   const fait = useLiveQuery(planFait)
   const [occupe, setOccupe] = useState(false)
   const [termine, setTermine] = useState(false)
+  // Plan de course propre à Titouan : jamais pour un compte créé avec un code
+  const [compte] = useReglage<ReglageCompte>('compte', {})
   if (termine)
     return (
       <Carte titre="📅 Plan ajouté">
@@ -17,7 +21,7 @@ export function CartePlanCampus() {
         <Link to="/entrainement/semaine" className="mt-2 block text-sm font-semibold text-accent">Voir ma semaine ›</Link>
       </Carte>
     )
-  if (fait !== false || !planDisponible()) return null
+  if (compte.invite || fait !== false || !planDisponible()) return null
   return (
     <Carte titre="📅 Ton plan Campus du 26/10 au 15/11">
       <ul className="space-y-1 text-sm text-texte-2">

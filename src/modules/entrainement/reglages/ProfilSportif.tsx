@@ -3,7 +3,7 @@ import { jourCourt } from '../../../core/dates'
 import { useReglage } from '../../../core/reglages'
 import { ChampNombre } from '../../../core/ui/ChampNombre'
 import { Repliable } from '../../../core/ui/Repliable'
-import { NOMS_DISCIPLINES, type Discipline } from '../../../metrics/programme'
+import { DISCIPLINES_PROPOSEES, NOMS_DISCIPLINES, type Discipline } from '../../../metrics/programme'
 import { AIDES } from '../aides'
 import { programmeDe, useReglagesEntrainement } from '../reglagesEntrainement'
 import type { ReglagesProgramme } from '../types'
@@ -79,7 +79,7 @@ export function SectionProfilSportif() {
         {ps.sports.includes('Course à pied') && <p className="mt-1.5 text-xs text-texte-3">{AIDES.profilCourse}</p>}
       </Ligne>
       <Ligne {...props('discipline')} libelle="Discipline visée" valeur={NOMS_DISCIPLINES[discipline]}>
-        {choixUnique(Object.values(NOMS_DISCIPLINES), NOMS_DISCIPLINES[discipline], (nom) => {
+        {choixUnique(DISCIPLINES_PROPOSEES.map((d) => NOMS_DISCIPLINES[d]), NOMS_DISCIPLINES[discipline], (nom) => {
           const d = (Object.keys(NOMS_DISCIPLINES) as Discipline[]).find((k) => NOMS_DISCIPLINES[k] === nom)
           if (d) changerProg({ discipline: d })
         })}

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Carte } from '../core/ui/Carte'
 import { EnTete } from '../core/ui/EnTete'
+import { SectionCodes } from './SectionCodes'
 import { SectionCompte } from './SectionCompte'
 import { SectionImport } from './SectionImport'
 import { SectionRappels } from './SectionRappels'
@@ -22,6 +23,7 @@ export function ReglagesGeneraux() {
       <EnTete titre="Réglages" />
       <div className="space-y-3 px-4">
         <SectionCompte />
+        <SectionCodes />
         <SectionRappels />
         <SectionImport />
         <Carte titre="État de l'appli">

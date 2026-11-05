@@ -19,6 +19,8 @@ export type Discipline = 'route' | 'xco' | 'xcc' | 'xcm' | 'enduro' | 'dh'
 export const NOMS_DISCIPLINES: Record<Discipline, string> = {
   route: 'Route', xco: 'VTT cross-country (XCO)', xcc: 'VTT short track (XCC)', xcm: 'VTT marathon (XCM)', enduro: 'VTT enduro', dh: 'VTT descente',
 }
+/** Disciplines proposées (enduro et descente mis de côté le 5/11/2026 : le code reste, on ne les propose plus). */
+export const DISCIPLINES_PROPOSEES: Discipline[] = ['route', 'xco', 'xcc', 'xcm']
 export type TypePhase = 'reprise' | 'vo2' | 'seuil' | 'entretien'
 /** Rôle d'un jour dans la semaine type */
 export type Role = 'course' | 'renfo' | 'velo-dur' | 'velo-z2' | 'velo-long' | 'libre'

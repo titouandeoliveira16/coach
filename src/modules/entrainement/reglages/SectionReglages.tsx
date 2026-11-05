@@ -50,9 +50,9 @@ export function SectionReglagesEntrainement() {
   const [r, modifier] = useReglagesEntrainement()
   const [ps] = useReglage<ProfilSportif>('profil-sportif', { sports: [], materiel: [] })
   const [catalogue, setCatalogue] = useState(false)
-  // Catalogue limité aux sports pratiqués (renfo toujours) ; sans réponse : vélo, course et renfo
-  const VERS_CATALOGUE: Record<string, SeanceCatalogue['sport']> = { 'Vélo route': 'velo', VTT: 'vtt', 'Course à pied': 'course', Musculation: 'force' }
-  const sports = [...new Set([...(ps.sports.length ? ps.sports.map((x) => VERS_CATALOGUE[x]).filter(Boolean) : ['velo', 'course']), 'force'])] as SeanceCatalogue['sport'][]
+  // Catalogue limité aux sports pratiqués, vélo seulement (la course à pied est mise de côté) ; renfo toujours ; sans réponse : route et renfo
+  const VERS_CATALOGUE: Record<string, SeanceCatalogue['sport']> = { 'Vélo route': 'velo', VTT: 'vtt', Musculation: 'force' }
+  const sports = [...new Set([...(ps.sports.length ? ps.sports.map((x) => VERS_CATALOGUE[x]).filter(Boolean) : ['velo']), 'force'])] as SeanceCatalogue['sport'][]
   const [agenda, setAgenda] = useState(false)
   const [avance, setAvance] = useState(false)
   const { ref: grille, hauteur } = useHauteurJusquABarre()

@@ -5,6 +5,8 @@ import { Accueil } from './Accueil'
 import { MODULES } from './modules'
 import { Reglages } from './Reglages'
 import { ReglagesGeneraux } from './ReglagesGeneraux'
+import { Entree } from './Entree'
+import { useSynchro } from '../core/synchro'
 
 /**
  * Coquille commune : applique la couleur d'accent du module affiché,
@@ -12,10 +14,15 @@ import { ReglagesGeneraux } from './ReglagesGeneraux'
  */
 function Coquille() {
   const { pathname } = useLocation()
+  const { session, pret } = useSynchro()
   const moduleActif = MODULES.find((m) => pathname.startsWith(m.chemin))
   // --color-accent est aussi redéfini ici : sinon il garde la valeur calculée à la racine (orange)
   const accent = moduleActif?.couleur ?? '#f2f4f7'
   const style = { '--accent': accent, '--color-accent': accent } as CSSProperties
+
+  // Personne de connecté sur cet appareil : connexion, ou création du compte avec un code
+  if (!pret) return null
+  if (!session) return <Entree />
 
   // Dans un module, la page est toujours un peu plus haute que l'écran : sur iPhone (appli installée),
   // la barre du bas ne reste collée en bas que si la page peut défiler
