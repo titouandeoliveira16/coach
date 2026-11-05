@@ -21,7 +21,8 @@ export function ListeCatalogue({ sports }: { sports: Sport[] }) {
   const [sport, setSport] = useState<Sport>()
   const [famille, setFamille] = useState<string>()
   const [texte, setTexte] = useState('')
-  const autorises = CATALOGUE.seances.filter((s) => sports.includes(s.sport))
+  // Enduro et descente mis de côté : on cache les séances qui ne servent qu'à eux
+  const autorises = CATALOGUE.seances.filter((s) => sports.includes(s.sport) && !(s.disciplines?.length && s.disciplines.every((d) => d === 'enduro' || d === 'dh')))
   const choisis = autorises.filter((s) => !sport || s.sport === sport)
   const familles = [...new Set(choisis.map((s) => s.famille))]
   const t = sansAccents(texte.trim())

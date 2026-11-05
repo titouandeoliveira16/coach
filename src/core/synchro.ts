@@ -25,6 +25,8 @@ export interface EtatSynchro {
   statut: 'deconnecte' | 'en-cours' | 'ok' | 'hors-ligne' | 'erreur'
   derniereSynchro?: string
   erreur?: string
+  /** La session enregistrée a été relue (avant : on ne sait pas encore si quelqu'un est connecté) */
+  pret?: boolean
 }
 
 let etat: EtatSynchro = { session: null, statut: 'deconnecte' }
@@ -220,13 +222,6 @@ export async function seConnecter(email: string, motDePasse: string) {
   if (error) throw new Error(traduire(error.message))
 }
 
-/** Création de compte (la confirmation par email est désactivée côté Supabase). */
-export async function creerCompte(email: string, motDePasse: string) {
-  const { data, error } = await supabase.auth.signUp({ email, password: motDePasse })
-  if (error) throw new Error(traduire(error.message))
-  if (!data.session) throw new Error('Compte créé, mais Supabase demande une confirmation par email : désactive « Confirm email » dans Supabase.')
-}
-
 /**
  * Déconnexion : dernière synchro, puis effacement des données de cet appareil
  * (elles restent sur le serveur et reviendront à la prochaine connexion).
@@ -254,7 +249,7 @@ function traduire(message: string) {
 /** À appeler une fois au démarrage de l'appli. */
 export function demarrerSynchro() {
   supabase.auth.onAuthStateChange((evenement, session) => {
-    majEtat({ session, statut: session ? etat.statut : 'deconnecte' })
+    majEtat({ session, statut: session ? etat.statut : 'deconnecte', pret: true })
     // Synchro à l'ouverture de session (sans bloquer le rappel de Supabase)
     if (session && (evenement === 'INITIAL_SESSION' || evenement === 'SIGNED_IN')) setTimeout(() => synchroniser(), 0)
   })
