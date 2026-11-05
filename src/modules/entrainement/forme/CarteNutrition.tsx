@@ -56,7 +56,7 @@ export function CarteNutrition() {
     && !nutrition.etalements?.some((e) => e.date === d) && !nutrition.etalementsRefuses?.includes(d))
 
   return (
-    <Carte className="flex flex-[1_0_auto] flex-col gap-2">
+    <Carte className="flex shrink-0 flex-col gap-2 p-3!">
       <button type="button" onClick={() => setOuverte(!ouverte)} className="flex items-center justify-between text-left">
         <span className="text-xs font-semibold uppercase tracking-wider text-texte-3">Nutrition du jour</span>
         <span className="text-sm">
@@ -64,8 +64,8 @@ export function CarteNutrition() {
           <span className="text-texte-2"> / {formatNombre(b.kcal)} kcal</span> <span className="text-texte-3">{ouverte ? '▴' : '▾'}</span>
         </span>
       </button>
-      {!ouverte && (
-        <button type="button" onClick={() => setOuverte(true)} className="grid min-h-11 flex-1 grid-cols-3 gap-1.5 text-center text-sm text-texte-2">
+      {!ouverte && !hierAFaire && (
+        <button type="button" onClick={() => setOuverte(true)} className="grid min-h-10 grid-cols-3 gap-1.5 text-center text-[13px] text-texte-2">
           {([['G', b.glucides, m?.glucides], ['P', b.proteines, m?.proteines], ['L', b.lipides, m?.lipides]] as const).map(([n, besoin, v]) => (
             <span key={n} className="flex items-center justify-center rounded-xl bg-surface-2">{n} {v !== undefined ? `${formatNombre(v)} / ` : ''}{formatNombre(besoin)} g</span>
           ))}

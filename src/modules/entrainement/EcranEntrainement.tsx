@@ -1,8 +1,8 @@
 import { useEffect } from 'react'
-import { Link, Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
+import { aujourdhui } from '../../core/dates'
 import { EnTete } from '../../core/ui/EnTete'
 import { Onglets } from '../../core/ui/Onglets'
-import { IconePlus } from '../../core/ui/icones'
 import { Aujourdhui } from './ecrans/Aujourdhui'
 import { Progres } from './ecrans/Progres'
 import { Saison } from './ecrans/Saison'
@@ -22,7 +22,7 @@ const ONGLETS = [
   { libelle: 'Progrès', vers: '/entrainement/progres' },
 ]
 
-/** Écran racine du module : onglets en haut, bouton « + » en bas à droite. */
+/** Écran racine du module : onglets en haut (la date du jour à droite du titre). */
 export function EcranEntrainement() {
   // Nouvelles données Intervals.icu à l'ouverture (au plus une fois par heure)
   // (et fusion des éventuels doublons déjà enregistrés)
@@ -43,7 +43,7 @@ export function EcranEntrainement() {
 function AvecOnglets() {
   return (
     <>
-      <EnTete titre="Entraînement">
+      <EnTete titre="Entraînement" aDroite={new Date(`${aujourdhui()}T12:00:00`).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}>
         <Onglets onglets={ONGLETS} />
       </EnTete>
       <div className="px-4">
@@ -55,15 +55,6 @@ function AvecOnglets() {
           <Route path="*" element={<Navigate to="aujourdhui" replace />} />
         </Routes>
       </div>
-
-      {/* Action principale : nouvelle séance */}
-      <Link
-        to="/entrainement/seance/nouvelle"
-        aria-label="Nouvelle séance"
-        className="fixed right-5 bottom-28 z-20 flex h-16 w-16 items-center justify-center rounded-full bg-accent text-fond shadow-lg shadow-black/50 active:scale-95"
-      >
-        <IconePlus className="h-8 w-8" />
-      </Link>
     </>
   )
 }
