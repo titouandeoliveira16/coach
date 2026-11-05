@@ -37,6 +37,9 @@ export const SEUILS_DEFAUT: Seuils = {
   fcReposEcart: 5, tsbMin: -20, ressentiMin: 2.5, sommeilMax: 2, picMax: 1.3, cvFacteur: 1.5, nuitMinH: 6, moyenne7MinH: 7, ecartPersoH: 0.75,
 }
 
+/** Conseil affiché après une nuit courte ou une dette de sommeil. */
+export const CONSEIL_SIESTE = 'Si tu peux : une sieste courte (une demi-heure) en début d’après-midi, au moins une heure avant ta séance'
+
 /** Durée de sommeil : nuit, moyenne 7 jours (au moins 3 nuits) et moyenne des 30 jours d'avant (au moins 10 nuits). */
 export function analyserSommeil(nuits: { date: string; h?: number }[], date: string) {
   const entre = (du: string, au: string) => nuits.filter((n) => n.h !== undefined && n.date >= du && n.date <= au).map((n) => n.h!)
@@ -190,6 +193,8 @@ function detailsSignal(e: EntreeSignal, alertes: Alerte[], calibration: boolean,
   const dette = h?.moyenne7 !== undefined && (h.moyenne7 < s.moyenne7MinH || (h.moyenne30 !== undefined && h.moyenne7 < h.moyenne30 - s.ecartPersoH))
   if (h?.nuit !== undefined && h.nuit < s.nuitMinH) alerte('😴', dette ? 'Nuit courte, et manque de sommeil sur la semaine' : 'Nuit courte', ['sommeil', 'Nuit courte'])
   else if (dette) alerte('😴', 'Manque de sommeil accumulé sur la semaine', ['sommeil', 'En retard'])
+  // Conseil (le feu ne change pas) : sieste courte en début d'après-midi (Mesas 2023, Lastella 2021)
+  if ((h?.nuit !== undefined && h.nuit < s.nuitMinH) || dette) info('💤', CONSEIL_SIESTE)
   else if (e.sommeil !== undefined && e.sommeil <= s.sommeilMax) alerte('😴', 'Mauvaise nuit d’après toi', ['sommeil', 'Mauvaise nuit'])
   else if (h?.nuit !== undefined || h?.moyenne7 !== undefined) ok('😴', 'Sommeil suffisant', ['sommeil', 'Suffisant'])
 
