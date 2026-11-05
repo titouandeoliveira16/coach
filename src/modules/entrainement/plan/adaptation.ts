@@ -45,6 +45,6 @@ export function adapterDuJour(p: SeancePrevue, couleur: Couleur): Adaptation {
     const court = construireIntervalles(f, palierRaccourci(f, p.velo!.palier ?? 0), cpEff, 0)
     return { texte: `Feu orange : version raccourcie, mêmes watts (${court.titre}, ${court.dureeMin} min).`, etapes: court.velo.etapes, modifiee: true }
   }
-  if (p.sport === 'course' && p.intensite === 'haute') return { texte: 'Feu orange : version courte, enlève un tiers des fractions, mêmes allures.', modifiee: true }
+  if (p.sport === 'course' && p.intensite === 'haute') return { texte: 'Feu orange : un tiers des fractions en moins, mêmes allures.', modifiee: true }
   return { texte: 'Feu orange : séance facile maintenue, reste bien tranquille.', etapes, modifiee: false }
 }
