@@ -11,6 +11,16 @@ demanderStockagePersistant()
 demarrerSynchro()
 // Laisse le temps à la session du compte de se restaurer
 setTimeout(() => synchroniserRappels(), 5000)
+
+// iPhone, appli installée : si la page ne descend pas jusqu'en bas de l'écran, le système garde déjà la zone de la
+// barre d'accueil ; la barre du bas n'ajoute alors pas sa marge de sécurité (sinon grand vide sous les boutons)
+function marquerBasReserve() {
+  const installee = (navigator as Navigator & { standalone?: boolean }).standalone || matchMedia('(display-mode: standalone)').matches
+  const ecart = screen.height - window.innerHeight
+  document.documentElement.classList.toggle('bas-reserve', !!installee && ecart >= 20 && ecart < 120)
+}
+marquerBasReserve()
+window.addEventListener('resize', marquerBasReserve)
 // Après la première synchro : séances à venir remises au format avec répétitions (v0.62)
 setTimeout(() => import('./modules/entrainement/plan/programme').then((m) => m.mettreAJourFormatSeances()).catch(() => {}), 8000)
 // Contrôle des séances récentes recalculé avec les règles du moment (ex. arrêts exclus des moyennes, v0.71)

@@ -30,7 +30,7 @@ function ChoixSeance({ maintenue, conseil, prevu, couleur, onChoisir }: {
   maintenue: boolean; conseil: string; prevu: string; couleur: string; onChoisir: (maintenir: boolean) => void
 }) {
   const bouton = (actif: boolean) =>
-    `flex-1 rounded-xl border-2 px-2 py-2.5 text-sm font-semibold leading-tight ${actif ? 'text-fond' : 'border-bordure bg-surface text-texte-3'}`
+    `flex-1 rounded-xl border-2 px-2 py-1.5 text-sm font-semibold leading-tight ${actif ? 'text-fond' : 'border-bordure bg-surface text-texte-3'}`
   return (
     <div className="mt-2 flex gap-2" role="radiogroup" aria-label="Séance à faire">
       <button type="button" role="radio" aria-checked={!maintenue} className={bouton(!maintenue)}
@@ -96,6 +96,8 @@ export function CarteAujourdhui({ onModifierMatin }: { onModifierMatin?: () => v
   const pourquoi = enAlerte.length
     ? `${enAlerte.length === 1 ? '1 signal en alerte' : `${enAlerte.length} signaux en alerte`} ce matin : ${enAlerte.map((x) => x.texte.replace(/^./, (c) => c.toLowerCase())).join(' ; ')}.`
     : ''
+  // Version courte pour la carte (le détail chiffré est dans le « ? »)
+  const pourquoiCourt = enAlerte.map((x) => x.texte.replace(/\s*\(.*?\)/g, '').replace(/^./, (c) => c.toLowerCase())).join(', ')
   const regle = signal.couleur === 'orange'
     ? 'Règle : 1 signal en alerte = séance raccourcie, mêmes watts (une série ou un tiers des répétitions en moins). Si tu te sens très bien, tu peux garder la séance complète.'
     : 'Règle : 2 signaux en alerte ou plus (ou malade) = pas d’intensité aujourd’hui. Si tu te sens vraiment bien et que tu n’es pas malade, tu peux garder la séance prévue.'
@@ -200,9 +202,9 @@ export function CarteAujourdhui({ onModifierMatin }: { onModifierMatin?: () => v
       <Carte className="flex min-h-40 flex-1 flex-col overflow-y-auto p-3!">
         <div className="flex items-baseline justify-between gap-2">
           <p className="text-xs font-semibold uppercase tracking-wider text-texte-3">Séance du jour</p>
-          {prevue && (etapesDuJour || prevue.sport !== 'renfo') ? (
+          {prevue && etapesDuJour ? (
             <button type="button" onClick={() => setVoir(voir === 'deroule' ? undefined : 'deroule')} className="text-sm font-semibold text-accent">
-              {etapesDuJour ? 'Déroulé' : 'Nutrition'} {voir === 'deroule' ? '▴' : '▾'}
+              Déroulé {voir === 'deroule' ? '▴' : '▾'}
             </button>
           ) : prevue ? <span className="text-xs text-texte-2">{prevue.sport}</span> : null}
         </div>
@@ -219,11 +221,12 @@ export function CarteAujourdhui({ onModifierMatin }: { onModifierMatin?: () => v
             {prevue.kjPrevu ? <p className="text-xs text-texte-3">{prevue.kjPrevu} kJ</p> : null}
             {adaptation?.modifiee ? (
               <>
-                <p className="mt-1.5 text-sm"><b style={{ color: COULEUR[signal.couleur] }}>Pourquoi {signal.couleur === 'orange' ? 'raccourcie' : 'pas d’intensité'} ?</b> {pourquoi}<Aide titre="Règle du feu" texte={regle} /></p>
+                <p className="mt-1 text-sm"><b style={{ color: COULEUR[signal.couleur] }}>Pourquoi {signal.couleur === 'orange' ? 'raccourcie' : 'pas d’intensité'} ?</b> {pourquoiCourt}<Aide titre="Règle du feu" texte={`${pourquoi} ${regle}`} /></p>
                 <ChoixSeance maintenue={!!decision?.force} couleur={COULEUR[signal.couleur]} onChoisir={choisir}
                   conseil={signal.couleur === 'orange' ? `Raccourcie${minutesAdaptees ? ` · ${minutesAdaptees} min` : ''}` : 'Très facile ou repos'}
                   prevu={signal.couleur === 'orange' ? `Complète · ${prevue.dureeMin} min` : 'Séance prévue'} />
                 {decision?.force && <p className="mt-1.5 text-sm font-semibold" style={{ color: COULEUR.vert }}>Séance complète maintenue : arrête-toi si les watts ne tiennent pas.</p>}
+                {!decision?.force && !etapesDuJour && <p className="mt-1.5 text-sm" style={{ color: COULEUR[signal.couleur] }}>{adaptation.texte.replace(/^Feu \w+ : /, '').replace(/^./, (c) => c.toUpperCase())}</p>}
               </>
             ) : (
               <p className="mt-1 text-sm" style={{ color: signal.couleur === 'vert' ? COULEUR.vert : COULEUR[signal.couleur] }}>
@@ -238,7 +241,7 @@ export function CarteAujourdhui({ onModifierMatin }: { onModifierMatin?: () => v
               </>
             ) : (
               // Renfo, course, séance sans déroulé : le détail est visible directement
-              <div className="mt-2 min-h-0 flex-1 overflow-y-auto whitespace-pre-line rounded-xl bg-surface-2 p-3 text-sm text-texte-2">
+              <div className="mt-2 min-h-16 flex-1 overflow-y-auto whitespace-pre-line rounded-xl bg-surface-2 p-3 text-sm text-texte-2">
                 {prevue.detail || `${prevue.dureeMin} min`}
               </div>
             )}
@@ -249,7 +252,7 @@ export function CarteAujourdhui({ onModifierMatin }: { onModifierMatin?: () => v
               }}>Faite</button>
             )}
             {voir === 'deroule' && etapesDuJour && <Deroule etapes={etapesDuJour} sansProfil />}
-            {voir === 'deroule' && !(adaptation?.modifiee && !decision?.force && signal.couleur === 'rouge') && <NutritionSeance p={prevue} />}
+            {voir === 'deroule' && etapesDuJour && !(adaptation?.modifiee && !decision?.force && signal.couleur === 'rouge') && <NutritionSeance p={prevue} />}
           </>
         ) : faites ? null : reportee ? (
           <div className="mt-1 text-sm">
