@@ -72,6 +72,15 @@ Points décidés ou mis de côté, à reprendre au bon moment.
   sous la CP) ; W' utilisé seulement après un test complet 12-7-3 et pas le 1er test CP (actif à partir de son prochain test
   complet). Pmax : rien de plus (déjà dans Progrès, Titouan n'en veut pas davantage). Pas de W'bal en direct.
   Kcal vélo : 1 kcal/kJ gardé (rendement ~20 %, repos déjà compté).
+- **Comptes pour élèves / frère (v0.84.0, 5/11/2026)** : une seule appli (Coach), même moteur pour tous ; inscription avec
+  un code à usage unique (fonction `inscription`, SQL `04-codes.sql`, Titouan dans la table `coachs`, inscriptions libres
+  fermées) ; questionnaire d'arrivée (Toi, profil, semaine, course principale → saison calculée `metrics/saison.ts`, puis
+  Intervals.icu) ; accueil = Entraînement seul ; pas d'accès de Titouan aux données des élèves (pas voulu pour l'instant).
+  Course à pied mise de côté (pas de programme pour les autres ; plan Campus de Titouan inchangé, à rediscuter) ;
+  enduro et descente retirés des propositions. Ancienne appli `suivi-coaching` : à supprimer quand plus personne ne s'en sert.
+  Semaine allégée comptée sur toute la saison (pour tout le monde, validé par Titouan).
+  **Plus tard** : questionnaire santé PAR-Q+ (si on ouvre à plus de monde ; accord parental pour un mineur) ;
+  renfo / muscu « type force » selon la science et ses conseils d'entraîneurs ; mode sans capteur.
 - VTT (3/11/2026, demande de Titouan pour ses élèves) : section VTT du catalogue (v0.66.0) puis **moteur** (v0.67.0) :
   réglage « Discipline visée » (Réglages → Avancé → Programme vélo ; route par défaut). XCO/XCC : intervalles longs d'Inoue,
   sprints de 30" en séries (à fond, allure libre), relances 1 séance de seuil sur 3 ; marathon : sortie longue en côtes

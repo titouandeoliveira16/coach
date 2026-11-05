@@ -26,6 +26,13 @@ En ligne : https://titouandeoliveira16.github.io/coach/ (GitHub Pages, déployé
   pour les lui faire entrer, préparer un fichier privé (scratchpad, envoyé avec SendUserFile) à importer via
   Accueil → ⚙️ → « Importer mes données » (`src/app/importDonnees.ts`) ou Budget → Réglages → « Importer des mouvements ».
 
+## Comptes
+- Une seule appli pour Titouan, son frère et ses élèves : chacun son compte (données séparées par RLS), même moteur.
+  Inscription seulement avec un code (`supabase/functions/inscription`, `supabase/sql/04-codes.sql`) ; un compte créé
+  avec un code a le réglage `compte.invite` : accueil = Entraînement seul, questionnaire d'arrivée
+  (`modules/entrainement/arrivee/`), saison calculée depuis sa course (`metrics/saison.ts`). La saison de Titouan reste
+  écrite à la main (`PROGRAMME_DEFAUT`) : ne jamais l'appliquer à un autre compte.
+
 ## Commandes
 - `npm run dev` · `npm test` (Vitest) · `npx tsc -b` · `npm run lint` (oxlint) · `npm run build`
 - Publier une version : skill **`publier`** (version, vérifications, commit, push, déploiement, contrôle).

@@ -7,6 +7,10 @@ import { Reglages } from './Reglages'
 import { ReglagesGeneraux } from './ReglagesGeneraux'
 import { Entree } from './Entree'
 import { useSynchro } from '../core/synchro'
+import { useReglage } from '../core/reglages'
+import type { ReglageCompte } from '../core/inscription'
+import { QuestionnaireArrivee } from '../modules/entrainement/arrivee/QuestionnaireArrivee'
+import type { EtatArrivee } from '../modules/entrainement/arrivee/donnees'
 
 /**
  * Coquille commune : applique la couleur d'accent du module affiché,
@@ -14,7 +18,9 @@ import { useSynchro } from '../core/synchro'
  */
 function Coquille() {
   const { pathname } = useLocation()
-  const { session, pret } = useSynchro()
+  const { session, pret, derniereSynchro } = useSynchro()
+  const [compte] = useReglage<ReglageCompte>('compte', {})
+  const [arrivee] = useReglage<EtatArrivee>('arrivee', {})
   const moduleActif = MODULES.find((m) => pathname.startsWith(m.chemin))
   // --color-accent est aussi redéfini ici : sinon il garde la valeur calculée à la racine (orange)
   const accent = moduleActif?.couleur ?? '#f2f4f7'
@@ -23,6 +29,10 @@ function Coquille() {
   // Personne de connecté sur cet appareil : connexion, ou création du compte avec un code
   if (!pret) return null
   if (!session) return <Entree />
+  // Compte créé avec un code : questionnaire d'arrivée (après la 1re synchro, pour ne pas le reposer sur un 2e appareil),
+  // puis la montre (Intervals.icu)
+  if (compte.invite && derniereSynchro && !arrivee.fait) return <QuestionnaireArrivee />
+  if (compte.invite && arrivee.fait && !arrivee.montre) return <QuestionnaireArrivee montreSeulement />
 
   // Dans un module, la page est toujours un peu plus haute que l'écran : sur iPhone (appli installée),
   // la barre du bas ne reste collée en bas que si la page peut défiler

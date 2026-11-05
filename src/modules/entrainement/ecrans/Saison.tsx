@@ -8,7 +8,7 @@ import { AIDES } from '../aides'
 import { saison } from '../plan/programme'
 
 /** Couleur de chaque phase (rampe validée sur fond sombre). */
-const COULEURS: Record<TypePhase, string> = { reprise: '#86b6ef', vo2: '#3987e5', seuil: '#1c5cab', entretien: '#199e70' }
+const COULEURS: Record<TypePhase, string> = { reprise: '#86b6ef', vo2: '#3987e5', seuil: '#1c5cab', entretien: '#199e70', specifique: '#d97706', affutage: '#dc2626', recuperation: '#9ca3af' }
 const jm = (d: string) => depuisJour(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
 
 const BADGES: Record<SemaineSaison['type'], { texte: string; classe: string } | undefined> = {
