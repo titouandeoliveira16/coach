@@ -3,10 +3,11 @@ import { aujourdhui, decalerJour, NOMS_JOURS, depuisJour } from '../../../core/d
 import { enregistrer, supprimer } from '../../../core/stockage'
 import {
   ajustementZ2, budgetSemaine, formatDe, gardeFouCourse, NOMS_FAMILLES, plafondsReprise, projeterSaison, choisirFormat, construireIntervalles, construireTest, construireZ2, estSemaineAllegee, etatProgression,
-  construireLongueCotes, construireSpeciales, construireTerrain, cotesDe, minutesPourKj, NOMS_DISCIPLINES, NOMS_PHASES, palierPossible, phaseDe, placer, retourDeCoupure, semainesChamboulees, SPRINTS, type BilanSemaine, type Famille, type HistoIntensite,
+  construireLongueCotes, construireSpeciales, construireTerrain, cotesDe, minutesPourKj, NOMS_DISCIPLINES, NOMS_PHASES, deuxIntensitesPossibles, formatsPour, hausseBudget, heuresDe, jourDeuxiemeIntensite, niveauDe, palierPossible, phaseDe, placer, retourDeCoupure, semainesChamboulees, SPRINTS, type BilanSemaine, type Famille, type HistoIntensite,
   type SeanceConstruite,
 } from '../../../metrics/programme'
 import { programmeDe } from '../reglagesEntrainement'
+import type { ProfilSportif } from '../reglages/ProfilSportif'
 import { chargeDe, chargerContexte, domaineDe, lundiDe } from '../seances/donnees'
 import type { ReglagesEntrainement, Seance, SeancePrevue } from '../types'
 import { chargePrevue, joursDe } from './donnees'
@@ -135,6 +136,8 @@ function champsVelo(c: SeanceConstruite): Pick<SeancePrevue, 'type' | 'intensite
 
 const nomJour = (d: string) => NOMS_JOURS[depuisJour(d).getDay()]
 
+export const NOTE_GENOUX = 'Genoux : garde une cadence d’au moins 80 tr/min, surtout en côte et à haute puissance.'
+
 /**
  * Génère (ou regénère) les séances vélo de la semaine autour des séances déjà saisies (course Campus, renfo).
  * Les séances déjà faites sont gardées ; seules les séances auto encore à faire sont remplacées.
@@ -147,6 +150,10 @@ export async function genererSemaineVelo(lundi: string) {
   const r = await lireReglages()
   const prog = r.programme
   const discipline = prog.discipline ?? 'route'
+  // Profil sportif (questionnaire) : niveau et heures par semaine règlent le moteur
+  const ps = (await db.reglages.get('profil-sportif'))?.valeur as Partial<ProfilSportif> | undefined
+  const niveau = niveauDe(ps?.niveau)
+  const heures = heuresDe(ps?.heuresSemaine)
 
   // Anciennes séances à remplacer : séances auto encore à faire, plan importé et propositions de course (anciennes versions)
   for (const p of await db.prevues.where('date').aboveOrEqual(aPartirDe).toArray()) {
@@ -207,7 +214,9 @@ export async function genererSemaineVelo(lundi: string) {
       intensite = construireTest(r.cpW, prog.testsCourts?.includes(dateTest))
       intensite.velo.pourquoi = 'Test prévu : il recale toutes tes cibles en watts.'
     } else {
-      const choix = choisirFormat(lundi, prog.phases, histo, discipline)
+      let choix = choisirFormat(lundi, prog.phases, histo, discipline)
+      // Moins de 4 h par semaine : pas de sprints en séries, des blocs longs (Rosenblat 2020)
+      if (choix.famille === 'sprints' && heures[1] <= 4) choix = { ...choix, famille: 'vo2-longs', format: formatsPour('vo2-longs', discipline)[0] }
       const etat = etatProgression(histo, datesTests(r.tests))[choix.famille]
       const vise = allegee ? Math.max(0, etat.palier - 1) : etat.palier
       const palier = palierPossible(choix.format, vise, maxDuJour(placement.intensite))
@@ -227,11 +236,37 @@ export async function genererSemaineVelo(lundi: string) {
     phrases.push('Pas de jour pour l’intensité vélo sans enchaîner deux jours durs (ou sans doubler une séance) : semaine en Z2.')
   }
 
+  // 2e intensité vélo : confirmé ou expert, 6 h et plus, hors reprise et semaine allégée, et seulement si la semaine
+  // n'a pas déjà de séance dure de course (2 séances dures au total par semaine)
+  let intensite2: { date: string; s: SeanceConstruite } | undefined
+  const courseDure = [...prevues.filter((p) => p.sport === 'course' && p.intensite === 'haute' && dansSemaine(p.date)).map((p) => p.date),
+    ...seances.filter((x) => x.sport === 'course' && dansSemaine(x.date) && domaineDe(x, c.bornes) === 'haute').map((x) => x.date)]
+  if (intensite && placement.intensite && placement.intensite !== dateTest && deuxIntensitesPossibles(niveau, heures)
+    && phase.type !== 'reprise' && !allegee && !courseDure.length) {
+    const dures = [placement.intensite, ...occupations.filter((o) => o.dure).map((o) => o.date)]
+    const jour2 = jourDeuxiemeIntensite(placement.z2, dures, placement.long)
+    if (jour2) {
+      // L'autre dominante de la phase : la première séance compte comme déjà faite
+      const premier = intensite.velo
+      const histo2: HistoIntensite[] = [...histo, { date: decalerJour(lundi, -1), famille: premier.famille as Famille, formatId: premier.formatId ?? '', palier: premier.palier ?? 0 }]
+      const choix2 = choisirFormat(lundi, prog.phases, histo2, discipline)
+      const etat2 = etatProgression(histo, datesTests(r.tests))[choix2.famille]
+      const palier2 = palierPossible(choix2.format, etat2.palier, maxDuJour(jour2))
+      const s2 = construireIntervalles(choix2.format, palier2, r.cpW, etat2.bonus)
+      s2.velo.pourquoi = `2e séance dure de la semaine (niveau ${niveau === 'expert' ? 'expert' : 'confirmé'}, ${heures[0]} h et plus, pas de séance dure de course) · palier ${palier2 + 1}/4`
+      intensite2 = { date: jour2, s: s2 }
+      placement.z2 = placement.z2.filter((d) => d !== jour2)
+    }
+  }
+
   // Budget kJ de la semaine
-  const kjIntensite = intensite?.kj ?? 0
+  const kjIntensite = (intensite?.kj ?? 0) + (intensite2?.s.kj ?? 0)
   const nominal = kjIntensite + construireZ2(Math.min(60, cap.z2), z2W).kj + construireZ2(Math.min(100, cap.long), z2W).kj
   const plafond = kjIntensite + roles.filter((x) => x === 'velo-z2').length * construireZ2(cap.z2, z2W).kj + construireZ2(cap.long, z2W).kj
-  const b = await avecGardeFou(avecCoupure(budgetSemaine(await bilanPrecedent(lundi), nominal, plafond, allegee, raisonAllegee), coupure), lundi)
+  // Plafond aussi limité par tes heures : le haut de ta tranche, moins la course prévue cette semaine
+  const minutesCourse = prevues.filter((p) => p.sport === 'course' && dansSemaine(p.date)).reduce((a, p) => a + p.dureeMin, 0)
+  const plafondHeures = ps?.heuresSemaine ? Math.max(nominal, Math.round(((heures[1] * 60 - minutesCourse) * 60 * z2W) / 1000)) : Infinity
+  const b = await avecGardeFou(avecCoupure(budgetSemaine(await bilanPrecedent(lundi), nominal, Math.min(plafond, plafondHeures), allegee, raisonAllegee, hausseBudget(niveau)), coupure), lundi)
 
   // Répartition du reste du budget en Z2 : 60 % pour la sortie longue
   const kjFaits = seances.filter((s) => s.sport === 'velo' && dansSemaine(s.date)).reduce((a, s) => a + (s.kj ?? 0), 0)
@@ -243,6 +278,7 @@ export async function genererSemaineVelo(lundi: string) {
 
   const aCreer: [string, SeanceConstruite][] = []
   if (placement.intensite && intensite) aCreer.push([placement.intensite, intensite])
+  if (intensite2) aCreer.push([intensite2.date, intensite2.s])
   if (placement.long) {
     const min = borner(Math.min(prog.minLongMin, cap.long) * (allegee ? 0.7 : 1), cap.long, minutesPourKj(reste * partLong, z2W))
     // Marathon VTT (hors reprise et semaine allégée) : sortie longue en côtes
@@ -257,10 +293,12 @@ export async function genererSemaineVelo(lundi: string) {
     aCreer.push([d, discipline !== 'route' && i === 0 ? construireTerrain(discipline, min, z2W) : construireZ2(min, z2W)])
   })
 
+  // Genoux sensibles : pédaler souple, la charge sur le genou baisse quand la cadence monte (Kutzner 2012 ; résultats mitigés)
+  const genoux = /genou/i.test(ps?.pointsSensibles ?? '')
   for (const [date, s] of aCreer) {
     s.velo.allegee = allegee
     await enregistrer(db.prevues, {
-      id: `auto-${date}-velo`, date, sport: 'velo', titre: s.titre, detail: s.detail, dureeMin: s.dureeMin, kjPrevu: s.kj,
+      id: `auto-${date}-velo`, date, sport: 'velo', titre: s.titre, detail: genoux && s.detail ? `${s.detail}\n${NOTE_GENOUX}` : s.detail, dureeMin: s.dureeMin, kjPrevu: s.kj,
       statut: 'prevue', origine: 'auto', velo: s.velo, ...champsVelo(s),
     } satisfies SeancePrevue)
   }
@@ -303,7 +341,8 @@ export async function alertesCumul(lundi: string) {
   const semaine = joursDe(lundi)
   const fin = semaine[6]
   const prevues = (await db.prevues.where('date').between(decalerJour(lundi, -1), fin, true, true).toArray()).filter(actives)
-  const seances = await db.seances.where('date').between(decalerJour(lundi, -28), fin, true, true).toArray()
+  const seances = await db.seances.where('date').between(decalerJour(lundi, -30), fin, true, true).toArray()
+  const ps = (await db.reglages.get('profil-sportif'))?.valeur as Partial<ProfilSportif> | undefined
   const alertes: string[] = []
 
   const dur = new Set([
@@ -334,6 +373,25 @@ export async function alertesCumul(lundi: string) {
   const hausse = hausseCharge(prevueCourse, quatre)
   if (hausse !== undefined && hausse > 30)
     alertes.push(`Course : charge prévue +${Math.round(hausse)} % par rapport à tes dernières semaines. Au-delà de +30 %, le risque de blessure augmente (Nielsen 2014).`)
+
+  // Muscu (si tu en fais) : pas le jour de l'intensité vélo, ni la veille de l'intensité ou de la sortie longue
+  // (Schumann 2022 : interférence surtout dans la même séance, pas à ≥ 3 h d'écart ; la veille : choix d'entraîneur)
+  if (/séance/.test(ps?.muscu ?? '')) {
+    const exigeants = new Set(prevues.filter((p) => p.sport === 'velo' && (p.intensite === 'haute' || p.longue)).map((p) => p.date))
+    for (const m of prevues.filter((p) => p.sport === 'renfo' && p.statut === 'prevue' && p.date >= lundi)) {
+      const v = prevues.find((p) => p.sport === 'velo' && p.date === m.date && p.intensite === 'haute')
+      if (v) alertes.push(`Muscu le ${nomJour(m.date)}, le même jour que l'intensité vélo : fais-la au moins 3 h après le vélo, ou change de jour.`)
+      else if (exigeants.has(decalerJour(m.date, 1)))
+        alertes.push(`Muscu le ${nomJour(m.date)}, la veille d'une séance dure ou de la sortie longue : tes jambes seront moins fraîches. Change-la de jour si tu peux.`)
+    }
+  }
+
+  // Course : une sortie pas plus de 10 % plus longue que la plus longue des 30 derniers jours (Frandsen 2025)
+  const avant = seances.filter((s) => s.sport === 'course' && s.date >= decalerJour(lundi, -30) && s.date < lundi)
+  const plusLongue = Math.max(0, ...avant.map((s) => s.dureeSec / 60))
+  if (plusLongue > 0)
+    for (const p of resteCourse.filter((p) => p.dureeMin > plusLongue * 1.1))
+      alertes.push(`Course du ${nomJour(p.date)} : ${p.dureeMin} min, plus de 10 % au-dessus de ta plus longue sortie du mois (${Math.round(plusLongue)} min). Raccourcis-la à ${Math.floor(plusLongue * 1.1)} min (Frandsen 2025).`)
 
   return alertes
 }
@@ -461,7 +519,8 @@ export async function bilanDimanche(lundi: string) {
   const nominal = kjIntensite + construireZ2(Math.min(60, cap.z2), z2W).kj + construireZ2(Math.min(100, cap.long), z2W).kj
   const plafond = kjIntensite + nZ2 * construireZ2(cap.z2, z2W).kj + construireZ2(cap.long, z2W).kj
   const meta = await lireMeta(lundi)
-  const b = await avecGardeFou(budgetSemaine(await bilanPrecedent(suivant), nominal, plafond, allegee, course ? `semaine de ta course (${course.nom})` : 'semaine allégée (1 sur 4)'), suivant)
+  const ps = (await db.reglages.get('profil-sportif'))?.valeur as Partial<ProfilSportif> | undefined
+  const b = await avecGardeFou(budgetSemaine(await bilanPrecedent(suivant), nominal, plafond, allegee, course ? `semaine de ta course (${course.nom})` : 'semaine allégée (1 sur 4)', hausseBudget(niveauDe(ps?.niveau))), suivant)
   const ecart = meta ? b.budget - meta.budget : undefined
   const change = [
     `budget vélo ${b.budget} kJ${ecart !== undefined ? ` (${ecart >= 0 ? '+' : ''}${ecart})` : ''}`,

@@ -17,8 +17,10 @@ function Coquille() {
   const accent = moduleActif?.couleur ?? '#f2f4f7'
   const style = { '--accent': accent, '--color-accent': accent } as CSSProperties
 
+  // Dans un module, la page est toujours un peu plus haute que l'écran : sur iPhone (appli installée),
+  // la barre du bas ne reste collée en bas que si la page peut défiler
   return (
-    <div style={style} className={`mx-auto min-h-full max-w-lg ${moduleActif ? 'pb-28' : 'pb-8'}`}>
+    <div style={style} className={`mx-auto max-w-lg ${moduleActif ? 'min-h-[calc(100vh+1px)] pb-28' : 'min-h-full pb-8'}`}>
       <Routes>
         {MODULES.map((m) => (
           <Route key={m.id} path={`${m.chemin}/*`} element={<m.Ecran />} />
