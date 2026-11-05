@@ -4,7 +4,8 @@
  *  - Vie quotidienne hors sport : métabolisme × 1,4 (digestion, posture, petits mouvements, la marche du quotidien
  *    et les activités occasionnelles comme un five ; FAO/OMS/UNU 2004 : sédentaire 1,40-1,69).
  *    Pas de comptage de pas : le maintien mesuré (repas + poids) corrige ensuite le coefficient.
- *  - Séances : vélo 1 kcal par kJ de travail (rendement brut ~24 %) ; course ~1 kcal × kg × km ;
+ *  - Séances : vélo 1 kcal par kJ de travail (rendement brut ~20 % → ~1,2 kcal/kJ en dépense totale, moins le repos
+ *    déjà compté dans le métabolisme × 1,4 → ~1,0-1,1 ; Moseley 2004, Almquist 2019) ; course ~1 kcal × kg × km ;
  *    sinon par équivalent métabolique (MET, Compendium d'Ainsworth), hors repos. Jamais les calories de la montre.
  *  - Glucides brûlés en séance : part glucidique de la dépense selon l'intensité, zone par zone, pondérée par
  *    l'énergie dépensée dans chaque zone (Z1-Z2 50 %, Z3 70 %, Z4-Z5 90 % ; Romijn 1993, van Loon 2001).
