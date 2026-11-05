@@ -49,6 +49,7 @@ function useZoneEcran(pret: boolean) {
 export function Aujourdhui() {
   const recentes = useLiveQuery(() => mesuresRecentes(1))
   const [edition, setEdition] = useState(false)
+  const [nutriOuverte, setNutriOuverte] = useState(false)
   const { ref, zone } = useZoneEcran(recentes !== undefined)
 
   if (!recentes) return null
@@ -78,11 +79,11 @@ export function Aujourdhui() {
         <CarteCalibration />
       </BandeauAVoir>
       {complet && !edition ? (
-        <CarteAujourdhui onModifierMatin={() => setEdition(true)} />
+        <CarteAujourdhui onModifierMatin={() => setEdition(true)} autreOuvert={nutriOuverte} />
       ) : (
         <SaisieMatin key={duJour?.modifieLe} existante={duJour} onTermine={() => setEdition(false)} />
       )}
-      <CarteNutrition />
+      <CarteNutrition ouverte={nutriOuverte} onBasculer={setNutriOuverte} />
       {/* En bas : pesée et imprévu sur une ligne */}
       <div className="flex shrink-0 gap-2">
         <CartePesee compact />
