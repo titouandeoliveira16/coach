@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { db } from '../../../core/db'
 import { aujourdhui, decalerJour, depuisJour } from '../../../core/dates'
 import { formatNombre } from '../../../core/format'
@@ -30,16 +30,16 @@ function ChoixSeance({ maintenue, conseil, prevu, couleur, onChoisir }: {
   maintenue: boolean; conseil: string; prevu: string; couleur: string; onChoisir: (maintenir: boolean) => void
 }) {
   const bouton = (actif: boolean) =>
-    `flex-1 rounded-xl border-2 px-2 py-1.5 text-sm font-semibold leading-tight ${actif ? 'text-fond' : 'border-bordure bg-surface text-texte-3'}`
+    `flex-1 rounded-xl border-2 px-2 py-1 text-sm font-semibold leading-tight ${actif ? 'text-fond' : 'border-bordure bg-surface text-texte-3'}`
   return (
     <div className="mt-2 flex gap-2" role="radiogroup" aria-label="Séance à faire">
       <button type="button" role="radio" aria-checked={!maintenue} className={bouton(!maintenue)}
         style={!maintenue ? { background: couleur, borderColor: couleur } : undefined} onClick={() => onChoisir(false)}>
-        {conseil}<span className="block text-xs font-normal">conseillé</span>
+        {conseil}<span className="block text-[11px] font-normal leading-tight">conseillé</span>
       </button>
       <button type="button" role="radio" aria-checked={maintenue} className={bouton(maintenue)}
         style={maintenue ? { background: '#4ade80', borderColor: '#4ade80' } : undefined} onClick={() => onChoisir(true)}>
-        {prevu}<span className="block text-xs font-normal">je me sens bien</span>
+        {prevu}<span className="block text-[11px] font-normal leading-tight">je me sens bien</span>
       </button>
     </div>
   )
@@ -235,7 +235,7 @@ export function CarteAujourdhui({ onModifierMatin, autreOuvert = false }: {
         style={!toutFerme && !detailOuvert && !faites && hauteurSeance ? { height: hauteurSeance } : undefined}>
         <div className="flex items-baseline justify-between gap-2">
           <p className="text-xs font-semibold uppercase tracking-wider text-texte-3">Séance du jour</p>
-          {prevue && <span className="text-xs text-texte-2">{prevue.sport === 'velo' ? 'vélo' : prevue.sport}</span>}
+          {prevue && <span className="text-xs text-texte-2">{prevue.sport === 'velo' ? 'vélo' : prevue.sport}{prevue.kjPrevu ? ` · ${prevue.kjPrevu} kJ` : ''}</span>}
         </div>
         {reprise ? (
           <p className="mt-2 rounded-xl bg-surface-2 p-3 text-sm">
@@ -247,7 +247,6 @@ export function CarteAujourdhui({ onModifierMatin, autreOuvert = false }: {
         {prevue ? (
           <>
             <p className="mt-0.5 text-[22px] font-bold leading-tight">{prevue.titre}{prevue.sport === 'velo' && !/\d+ ?(min|h)/.test(prevue.titre) ? ` · ${prevue.dureeMin} min` : ''}</p>
-            {prevue.kjPrevu ? <p className="text-xs text-texte-3">{prevue.kjPrevu} kJ</p> : null}
             {adaptation?.modifiee ? (
               <>
                 <p className="mt-1 text-sm"><b style={{ color: COULEUR[signal.couleur] }}>Pourquoi {signal.couleur === 'orange' ? 'raccourcie' : 'pas d’intensité'} ?</b> {pourquoiCourt}<Aide titre="Règle du feu" texte={`${pourquoi} ${regle}`} /></p>
@@ -255,40 +254,47 @@ export function CarteAujourdhui({ onModifierMatin, autreOuvert = false }: {
                   conseil={signal.couleur === 'orange' ? `Raccourcie${minutesAdaptees ? ` · ${minutesAdaptees} min` : ''}` : 'Très facile ou repos'}
                   prevu={signal.couleur === 'orange' ? `Complète · ${prevue.dureeMin} min` : 'Séance prévue'} />
                 {decision?.force && <p className="mt-1.5 text-sm font-semibold" style={{ color: COULEUR.vert }}>Séance complète maintenue : arrête-toi si les watts ne tiennent pas.</p>}
-                {!decision?.force && !etapesDuJour && <p className="mt-1.5 text-[13px] leading-snug" style={{ color: COULEUR[signal.couleur] }}>{adaptation.texte.replace(/^Feu \w+ : /, '').replace(/^./, (c) => c.toUpperCase())}</p>}
+                {!decision?.force && !etapesDuJour && <p className="mt-1 line-clamp-2 text-[13px] leading-snug" style={{ color: COULEUR[signal.couleur] }}>{adaptation.texte.replace(/^Feu \w+ : /, '').replace(/^./, (c) => c.toUpperCase())}</p>}
               </>
-            ) : (
-              <p className="mt-1 text-sm" style={{ color: signal.couleur === 'vert' ? COULEUR.vert : COULEUR[signal.couleur] }}>
+            ) : signal.couleur === 'vert' && !etapesDuJour ? null : (
+              <p className="mt-0.5 truncate text-[13px]" style={{ color: signal.couleur === 'vert' ? COULEUR.vert : COULEUR[signal.couleur] }}>
                 {signal.couleur === 'vert' ? 'Feu vert : séance prévue maintenue.' : adaptation!.texte}
               </p>
             )}
             {etapesDuJour ? (
               <>
                 <Profil etapes={etapesDuJour} cpW={cpW} extensible />
-                {prevue.detail && !adaptation?.modifiee && <p className="mt-2 text-[13px] text-texte-2">{prevue.detail}</p>}
-                {prevue.sport === 'velo' && <BoutonsEnvoi p={prevue} etapes={etapesDuJour} />}
+                {prevue.detail && !adaptation?.modifiee && <p className="mt-1.5 line-clamp-2 shrink-0 text-[13px] leading-snug text-texte-2">{prevue.detail}</p>}
+                {prevue.sport === 'velo' && <div className="shrink-0"><BoutonsEnvoi p={prevue} etapes={etapesDuJour} /></div>}
               </>
             ) : (
               // Renfo, course, séance sans déroulé : le détail est visible directement
-              <div className="mt-2 min-h-0 flex-1 overflow-hidden whitespace-pre-line rounded-xl bg-surface-2 p-3 text-sm text-texte-2">
+              <div className="mt-1.5 min-h-0 flex-1 overflow-hidden whitespace-pre-line rounded-xl bg-surface-2 px-3 py-1.5 text-[13px] leading-[18px] text-texte-2">
                 {prevue.detail || `${prevue.dureeMin} min`}
               </div>
             )}
-            <button type="button" onClick={() => setDetailOuvert(!detailOuvert)}
-              className={`mt-2 min-h-10 w-full shrink-0 rounded-xl border text-sm font-semibold ${detailOuvert ? 'border-accent text-accent' : 'border-bordure bg-surface-2 text-texte-2'}`}>
-              Détail et nutrition {detailOuvert ? '▴' : '▾'}
-            </button>
+            {prevue.sport !== 'velo' ? (
+              <div className="mt-2 flex shrink-0 gap-2">
+                <button type="button" className="min-h-10 flex-[1.4] rounded-xl bg-accent text-sm font-bold text-fond" onClick={() => {
+                  const seance: Seance = { id: nouvelId(), date: jour, sport: prevue.sport, type: prevue.type, titre: prevue.titre, dureeSec: prevue.dureeMin * 60, source: 'manuel', prevueId: prevue.id }
+                  navigate('/entrainement/seance/nouvelle', { state: { seance } })
+                }}>Faite</button>
+                <button type="button" onClick={() => setDetailOuvert(!detailOuvert)}
+                  className={`min-h-10 flex-1 rounded-xl border text-sm font-semibold ${detailOuvert ? 'border-accent text-accent' : 'border-bordure bg-surface-2 text-texte-2'}`}>
+                  Nutrition {detailOuvert ? '▴' : '▾'}
+                </button>
+              </div>
+            ) : (
+              <button type="button" onClick={() => setDetailOuvert(!detailOuvert)}
+                className={`mt-2 flex min-h-9 w-full shrink-0 items-center justify-between border-t border-bordure pt-2 text-sm font-semibold ${detailOuvert ? 'text-accent' : 'text-texte-2'}`}>
+                <span>Détail et nutrition</span><span>{detailOuvert ? '▴' : '▾'}</span>
+              </button>
+            )}
             {detailOuvert && (
-              <div className="shrink-0">
+              <div className="shrink-0 space-y-2 pb-1">
                 {etapesDuJour && <Deroule etapes={etapesDuJour} sansProfil />}
                 {!(adaptation?.modifiee && !decision?.force && signal.couleur === 'rouge') && <NutritionSeance p={prevue} />}
               </div>
-            )}
-            {prevue.sport !== 'velo' && (
-              <button type="button" className="mt-2 min-h-11 w-full shrink-0 rounded-xl bg-accent text-sm font-bold text-fond" onClick={() => {
-                const seance: Seance = { id: nouvelId(), date: jour, sport: prevue.sport, type: prevue.type, titre: prevue.titre, dureeSec: prevue.dureeMin * 60, source: 'manuel', prevueId: prevue.id }
-                navigate('/entrainement/seance/nouvelle', { state: { seance } })
-              }}>Faite</button>
             )}
           </>
         ) : faites ? null : reportee ? (
@@ -305,22 +311,21 @@ export function CarteAujourdhui({ onModifierMatin, autreOuvert = false }: {
           <>
             <p className="mt-1 text-[22px] font-bold">{signal.couleur === 'rouge' ? 'Très facile ou repos' : 'Repos'}</p>
             <p className="mt-1 text-sm text-texte-2">
-              {signal.couleur === 'rouge' ? '30 à 45 min très facile au plus, ou repos complet.' : 'Rien de prévu : c’est aussi là que tu progresses. Marche, étirements, bien dormir.'}
+              {signal.couleur === 'rouge' ? '30 à 45 min très facile au plus, ou repos complet.' : 'Marche, étirements, bien dormir : c’est aussi là que tu progresses.'}
             </p>
             <div className="flex-1" />
             {demain && demain.length > 0 && (
               <>
-                <p className="mt-3 text-xs font-semibold uppercase tracking-wider text-texte-3">Demain</p>
+                <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-texte-3">Demain</p>
                 {demain.map((d) => (
                   <div key={d.id} className="mt-1.5 rounded-xl bg-surface-2 p-3">
                     <p className="flex justify-between gap-2 font-semibold"><span>{iconeSport(d.sport)} {d.titre}</span><span className="font-normal text-texte-2">{d.dureeMin} min</span></p>
                     {d.velo?.etapes && <Profil etapes={d.velo.etapes} cpW={cpW} />}
-                    {d.intensite !== 'basse' && <p className="mt-1.5 text-[13px] text-texte-2">Séance dure demain : recharge bien en glucides ce soir.</p>}
+                    {d.intensite !== 'basse' && <p className="mt-1 text-[13px] text-texte-2">Séance dure : recharge en glucides ce soir.</p>}
                   </div>
                 ))}
               </>
             )}
-            <Link to="/entrainement/semaine" className="mt-2 py-1.5 text-sm font-semibold text-accent">Voir ma semaine ›</Link>
           </>
         )}
       </Carte>
