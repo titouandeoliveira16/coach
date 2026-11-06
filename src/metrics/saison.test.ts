@@ -98,3 +98,13 @@ describe('séances de course', () => {
     expect(choisirFormat('2027-04-12', ph, [], 'route', 0, 'cyclo').format.id).toBe('seuil-12-20')
   })
 })
+
+describe('équivalent vélo d’une séance de course', () => {
+  it('8 × 1′ seuil 30 → 8 × 1′ à 112 % de la CP ; footing → Z2 1,4 fois plus longue', async () => {
+    const { construireEquivalentCourse, deplier } = await import('./programme')
+    const v = construireEquivalentCourse({ intensite: 'haute', typeCourse: 'Seuil 30', minutesCle: 8, dureeMin: 46 }, 260, 160)
+    expect(deplier(v.velo.etapes!).filter((e) => e.libelle === 'Effort').map((e) => e.w)).toEqual(Array(8).fill(290))
+    expect(v.dureeMin).toBe(40)
+    expect(construireEquivalentCourse({ intensite: 'basse', dureeMin: 45 }, 260, 160).dureeMin).toBe(65)
+  })
+})
