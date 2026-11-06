@@ -37,7 +37,9 @@ function SeanceFaite({ s }: { s: Seance }) {
   }, [s.id, s.prevueId, s.fcMoy, s.tempsZones?.join()])
   const categorie = info?.categorie
   const verdict = info ? controleFc(s, info.categorie, info.fcMax) : undefined
-  const reserve = categorie && (s.sport === 'velo' || s.sport === 'course') ? questionReserve(categorie) : undefined
+  // Question « en réserve » seulement pour les séances faciles : elle sert au bilan de la semaine (sorties faciles
+  // ressenties comme dures) ; sur l'intensité, elle n'était qu'un message (retirée le 6/11/2026)
+  const reserve = categorie === 'facile' && (s.sport === 'velo' || s.sport === 'course') ? questionReserve(categorie) : undefined
   const min = Math.round(s.dureeSec / 60)
   const resume = [`${min} min`, s.distanceKm && `${formatNombre(s.distanceKm, 1)} km`, s.kj && `${s.kj} kJ`, s.parties && s.parties > 1 && `${s.parties} parties`].filter(Boolean).join(' · ')
   return (
@@ -83,12 +85,12 @@ function SeanceFaite({ s }: { s: Seance }) {
 
 /** « Pas de ceinture cardio » : la FC (au poignet) n'est ni jugée ni gardée comme FC max. */
 function CaseCeinture({ s }: { s: Seance }) {
+  const sans = !!s.sansCeinture
   return (
-    <label className="mt-2 flex items-center gap-2 text-sm text-texte-2">
-      <input type="checkbox" checked={!!s.sansCeinture} onChange={(e) => enregistrer(db.seances, { ...s, sansCeinture: e.target.checked || undefined })}
-        className="h-5 w-5 accent-[var(--color-accent)]" />
-      Pas de ceinture cardio (FC au poignet, pas jugée)
-    </label>
+    <button type="button" onClick={() => enregistrer(db.seances, { ...s, sansCeinture: sans ? undefined : true })} aria-pressed={sans}
+      className={`mt-2 w-full rounded-xl border px-3 py-2 text-left text-sm ${sans ? 'border-accent bg-accent/15 font-semibold text-texte' : 'border-bordure text-texte-2'}`}>
+      {sans ? '⌚ Sans ceinture cardio : FC au poignet, pas jugée · annuler' : '⌚ J’avais pas ma ceinture cardio'}
+    </button>
   )
 }
 
