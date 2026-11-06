@@ -114,15 +114,13 @@ describe('équivalent vélo d’une séance de course', () => {
   })
 })
 
-describe('sommeil comparé à ta normale', () => {
-  it('6 h 40 habituel : pas d’alerte ; 45 min sous la normale ou sous 6 h : dette ; nuit 1 h 30 sous la normale : courte', async () => {
-    const { etatSommeil, calculerSignal } = await import('./signal')
-    expect(etatSommeil({ nuit: 6.6, moyenne7: 6.65, moyenne30: 6.7 })).toEqual({ nuitCourte: false, dette: false, sousRepere: true })
-    expect(etatSommeil({ moyenne7: 6.1, moyenne30: 7 }).dette).toBe(true)
-    expect(etatSommeil({ moyenne7: 5.9 }).dette).toBe(true)
+describe('sommeil', () => {
+  it('moyenne 7 j sous 7 h : dette ; 45 min sous la normale : dette ; nuit 1 h 30 sous la normale : courte', async () => {
+    const { etatSommeil } = await import('./signal')
+    expect(etatSommeil({ nuit: 6.6, moyenne7: 6.65, moyenne30: 6.7 }).dette).toBe(true)
+    expect(etatSommeil({ moyenne7: 7.1, moyenne30: 8 }).dette).toBe(true)
+    expect(etatSommeil({ moyenne7: 7.4, moyenne30: 7.5 }).dette).toBe(false)
     expect(etatSommeil({ nuit: 6.2, moyenne30: 7.8 }).nuitCourte).toBe(true)
-    const vfc = { lnJour: 4, ln7: 4, zoneBasse: 3.5, zoneHaute: 4.5 }
-    const sig = calculerSignal({ vfc, sommeilH: { nuit: 6.6, moyenne7: 6.65, moyenne30: 6.7 } } as Parameters<typeof calculerSignal>[0])
-    expect(sig.alertes.some((a) => a.code === 'ressenti')).toBe(false)
+    expect(etatSommeil({ nuit: 6 }).nuitCourte).toBe(true)
   })
 })
