@@ -1026,15 +1026,15 @@ export function jourDeuxiemeIntensite(z2: string[], dures: string[]) {
 }
 
 /**
- * Sprints à fond, une fois par semaine (relecture du 6/11/2026) : l'hiver, courts (10-15 s, force et nerf, peu de
- * lactique : la progression SPRINTS, 8 min entre) ; en fin de préparation et près de la course, longs (30 s en VTT XCO/XCC,
- * 30 puis 45 s sur route), lactiques (Gastin 2001), récupération longue. Doses : choix d'entraîneur.
+ * Sprints à fond, une fois par semaine (relecture du 6/11/2026) : courts (10-15 s, force et nerf, peu de lactique :
+ * la progression SPRINTS, 8 min entre) ; en VTT XCO / XCC seulement, en fin de préparation et près de la course,
+ * 30 s (lactiques, Gastin 2001), récupération longue. Doses : choix d'entraîneur.
  */
 export function sprintsDeLaPhase(type: TypePhase, discipline: Discipline, n: number): { n: number; sec: number; espacementSec: number } {
-  if (type === 'fin-prepa' || type === 'specifique') {
-    const vtt = discipline === 'xco' || discipline === 'xcc'
-    return { n: vtt ? 4 + Math.min(2, n % 3) : 3 + Math.min(2, n % 3), sec: vtt ? 30 : n % 2 ? 45 : 30, espacementSec: 720 }
-  }
+  // Sprints longs (lactiques) seulement là où la course le demande : XCO / XCC en fin de prépa et près de la course
+  // (efforts répétés au-dessus de la CP). Ailleurs, les sprints courts suffisent (choix de Titouan, 6/11/2026).
+  if ((type === 'fin-prepa' || type === 'specifique') && (discipline === 'xco' || discipline === 'xcc'))
+    return { n: 4 + Math.min(2, n % 3), sec: 30, espacementSec: 720 }
   return { ...SPRINTS[Math.min(n, SPRINTS.length - 1)], espacementSec: 480 }
 }
 

@@ -7,7 +7,7 @@ export const AIDES = {
   blocsSv1:
     "Blocs au 1er seuil : ils poussent le haut de ta Z2, jamais la Z3. Tu dois pouvoir parler en phrases (talk test, Rodríguez-Marroyo 2013) et ton cœur ne doit pas dériver d'un bloc à l'autre. L'appli monte les watts de 5 W quand tu les tiens sans dérive deux fois de suite, les baisse si ça dérive (plus de 5 %, une convention), sans dépasser 85 % de ta CP. Sous ce seuil, on récupère en moins de 24 h (Stanley 2013) : ce n'est pas une séance dure. Progression 3 × 15 → 5 × 15 → 5 × 20 → 6 × 20, jamais plus de la moitié de la sortie.",
   sprintsSemaine:
-    "Sprints à fond une fois par semaine, avec une longue récupération : l'hiver, courts (10-15 s : force et nerf, peu de lactique) ; en fin de prépa, plus longs (30-45 s), qui sont lactiques (Gastin 2001). Pas de watts à viser.",
+    "Sprints à fond une fois par semaine, avec une longue récupération : courts (10-15 s : force et nerf, peu de lactique). En VTT XCO ou short track seulement, en fin de prépa et près de la course, des sprints de 30 s, lactiques (Gastin 2001), parce que la course enchaîne ces efforts. Pas de watts à viser.",
   deuxIntensites:
     "À partir de 4 jours de vélo par semaine, 2 séances intensives séparées d'au moins 48 h (Stanley 2013) ; avec 3 jours ou en débutant, une seule, et ta sortie longue avec ses blocs au 1er seuil fait le reste (semaines types de Mathias Chauvin). Course à pied comprise : 2 séances dures au plus par semaine.",
   testDepart:
