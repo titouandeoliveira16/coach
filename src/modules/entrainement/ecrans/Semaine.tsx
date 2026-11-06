@@ -264,7 +264,12 @@ function DetailSeance({ p, jours, prevues, onFermer, onMessage }: {
               </div>
             </div>
           )}
-          {p.statut === 'prevue' && p.sport === 'course' && <Bouton variante="secondaire" onClick={async () => { onMessage(await remplacerParVelo(p)); onFermer() }}>🚴 Faire du vélo à la place</Bouton>}
+          {p.statut === 'prevue' && p.sport === 'course' && (
+            <>
+              <p className="text-xs text-texte-3">Si tu peux, décale plutôt ta course dans la semaine (« Changer de jour ») : le vélo garde ton moteur, pas ta foulée.<Aide titre="Vélo à la place de la course" texte={AIDES.veloALaPlace} /></p>
+              <Bouton variante="secondaire" onClick={async () => { onMessage(await remplacerParVelo(p)); onFermer() }}>🚴 Faire du vélo à la place</Bouton>
+            </>
+          )}
           {p.statut === 'prevue' && <Bouton variante="secondaire" onClick={() => setMode('jour')}>↔ Changer de jour</Bouton>}
           {p.statut === 'prevue' && <Bouton variante="secondaire" onClick={() => setMode('annuler')}>✗ Je ne peux pas la faire</Bouton>}
           <Bouton variante="secondaire" onClick={() => setMode('modifier')}>Modifier</Bouton>

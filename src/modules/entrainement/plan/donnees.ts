@@ -138,7 +138,14 @@ export async function remplacerParVelo(p: SeancePrevue) {
     id: `velo-pour-${p.id}`, date, sport: 'velo', titre: s.titre, detail: s.detail, dureeMin: s.dureeMin, kjPrevu: s.kj,
     type: p.intensite === 'haute' ? 'Fractionné / VMA' : 'Endurance', intensite: p.intensite, priorite: p.priorite, statut: 'prevue', origine: 'manuel', velo: s.velo,
   })
-  return [`${p.titre} remplacée par : ${s.titre} (${s.dureeMin} min, ${s.kj} kJ).`]
+  // 48 h entre deux séances dures : on prévient si une séance dure tombe la veille ou le lendemain
+  const voisins = [decalerJour(date, -1), decalerJour(date, 1)]
+  const dureProche = p.intensite === 'haute' && (await db.prevues.where('date').anyOf(voisins).toArray())
+    .some((x) => x.statut !== 'non-faite' && x.intensite === 'haute' && x.id !== p.id)
+  return [
+    `${p.titre} remplacée par : ${s.titre} (${s.dureeMin} min, ${s.kj} kJ).`,
+    ...(dureProche ? ['Attention : une séance dure est prévue la veille ou le lendemain. Garde 48 h entre deux séances dures : déplace l’une des deux si tu peux.'] : []),
+  ]
 }
 
 export const enregistrerPrevue = (p: SeancePrevue) => enregistrer(db.prevues, p)

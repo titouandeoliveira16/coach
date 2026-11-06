@@ -100,11 +100,16 @@ describe('séances de course', () => {
 })
 
 describe('équivalent vélo d’une séance de course', () => {
-  it('8 × 1′ seuil 30 → 8 × 1′ à 112 % de la CP ; footing → Z2 1,4 fois plus longue', async () => {
+  it('seuil 30 → 103 % de la CP, même structure ; VMA → 117 % ; footing → Z2 1,4 fois plus longue', async () => {
     const { construireEquivalentCourse, deplier } = await import('./programme')
-    const v = construireEquivalentCourse({ intensite: 'haute', typeCourse: 'Seuil 30', minutesCle: 8, dureeMin: 46 }, 260, 160)
-    expect(deplier(v.velo.etapes!).filter((e) => e.libelle === 'Effort').map((e) => e.w)).toEqual(Array(8).fill(290))
-    expect(v.dureeMin).toBe(40)
+    const v = construireEquivalentCourse({ intensite: 'haute', typeCourse: 'Seuil 30', minutesCle: 8, dureeMin: 46, titre: "8 × 1' seuil 30" }, 260, 160)
+    expect(deplier(v.velo.etapes!).filter((e) => e.libelle === 'Effort').map((e) => e.w)).toEqual(Array(8).fill(270))
+    // 3 × 8' au seuil 30 : pas 24 × 1'
+    const b = construireEquivalentCourse({ intensite: 'haute', typeCourse: 'Seuil 30', minutesCle: 24, dureeMin: 60, titre: "3 × 8' seuil 30" }, 260, 160)
+    expect(deplier(b.velo.etapes!).filter((e) => e.libelle === 'Effort')).toHaveLength(3)
+    const vma = construireEquivalentCourse({ intensite: 'haute', typeCourse: 'Fractionné / VMA', minutesCle: 30, dureeMin: 50 }, 260, 160)
+    expect(deplier(vma.velo.etapes!).filter((e) => e.libelle === 'Effort')).toHaveLength(16)
+    expect(vma.velo.etapes![1].w).toBe(305)
     expect(construireEquivalentCourse({ intensite: 'basse', dureeMin: 45 }, 260, 160).dureeMin).toBe(65)
   })
 })
