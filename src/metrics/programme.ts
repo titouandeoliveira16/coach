@@ -388,40 +388,54 @@ function enchainer(blocs: Omit<Etape, 'debutSec'>[], z2W: number) {
 const p = (w: number, lo: number, hi: number) => ({ w, wMin: arrondi5(w * lo), wMax: arrondi5(w * hi) })
 
 /**
- * Équivalent vélo d'une séance de course à pied (choix d'entraîneur) :
- *  - séance dure : même travail au même genre d'intensité. Seuil 60 : 3 blocs juste sous la CP ; seuil 30, VMA,
- *    fractionné : 1' à 112 % de la CP par minute à l'allure clé, 1' très facile entre ;
- *  - endurance : Z2 environ 1,4 fois plus longue (à vélo, le cœur monte moins et on ne porte pas son poids).
+ * Équivalent vélo d'une séance de course à pied (relu le 6/11/2026 : Tanaka 1994, Millet 2009, Menges 2026 ;
+ * pourcentages : choix d'entraîneur appuyés sur la physiologie). Le vélo garde le moteur (cœur, VO2max), pas la foulée,
+ * les tendons ni l'économie de course : à l'approche d'une course, mieux vaut décaler la séance.
+ *  - seuil 30 (≈ la vitesse critique, l'équivalent de la CP) → 103 % de la CP, même structure (ex. 8 × 1') ou blocs de 7' ;
+ *  - VMA, côtes, fractionné → 117 % de la CP, 1' par minute à l'allure clé (16 au plus) ou même structure ;
+ *  - seuil 60 → 3 blocs à 95 % de la CP ;
+ *  - endurance → Z2 environ 1,4 fois plus longue (FC plus basse à vélo à effort égal ; aucun facteur publié).
  * Pas compté dans la progression des formats vélo (marqué comme allégé).
  */
-export function construireEquivalentCourse(c: { intensite: string; typeCourse?: string; minutesCle?: number; dureeMin: number }, cpW: number, z2W: number): SeanceConstruite {
+export function construireEquivalentCourse(c: { intensite: string; typeCourse?: string; minutesCle?: number; dureeMin: number; titre?: string; detail?: string }, cpW: number, z2W: number): SeanceConstruite {
   if (c.intensite !== 'haute' || !c.minutesCle) {
     const s = construireZ2(Math.min(180, arrondi5(c.dureeMin * 1.4)), z2W)
     return { ...s, titre: `Z2 à la place de la course (${s.dureeMin} min)`, velo: { ...s.velo, allegee: true, pourquoi: 'Équivalent vélo de ta séance de course : endurance environ 1,4 fois plus longue.' } }
   }
   const wEch = arrondi5(z2W * 0.85)
   const facile = arrondi5(cpW * 0.5)
-  const long = /seuil 60/i.test(c.typeCourse ?? '')
-  const blocs: Omit<Etape, 'debutSec'>[] = [
-    { dureeSec: 900, libelle: 'Échauffement progressif, 2 accélérations de 30" à la fin', w: wEch },
-  ]
-  let titre: string
-  if (long) {
-    const min = Math.max(5, Math.round(c.minutesCle / 3))
-    const w = arrondi5(cpW * 0.97)
-    blocs.push({ dureeSec: 3 * min * 60 + 2 * 180, w, libelle: `3 × ${min}' à ${w} W, 3' faciles entre`, repetition: { fois: 3, derniere: 1, etapes: [{ dureeSec: min * 60, libelle: 'Bloc', w, ...plage(w, 'seuil') }, { dureeSec: 180, libelle: 'Facile', w: facile }] } })
-    titre = `3 × ${min}' au seuil (à la place de la course)`
+  const seuil60 = /seuil 60/i.test(c.typeCourse ?? '')
+  const seuil30 = /seuil 30/i.test(c.typeCourse ?? '')
+  // Structure de la séance de course si elle est écrite (« 8 × 1' », « 3 × 8′ »)
+  const m = `${c.titre ?? ''} ${c.detail ?? ''}`.match(/(\d+)\s*[×x]\s*(\d+)\s*['′]/)
+  let reps: number
+  let min: number
+  let recup: number
+  let pct: number
+  let famille: Famille
+  if (seuil60) {
+    reps = 3; min = Math.max(5, Math.round(c.minutesCle / 3)); recup = 180; pct = 0.95; famille = 'seuil'
+  } else if (seuil30) {
+    if (m) { reps = Number(m[1]); min = Number(m[2]) } else { min = 7; reps = Math.max(2, Math.round(c.minutesCle / 7)) }
+    recup = min <= 2 ? 60 : 120; pct = 1.03; famille = 'seuil-plus'
   } else {
-    const n = Math.max(4, Math.round(c.minutesCle))
-    const w = arrondi5(cpW * 1.12)
-    blocs.push({ dureeSec: n * 60 + (n - 1) * 60, w, libelle: `${n} × 1' à ${w} W, 1' très facile entre`, repetition: { fois: n, derniere: 1, etapes: [{ dureeSec: 60, libelle: 'Effort', w, ...plage(w, 'vo2-courts'), cadence: '95-105' }, { dureeSec: 60, libelle: 'Très facile', w: facile }] } })
-    titre = `${n} × 1' à ${w} W (à la place de la course)`
+    if (m) { reps = Math.min(16, Number(m[1])); min = Number(m[2]) } else { min = 1; reps = Math.min(16, Math.max(4, Math.round(c.minutesCle))) }
+    recup = Math.max(60, min * 60); pct = 1.17; famille = 'vo2-courts'
   }
-  blocs.push({ dureeSec: 600, libelle: 'Retour au calme', w: wEch })
-  const { etapes, dureeMin, kj } = enchainer(blocs, z2W)
+  const w = arrondi5(cpW * pct)
+  const plageFamille = famille === 'vo2-courts' ? 'vo2-courts' : famille === 'seuil' ? 'seuil' : 'seuil-plus'
+  const { etapes, dureeMin, kj } = enchainer([
+    { dureeSec: 900, libelle: 'Échauffement progressif, 2 accélérations de 30" à la fin', w: wEch },
+    {
+      dureeSec: reps * min * 60 + (reps - 1) * recup, w, libelle: `${reps} × ${min}' à ${w} W, ${Math.round(recup / 60)}' faciles entre`,
+      repetition: { fois: reps, derniere: 1, etapes: [{ dureeSec: min * 60, libelle: 'Effort', w, ...plage(w, plageFamille), cadence: '90-105' }, { dureeSec: recup, libelle: 'Facile', w: facile }] },
+    },
+    { dureeSec: 600, libelle: 'Retour au calme', w: wEch },
+  ], z2W)
+  const titre = `${reps} × ${min}' à ${w} W (à la place de la course)`
   return {
-    titre, dureeMin, kj, detail: `Équivalent vélo de ta séance de course · ${titre.replace(' (à la place de la course)', '')}`,
-    velo: { famille: long ? 'seuil' : 'vo2-courts', formatId: 'equivalent-course', palier: 0, allegee: true, cpW, etapes, pourquoi: 'Équivalent vélo de ta séance de course : même travail, même genre d’intensité.' },
+    titre, dureeMin, kj, detail: `Équivalent vélo de ta séance de course · ${reps} × ${min}' à ${Math.round(pct * 100)} % de ta CP`,
+    velo: { famille, formatId: 'equivalent-course', palier: 0, allegee: true, cpW, etapes, pourquoi: 'Équivalent vélo de ta séance de course : même structure, intensité équivalente. Le vélo garde ton moteur, pas ta foulée.' },
   }
 }
 

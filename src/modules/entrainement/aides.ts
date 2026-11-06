@@ -14,6 +14,8 @@ export const AIDES = {
     "On reproduit ta course quand tu es déjà fatigué : un travail préalable intense fait baisser surtout ton sprint (Spragg 2024). Ça entraîne la tenue et le rythme ; ce n'est pas prouvé que ça fasse mieux qu'une séance classique. C'est une séance dure : pas d'autre intensité 48 h avant et après.",
   echauffementCourse:
     "Avant une course courte et très dure (XCO, short track, course en ligne) : un effort soutenu de 5-6 min puis au moins 10 min faciles avant le départ t'aide à tenir un effort très dur (+15 à 30 % en labo, Bailey 2009). Avec 3 min seulement, c'est l'inverse.",
+  veloALaPlace:
+    "Le vélo garde ton moteur (cœur, VO2max) presque aussi bien que la course quand on remplace une partie des séances (Menges 2026, Tanaka 1994). Il n'entraîne ni ta foulée, ni tes tendons, ni ton économie de course (Pizza 1995). À l'approche d'une course, décale plutôt ta séance, et pas plus d'une séance remplacée par semaine ; sinon, l'appli te propose le même effort à vélo : seuil 30 vers 103 % de ta CP, VMA vers 117 %, seuil 60 vers 95 %, footing 1,4 fois plus long. Les pourcentages sont des choix d'entraîneur.",
   deuxIntensites:
     "À partir de 4 jours de vélo par semaine, 2 séances intensives séparées d'au moins 48 h (Stanley 2013) ; avec 3 jours ou en débutant, une seule, et ta sortie longue avec ses blocs au 1er seuil fait le reste (semaines types de Mathias Chauvin). Course à pied comprise : 2 séances dures au plus par semaine.",
   testDepart:
