@@ -388,6 +388,44 @@ function enchainer(blocs: Omit<Etape, 'debutSec'>[], z2W: number) {
 const p = (w: number, lo: number, hi: number) => ({ w, wMin: arrondi5(w * lo), wMax: arrondi5(w * hi) })
 
 /**
+ * Équivalent vélo d'une séance de course à pied (choix d'entraîneur) :
+ *  - séance dure : même travail au même genre d'intensité. Seuil 60 : 3 blocs juste sous la CP ; seuil 30, VMA,
+ *    fractionné : 1' à 112 % de la CP par minute à l'allure clé, 1' très facile entre ;
+ *  - endurance : Z2 environ 1,4 fois plus longue (à vélo, le cœur monte moins et on ne porte pas son poids).
+ * Pas compté dans la progression des formats vélo (marqué comme allégé).
+ */
+export function construireEquivalentCourse(c: { intensite: string; typeCourse?: string; minutesCle?: number; dureeMin: number }, cpW: number, z2W: number): SeanceConstruite {
+  if (c.intensite !== 'haute' || !c.minutesCle) {
+    const s = construireZ2(Math.min(180, arrondi5(c.dureeMin * 1.4)), z2W)
+    return { ...s, titre: `Z2 à la place de la course (${s.dureeMin} min)`, velo: { ...s.velo, allegee: true, pourquoi: 'Équivalent vélo de ta séance de course : endurance environ 1,4 fois plus longue.' } }
+  }
+  const wEch = arrondi5(z2W * 0.85)
+  const facile = arrondi5(cpW * 0.5)
+  const long = /seuil 60/i.test(c.typeCourse ?? '')
+  const blocs: Omit<Etape, 'debutSec'>[] = [
+    { dureeSec: 900, libelle: 'Échauffement progressif, 2 accélérations de 30" à la fin', w: wEch },
+  ]
+  let titre: string
+  if (long) {
+    const min = Math.max(5, Math.round(c.minutesCle / 3))
+    const w = arrondi5(cpW * 0.97)
+    blocs.push({ dureeSec: 3 * min * 60 + 2 * 180, w, libelle: `3 × ${min}' à ${w} W, 3' faciles entre`, repetition: { fois: 3, derniere: 1, etapes: [{ dureeSec: min * 60, libelle: 'Bloc', w, ...plage(w, 'seuil') }, { dureeSec: 180, libelle: 'Facile', w: facile }] } })
+    titre = `3 × ${min}' au seuil (à la place de la course)`
+  } else {
+    const n = Math.max(4, Math.round(c.minutesCle))
+    const w = arrondi5(cpW * 1.12)
+    blocs.push({ dureeSec: n * 60 + (n - 1) * 60, w, libelle: `${n} × 1' à ${w} W, 1' très facile entre`, repetition: { fois: n, derniere: 1, etapes: [{ dureeSec: 60, libelle: 'Effort', w, ...plage(w, 'vo2-courts'), cadence: '95-105' }, { dureeSec: 60, libelle: 'Très facile', w: facile }] } })
+    titre = `${n} × 1' à ${w} W (à la place de la course)`
+  }
+  blocs.push({ dureeSec: 600, libelle: 'Retour au calme', w: wEch })
+  const { etapes, dureeMin, kj } = enchainer(blocs, z2W)
+  return {
+    titre, dureeMin, kj, detail: `Équivalent vélo de ta séance de course · ${titre.replace(' (à la place de la course)', '')}`,
+    velo: { famille: long ? 'seuil' : 'vo2-courts', formatId: 'equivalent-course', palier: 0, allegee: true, cpW, etapes, pourquoi: 'Équivalent vélo de ta séance de course : même travail, même genre d’intensité.' },
+  }
+}
+
+/**
  * Simulation de course en ligne (course FFC, relue le 6/11/2026 : Sanders & van Erp 2021, Spragg 2024, Leo 2022 ;
  * format : choix d'entraîneur) : Z2, 3 blocs de 12' à 80-90 % de la CP avec une attaque de 30" toutes les 3', une
  * échappée de 5', puis en finale 2 × (1' à 110-120 % + sprint de 15") fatigué. Séance dure, à la place de la sortie longue.

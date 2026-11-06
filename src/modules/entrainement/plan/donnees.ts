@@ -121,6 +121,26 @@ export async function annulerPrevue(p: SeancePrevue, raison: Raison) {
   return [`${p.titre} annulée (${raison}) : elle n'est pas rattrapée.`]
 }
 
+/**
+ * Remplace une séance de course par son équivalent vélo, le jour même (ou aujourd'hui si elle était passée) :
+ * la course passe en « pas faite », le vélo prévu ce jour-là par le programme est retiré (une séance par jour).
+ */
+export async function remplacerParVelo(p: SeancePrevue) {
+  const { construireEquivalentCourse } = await import('../../../metrics/programme')
+  const { z2Actuel } = await import('./programme')
+  const r = (await db.reglages.get('entrainement'))?.valeur as { cpW?: number } | undefined
+  const date = p.date < aujourdhui() ? aujourdhui() : p.date
+  const s = construireEquivalentCourse(p, r?.cpW ?? 260, (await z2Actuel()).w)
+  for (const x of await db.prevues.where('date').equals(date).toArray())
+    if (x.sport === 'velo' && x.origine === 'auto' && x.statut === 'prevue') await supprimer(db.prevues, x.id)
+  await enregistrer(db.prevues, { ...p, statut: 'non-faite', remplaceeParVelo: true })
+  await enregistrer(db.prevues, {
+    id: `velo-pour-${p.id}`, date, sport: 'velo', titre: s.titre, detail: s.detail, dureeMin: s.dureeMin, kjPrevu: s.kj,
+    type: p.intensite === 'haute' ? 'Fractionné / VMA' : 'Endurance', intensite: p.intensite, priorite: p.priorite, statut: 'prevue', origine: 'manuel', velo: s.velo,
+  })
+  return [`${p.titre} remplacée par : ${s.titre} (${s.dureeMin} min, ${s.kj} kJ).`]
+}
+
 export const enregistrerPrevue = (p: SeancePrevue) => enregistrer(db.prevues, p)
 export const supprimerPrevue = (id: string) => supprimer(db.prevues, id)
 

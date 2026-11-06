@@ -218,6 +218,8 @@ export interface SeancePrevue {
   reporteeDu?: string
   /** Changée de jour à la main : le recalcul du vélo la laisse où elle est */
   deplacee?: boolean
+  /** Séance de course remplacée par son équivalent vélo */
+  remplaceeParVelo?: boolean
   /** Minutes ajoutées pour compenser un imprévu (ex. vélo en panne) */
   compensationMin?: number
   /** Séance d'intensité : blocs tous tenus ou non (fait avancer la progression) */
