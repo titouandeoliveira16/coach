@@ -7,9 +7,10 @@ description: Publier une nouvelle version de l'appli Coach (numéro de version, 
 
 Toujours dans cet ordre, sans sauter d'étape :
 
-1. **Numéro de version** : dans `package.json`, monter la version (`0.x.y`) :
-   - nouvelle fonction → `0.(x+1).0` ;
-   - correction ou petit changement de texte → `0.x.(y+1)`.
+1. **Numéro de version** : dans `package.json`, monter la version (`x.y.z`, affichée « x.y » comme un nombre à virgule,
+   « x.y.z » pour une correction) :
+   - nouvelle fonction → décimale suivante : `8.6.z` → `8.7.0`, et `8.9.z` → `9.0.0` ;
+   - correction ou petit changement de texte → `x.y.(z+1)`.
 2. **Vérifier** : `npx tsc -b`, puis `npm test`, puis `npm run build`. Tout doit passer.
 3. **Contrôler à l'écran** les écrans touchés : lancer `npx vite preview --port 4173 --strictPort` en arrière-plan,
    puis ouvrir les pages avec Playwright (Chromium est dans `/opt/pw-browsers`, Playwright dans

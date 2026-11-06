@@ -28,7 +28,7 @@ export function ReglagesGeneraux() {
         <SectionImport />
         <Carte titre="État de l'appli">
           <Ligne libelle="Installée sur l'écran d'accueil" valeur={installee ? 'Oui ✓' : 'Non'} ok={installee} />
-          <Ligne libelle="Version" valeur={__VERSION__} />
+          <Ligne libelle="Version" valeur={__VERSION__.replace(/\.0$/, '')} />
           {!installee && (
             <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-texte-2">
               <li>Ouvre cette page dans Safari</li>
