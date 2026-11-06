@@ -269,6 +269,20 @@ seance("velo-seuil-4x16", famille="seuil", nom="4 × 16 min (Seiler, Sylta)",
        conseils=["Le %CP est une estimation : les études règlent l'intensité à l'effort, pas en watts.", SANS_ERG],
        preuve=P("prouvé", "Chez des amateurs, 4 × 16 min a moins progressé que 4 × 8 min sur 7 semaines. Sur 12 semaines (63 cyclistes), alterner 4 × 16, 4 × 8 et 4 × 4 a donné +5 à 10 % de puissance sur 40 min, quel que soit l'ordre.", SEILER_2013, SYLTA_2016), **V)
 
+seance("velo-tirage-seuil", famille="seuil", nom="Tirer le seuil 5 × 5 → 4 × 8 min",
+       objectif="Faire monter la puissance au seuil (1re étape du travail du 2e seuil)", resume="Blocs plus courts qu'au seuil classique mais un peu au-dessus de la CP : 5 × 5, puis 5 × 6, puis 4 × 8 min, récupération 3 min.",
+       zone="Z4-Z5", rpe="7-8", niveau="intermédiaire", deroule=[ECH(15), X(5, E(5, 100, 105, cad="85-95"), R(3)), CALME(10)],
+       variantes=["5 × 5", "5 × 6", "4 × 8", "4 × 8 un peu plus fort"], phases=["construction"], parSemaine="1-2",
+       recuperation="48 h", conseils=["On monte les watts petit à petit tant que l'effort ressenti reste cohérent avec la séance.", SANS_ERG],
+       preuve=P("plausible", "Pratique d'entraîneur : tirer d'abord la puissance avec des blocs juste au-dessus de la CP, puis allonger le maintien. Le stimulus est celui des intervalles de 5 à 8 min (Rønnestad 2015, Seiler 2013) ; l'ordre des blocs change peu les progrès à charge égale (Sylta 2016).", SEILER_2013, SYLTA_2016), **V)
+
+seance("velo-seuil-maintien", famille="seuil", nom="Allonger le seuil 4 × 10 → 2 × 30 min",
+       objectif="Tenir plus longtemps la puissance au seuil (2e étape du travail du 2e seuil)", resume="Juste sous la CP, des blocs de plus en plus longs : 4 × 10, 3 × 15, 2 × 25, puis 2 × 30 min pour valider le cycle.",
+       zone="Z4", rpe="7", niveau="intermédiaire", deroule=[ECH(15), X(4, E(10, 93, 97, cad="85-95"), R(4)), CALME(10)],
+       variantes=["4 × 10", "3 × 15", "2 × 25", "2 × 30"], phases=["construction"], parSemaine="1",
+       recuperation="48 h", conseils=["Le 2 × 30 min réussi valide ton seuil : c'est le moment d'un test CP court.", SANS_ERG],
+       preuve=P("plausible", "Pratique d'entraîneur (allonger le temps de maintien à la nouvelle puissance) ; intervalles longs au seuil : +5 à 10 % de puissance sur 40 min en 12 semaines, quel que soit l'ordre (Sylta 2016).", SYLTA_2016, ALLEN_COGGAN), **V)
+
 seance("velo-over-unders", famille="seuil", nom="Over-unders",
        objectif="Tolérance aux variations autour du seuil (relances, attaques en côte)", resume="3 séries de 4 × (2 min à 95 % / 1 min à 105-110 %), récupération 5 min entre les séries.",
        zone="Z4", rpe="8", niveau="confirmé", deroule=[ECH(15), X(3, X(4, E(2, 93, 97), E(1, 105, 110)), R(5)), CALME(10)],
@@ -949,6 +963,12 @@ prog("velo-seuil-4x16", "seuil-12-20", "seuil", "seuil en blocs de 12-20'", 720,
      "Sylta et al. 2016 : intervalles longs (jusqu’à 16 min), +5 à 10 % de puissance sur 40 min.")
 prog("velo-seuil-continu", "seuil-continu", "seuil", "seuil continu", 1200, 95, 0, 50, [(1, 1), (1, 1, 1500), (1, 1, 1800), (1, 1, 2100)], "bonne",
      "Travail continu juste sous la CP (état stable lactique maximal).")
+prog("velo-tirage-seuil", "tirage-seuil", "seuil-plus", "tirer le seuil", 300, 102, 180, 50, [(1, 5), (1, 5, 360), (1, 4, 480), (1, 4, 540)], "correcte",
+     "Pratique d'entraîneur appuyée sur les intervalles de 5 à 8 min (Seiler 2013) ; ordre des blocs neutre (Sylta 2016).")
+prog("velo-seuil-maintien", "seuil-maintien", "seuil", "allonger le seuil", 600, 95, 180, 50, [(1, 4), (1, 3, 900), (1, 2, 1500), (1, 2, 1800)], "bonne",
+     "Sylta et al. 2016 : intervalles longs au seuil ; le 2 × 30 min valide le cycle (pratique d'entraîneur).")
+prog("velo-sweet-spot-long", "sweet-spot-long", "sweet-spot", "sweet spot long", 900, 88, 240, 50, [(1, 3), (1, 2, 1500), (1, 3, 1200), (1, 2, 1800)], "plus faible",
+     "Pratique d'entraîneur en fin de préparation (entre le 1er seuil et la CP, moins de fatigue qu'au seuil) ; aucun essai contrôlé.")
 prog("velo-over-unders", "over-under", "seuil-variable", "over-unders", 60, 105, 120, 95, [(2, 3), (2, 4), (3, 3), (3, 4)], "plus faible",
      "Pratique d’entraîneurs, peu étudiée : gardée pour varier le travail au seuil.", recupSerieSec=240, continu=True)
 prog("velo-sweet-spot-3x15", "sweet-spot", "sweet-spot", "sweet spot", 900, 91, 240, 50, [(1, 2), (1, 3, 720), (1, 2, 1200), (1, 3, 840)], "plus faible",
@@ -987,7 +1007,7 @@ DISC_EN_PLUS = {
     "velo-endurance-courte": ["xco", "xcc", "xcm", "enduro"], "velo-endurance-longue": ["xco", "xcm", "enduro"],
     "velo-endurance-sprints": ["xco", "xcc", "enduro"], "velo-durabilite-effort-final": ["xcm", "xco"],
     "velo-tempo-2x20": ["xcm"], "velo-sweet-spot-3x15": ["xcm", "xco"], "velo-sweet-spot-long": ["xcm"],
-    "velo-seuil-2x20": ["xco", "xcm"], "velo-seuil-4x10": ["xco", "xcc", "xcm"], "velo-seuil-4x16": ["xcm"], "velo-seuil-continu": ["xcm"],
+    "velo-seuil-2x20": ["xco", "xcm"], "velo-tirage-seuil": ["xcm"], "velo-seuil-maintien": ["xcm"], "velo-seuil-4x10": ["xco", "xcc", "xcm"], "velo-seuil-4x16": ["xcm"], "velo-seuil-continu": ["xcm"],
     "velo-over-unders": ["xco", "xcc"], "velo-vo2-30-15-ronnestad": ["xco", "xcc"], "velo-vo2-30-30": ["xco", "xcc"], "velo-vo2-15-15": ["xco", "xcc"],
     "velo-vo2-4x5": ["xco", "xcc", "xcm"], "velo-vo2-puissance-variee": ["xco", "xcc"], "velo-sit-30s": ["xco", "xcc"],
     "velo-sprints-courts": ["xco", "xcc", "enduro", "dh"], "velo-departs-arretes": ["xco", "enduro", "dh"],

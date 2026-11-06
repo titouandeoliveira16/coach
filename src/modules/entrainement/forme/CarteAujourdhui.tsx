@@ -311,7 +311,9 @@ export function CarteAujourdhui({ onModifierMatin, autreOuvert = false }: {
           <>
             <p className="mt-1 text-[22px] font-bold">{signal.couleur === 'rouge' ? 'Très facile ou repos' : 'Repos'}</p>
             <p className="mt-1 text-sm text-texte-2">
-              {signal.couleur === 'rouge' ? '30 à 45 min très facile au plus, ou repos complet.' : 'Marche, étirements, bien dormir : c’est aussi là que tu progresses.'}
+              {signal.couleur === 'rouge' ? '30 à 45 min très facile au plus, ou repos complet.' : demain?.some((d) => d.intensite === 'haute')
+                ? 'Demain, séance dure : si tu te sens rouillé, 20 à 30 min très faciles aujourd’hui (repos actif, facultatif).'
+                : 'Marche, étirements, bien dormir : c’est aussi là que tu progresses.'}
             </p>
             <div className="flex-1" />
             {demain && demain.length > 0 && (

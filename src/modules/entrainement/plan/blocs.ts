@@ -4,7 +4,7 @@ import { reperesBlocs } from '../../../metrics/puissance'
 import type { Seance, SeancePrevue } from '../types'
 
 /** Familles à cible stable : comparer les watts de chaque bloc a du sens (pas pour les 30/15 ni les over-unders). */
-const FAMILLES_STABLES = new Set(['seuil', 'sweet-spot', 'tempo', 'vo2-longs'])
+const FAMILLES_STABLES = new Set(['seuil', 'sweet-spot', 'tempo', 'vo2-longs', 'seuil-plus'])
 
 /** Bloc tenu, pour les séances d'avant les plages : au moins 97 % de la cible (marge de mesure du home trainer et du capteur). */
 export const SEUIL_TENU = 0.97
