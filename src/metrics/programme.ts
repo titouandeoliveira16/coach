@@ -13,7 +13,7 @@
 import catalogue from '../../catalogue/seances.json'
 import { decaler } from './vfc'
 
-export type Famille = 'vo2-courts' | 'vo2-longs' | 'seuil' | 'seuil-variable' | 'sweet-spot' | 'tempo' | 'relances' | 'sprints'
+export type Famille = 'vo2-courts' | 'vo2-longs' | 'seuil-plus' | 'seuil' | 'seuil-variable' | 'sweet-spot' | 'tempo' | 'relances' | 'sprints'
 /** Discipline visée : route (programme d'origine) ou une discipline VTT (catalogue, profils de discipline). */
 export type Discipline = 'route' | 'xco' | 'xcc' | 'xcm' | 'enduro' | 'dh'
 export const NOMS_DISCIPLINES: Record<Discipline, string> = {
@@ -21,7 +21,12 @@ export const NOMS_DISCIPLINES: Record<Discipline, string> = {
 }
 /** Disciplines proposées (enduro et descente mis de côté le 5/11/2026 : le code reste, on ne les propose plus). */
 export const DISCIPLINES_PROPOSEES: Discipline[] = ['route', 'xco', 'xcc', 'xcm']
-export type TypePhase = 'reprise' | 'vo2' | 'seuil' | 'entretien' | 'specifique' | 'affutage' | 'recuperation'
+/**
+ * Phases. Saisons calculées (depuis le 6/11/2026, forme de l'entraîneur Mathias Chauvin, contenu relu par la science) :
+ * reprise → seuil-tirage (tirer le seuil) → seuil-maintien (allonger le seuil) → fin-prepa (sweet spot + VO2) →
+ * specifique → affutage → recuperation. 'vo2' et 'seuil' restent pour la saison écrite à la main de Titouan.
+ */
+export type TypePhase = 'reprise' | 'vo2' | 'seuil' | 'entretien' | 'seuil-tirage' | 'seuil-maintien' | 'fin-prepa' | 'specifique' | 'affutage' | 'recuperation'
 /** Rôle d'un jour dans la semaine type */
 export type Role = 'course' | 'renfo' | 'velo-dur' | 'velo-z2' | 'velo-long' | 'libre'
 
@@ -179,7 +184,7 @@ export function deplier(etapes: Etape[]): Etape[] {
  * on juge la puissance moyenne de chaque répétition, pas la puissance seconde par seconde.
  */
 const PLAGES: Record<Famille | 'z2', [number, number]> = {
-  'vo2-courts': [-0.03, 0.05], 'vo2-longs': [-0.03, 0.05], seuil: [-0.02, 0.03], 'seuil-variable': [-0.03, 0.03],
+  'vo2-courts': [-0.03, 0.05], 'vo2-longs': [-0.03, 0.05], 'seuil-plus': [-0.03, 0.04], seuil: [-0.02, 0.03], 'seuil-variable': [-0.03, 0.03],
   'sweet-spot': [-0.03, 0.03], tempo: [-0.03, 0.03], relances: [-0.03, 0.05], sprints: [0, 0], z2: [-0.05, 0.05],
 }
 /** Familles où dépasser la plage compte comme « pas tenu » (on passerait au-dessus du seuil). */
@@ -200,6 +205,9 @@ export interface SeanceVelo {
   cibleW?: number
   /** CP utilisée pour construire la séance (version raccourcie d'un jour orange) */
   cpW?: number
+  /** Sortie avec blocs au 1er seuil : watts et nombre de blocs */
+  sv1W?: number
+  blocsSv1?: number
   /** W' (kJ) qui a limité les watts du travail (garde-fou : une répétition ne vide pas plus de 80 % du W') */
   wPrimeKj?: number
   /** Explication du choix (phase, alternance, progression) */
@@ -441,47 +449,101 @@ export function construireSpeciales(palier: number, cpW: number): SeanceConstrui
 }
 
 /** Séance d'endurance (Z2), avec sprints pour la sortie longue. */
-export function construireZ2(duree: number, z2W: number, sprints?: { n: number; sec: number }): SeanceConstruite {
+/** Blocs au 1er seuil de la sortie longue : palier 0 → 3 (choix d'entraîneur, forme Chauvin). */
+export const BLOCS_SV1: { reps: number; min: number }[] = [{ reps: 3, min: 15 }, { reps: 5, min: 15 }, { reps: 5, min: 20 }, { reps: 6, min: 20 }]
+const RECUP_SV1_MIN = 5
+
+/**
+ * Sortie Z2. Options :
+ *  - `sprints` : sprints à fond, un toutes les `espacementSec` (10 min par défaut) à partir de la 20e minute ;
+ *  - `sv1` : blocs au 1er seuil (haut de la Z2, jamais en Z3), 5 min de Z2 entre, au plus la moitié de la sortie,
+ *    à partir de la 45e minute (relecture du 6/11/2026 : talk test, dérive cardiaque) ;
+ *  - `rappelSv1` : 2 × 10 min au 1er seuil (lendemain d'une séance intensive, confirmé et plus) ;
+ *  - Z2 de 90 min ou plus sans rien d'autre : découpée en 8 min de Z2 + 2 min plus faciles (monotonie, home trainer).
+ * Une sortie avec `sprints` ou `longue` est la sortie longue (famille z2-long).
+ */
+export function construireZ2(duree: number, z2W: number, sprints?: { n: number; sec: number }, o: { longue?: boolean; sv1?: { w: number; reps: number; min: number }; espacementSec?: number } = {}): SeanceConstruite {
   const dureeMin = Math.round(duree)
   const ech = Math.min(10, dureeMin) * 60
   const wEch = arrondi5(z2W * 0.85)
-  const kj = (ech * wEch + (dureeMin * 60 - ech) * z2W) / 1000 + (sprints ? sprints.n * sprints.sec * z2W * 2.5 / 1000 : 0)
   const fin = dureeMin * 60
-  const etapes: Etape[] = [
-    { debutSec: 0, dureeSec: ech, libelle: 'Mise en route progressive', w: wEch },
-    { debutSec: ech, dureeSec: fin - ech - 300, libelle: 'Z2 régulière : RPE ≤ 3, tu peux parler en phrases', w: z2W, ...plage(z2W, 'z2') },
-    { debutSec: fin - 300, dureeSec: 300, libelle: 'Retour au calme', w: wEch },
-  ]
-  // Un sprint toutes les 10 min à partir de la 20e, avant les 10 dernières minutes
-  const minutes = sprints ? Array.from({ length: sprints.n }, (_, i) => 20 + i * 10).filter((m) => m <= dureeMin - 10) : []
-  if (sprints && minutes.length) {
-    const s = sprints.sec
-    const debut = minutes[0] * 60
-    const finSprints = minutes[minutes.length - 1] * 60 + s + 120
-    const z2Etape = etapes[1]
-    etapes.splice(1, 1,
-      { ...z2Etape, dureeSec: debut - ech },
-      {
-        debutSec: debut, dureeSec: finSprints - debut, w: wEch,
-        libelle: `${minutes.length} sprints de ${s}" à fond (à ${minutes.map((m) => `${m}'`).join(', ')}), assis puis debout en alternance ; 2' très facile après chacun, puis Z2`,
-        // La dernière répétition s'arrête après les 2' faciles : la Z2 reprend ensuite jusqu'au retour au calme
-        repetition: {
-          fois: minutes.length, derniere: 2,
-          etapes: [
-            { dureeSec: s, libelle: 'Sprint à fond', cadence: '100-120' },
-            { dureeSec: 120, libelle: 'Très facile', w: wEch },
-            { dureeSec: 600 - s - 120, libelle: 'Z2', w: z2W, ...plage(z2W, 'z2') },
-          ],
-        },
-      },
-      { ...z2Etape, debutSec: finSprints, dureeSec: fin - 300 - finSprints, libelle: 'Z2 régulière jusqu’au retour au calme' },
-    )
+  const z2 = (debutSec: number, dureeSec: number, libelle = 'Z2 régulière : RPE ≤ 3, tu peux parler en phrases'): Etape => ({ debutSec, dureeSec, libelle, w: z2W, ...plage(z2W, 'z2') })
+  const etapes: Etape[] = [{ debutSec: 0, dureeSec: ech, libelle: 'Mise en route progressive', w: wEch }]
+  const corpsFin = fin - 300
+  // Sans précision, une sortie avec sprints est la sortie longue (comportement d'origine)
+  const longue = o.longue ?? !!sprints
+  let titre = longue ? 'Z2 longue' : 'Endurance Z2'
+  let detailPlus = ''
+  let kjPlus = 0
+
+  // Blocs au 1er seuil : au plus la moitié de la sortie, en laissant 15 min de Z2 avant et 10 min après
+  let sv1 = o.sv1
+  if (sv1) {
+    let reps = sv1.reps
+    const total = (n: number) => (n * sv1!.min + (n - 1) * RECUP_SV1_MIN) * 60
+    while (reps > 1 && (reps * sv1.min * 60 > fin / 2 || total(reps) > corpsFin - ech - 15 * 60 - 10 * 60)) reps--
+    if (reps * sv1.min * 60 > fin / 2 || total(reps) > corpsFin - ech - 25 * 60) sv1 = undefined
+    else sv1 = { ...sv1, reps }
   }
+  // Sortie longue : premier sprint à la 20e minute ; Z2 de semaine (plus courte) : dès la 15e
+  const premier = longue ? 20 : 15
+  const minutes = sprints && !sv1 ? Array.from({ length: sprints.n }, (_, i) => premier + i * Math.round((o.espacementSec ?? 600) / 60)).filter((m) => m <= dureeMin - 10) : []
+
+  if (sv1) {
+    const total = (sv1.reps * sv1.min + (sv1.reps - 1) * RECUP_SV1_MIN) * 60
+    const debut = Math.max(ech + 15 * 60, Math.min(45 * 60, corpsFin - 10 * 60 - total))
+    const p = plage(sv1.w, 'tempo')
+    etapes.push(z2(ech, debut - ech), {
+      debutSec: debut, dureeSec: total, w: sv1.w,
+      libelle: `${sv1.reps} × ${sv1.min}' au 1er seuil (${sv1.w} W) : haut de ta Z2, tu parles encore en phrases, le cœur ne dérive pas ; ${RECUP_SV1_MIN}' de Z2 entre`,
+      repetition: {
+        fois: sv1.reps, derniere: 1,
+        etapes: [{ dureeSec: sv1.min * 60, libelle: 'Bloc 1er seuil', w: sv1.w, wMin: p.wMin, wMax: Math.min(p.wMax, sv1.w + 5), cadence: '85-95' }, { dureeSec: RECUP_SV1_MIN * 60, libelle: 'Z2', w: z2W, ...plage(z2W, 'z2') }],
+      },
+    }, z2(debut + total, corpsFin - debut - total, 'Z2 régulière jusqu’au retour au calme'))
+    titre = `${titre} + ${sv1.reps} × ${sv1.min}' au 1er seuil`
+    detailPlus = ` · ${sv1.reps} × ${sv1.min}' au 1er seuil (${sv1.w} W)`
+    kjPlus = (sv1.reps * sv1.min * 60 * (sv1.w - z2W)) / 1000
+  } else if (sprints && minutes.length) {
+    const sec = sprints.sec
+    const pas = Math.round((o.espacementSec ?? 600) / 60) * 60
+    const facile = Math.min(pas - sec - 60, sec >= 30 ? 300 : 120)
+    const debut = minutes[0] * 60
+    const finSprints = minutes[minutes.length - 1] * 60 + sec + facile
+    etapes.push(z2(ech, debut - ech), {
+      debutSec: debut, dureeSec: finSprints - debut, w: wEch,
+      libelle: `${minutes.length} sprints de ${sec}" à fond (à ${minutes.map((m) => `${m}'`).join(', ')}), assis puis debout en alternance ; ${Math.round(facile / 60)}' très facile après chacun, puis Z2`,
+      // La dernière répétition s'arrête après la récupération très facile : la Z2 reprend ensuite jusqu'au retour au calme
+      repetition: {
+        fois: minutes.length, derniere: 2,
+        etapes: [
+          { dureeSec: sec, libelle: 'Sprint à fond', cadence: '100-120' },
+          { dureeSec: facile, libelle: 'Très facile', w: wEch },
+          { dureeSec: pas - sec - facile, libelle: 'Z2', w: z2W, ...plage(z2W, 'z2') },
+        ],
+      },
+    }, z2(finSprints, corpsFin - finSprints, 'Z2 régulière jusqu’au retour au calme'))
+    titre = `${titre} + ${minutes.length} sprints${sec >= 30 ? ` de ${sec}"` : ''}`
+    detailPlus = ` · ${minutes.length} sprints de ${sec}"`
+    kjPlus = (minutes.length * sec * z2W * 2.5) / 1000
+  } else if (!longue && !sprints && dureeMin >= 90) {
+    // Z2 découpée : 8 min de Z2, 2 min plus faciles (monotonie sur home trainer ; choix d'entraîneur)
+    const n = Math.floor((corpsFin - ech) / 600)
+    const wFacile = arrondi5(z2W * 0.8)
+    etapes.push({
+      debutSec: ech, dureeSec: n * 600, w: z2W, libelle: `${n} × (8' Z2 + 2' plus facile) : casse la monotonie`,
+      repetition: { fois: n, etapes: [{ dureeSec: 480, libelle: 'Z2', w: z2W, ...plage(z2W, 'z2') }, { dureeSec: 120, libelle: 'Plus facile', w: wFacile }] },
+    })
+    if (corpsFin - ech - n * 600 > 0) etapes.push(z2(ech + n * 600, corpsFin - ech - n * 600, 'Z2 régulière'))
+    kjPlus = -(n * 120 * (z2W - wFacile)) / 1000
+  } else etapes.push(z2(ech, corpsFin - ech))
+  etapes.push({ debutSec: corpsFin, dureeSec: 300, libelle: 'Retour au calme', w: wEch })
+  const kj = (ech * wEch + (fin - ech - 300) * z2W + 300 * wEch) / 1000 + kjPlus
   return {
-    titre: sprints ? (minutes.length ? `Z2 longue + ${minutes.length} sprints` : 'Z2 longue') : 'Endurance Z2',
-    detail: `10' progressif puis Z2 à ${z2W} W (RPE ≤ 3)${minutes.length ? ` · ${minutes.length} sprints de ${sprints!.sec}"` : ''}`,
+    titre,
+    detail: `10' progressif puis Z2 à ${z2W} W (RPE ≤ 3)${detailPlus}`,
     dureeMin, kj: Math.round(kj),
-    velo: { famille: sprints ? 'z2-long' : 'z2', cibleW: z2W, etapes },
+    velo: { famille: longue ? 'z2-long' : 'z2', cibleW: z2W, etapes, ...(sv1 ? { sv1W: sv1.w, blocsSv1: sv1.reps } : {}) },
   }
 }
 
@@ -529,6 +591,9 @@ export const NOMS_PHASES: Record<TypePhase, string> = {
   vo2: 'Dominante VO2max',
   seuil: 'Dominante seuil',
   entretien: 'Entretien (VO2 / seuil)',
+  'seuil-tirage': 'Tirer le seuil',
+  'seuil-maintien': 'Allonger le seuil',
+  'fin-prepa': 'Fin de prépa (sweet spot + VO2)',
   specifique: 'Proche de ta course',
   affutage: 'Affûtage',
   recuperation: 'Récupération',
@@ -551,7 +616,7 @@ export function estSemaineAllegee(lundi: string, phases: Phase[]) {
   const triees = [...phases].sort((a, b) => a.debut.localeCompare(b.debut))
   if (!triees.length) return false
   const { phase } = phaseDe(lundi, triees)
-  if (phase.type === 'specifique' || phase.type === 'affutage' || phase.type === 'recuperation') return false
+  if (phase.type === 'specifique' || phase.type === 'affutage' || phase.type === 'recuperation' || phase.type === 'fin-prepa') return false
   const rang = Math.floor((Date.parse(lundi) - Date.parse(triees[0].debut)) / (7 * 86_400_000))
   return rang >= 0 && rang % 4 === 3
 }
@@ -575,6 +640,10 @@ const CYCLES: Record<TypePhase, ('vo2' | 'seuil' | 'sous-seuil')[]> = {
   vo2: ['vo2', 'vo2', 'seuil'],
   seuil: ['seuil', 'seuil', 'vo2'],
   entretien: ['vo2', 'seuil'],
+  // Phases des saisons calculées : choix par semaine et par rang (choisirFormatSaison), ces cycles ne servent qu'en secours
+  'seuil-tirage': ['seuil'],
+  'seuil-maintien': ['seuil'],
+  'fin-prepa': ['vo2', 'seuil'],
   specifique: ['vo2', 'seuil'],
   affutage: ['vo2', 'seuil'],
   recuperation: ['sous-seuil'],
@@ -618,9 +687,50 @@ export function formatsPour(famille: Famille, discipline: Discipline = 'route') 
   return siens.length ? siens : tous
 }
 
-/** Choisit la famille et le format de la séance d'intensité de la semaine. */
-export function choisirFormat(lundi: string, phases: Phase[], histo: HistoIntensite[], discipline: Discipline = 'route') {
-  const { phase } = phaseDe(lundi, phases)
+/**
+ * Saisons calculées (forme Chauvin) : la séance dépend de la phase, de la semaine dans la phase et du rang
+ * (0 = 1re séance intensive de la semaine, 1 = 2e). Relu le 6/11/2026 :
+ *  - tirer le seuil : 5 × 5 → 5 × 6 → 4 × 8 juste au-dessus de la CP (VTT XCO/XCC : intervalles d'Inoue, même stimulus) ;
+ *    2e séance : seuil ;
+ *  - allonger le seuil : 4 × 10 → 3 × 15 → 2 × 25 → 2 × 30 (XCO/XCC : seuil, relances 1 fois sur 3) ;
+ *    rappel 30/15 léger toutes les 3 semaines pour garder la puissance 5' (Spiering 2021) ; 2e séance : tirer le seuil ;
+ *  - fin de prépa : VO2 (VTT : sprints de 30" en séries et Inoue) ; 2e séance : sweet spot les 2 premières semaines,
+ *    VO2 la 3e.
+ * Retourne undefined pour les autres phases (cycles classiques).
+ */
+function familleSaison(type: TypePhase, semaine: number, rang: number, discipline: Discipline, avant: HistoIntensite[]):
+  { famille: Famille; formatId?: string; palier?: number; dominante: 'vo2' | 'seuil' | 'sous-seuil' } | undefined {
+  const vtt = discipline === 'xco' || discipline === 'xcc'
+  const derniere = (l: Famille[]) => [...avant].reverse().find((h) => l.includes(h.famille))?.famille
+  if (type === 'seuil-tirage') {
+    if (rang === 1) return { famille: vtt ? familleVtt(discipline, 'seuil', avant)! : 'seuil', dominante: 'seuil' }
+    return vtt ? { famille: 'vo2-longs', formatId: 'inoue', dominante: 'vo2' } : { famille: 'seuil-plus', formatId: 'tirage-seuil', dominante: 'seuil' }
+  }
+  if (type === 'seuil-maintien') {
+    if (rang === 0 && semaine % 3 === 2) return { famille: 'vo2-courts', formatId: '30-15', palier: 0, dominante: 'vo2' }
+    if (rang === 1) return vtt ? { famille: 'vo2-longs', formatId: 'inoue', dominante: 'vo2' } : { famille: 'seuil-plus', formatId: 'tirage-seuil', dominante: 'seuil' }
+    return vtt ? { famille: familleVtt(discipline, 'seuil', avant)!, dominante: 'seuil' } : { famille: 'seuil', formatId: 'seuil-maintien', dominante: 'seuil' }
+  }
+  if (type === 'fin-prepa') {
+    if (rang === 1 && semaine < 2) return { famille: 'sweet-spot', formatId: 'sweet-spot-long', dominante: 'sous-seuil' }
+    if (vtt) return derniere(['sprints', 'vo2-longs']) === 'sprints' ? { famille: 'vo2-longs', formatId: 'inoue', dominante: 'vo2' } : { famille: 'sprints', formatId: 'sit-series', dominante: 'vo2' }
+    return { famille: derniere(['vo2-courts', 'vo2-longs']) === 'vo2-courts' ? 'vo2-longs' : 'vo2-courts', dominante: 'vo2' }
+  }
+  return undefined
+}
+
+/** Choisit la famille et le format de la séance d'intensité de la semaine (`rang` 1 : 2e séance intensive). */
+export function choisirFormat(lundi: string, phases: Phase[], histo: HistoIntensite[], discipline: Discipline = 'route', rang = 0) {
+  const { phase, semaine: semaineDansPhase } = phaseDe(lundi, phases)
+  const avantSaison = histo.filter((h) => h.date < lundi).sort((a, b) => a.date.localeCompare(b.date))
+  const saison = familleSaison(phase.type, semaineDansPhase, rang, discipline, avantSaison)
+  if (saison) {
+    const formats = formatsPour(saison.famille, discipline)
+    const dernier = [...avantSaison].reverse().find((h) => h.famille === saison.famille)
+    const format = (saison.formatId && formats.find((f) => f.id === saison.formatId)) ||
+      formats[dernier ? (formats.findIndex((f) => f.id === dernier.formatId) + 1) % formats.length : 0]
+    return { famille: saison.famille, format, phase, dominante: saison.dominante, palierImpose: saison.palier }
+  }
   const avant = histo.filter((h) => h.date < lundi).sort((a, b) => a.date.localeCompare(b.date))
   const dansPhase = avant.filter((h) => h.date >= phase.debut)
   // Marathon VTT près de la course : seuil et sous le seuil (sortie longue au maximum à côté)
@@ -897,16 +1007,52 @@ export function heuresDe(texte?: string): [number, number] {
 }
 /** Hausse du budget kJ quand la semaine est validée et les signaux au vert. */
 export const hausseBudget = (niveau: Niveau) => (niveau === 'debutant' ? 0.05 : 0.075)
-/** 2 séances dures par semaine au total possibles (confirmé ou expert, 6 h et plus). */
-export const deuxIntensitesPossibles = (niveau: Niveau, heures: [number, number]) => (niveau === 'confirme' || niveau === 'expert') && heures[0] >= 6
+/**
+ * 2 séances intensives par semaine (forme Chauvin, relue le 6/11/2026) : à partir de 4 jours de vélo, sauf débutant.
+ * Avec 3 jours (ou en débutant), 1 seule : la sortie longue avec ses blocs au 1er seuil fait le reste.
+ * Toujours 48 h entre deux séances dures (Stanley 2013), et 2 séances dures au total course à pied comprise.
+ */
+export const deuxIntensitesPossibles = (niveau: Niveau, joursVelo: number) => niveau !== 'debutant' && joursVelo >= 4
 
 /**
- * Jour de la 2e intensité vélo : une des sorties Z2 prévues, à au moins 2 jours de toute séance dure
- * (48 h entre deux séances dures) et pas la veille de la sortie longue. Undefined si aucun jour ne convient.
+ * Jour de la 2e intensité vélo : la sortie Z2 la plus éloignée des séances dures, à au moins 2 jours de chacune
+ * (48 h entre deux séances dures). La veille de la sortie longue est permise (semaine type de Chauvin : intensif le
+ * samedi, longue le dimanche) : la sortie longue reste en endurance. Undefined si aucun jour ne convient.
  */
-export function jourDeuxiemeIntensite(z2: string[], dures: string[], long?: string) {
+export function jourDeuxiemeIntensite(z2: string[], dures: string[]) {
   const ecart = (a: string, b: string) => Math.abs(Date.parse(a) - Date.parse(b)) / 86_400_000
-  return z2.find((d) => dures.every((x) => ecart(d, x) >= 2) && (!long || decaler(d, 1) !== long))
+  const proche = (d: string) => Math.min(Infinity, ...dures.map((x) => ecart(d, x)))
+  return z2.filter((d) => proche(d) >= 2).sort((a, b) => proche(b) - proche(a) || b.localeCompare(a))[0]
+}
+
+/**
+ * Sprints à fond, une fois par semaine (relecture du 6/11/2026) : l'hiver, courts (10-15 s, force et nerf, peu de
+ * lactique : la progression SPRINTS, 8 min entre) ; en fin de préparation et près de la course, longs (30 s en VTT XCO/XCC,
+ * 30 puis 45 s sur route), lactiques (Gastin 2001), récupération longue. Doses : choix d'entraîneur.
+ */
+export function sprintsDeLaPhase(type: TypePhase, discipline: Discipline, n: number): { n: number; sec: number; espacementSec: number } {
+  if (type === 'fin-prepa' || type === 'specifique') {
+    const vtt = discipline === 'xco' || discipline === 'xcc'
+    return { n: vtt ? 4 + Math.min(2, n % 3) : 3 + Math.min(2, n % 3), sec: vtt ? 30 : n % 2 ? 45 : 30, espacementSec: 720 }
+  }
+  return { ...SPRINTS[Math.min(n, SPRINTS.length - 1)], espacementSec: 480 }
+}
+
+/** 1er seuil de départ : 70 % de la CP (SEUIL1_PCT_CP), puis ajusté par la dérive ; jamais plus de 85 % de la CP. */
+export const SV1_DEPART_PCT = 0.7
+export const SV1_MAX_PCT = 0.85
+
+/**
+ * Signal d'une sortie avec blocs au 1er seuil (talk test et dérive : Rodríguez-Marroyo 2013 ; 5 % : convention) :
+ * +1 si la FC du dernier bloc dépasse celle du premier de moins de 3 % et l'effort ressenti reste modéré (≤ 5),
+ * −1 si elle dérive de plus de 5 % ou si l'effort était dur (≥ 7). Sinon, pas de signal.
+ */
+export function signalSv1(fcBlocs: number[], rpe?: number) {
+  if (fcBlocs.length < 2) return 0
+  const derive = ((fcBlocs[fcBlocs.length - 1] - fcBlocs[0]) / fcBlocs[0]) * 100
+  if (derive > 5 || (rpe !== undefined && rpe >= 7)) return -1
+  if (derive < 3 && (rpe === undefined || rpe <= 5)) return 1
+  return 0
 }
 
 // ——— Vision de la saison ———
@@ -926,7 +1072,7 @@ export interface SemaineSaison {
 }
 
 export const NOMS_FAMILLES: Record<Famille, string> = {
-  'vo2-courts': 'VO2 courts', 'vo2-longs': 'VO2 longs', seuil: 'Seuil', 'seuil-variable': 'Seuil variable', 'sweet-spot': 'Sweet spot', tempo: 'Tempo',
+  'vo2-courts': 'VO2 courts', 'vo2-longs': 'VO2 longs', 'seuil-plus': 'Tirer le seuil', seuil: 'Seuil', 'seuil-variable': 'Seuil variable', 'sweet-spot': 'Sweet spot', tempo: 'Tempo',
   relances: 'Relances', sprints: 'Sprints',
 }
 
@@ -947,6 +1093,8 @@ export function projeterSaison(o: {
   /** Plafond propre à une semaine (reprise progressive) */
   plafondDe?: (lundi: string) => number
   discipline?: Discipline
+  /** Saison calculée : reprise sans intensité */
+  repriseSansIntensite?: boolean
 }): SemaineSaison[] {
   const triees = [...o.phases].sort((a, b) => a.debut.localeCompare(b.debut))
   const histo = [...o.histo]
@@ -969,6 +1117,7 @@ export function projeterSaison(o: {
     let intensite: string
     if (test) intensite = o.testsCourts?.includes(test) ? "Test CP court 3' + 12'" : 'Test CP complet 12-7-3'
     else if (phase.type === 'recuperation') intensite = 'Pas d’intensité (récupération)'
+    else if (phase.type === 'reprise' && o.repriseSansIntensite) intensite = 'Base d’endurance (pas d’intensité)'
     else {
       const choix = choisirFormat(l, triees, histo, o.discipline)
       const famille = NOMS_FAMILLES[choix.famille]

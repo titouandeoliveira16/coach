@@ -261,10 +261,18 @@ export function controlerSeance(o: {
         }
       }
       // Sprints de la sortie longue : à fond, pas de plage à contrôler (la Z2 entre les sprints est contrôlée)
-      if (famille === 'z2-long') {
+      if (famille === 'z2-long' || famille === 'z2') {
+        // Blocs au 1er seuil : une ligne par bloc (la FC du premier et du dernier dit si le cœur a dérivé)
+        const b1 = sous.findIndex((x) => x.libelle === 'Bloc 1er seuil')
+        if (b1 >= 0 && sous[b1].wMin && sous[b1].wMax)
+          parSous[b1].forEach((k, n) => {
+            const g = groupe([k])
+            if (g) lignes.push(ligne(`1er seuil ${n + 1}`, g.w, sous[b1].wMin!, sous[b1].wMax!, g.fc, true))
+          })
         const j = sous.findIndex((x) => x.libelle === 'Z2')
-        const g = j >= 0 ? groupe(parSous[j]) : undefined
-        if (g && sous[j].wMin && sous[j].wMax) lignes.push(ligne(sous.some((x) => x.libelle === 'Montée') ? 'Z2 entre les montées' : 'Z2 entre les sprints', g.w, sous[j].wMin!, sous[j].wMax!, g.fc))
+        const g = j >= 0 && b1 < 0 ? groupe(parSous[j]) : undefined
+        const nomZ2 = sous.some((x) => x.libelle === 'Montée') ? 'Z2 entre les montées' : sous.some((x) => x.libelle === 'Sprint à fond') ? 'Z2 entre les sprints' : 'Z2'
+        if (g && sous[j].wMin && sous[j].wMax) lignes.push(ligne(nomZ2, g.w, sous[j].wMin!, sous[j].wMax!, g.fc))
         // Sortie longue en côtes : les montées sont contrôlées ensemble (85-95 % de la CP, sans dépasser)
         const m = sous.findIndex((x) => x.libelle === 'Montée')
         const gm = m >= 0 ? groupe(parSous[m]) : undefined

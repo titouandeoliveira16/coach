@@ -46,9 +46,9 @@ describe('banque de séances', () => {
     expect(e.at(-1)!.debutSec + e.at(-1)!.dureeSec).toBe(seuil.dureeMin * 60)
   })
 
-  it('banque piochée dans le catalogue : 21 formats (dont 5 VTT), chacun relié à sa fiche', () => {
-    expect(FORMATS).toHaveLength(21)
-    expect(new Set(FORMATS.map((f) => f.id)).size).toBe(21)
+  it('banque piochée dans le catalogue : 24 formats (dont 5 VTT), chacun relié à sa fiche', () => {
+    expect(FORMATS).toHaveLength(24)
+    expect(new Set(FORMATS.map((f) => f.id)).size).toBe(24)
     expect(FORMATS.filter((f) => !f.disciplines.includes('route')).map((f) => f.id)).toEqual(['inoue', 'relances-xco', 'relances-xcc', 'sit-series', 'sprints-courts'])
     for (const f of FORMATS) expect(catalogue.seances.some((s) => s.id === f.catalogueId)).toBe(true)
     expect(formatDe('30-15')!.catalogueId).toBe('velo-vo2-30-15-ronnestad')

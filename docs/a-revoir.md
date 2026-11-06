@@ -13,13 +13,20 @@ Points décidés ou mis de côté, à reprendre au bon moment.
 - Question ouverte : garder le contrôle du dimanche, ou seulement le relevé du 5 ?
 - Il veut remplir le Budget au bon moment, à chaque fois : vérifier que le rappel du soir est activé (Budget → Réglages).
 
-## Conseils de Mathias Chauvin (6/11/2026, en cours)
+## Conseils de Mathias Chauvin (6/11/2026, codés en v0.86.0)
 - Décidé : forme de l'entraîneur (ordre reprise → 2e seuil → sweet spot + VO2 court → spécifique → affûtage), contenu
   validé par la science ; blocs au 1er seuil (fin de Z2) dans la sortie longue tout l'hiver ; 4 séances et plus = 2
   intensives, 3 séances = 1 intensive + sortie longue avec blocs ; nombre de jours d'entraînement demandé au questionnaire ;
   sprints max 1 fois par semaine ; sweet spot en fin de prépa ; semaines de 7 jours (pas de blocs de 8 jours) ; rappel
   léger le lendemain d'une intensive, repos actif la veille ; Z2 découpée seulement pour les longues séances au home trainer.
   Muscu lourde : option, plus tard.
+- Codé (v0.86.0) : phases `seuil-tirage`, `seuil-maintien`, `fin-prepa` (saisons calculées, `modele: 'chauvin'` : reprise
+  sans intensité) ; formats tirer le seuil, allonger le seuil (2 × 25 au lieu de 2 × 20 pour garder des paliers croissants),
+  sweet spot long ; blocs au 1er seuil dans la sortie longue (SV1 70 % CP ±5 W selon la dérive, 85 % CP max ; la limite
+  Z2/Z3 suit le SV1) ; sprints 1×/semaine (courts l'hiver, 30-45" en fin de prépa) ; 2 intensives dès 4 jours de vélo sauf
+  débutant (la règle des 6 h est retirée), veille de la sortie longue permise ; rappel 2 × 10' au 1er seuil le lendemain
+  d'une intensive (confirmé et plus) ; repos actif conseillé la veille d'une séance dure ; Z2 de 90' et plus découpée.
+  À surveiller : en VTT avec 4 jours, la seule Z2 est la sortie technique → pas de sprints hors fin de prépa.
 - **Sa saison à lui (phase VO2 prévue le 14/12) : à décider avant le 14/12** ; Étape du Tour 2027 : pas d'inscription
   pour l'instant (places manquées), objectif vélo principal à redéfinir.
 - Quand il roulera dehors avec un capteur : refaire un test pour avoir des zones « dehors » (et un facteur capteur si

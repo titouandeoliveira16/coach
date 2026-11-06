@@ -615,7 +615,7 @@
     ],
     "preuve": "plus faible",
     "source": "Zone 3 (« moyenne ») : utile en reprise, à doser (modèle pyramidal).",
-    "ordre": 15
+    "ordre": 18
    },
    "disciplines": [
     "route",
@@ -744,7 +744,7 @@
     ],
     "preuve": "plus faible",
     "source": "Peu étudié : utile en reprise pour accumuler du travail sous le seuil.",
-    "ordre": 14
+    "ordre": 17
    },
    "disciplines": [
     "route",
@@ -834,6 +834,39 @@
       "revue": "VeloPress (livre)"
      }
     ]
+   },
+   "programme": {
+    "id": "sweet-spot-long",
+    "famille": "sweet-spot",
+    "nom": "sweet spot long",
+    "travailSec": 900,
+    "pct": 88,
+    "recupSec": 240,
+    "pctRecup": 50,
+    "paliers": [
+     [
+      1,
+      3
+     ],
+     [
+      1,
+      2,
+      1500
+     ],
+     [
+      1,
+      3,
+      1200
+     ],
+     [
+      1,
+      2,
+      1800
+     ]
+    ],
+    "preuve": "plus faible",
+    "source": "Pratique d'entraîneur en fin de préparation (entre le 1er seuil et la CP, moins de fatigue qu'au seuil) ; aucun essai contrôlé.",
+    "ordre": 15
    },
    "disciplines": [
     "route",
@@ -1181,6 +1214,261 @@
    ]
   },
   {
+   "id": "velo-tirage-seuil",
+   "sport": "velo",
+   "famille": "seuil",
+   "nom": "Tirer le seuil 5 × 5 → 4 × 8 min",
+   "objectif": "Faire monter la puissance au seuil (1re étape du travail du 2e seuil)",
+   "resume": "Blocs plus courts qu'au seuil classique mais un peu au-dessus de la CP : 5 × 5, puis 5 × 6, puis 4 × 8 min, récupération 3 min.",
+   "unite": "%CP",
+   "zone": "Z4-Z5",
+   "rpe": "7-8",
+   "niveau": "intermédiaire",
+   "dureeMin": 65,
+   "travailMin": 25.0,
+   "deroule": [
+    {
+     "type": "echauffement",
+     "duree": 900,
+     "intensite": [
+      50,
+      75
+     ]
+    },
+    {
+     "type": "repetition",
+     "fois": 5,
+     "etapes": [
+      {
+       "type": "effort",
+       "duree": 300,
+       "intensite": [
+        100,
+        105
+       ],
+       "cadence": "85-95"
+      },
+      {
+       "type": "recup",
+       "duree": 180,
+       "intensite": [
+        45,
+        55
+       ]
+      }
+     ]
+    },
+    {
+     "type": "retour",
+     "duree": 600,
+     "intensite": [
+      45,
+      55
+     ]
+    }
+   ],
+   "variantes": [
+    "5 × 5",
+    "5 × 6",
+    "4 × 8",
+    "4 × 8 un peu plus fort"
+   ],
+   "quand": {
+    "phases": [
+     "construction"
+    ],
+    "parSemaine": "1-2",
+    "recuperation": "48 h"
+   },
+   "conseils": [
+    "On monte les watts petit à petit tant que l'effort ressenti reste cohérent avec la séance.",
+    "Sans ERG : choisis ton braquet avant chaque effort (un ou deux pignons plus dur), lance les 5 premières secondes un peu au-dessus de la cible puis stabilise."
+   ],
+   "preuve": {
+    "niveau": "plausible",
+    "resultat": "Pratique d'entraîneur : tirer d'abord la puissance avec des blocs juste au-dessus de la CP, puis allonger le maintien. Le stimulus est celui des intervalles de 5 à 8 min (Rønnestad 2015, Seiler 2013) ; l'ordre des blocs change peu les progrès à charge égale (Sylta 2016).",
+    "references": [
+     {
+      "auteurs": "Seiler S, Jøranson K, Olesen BV, Hetlelid KJ",
+      "annee": 2013,
+      "titre": "Adaptations to aerobic interval training: interactive effects of exercise intensity and total work duration",
+      "revue": "Scand J Med Sci Sports",
+      "pmid": "21812820"
+     },
+     {
+      "auteurs": "Sylta Ø, Tønnessen E, Hammarström D, et al.",
+      "annee": 2016,
+      "titre": "The effect of different high-intensity periodization models on endurance adaptations",
+      "revue": "Med Sci Sports Exerc"
+     }
+    ]
+   },
+   "programme": {
+    "id": "tirage-seuil",
+    "famille": "seuil-plus",
+    "nom": "tirer le seuil",
+    "travailSec": 300,
+    "pct": 102,
+    "recupSec": 180,
+    "pctRecup": 50,
+    "paliers": [
+     [
+      1,
+      5
+     ],
+     [
+      1,
+      5,
+      360
+     ],
+     [
+      1,
+      4,
+      480
+     ],
+     [
+      1,
+      4,
+      540
+     ]
+    ],
+    "preuve": "correcte",
+    "source": "Pratique d'entraîneur appuyée sur les intervalles de 5 à 8 min (Seiler 2013) ; ordre des blocs neutre (Sylta 2016).",
+    "ordre": 13
+   },
+   "disciplines": [
+    "route",
+    "xcm"
+   ]
+  },
+  {
+   "id": "velo-seuil-maintien",
+   "sport": "velo",
+   "famille": "seuil",
+   "nom": "Allonger le seuil 4 × 10 → 2 × 30 min",
+   "objectif": "Tenir plus longtemps la puissance au seuil (2e étape du travail du 2e seuil)",
+   "resume": "Juste sous la CP, des blocs de plus en plus longs : 4 × 10, 3 × 15, 2 × 25, puis 2 × 30 min pour valider le cycle.",
+   "unite": "%CP",
+   "zone": "Z4",
+   "rpe": "7",
+   "niveau": "intermédiaire",
+   "dureeMin": 81,
+   "travailMin": 40.0,
+   "deroule": [
+    {
+     "type": "echauffement",
+     "duree": 900,
+     "intensite": [
+      50,
+      75
+     ]
+    },
+    {
+     "type": "repetition",
+     "fois": 4,
+     "etapes": [
+      {
+       "type": "effort",
+       "duree": 600,
+       "intensite": [
+        93,
+        97
+       ],
+       "cadence": "85-95"
+      },
+      {
+       "type": "recup",
+       "duree": 240,
+       "intensite": [
+        45,
+        55
+       ]
+      }
+     ]
+    },
+    {
+     "type": "retour",
+     "duree": 600,
+     "intensite": [
+      45,
+      55
+     ]
+    }
+   ],
+   "variantes": [
+    "4 × 10",
+    "3 × 15",
+    "2 × 25",
+    "2 × 30"
+   ],
+   "quand": {
+    "phases": [
+     "construction"
+    ],
+    "parSemaine": "1",
+    "recuperation": "48 h"
+   },
+   "conseils": [
+    "Le 2 × 30 min réussi valide ton seuil : c'est le moment d'un test CP court.",
+    "Sans ERG : choisis ton braquet avant chaque effort (un ou deux pignons plus dur), lance les 5 premières secondes un peu au-dessus de la cible puis stabilise."
+   ],
+   "preuve": {
+    "niveau": "plausible",
+    "resultat": "Pratique d'entraîneur (allonger le temps de maintien à la nouvelle puissance) ; intervalles longs au seuil : +5 à 10 % de puissance sur 40 min en 12 semaines, quel que soit l'ordre (Sylta 2016).",
+    "references": [
+     {
+      "auteurs": "Sylta Ø, Tønnessen E, Hammarström D, et al.",
+      "annee": 2016,
+      "titre": "The effect of different high-intensity periodization models on endurance adaptations",
+      "revue": "Med Sci Sports Exerc"
+     },
+     {
+      "auteurs": "Allen H, Coggan A",
+      "annee": 2019,
+      "titre": "Training and Racing with a Power Meter (3e éd.)",
+      "revue": "VeloPress (livre)"
+     }
+    ]
+   },
+   "programme": {
+    "id": "seuil-maintien",
+    "famille": "seuil",
+    "nom": "allonger le seuil",
+    "travailSec": 600,
+    "pct": 95,
+    "recupSec": 180,
+    "pctRecup": 50,
+    "paliers": [
+     [
+      1,
+      4
+     ],
+     [
+      1,
+      3,
+      900
+     ],
+     [
+      1,
+      2,
+      1500
+     ],
+     [
+      1,
+      2,
+      1800
+     ]
+    ],
+    "preuve": "bonne",
+    "source": "Sylta et al. 2016 : intervalles longs au seuil ; le 2 × 30 min valide le cycle (pratique d'entraîneur).",
+    "ordre": 14
+   },
+   "disciplines": [
+    "route",
+    "xcm"
+   ]
+  },
+  {
    "id": "velo-over-unders",
    "sport": "velo",
    "famille": "seuil",
@@ -1307,7 +1595,7 @@
     ],
     "preuve": "plus faible",
     "source": "Pratique d’entraîneurs, peu étudiée : gardée pour varier le travail au seuil.",
-    "ordre": 13
+    "ordre": 16
    },
    "disciplines": [
     "route",
@@ -4606,7 +4894,7 @@
     ],
     "preuve": "bonne",
     "source": "Inoue et al. 2016 : essai randomisé chez 16 vététistes, 7-10 × 4-6 min ; meilleur temps de course qu'avec des sprints de 30 s.",
-    "ordre": 16
+    "ordre": 19
    }
   },
   {
@@ -4760,7 +5048,7 @@
     ],
     "preuve": "bonne",
     "source": "Hebisz 2016, 2021 ; Inoue 2016 : les sprints de 30 s font progresser VO2max et puissance anaérobie chez des vététistes.",
-    "ordre": 19
+    "ordre": 22
    }
   },
   {
@@ -4925,7 +5213,7 @@
     ],
     "preuve": "plus faible",
     "source": "Næss 2021, Prinz 2021 : en XCO, ≈ 40 % du temps au-dessus de la CP en efforts de quelques secondes ; format qui copie la course, pas d'essai dédié.",
-    "ordre": 17
+    "ordre": 20
    }
   },
   {
@@ -5170,7 +5458,7 @@
     ],
     "preuve": "plus faible",
     "source": "Arriel 2023 : le short track dure ≈ 20 min à une puissance plus haute que le XCO, allure variable ; pas d'essai dédié.",
-    "ordre": 18
+    "ordre": 21
    }
   },
   {
@@ -5523,7 +5811,7 @@
     ],
     "preuve": "plus faible",
     "source": "Hurst & Atkins 2006, Burr 2012 : descente = pics de puissance très courts ; pratique d'entraîneur, la technique prime.",
-    "ordre": 20
+    "ordre": 23
    }
   },
   {

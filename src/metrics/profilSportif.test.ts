@@ -19,14 +19,14 @@ describe('profil sportif → moteur', () => {
     expect(budgetSemaine(prec, 2000, 4000, false, undefined, hausseBudget('debutant')).budgetRef).toBe(2100)
     expect(budgetSemaine(prec, 2000, 4000, false, undefined, hausseBudget('confirme')).budgetRef).toBe(2150)
   })
-  it('2 intensités : confirmé ou expert, au moins 6 h', () => {
-    expect(deuxIntensitesPossibles('confirme', [6, 8])).toBe(true)
-    expect(deuxIntensitesPossibles('expert', [4, 6])).toBe(false)
-    expect(deuxIntensitesPossibles('intermediaire', [8, 10])).toBe(false)
+  it('2 intensités (forme Chauvin) : 4 jours de vélo ou plus, sauf débutant', () => {
+    expect(deuxIntensitesPossibles('intermediaire', 4)).toBe(true)
+    expect(deuxIntensitesPossibles('confirme', 3)).toBe(false)
+    expect(deuxIntensitesPossibles('debutant', 5)).toBe(false)
   })
-  it('jour de la 2e intensité : 48 h des jours durs, pas la veille de la longue', () => {
-    // Mardi dur, Z2 mercredi / jeudi / vendredi, longue samedi
-    expect(jourDeuxiemeIntensite(['2026-11-11', '2026-11-12', '2026-11-13'], ['2026-11-10'], '2026-11-14')).toBe('2026-11-12')
-    expect(jourDeuxiemeIntensite(['2026-11-11', '2026-11-13'], ['2026-11-10'], '2026-11-14')).toBeUndefined()
-  })
+  it('jour de la 2e intensité : 48 h des jours durs, la plus éloignée, veille de la longue permise', () => {
+    // Mardi dur, Z2 mercredi / jeudi / samedi, longue dimanche (semaine à 5 de Chauvin : intensif samedi)
+    expect(jourDeuxiemeIntensite(['2026-11-11', '2026-11-12', '2026-11-14'], ['2026-11-10'])).toBe('2026-11-14')
+    expect(jourDeuxiemeIntensite(['2026-11-11'], ['2026-11-10'])).toBeUndefined()
+})
 })

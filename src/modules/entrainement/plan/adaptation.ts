@@ -10,7 +10,7 @@ export interface Adaptation {
   modifiee: boolean
 }
 
-const INTENSITES = ['vo2-courts', 'vo2-longs', 'seuil', 'seuil-variable', 'sweet-spot', 'tempo', 'relances', 'sprints']
+const INTENSITES = ['vo2-courts', 'vo2-longs', 'seuil-plus', 'seuil', 'seuil-variable', 'sweet-spot', 'tempo', 'relances', 'sprints']
 const arrondi5 = (n: number) => Math.round(n / 5) * 5
 
 /**

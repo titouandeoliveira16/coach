@@ -36,19 +36,22 @@ export interface ReponsesArrivee {
   course: { nom: string; date: string }
 }
 
-export const SEMAINE_TYPE_DEPART: Role[] = ['libre', 'velo-dur', 'libre', 'velo-z2', 'libre', 'libre', 'velo-long']
+export const SEMAINE_TYPE_DEPART: Role[] = ['libre', 'velo-dur', 'libre', 'velo-z2', 'libre', 'velo-long', 'libre']
 
 /**
- * Semaine type de départ selon le temps disponible : 1 jour dur (mardi), 1 sortie longue (dimanche), le reste en Z2
- * (3 jours de vélo sous 4 h, jusqu'à 6 au-delà de 10 h ; choix d'entraîneur, modifiable en touchant les jours).
- * La 2e séance dure (confirmé ou expert, 6 h et plus) n'a pas besoin de jour à elle : le moteur la place sur une Z2.
+ * Semaine type selon le nombre de jours de vélo (semaines types de Mathias Chauvin) : 1 jour dur (mardi), la sortie
+ * longue le week-end, le reste en Z2. À partir de 4 jours, le moteur place lui-même la 2e séance intensive sur une Z2
+ * (la plus éloignée du mardi : vendredi ou samedi). Modifiable en touchant les jours.
  */
-export function semaineDepuisHeures(heures?: string): Role[] {
-  const n = ({ 'Moins de 4 h': 3, '4 à 6 h': 4, '6 à 8 h': 5, '8 à 10 h': 5, '10 à 12 h': 6, 'Plus de 12 h': 6 } as Record<string, number>)[heures ?? ''] ?? 4
-  const t: Role[] = ['libre', 'velo-dur', 'libre', 'libre', 'libre', 'libre', 'velo-long']
-  for (const i of [3, 5, 0, 4].slice(0, n - 2)) t[i] = 'velo-z2'
+export function semaineDepuisJours(n: number): Role[] {
+  const t: Role[] = ['libre', 'velo-dur', 'libre', 'libre', 'libre', 'libre', 'libre']
+  if (n <= 3) { t[3] = 'velo-z2'; t[5] = 'velo-long'; return t }
+  if (n === 4) { t[2] = 'velo-z2'; t[4] = 'velo-z2'; t[5] = 'velo-long'; return t }
+  t[2] = 'velo-z2'; t[3] = 'velo-z2'; t[5] = 'velo-z2'; t[6] = 'velo-long'
+  if (n >= 6) t[0] = 'velo-z2'
   return t
 }
+
 /** FC max provisoire (Tanaka 2001 : 208 − 0,7 × âge, ±10 bpm) en attendant la plus haute vue dans tes sorties. */
 export const fcMaxTanaka = (age: number) => Math.round(208 - 0.7 * age)
 /** CP provisoire sans test ni FTP : 2,5 W/kg, volontairement prudent (choix d'entraîneur) ; le test de la 1re semaine la remplace. */
@@ -87,7 +90,7 @@ export function preparerArrivee(r: ReponsesArrivee, jour: string) {
     programme: {
       semaineType: r.semaineType, maxSemaineMin: r.maxSemaineMin, minLongMin: r.minLongMin, maxLongMin: r.maxLongMin,
       phases: saison.phases, testsCp: saison.testsCp, testsCourts: saison.testsCourts,
-      competitions: [{ date: r.course.date, nom: r.course.nom.trim() || 'Course principale' }], discipline: r.discipline,
+      competitions: [{ date: r.course.date, nom: r.course.nom.trim() || 'Course principale' }], discipline: r.discipline, modele: 'chauvin',
     },
   }
   return { profil, entrainement, profilSportif: ps, saison, cpConnue: r.cpW !== undefined, fcConnue: r.fcMax !== undefined }

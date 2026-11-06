@@ -83,6 +83,8 @@ export interface ReglagesProgramme {
   competitions: { date: string; nom: string }[]
   /** Puissance Z2 de départ (W) : ajustée ensuite automatiquement */
   z2W?: number
+  /** Saison calculée depuis la course (forme Chauvin) : reprise sans intensité ; absent = saison écrite à la main */
+  modele?: 'chauvin'
 }
 
 /** Objectif de travail cumulé (kJ) entre deux dates. */

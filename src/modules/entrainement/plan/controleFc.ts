@@ -28,7 +28,7 @@ export function categorieDe(s: Seance, prevue: SeancePrevue | undefined, domaine
   if (f === 'vtt-terrain' || f === 'vtt-speciales' || s.terrainVtt) return 'sans'
   if (f === 'z2' || f === 'z2-long') return 'facile'
   if (f === 'seuil' || f === 'sweet-spot' || f === 'tempo') return 'plateau'
-  if (f === 'vo2-longs') return 'vo2'
+  if (f === 'vo2-longs' || f === 'seuil-plus') return 'vo2'
   if (f) return 'sans'
   if (prevue) return prevue.intensite === 'basse' ? 'facile' : 'sans'
   return domaine === 'basse' ? 'facile' : 'sans'

@@ -1,9 +1,15 @@
 /** Textes des « ? » : une phrase par chiffre affiché, pour savoir comment il est calculé. */
 export const AIDES = {
   profilNiveau:
-    "On te demande depuis quand tu roules régulièrement, combien d'heures tu as faites ces 3 derniers mois et si tu as déjà suivi des intervalles : c'est plus fiable qu'un mot comme « confirmé ». Ça règle seulement la vitesse de hausse de ta charge (+5 % par semaine en débutant, +7,5 % sinon) et le nombre de séances dures (2 par semaine possibles en confirmé ou expert avec 6 h et plus, les semaines sans course à pied dure). Les seuils sont des choix d'entraîneur.",
+    "On te demande depuis quand tu roules régulièrement, combien d'heures tu as faites ces 3 derniers mois et si tu as déjà suivi des intervalles : c'est plus fiable qu'un mot comme « confirmé ». Ça règle seulement la vitesse de hausse de ta charge (+5 % par semaine en débutant, +7,5 % sinon) et le rappel au 1er seuil le lendemain d'une séance intensive (confirmé et plus) ; en débutant, une seule séance intensive par semaine. Les seuils sont des choix d'entraîneur.",
   saisonCalculee:
-    "Ta saison part de la date de ta course et se calcule à l'envers : 2 semaines d'affûtage (moins de volume, même intensité : c'est le mieux prouvé, Bosquet 2007), 3 semaines proches de ta course, puis des blocs VO2 et seuil, et une reprise au début. L'ordre VO2 puis seuil change peu de chose (Sylta 2016) : ce qui compte, c'est de tenir la charge. Une semaine allégée sur 4 (sauf près de la course), un test CP au début de chaque bloc.",
+    "Ta saison part de la date de ta course et se calcule à l'envers, dans l'ordre de l'entraîneur Mathias Chauvin : une base d'endurance (reprise), puis tirer ton seuil (5 × 5 → 4 × 8 juste au-dessus de ta CP), l'allonger (4 × 10 → 2 × 30), une fin de prépa sweet spot + VO2 de 3 semaines, 3 semaines proches de ta course, et l'affûtage (moins de volume, même intensité : le mieux prouvé, Bosquet 2007). L'ordre des blocs change peu les progrès à charge égale (Sylta 2016) ; les 5 × 5 au-dessus de ta CP entretiennent ta puissance 5', avec un rappel 30/15 toutes les 3 semaines. Tout reste dans ton budget kJ.",
+  blocsSv1:
+    "Blocs au 1er seuil : ils poussent le haut de ta Z2, jamais la Z3. Tu dois pouvoir parler en phrases (talk test, Rodríguez-Marroyo 2013) et ton cœur ne doit pas dériver d'un bloc à l'autre. L'appli monte les watts de 5 W quand tu les tiens sans dérive deux fois de suite, les baisse si ça dérive (plus de 5 %, une convention), sans dépasser 85 % de ta CP. Sous ce seuil, on récupère en moins de 24 h (Stanley 2013) : ce n'est pas une séance dure. Progression 3 × 15 → 5 × 15 → 5 × 20 → 6 × 20, jamais plus de la moitié de la sortie.",
+  sprintsSemaine:
+    "Sprints à fond une fois par semaine, avec une longue récupération : l'hiver, courts (10-15 s : force et nerf, peu de lactique) ; en fin de prépa, plus longs (30-45 s), qui sont lactiques (Gastin 2001). Pas de watts à viser.",
+  deuxIntensites:
+    "À partir de 4 jours de vélo par semaine, 2 séances intensives séparées d'au moins 48 h (Stanley 2013) ; avec 3 jours ou en débutant, une seule, et ta sortie longue avec ses blocs au 1er seuil fait le reste (semaines types de Mathias Chauvin). Course à pied comprise : 2 séances dures au plus par semaine.",
   testDepart:
     "Sans CP connue, ta 1re semaine se fait aux sensations (tu peux parler en roulant), puis un test fixe tes watts. Une FTP Zwift peut servir de point de départ en attendant.",
   profilTemps:
