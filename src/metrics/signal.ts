@@ -25,7 +25,7 @@ export interface Seuils {
   picMax: number
   /** CV 7 j au-dessus de… fois le CV habituel */
   cvFacteur: number
-  /** Nuit courte : moins de… heures (plancher absolu) */
+  /** Nuit courte : … heures ou moins (plancher absolu, Craven 2022) */
   nuitMinH: number
   /** Nuit courte personnelle : moins que ta normale (30 nuits d'avant) de plus de… heures */
   nuitEcartPersoH: number
@@ -57,7 +57,8 @@ export function analyserSommeil(nuits: { date: string; h?: number }[], date: str
 
 /** Nuit courte et dette de sommeil, comparées à ta normale (planchers absolus de 6 h). */
 export function etatSommeil(h: { nuit?: number; moyenne7?: number; moyenne30?: number } | undefined, s: Seuils = SEUILS_DEFAUT) {
-  const nuitCourte = h?.nuit !== undefined && (h.nuit < s.nuitMinH || (h.moyenne30 !== undefined && h.nuit < h.moyenne30 - s.nuitEcartPersoH))
+  // « 6 h ou moins » : définition du manque de sommeil de la méta-analyse de Craven 2022
+  const nuitCourte = h?.nuit !== undefined && (h.nuit <= s.nuitMinH || (h.moyenne30 !== undefined && h.nuit < h.moyenne30 - s.nuitEcartPersoH))
   const dette = h?.moyenne7 !== undefined && (h.moyenne7 < s.moyenne7MinH || (h.moyenne30 !== undefined && h.moyenne7 < h.moyenne30 - s.ecartPersoH))
   const sousRepere = h?.moyenne7 !== undefined && h.moyenne7 < s.repereH
   return { nuitCourte, dette, sousRepere }
@@ -136,7 +137,7 @@ export function calculerSignal(e: EntreeSignal, s: Seuils = SEUILS_DEFAUT): Sign
   // n'est qu'une information (relecture du 6/11/2026)
   const h = e.sommeilH
   const etat = etatSommeil(h, s)
-  if (etat.nuitCourte) textes.push(h!.nuit! < s.nuitMinH ? `nuit courte (${enHeures(h!.nuit!)}, moins de ${s.nuitMinH} h)` : `nuit courte (${enHeures(h!.nuit!)} contre ${enHeures(h!.moyenne30!)} d'habitude)`)
+  if (etat.nuitCourte) textes.push(h!.nuit! <= s.nuitMinH ? `nuit courte (${enHeures(h!.nuit!)}, ${s.nuitMinH} h ou moins)` : `nuit courte (${enHeures(h!.nuit!)} contre ${enHeures(h!.moyenne30!)} d'habitude)`)
   if (etat.dette) textes.push(h!.moyenne7! < s.moyenne7MinH ? `dette de sommeil (${enHeures(h!.moyenne7!)} en moyenne sur 7 j, moins de ${s.moyenne7MinH} h)` : `dette de sommeil (${enHeures(h!.moyenne7!)} sur 7 j contre ${enHeures(h!.moyenne30!)} d'habitude)`)
   if (e.sommeil !== undefined && e.sommeil <= s.sommeilMax) textes.push('sommeil mauvais cette nuit')
   if (e.ressenti !== undefined && e.ressenti < s.ressentiMin) textes.push(`ressenti bas ce matin (${f1(e.ressenti)}/5)`)
