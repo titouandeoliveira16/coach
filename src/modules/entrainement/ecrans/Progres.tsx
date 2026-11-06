@@ -5,10 +5,12 @@ import { depuisJour } from '../../../core/dates'
 import { formatNombre } from '../../../core/format'
 import { Aide } from '../../../core/ui/Aide'
 import { Carte } from '../../../core/ui/Carte'
-import { GraphiqueBarres, GraphiqueLignes, SERIES } from '../../../core/ui/graphiques'
+import { GraphiqueLignes, SERIES } from '../../../core/ui/graphiques'
+import { Repliable } from '../../../core/ui/Repliable'
+import { useReglage } from '../../../core/reglages'
+import type { ProfilSportif } from '../reglages/ProfilSportif'
 import { AIDES } from '../aides'
 import { FTP_SUR_CP } from '../../../metrics/puissance'
-import { JOURS_AMORCAGE } from '../analyse/donnees'
 import { donneesProgres, HAUSSE_CP } from '../analyse/progres'
 import { progressionFamilles } from '../plan/programme'
 import { programmeDe, useReglagesEntrainement } from '../reglagesEntrainement'
@@ -16,7 +18,6 @@ import { NOMS_FAMILLES } from '../../../metrics/programme'
 import { Historique } from './Historique'
 import { SuiviRepas } from '../forme/SuiviRepas'
 import { CourbePuissance } from '../analyse/CourbePuissance'
-import { Calculateurs } from '../analyse/Calculateurs'
 
 const jj = (d: string) => depuisJour(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'numeric' })
 
@@ -27,6 +28,7 @@ export function Progres() {
   const [r, modifier] = useReglagesEntrainement()
   const [dateTest, setDateTest] = useState('')
   const [court, setCourt] = useState(true)
+  const [ps] = useReglage<ProfilSportif>('profil-sportif', { sports: [], materiel: [] })
   if (!t) return null
   const pct = (a?: number, b?: number) => (a !== undefined && b ? ((a - b) / b) * 100 : undefined)
   const prog = programmeDe(r.programme)
@@ -34,57 +36,42 @@ export function Progres() {
   const dernierTest = t.tests[t.tests.length - 1]
   const avantDernier = t.tests[t.tests.length - 2]
 
+  const prochain = t.testsPrevus[0]
+  const derniereEff = t.efficacite.length ? t.efficacite[t.efficacite.length - 1] : undefined
+
   return (
     <div className="space-y-3">
+      {/* Ce qui montre que tu progresses (allégé le 6/11/2026 : vélo 28 j, forme / fatigue et semaine en barres retirés) */}
       <div className="grid grid-cols-2 gap-2">
-        <Tuile libelle="CP" valeur={dernierTest?.wkg ? formatNombre(dernierTest.wkg, 2) : '–'} sous={dernierTest ? `W/kg · ${dernierTest.w} W` : 'W/kg'}
+        <Tuile libelle="CP" aide={AIDES.wkg} valeur={dernierTest?.wkg ? formatNombre(dernierTest.wkg, 2) : dernierTest ? `${dernierTest.w}` : '–'}
+          sous={dernierTest ? (dernierTest.wkg ? `W/kg · ${dernierTest.w} W` : 'W') : 'W/kg'}
           evolution={dernierTest?.wkg && avantDernier?.wkg ? `${dernierTest.wkg >= avantDernier.wkg ? '+' : ''}${formatNombre(dernierTest.wkg - avantDernier.wkg, 2)}` : undefined}
           hausse={dernierTest?.wkg && avantDernier?.wkg ? dernierTest.wkg >= avantDernier.wkg : undefined} />
-        <Tuile libelle="Efficacité" aide={AIDES.efficacite} valeur={t.effRecente ? formatNombre(t.effRecente, 2) : '–'} sous="W par bpm"
+        <Tuile libelle="Vélo 90 jours" aide={AIDES.kj90} valeur={formatNombre(t.kj90)} sous={`kJ · ${formatNombre(t.kj90Avant)} avant`}
+          evolution={signe(pct(t.kj90, t.kj90Avant))} hausse={t.kj90Avant ? t.kj90 >= t.kj90Avant : undefined} />
+        <Tuile libelle="Efficacité aérobie" aide={AIDES.efficacite} valeur={t.effRecente ? formatNombre(t.effRecente, 2) : '–'} sous="W par bpm · sorties faciles"
           evolution={signe(pct(t.effRecente, t.effAvant))} hausse={t.effAvant ? t.effRecente! >= t.effAvant : undefined} />
-        <Tuile libelle="Vélo 28 j" valeur={formatNombre(t.kj28)} sous="kJ · vs 28 j d'avant" evolution={signe(pct(t.kj28, t.kj28Avant))} hausse={t.kj28Avant ? t.kj28 >= t.kj28Avant : undefined} />
-        <Tuile libelle="Vélo 90 j" aide={AIDES.kj90} valeur={formatNombre(t.kj90)} sous={`kJ · ${formatNombre(t.kj90Avant)} les 90 j d'avant`} evolution={signe(pct(t.kj90, t.kj90Avant))} hausse={t.kj90Avant ? t.kj90 >= t.kj90Avant : undefined} />
+        <Tuile libelle="Prochain test" valeur={prochain ? depuisJour(prochain).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '–'}
+          sous={prochain ? (t.testsCourts.includes(prochain) ? "court 3′ + 12′" : 'complet 12-7-3') : 'aucun prévu'} />
       </div>
-
-      <PetitesVictoires t={t} />
-
-      <LigneFtp cpW={t.cpW ?? t.cpEstimee} poidsKg={t.poidsKg} estimee={!t.cpW} />
 
       <Carte titre="Évolution de mes tests">
         {t.tests.length === 0 ? (
           <p className="text-sm text-texte-3">Ton premier test donnera ton point de départ.</p>
         ) : (
           <>
+            {t.tests.length >= 2 && (
+              <GraphiqueLignes etiquettes={t.tests.map((x) => jj(x.date))} format={(n) => n.toFixed(2).replace('.', ',')}
+                series={[{ nom: 'W/kg', couleur: SERIES[1], valeurs: t.tests.map((x) => x.wkg) }]} />
+            )}
             {premierTest && dernierTest && t.tests.length >= 2 && (
-              <div className="grid grid-cols-3 gap-2 text-center">
+              <div className="mt-2 grid grid-cols-3 gap-2 text-center">
                 <Ecart libelle="W/kg" a={premierTest.wkg} b={dernierTest.wkg} decimales={2} />
                 <Ecart libelle="CP (W)" a={premierTest.w} b={dernierTest.w} />
                 <Ecart libelle="Poids (kg)" a={premierTest.poidsKg} b={dernierTest.poidsKg} decimales={1} inverse />
               </div>
             )}
-            {t.tests.length >= 2 && (
-              <>
-                <p className="mt-3 text-xs text-texte-3">Depuis le {depuisJour(t.tests[0].date).toLocaleDateString('fr-FR')} · rapport poids / puissance (W/kg)<Aide titre="W/kg" texte={AIDES.wkg} /></p>
-                <GraphiqueLignes etiquettes={t.tests.map((x) => jj(x.date))} format={(n) => n.toFixed(2).replace('.', ',')}
-                  series={[{ nom: 'W/kg', couleur: SERIES[1], valeurs: t.tests.map((x) => x.wkg) }]} />
-              </>
-            )}
-            <ul className="mt-2 text-sm">
-              {[...t.tests].reverse().map((x, i, l) => {
-                const avant = l[i + 1]
-                const ecart = x.wkg && avant?.wkg ? x.wkg - avant.wkg : undefined
-                return (
-                  <li key={x.date + i} className="flex items-baseline justify-between gap-2 border-t border-bordure py-1.5">
-                    <span className="text-texte-2">{depuisJour(x.date).toLocaleDateString('fr-FR')}</span>
-                    <span className="text-right">
-                      <b>{x.wkg ? `${formatNombre(x.wkg, 2)} W/kg` : `${x.w} W`}</b>
-                      {ecart !== undefined && <span className={ecart >= 0 ? 'text-nutrition' : 'text-[#f87171]'}> ({ecart >= 0 ? '+' : ''}{formatNombre(ecart, 2)})</span>}
-                      <span className="block text-xs text-texte-3">{x.w} W{x.poidsKg ? ` · ${formatNombre(x.poidsKg, 1)} kg` : ''}</span>
-                    </span>
-                  </li>
-                )
-              })}
-            </ul>
+            <p className="mt-2 text-xs text-texte-3">Depuis le {depuisJour(t.tests[0].date).toLocaleDateString('fr-FR')} · {t.tests.length} test{t.tests.length > 1 ? 's' : ''}</p>
           </>
         )}
         {t.cpEstimee && (
@@ -96,11 +83,55 @@ export function Progres() {
         )}
       </Carte>
 
-      <CourbePuissance />
+      {familles && familles.length > 0 && (
+        <Carte titre="Mes séances d'intensité">
+          <ul className="space-y-2 text-sm">
+            {familles.map((f) => (
+              <li key={f.famille} className="flex items-center justify-between gap-2">
+                <span>{NOMS_FAMILLES[f.famille]}{f.bonus !== 0 && <span className={`text-xs ${f.bonus > 0 ? 'text-nutrition' : 'text-[#f87171]'}`}> · {f.bonus > 0 ? '+' : ''}{formatNombre(f.bonus * 100, 1)} % W</span>}</span>
+                <span className="flex gap-1" aria-label={`palier ${f.palier} sur 4`}>
+                  {[1, 2, 3, 4].map((n) => <span key={n} className={`h-2 w-6 rounded-full ${n <= f.palier ? 'bg-accent' : 'bg-bordure'}`} />)}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-xs text-texte-3">Un palier de plus à chaque séance tenue.<Aide titre="Progression" texte={AIDES.progression} /></p>
+        </Carte>
+      )}
 
-      <Carte titre="Mes prochains tests">
+      <CourbePuissance />
+      <LigneFtp cpW={t.cpW ?? t.cpEstimee} poidsKg={t.poidsKg} estimee={!t.cpW} />
+
+      {/* Le reste, replié */}
+      <Repliable titre="Récupération" libelle="Voir" resume="VFC et pouls au repos sur les dernières semaines">
+        <p className="text-sm text-texte-2">VFC (moyenne 7 jours) et ta zone normale<Aide titre="VFC" texte={`${AIDES.vfc7} ${AIDES.zoneVfc}`} /></p>
+        <GraphiqueLignes etiquettes={t.physio.map((p) => jj(p.date))} format={(n) => n.toFixed(1).replace('.', ',')}
+          bande={{ nom: 'Zone normale', bas: t.physio.map((p) => p.bas), haut: t.physio.map((p) => p.haut) }}
+          series={[{ nom: 'VFC 7 j', couleur: SERIES[0], valeurs: t.physio.map((p) => p.ln7) }]} />
+        <p className="mt-3 text-sm text-texte-2">FC de repos (bpm)</p>
+        <GraphiqueLignes etiquettes={t.physio.map((p) => jj(p.date))} series={[{ nom: 'FC repos', couleur: SERIES[1], valeurs: t.physio.map((p) => p.fcRepos) }]} />
+      </Repliable>
+
+      {t.efficacite.length > 1 && (
+        <Repliable titre="Efficacité aérobie" libelle="Voir" resume={derniereEff ? `Dernière sortie facile : ${formatNombre(derniereEff.valeur, 2)} W par bpm` : undefined}>
+          <GraphiqueLignes etiquettes={t.efficacite.map((p) => jj(p.date))} format={(n) => n.toFixed(2).replace('.', ',')}
+            series={[{ nom: 'W par bpm', couleur: SERIES[0], valeurs: t.efficacite.map((p) => p.valeur) }]} />
+          <p className="mt-1 text-xs text-texte-3">Sorties faciles de 45 min et plus. Si la courbe monte, tu produis plus de watts pour le même cœur : tu progresses.</p>
+        </Repliable>
+      )}
+
+      {ps.nutrition !== false && (
+        <Repliable titre="Repas du soir" libelle="Voir" resume="Ce que tu manges face à ton besoin, sur 4 semaines">
+          <SuiviRepas nu />
+        </Repliable>
+      )}
+
+      <Repliable titre="Petites victoires" libelle="Voir" resume={t.regularite ? `Régularité : ${t.regularite.faites}/${t.regularite.prevues} séances faites (4 sem.)` : 'Tes progrès d’une séance à l’autre'}>
+        <PetitesVictoires t={t} nu />
+      </Repliable>
+
+      <Repliable titre="Mes prochains tests" libelle="Voir" resume={t.testsPrevus.length ? `${t.testsPrevus.length} prévu${t.testsPrevus.length > 1 ? 's' : ''}` : 'Aucun test programmé'}>
         <p className="text-sm text-texte-2">Chaque test recale tes zones et les watts de tes séances à venir.</p>
-        {t.testsPrevus.length === 0 && <p className="text-sm text-texte-3">Aucun test programmé.</p>}
         {t.testsPrevus.map((d) => (
           <div key={d} className="flex items-center justify-between py-1 text-sm">
             <span>
@@ -124,75 +155,12 @@ export function Progres() {
               setDateTest('')
             }}>OK</button>
         </div>
-        <p className="mt-2 text-xs text-texte-3">Conseil : un test toutes les 6 à 8 semaines, frais (après une semaine allégée). Complet = 1 h 50 (le dimanche), court = 1 h 15. Résultat à saisir dans <Link to="/entrainement/reglages" className="text-accent">Réglages → Vélo</Link>.</p>
-      </Carte>
+        <p className="mt-2 text-xs text-texte-3">Un test toutes les 6 à 8 semaines, frais (après une semaine allégée). Complet = 1 h 50, court = 1 h 15. Résultat à saisir dans <Link to="/entrainement/reglages" className="text-accent">Réglages → Vélo</Link>.</p>
+      </Repliable>
 
-      {familles && familles.length > 0 && (
-        <Carte titre="Mes séances d'intensité">
-          <ul className="text-sm">
-            {familles.map((f) => (
-              <li key={f.famille} className="flex items-center justify-between border-t border-bordure py-1.5 first:border-0">
-                <span>{NOMS_FAMILLES[f.famille]}</span>
-                <span className="text-texte-2">
-                  palier <b className="text-texte">{f.palier}/4</b>
-                  {f.bonus !== 0 && <span className={f.bonus > 0 ? 'text-nutrition' : 'text-[#f87171]'}> · {f.bonus > 0 ? '+' : ''}{formatNombre(f.bonus * 100, 1)} % W</span>}
-                </span>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-1 text-xs text-texte-3">Monte d'un palier à chaque séance tenue.<Aide titre="Progression" texte={AIDES.progression} /></p>
-        </Carte>
-      )}
-
-      <Calculateurs cpW={t.cpW ?? t.cpEstimee} wPrimeKj={r.wPrimeKj} poidsKg={t.poidsKg} />
-
-      <Carte titre="Efficacité aérobie (vélo)">
-        <GraphiqueLignes etiquettes={t.efficacite.map((p) => jj(p.date))} format={(n) => n.toFixed(2).replace('.', ',')}
-          series={[{ nom: 'W par bpm', couleur: SERIES[0], valeurs: t.efficacite.map((p) => p.valeur) }]} />
-        <p className="mt-1 text-xs text-texte-3">Sorties faciles de 45 min et plus. Si la courbe monte, tu produis plus de watts pour le même cœur : tu progresses.</p>
-      </Carte>
-
-      <Carte titre="Ma semaine d'entraînement">
-        <p className="text-sm text-texte-2">🚴 Vélo (kJ)</p>
-        <GraphiqueBarres etiquettes={t.semaines.map(jj)} series={[{ nom: 'kJ vélo', couleur: SERIES[0], valeurs: t.kjVelo }]} />
-        <p className="mt-3 text-sm text-texte-2">🏃 Course (charge {t.unite})</p>
-        <GraphiqueBarres etiquettes={t.semaines.map(jj)} series={[{ nom: 'Course', couleur: SERIES[1], valeurs: t.chargeCourse }]} />
-      </Carte>
-
-      <Carte titre="Forme et fatigue">
-        {t.a.amorcage ? (
-          <p className="text-sm text-texte-2">
-            Encore {JOURS_AMORCAGE - t.a.joursHistorique} jours d'historique avant d'afficher ce graphique.{' '}
-            <Link to="/entrainement/reglages" className="text-accent">Importer 3 mois depuis Intervals ›</Link>
-          </p>
-        ) : (
-          <>
-            <GraphiqueLignes zero etiquettes={t.forme.map((p) => jj(p.date))}
-              series={[
-                { nom: 'Forme de fond', couleur: SERIES[0], valeurs: t.forme.map((p) => p.ctl) },
-                { nom: 'Fatigue', couleur: SERIES[1], valeurs: t.forme.map((p) => p.atl) },
-                { nom: 'Fraîcheur', couleur: SERIES[2], valeurs: t.forme.map((p) => p.tsb) },
-              ]} />
-            <p className="mt-1 text-xs text-texte-3">
-              Fraîcheur sous −20 : fatigue accumulée, prudence.<Aide titre="Forme et fatigue" texte={`${AIDES.ctl} ${AIDES.atl} ${AIDES.tsb}`} />
-            </p>
-          </>
-        )}
-      </Carte>
-
-      <SuiviRepas />
-
-      <Carte titre="Récupération">
-        <p className="text-sm text-texte-2">VFC (moyenne 7 jours) et ta zone normale<Aide titre="VFC" texte={`${AIDES.vfc7} ${AIDES.zoneVfc}`} /></p>
-        <GraphiqueLignes etiquettes={t.physio.map((p) => jj(p.date))} format={(n) => n.toFixed(1).replace('.', ',')}
-          bande={{ nom: 'Zone normale', bas: t.physio.map((p) => p.bas), haut: t.physio.map((p) => p.haut) }}
-          series={[{ nom: 'VFC 7 j', couleur: SERIES[0], valeurs: t.physio.map((p) => p.ln7) }]} />
-        <p className="mt-3 text-sm text-texte-2">FC de repos (bpm)</p>
-        <GraphiqueLignes etiquettes={t.physio.map((p) => jj(p.date))} series={[{ nom: 'FC repos', couleur: SERIES[1], valeurs: t.physio.map((p) => p.fcRepos) }]} />
-      </Carte>
-
-      <h2 className="px-1 pt-2 text-lg font-bold">Mes séances</h2>
-      <Historique />
+      <Repliable titre="Historique des séances" libelle="Voir" resume="Toutes tes séances, semaine par semaine">
+        <Historique />
+      </Repliable>
     </div>
   )
 }
@@ -241,17 +209,17 @@ function LigneFtp({ cpW, poidsKg, estimee }: { cpW?: number; poidsKg?: number; e
 type Donnees = NonNullable<Awaited<ReturnType<typeof donneesProgres>>>
 
 /** Petites victoires : régularité, ta dernière Z2 et ta dernière séance d'intervalles comparées aux précédentes du même type. */
-function PetitesVictoires({ t }: { t: Donnees }) {
+function PetitesVictoires({ t, nu = false }: { t: Donnees; nu?: boolean }) {
   const [z2a, z2b] = t.victoires.z2
   const [ia, ib] = t.victoires.intervalles
-  if (!t.regularite && !(z2a && z2b) && !(ia && ib)) return null
+  if (!t.regularite && !(z2a && z2b) && !(ia && ib)) return nu ? <p className="text-sm text-texte-3">Rien à comparer pour l'instant : il faut au moins deux séances du même type.</p> : null
   const ecart = (b: number, a: number, unite: string, inverse = false) => {
     const d = b - a
     const bien = inverse ? d < 0 : d > 0
     return <b className={d === 0 ? 'text-texte' : bien ? 'text-nutrition' : 'text-[#f87171]'}>{d > 0 ? '+' : ''}{formatNombre(d, unite === '%' ? 1 : 0)} {unite}</b>
   }
-  return (
-    <Carte titre="🏅 Petites victoires">
+  const contenu = (
+    <>
       <ul className="space-y-2 text-sm text-texte-2">
         {t.regularite && (
           <li>Régularité (4 sem.) : <b className="text-texte">{t.regularite.faites}/{t.regularite.prevues}</b> séances prévues faites.</li>
@@ -272,7 +240,8 @@ function PetitesVictoires({ t }: { t: Donnees }) {
         )}
       </ul>
       <Aide titre="Petites victoires" texte={AIDES.victoires} />
-    </Carte>
+    </>
   )
+  return nu ? contenu : <Carte titre="🏅 Petites victoires">{contenu}</Carte>
 }
 
