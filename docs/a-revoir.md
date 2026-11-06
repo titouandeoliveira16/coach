@@ -27,6 +27,13 @@ Points décidés ou mis de côté, à reprendre au bon moment.
   débutant (la règle des 6 h est retirée), veille de la sortie longue permise ; rappel 2 × 10' au 1er seuil le lendemain
   d'une intensive (confirmé et plus) ; repos actif conseillé la veille d'une séance dure ; Z2 de 90' et plus découpée.
   À surveiller : en VTT avec 4 jours, la seule Z2 est la sortie technique → pas de sprints hors fin de prépa.
+- Séances de course (8.7, 6/11/2026, relues) : catalogue « Simulation de course en ligne », « Sortie longue + montées en fin
+  de sortie », « Simulation de course XCO », « Séance mixte sweet spot + 30/15 », méthode « Échauffement de course ».
+  Réglage « type de course » (route : en ligne / cyclosportive, cyclosportive par défaut). Proche de la course : en ligne =
+  VO2 courts + over-unders + simulation semaines 1 et 3 ; cyclo = seuil / VO2 longs / sweet spot long + montées en fin de
+  sortie (aussi une semaine sur deux en fin de prépa) ; XCO = simulation semaine 2 ; longues plafonnées XCO 2 h 30, XCC 2 h ;
+  marathon : la sortie en côtes compte comme dure. Rappel d'échauffement la veille (XCO, XCC, en ligne).
+  Mis de côté : contre-la-montre (la position, pas dans l'appli).
 - **Sa saison à lui (phase VO2 prévue le 14/12) : à décider avant le 14/12** ; Étape du Tour 2027 : pas d'inscription
   pour l'instant (places manquées), objectif vélo principal à redéfinir.
 - Quand il roulera dehors avec un capteur : refaire un test pour avoir des zones « dehors » (et un facteur capteur si

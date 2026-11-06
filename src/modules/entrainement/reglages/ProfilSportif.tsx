@@ -86,6 +86,12 @@ export function SectionProfilSportif() {
         })}
         <p className="mt-1.5 text-xs text-texte-3">Pense à recalculer ta semaine (onglet Semaine) après un changement.</p>
       </Ligne>
+      {discipline === 'route' && (
+        <Ligne {...props('typeCourse')} libelle="Type de course" valeur={prog.typeCourse === 'en-ligne' ? 'Course en ligne' : 'Cyclosportive'}>
+          {choixUnique(['Course en ligne', 'Cyclosportive'], prog.typeCourse === 'en-ligne' ? 'Course en ligne' : 'Cyclosportive', (v) => changerProg({ typeCourse: v === 'Course en ligne' ? 'en-ligne' : 'cyclo' }))}
+          <p className="mt-1.5 text-xs text-texte-3">{AIDES.typeCourse}</p>
+        </Ligne>
+      )}
       <Ligne {...props('objectifs')} libelle="Objectifs (courses)" valeur={objectifs.map((c) => c.nom).join(', ')}>
         <ul className="space-y-1 text-sm">
           {objectifs.map((c) => (

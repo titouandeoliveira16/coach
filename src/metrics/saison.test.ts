@@ -77,3 +77,24 @@ describe('sortie longue au 1er seuil, sprints de la semaine', () => {
     expect(sprintsDeLaPhase('seuil-tirage', 'route', 0).sec).toBeLessThanOrEqual(15)
   })
 })
+
+describe('séances de course', () => {
+  it('simulations et montées en fin de sortie : durées et structure', async () => {
+    const { construireSimulationLigne, construireCycloMontees, construireSimulationXco, choisirFormat, deplier } = await import('./programme')
+    const a = construireSimulationLigne(280, 170)
+    expect(a.velo.famille).toBe('simulation-ligne')
+    expect(a.dureeMin).toBeGreaterThan(120)
+    expect(deplier(a.velo.etapes!).filter((e) => e.libelle === 'Attaque à fond')).toHaveLength(12)
+    const b = construireCycloMontees(240, 170, 280, 3, 20)
+    expect(b.dureeMin).toBe(240)
+    expect(deplier(b.velo.etapes!).filter((e) => e.libelle === 'Montée')).toHaveLength(3)
+    const c = construireSimulationXco(280, 170)
+    expect(deplier(c.velo.etapes!).filter((e) => e.libelle === 'Relance')).toHaveLength(64)
+    // Pré-effort suivi d'au moins 10 min faciles (Bailey 2009)
+    expect(c.velo.etapes![2].dureeSec).toBeGreaterThanOrEqual(600)
+    const ph = [{ debut: '2027-04-12', type: 'specifique' as const }]
+    expect(choisirFormat('2027-04-12', ph, [], 'route', 0, 'en-ligne').famille).toBe('vo2-courts')
+    expect(choisirFormat('2027-04-12', ph, [], 'route', 1, 'en-ligne').famille).toBe('seuil-variable')
+    expect(choisirFormat('2027-04-12', ph, [], 'route', 0, 'cyclo').format.id).toBe('seuil-12-20')
+  })
+})

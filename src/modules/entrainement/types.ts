@@ -85,6 +85,8 @@ export interface ReglagesProgramme {
   z2W?: number
   /** Saison calculée depuis la course (forme Chauvin) : reprise sans intensité ; absent = saison écrite à la main */
   modele?: 'chauvin'
+  /** Route : course en ligne (FFC…) ou cyclosportive / longue distance (absent : cyclosportive) */
+  typeCourse?: 'en-ligne' | 'cyclo'
 }
 
 /** Objectif de travail cumulé (kJ) entre deux dates. */

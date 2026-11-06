@@ -449,7 +449,8 @@
       "auteurs": "Spragg J, Leo P, Giorgi A, Gonzalez BM, Swart J",
       "annee": 2024,
       "titre": "The intensity rather than the quantity of prior work determines the subsequent downward shift in the power duration relationship in professional cyclists",
-      "revue": "Eur J Sport Sci"
+      "revue": "Eur J Sport Sci",
+      "doi": "10.1002/ejsc.12077"
      },
      {
       "auteurs": "Rønnestad BR, Hansen EA, Raastad T",
@@ -483,8 +484,7 @@
    },
    "disciplines": [
     "route",
-    "xcm",
-    "xco"
+    "xcm"
    ]
   },
   {
@@ -1211,6 +1211,455 @@
    "disciplines": [
     "route",
     "xcm"
+   ]
+  },
+  {
+   "id": "velo-simulation-course-ligne",
+   "sport": "velo",
+   "famille": "specifique",
+   "nom": "Simulation de course en ligne",
+   "objectif": "Attaquer, relancer et sprinter en étant déjà fatigué (course FFC, UFOLEP, critérium)",
+   "resume": "60 min de Z2, puis 3 blocs de 12 min à 80-90 % de la CP avec une attaque de 30 s toutes les 3 min, une échappée de 5 min, et une finale : 2 × (1 min à 110-120 % puis un sprint de 15 s).",
+   "unite": "%CP",
+   "zone": "Z2-Z3 + Z5-Z7",
+   "rpe": "8",
+   "niveau": "confirmé",
+   "dureeMin": 160,
+   "travailMin": 43.5,
+   "deroule": [
+    {
+     "type": "echauffement",
+     "duree": 900,
+     "intensite": [
+      50,
+      75
+     ]
+    },
+    {
+     "type": "effort",
+     "duree": 3600,
+     "intensite": [
+      56,
+      70
+     ]
+    },
+    {
+     "type": "repetition",
+     "fois": 3,
+     "etapes": [
+      {
+       "type": "repetition",
+       "fois": 4,
+       "etapes": [
+        {
+         "type": "effort",
+         "duree": 150,
+         "intensite": [
+          80,
+          90
+         ],
+         "cadence": "85-95"
+        },
+        {
+         "type": "effort",
+         "duree": 30,
+         "intensite": [
+          140,
+          160
+         ],
+         "note": "attaque",
+         "cadence": "90-105"
+        }
+       ]
+      },
+      {
+       "type": "recup",
+       "duree": 300,
+       "intensite": [
+        45,
+        55
+       ]
+      }
+     ]
+    },
+    {
+     "type": "effort",
+     "duree": 300,
+     "intensite": [
+      100,
+      105
+     ],
+     "note": "bosse ou échappée",
+     "cadence": "90-105"
+    },
+    {
+     "type": "effort",
+     "duree": 600,
+     "intensite": [
+      56,
+      70
+     ]
+    },
+    {
+     "type": "repetition",
+     "fois": 2,
+     "etapes": [
+      {
+       "type": "effort",
+       "duree": 60,
+       "intensite": [
+        110,
+        120
+       ],
+       "cadence": "90-105"
+      },
+      {
+       "type": "effort",
+       "duree": 15,
+       "max": true,
+       "cadence": "> 100",
+       "note": "sprint final"
+      },
+      {
+       "type": "recup",
+       "duree": 180,
+       "intensite": [
+        45,
+        55
+       ]
+      }
+     ]
+    },
+    {
+     "type": "retour",
+     "duree": 600,
+     "intensite": [
+      45,
+      55
+     ]
+    }
+   ],
+   "variantes": [
+    "2 blocs (reprise)",
+    "3 blocs",
+    "Dehors : attaques en bosse, sprint sur un panneau"
+   ],
+   "quand": {
+    "phases": [
+     "spécifique"
+    ],
+    "parSemaine": "1 tous les 10-14 jours",
+    "recuperation": "48 h"
+   },
+   "conseils": [
+    "Une vraie course dans la semaine la remplace.",
+    "Mange comme en course (60-90 g de glucides par heure).",
+    "Sans ERG : choisis ton braquet avant chaque effort (un ou deux pignons plus dur), lance les 5 premières secondes un peu au-dessus de la cible puis stabilise."
+   ],
+   "preuve": {
+    "niveau": "plausible",
+    "resultat": "Les courses plates ou vallonnées se jouent sur des efforts de moins de 2 min ; c'est surtout le travail intense fait avant qui fait baisser le sprint (Spragg 2024), et une course intermittente fatigue plus qu'un effort régulier (Leo 2022). Le format est un choix d'entraîneur : aucun essai ne montre qu'une simulation fait mieux qu'une séance classique.",
+    "references": [
+     {
+      "auteurs": "Sanders D, van Erp T",
+      "annee": 2021,
+      "titre": "The physical demands and power profile of professional men's cycling races: an updated review",
+      "revue": "Int J Sports Physiol Perform"
+     },
+     {
+      "auteurs": "Spragg J, Leo P, Giorgi A, Gonzalez BM, Swart J",
+      "annee": 2024,
+      "titre": "The intensity rather than the quantity of prior work determines the subsequent downward shift in the power duration relationship in professional cyclists",
+      "revue": "Eur J Sport Sci",
+      "doi": "10.1002/ejsc.12077"
+     },
+     {
+      "auteurs": "Leo P, Spragg J, Simon D, et al.",
+      "annee": 2022,
+      "titre": "(intitulé non relevé) simulation de course intermittente de 150 min vs effort régulier : baisse de la puissance sur 12 min",
+      "revue": "Ger J Exerc Sport Res"
+     },
+     {
+      "auteurs": "Mateo-March M, Leo P, Muriel X, et al.",
+      "annee": 2024,
+      "titre": "Is all work the same? Performance after accumulated work of different intensities in male professional cyclists",
+      "revue": "J Sci Med Sport"
+     }
+    ]
+   },
+   "disciplines": [
+    "route"
+   ]
+  },
+  {
+   "id": "velo-cyclo-montees-fin",
+   "sport": "velo",
+   "famille": "durabilite",
+   "nom": "Sortie longue + montées en fin de sortie (cyclosportive)",
+   "objectif": "Garder ta puissance dans les cols après des heures de selle",
+   "resume": "3 h à 4 h 30 en Z2, puis 2 à 3 montées de 20-30 min à 85-92 % de la CP dans la dernière heure ; 60-90 g de glucides par heure dès la 1re heure.",
+   "unite": "%CP",
+   "zone": "Z2 + Z3-Z4",
+   "rpe": "6-7",
+   "niveau": "confirmé",
+   "dureeMin": 245,
+   "travailMin": 50.0,
+   "deroule": [
+    {
+     "type": "echauffement",
+     "duree": 900,
+     "intensite": [
+      50,
+      65
+     ]
+    },
+    {
+     "type": "effort",
+     "duree": 9000,
+     "intensite": [
+      56,
+      70
+     ]
+    },
+    {
+     "type": "repetition",
+     "fois": 2,
+     "etapes": [
+      {
+       "type": "effort",
+       "duree": 1500,
+       "intensite": [
+        85,
+        92
+       ],
+       "note": "montée",
+       "cadence": "85-95"
+      },
+      {
+       "type": "recup",
+       "duree": 600,
+       "intensite": [
+        50,
+        60
+       ]
+      }
+     ]
+    },
+    {
+     "type": "retour",
+     "duree": 600,
+     "intensite": [
+      45,
+      55
+     ]
+    }
+   ],
+   "variantes": [
+    "3 h avec 2 × 20 min",
+    "3 h 30 avec 2 × 25 min",
+    "4 h avec 3 × 20 min",
+    "4 h 30 avec 3 × 30 min (2-3 semaines avant l'objectif)"
+   ],
+   "quand": {
+    "phases": [
+     "construction",
+     "spécifique"
+    ],
+    "parSemaine": "1 tous les 7-14 jours",
+    "recuperation": "48 h"
+   },
+   "conseils": [
+    "C'est une séance dure : 48 h avant et après sans autre intensité.",
+    "Teste ta nutrition de course : c'est aussi un entraînement de l'estomac.",
+    "La dernière montée doit être aussi forte que la première : c'est le but."
+   ],
+   "preuve": {
+    "niveau": "plausible",
+    "resultat": "Après beaucoup de travail, les meilleures puissances baissent (1,6 à 3 % après 15 kJ/kg, 6 à 10 % après 45 kJ/kg chez les pros) ; chez des amateurs, ceux qui gagnent perdent deux fois moins sur 20 min après ≈ 1000 kJ ; en cyclosportive, la puissance dans les cols est liée au temps final. S'entraîner avec beaucoup de glucides augmente leur utilisation à l'effort, et entraîner l'estomac réduit probablement les troubles digestifs. Les durées sont un choix d'entraîneur.",
+    "references": [
+     {
+      "auteurs": "Mateo-March M, Valenzuela PL, Muriel X, et al.",
+      "annee": 2022,
+      "titre": "The record power profile of male professional cyclists: fatigue matters",
+      "revue": "Int J Sports Physiol Perform"
+     },
+     {
+      "auteurs": "Mateo-March M, Leo P, Muriel X, et al.",
+      "annee": 2024,
+      "titre": "Is all work the same? Performance after accumulated work of different intensities in male professional cyclists",
+      "revue": "J Sci Med Sport"
+     },
+     {
+      "auteurs": "Barsumyan A, et al.",
+      "annee": 2025,
+      "titre": "(intitulé non relevé) durabilité chez 14 cyclistes amateurs : puissance sur 5 et 20 min après ≈ 1000 kJ",
+      "revue": "Front Sports Act Living"
+     },
+     {
+      "auteurs": "van Erp T, Sanders D, Lamberts RP",
+      "annee": 2021,
+      "titre": "Maintaining power output with accumulating levels of work done is a key determinant for success in professional cycling",
+      "revue": "Med Sci Sports Exerc"
+     },
+     {
+      "auteurs": "Cox GR, Clark SA, Cox AJ, et al.",
+      "annee": 2010,
+      "titre": "Daily training with high carbohydrate availability increases exogenous carbohydrate oxidation during endurance cycling",
+      "revue": "J Appl Physiol",
+      "pmid": "20466803"
+     },
+     {
+      "auteurs": "Jones AM, Kirby BS",
+      "annee": 2025,
+      "titre": "Physiological resilience: what is it and how might it be trained?",
+      "revue": "Scand J Med Sci Sports",
+      "doi": "10.1111/sms.70032"
+     }
+    ]
+   },
+   "disciplines": [
+    "route"
+   ]
+  },
+  {
+   "id": "velo-mixte-ss-3015",
+   "sport": "velo",
+   "famille": "vo2max",
+   "nom": "Séance mixte : sweet spot puis 30/15",
+   "objectif": "Faire monter le souffle plus vite dans les répétitions dures grâce à un effort préalable",
+   "resume": "20 min à 88-92 % de la CP, 10 min faciles (pas moins), puis 2 × 10 × 30/15.",
+   "unite": "%CP",
+   "zone": "Z3-Z4 puis Z5-Z6",
+   "rpe": "8",
+   "niveau": "confirmé",
+   "dureeMin": 76,
+   "travailMin": 30.0,
+   "deroule": [
+    {
+     "type": "echauffement",
+     "duree": 900,
+     "intensite": [
+      50,
+      75
+     ]
+    },
+    {
+     "type": "effort",
+     "duree": 1200,
+     "intensite": [
+      88,
+      92
+     ],
+     "cadence": "85-95"
+    },
+    {
+     "type": "recup",
+     "duree": 600,
+     "intensite": [
+      45,
+      55
+     ],
+     "note": "au moins 10 min"
+    },
+    {
+     "type": "repetition",
+     "fois": 2,
+     "etapes": [
+      {
+       "type": "repetition",
+       "fois": 10,
+       "etapes": [
+        {
+         "type": "effort",
+         "duree": 30,
+         "intensite": [
+          115,
+          125
+         ],
+         "cadence": "90-105"
+        },
+        {
+         "type": "recup",
+         "duree": 15,
+         "intensite": [
+          45,
+          55
+         ]
+        }
+       ]
+      },
+      {
+       "type": "recup",
+       "duree": 180,
+       "intensite": [
+        45,
+        55
+       ]
+      }
+     ]
+    },
+    {
+     "type": "retour",
+     "duree": 600,
+     "intensite": [
+      45,
+      55
+     ]
+    }
+   ],
+   "variantes": [
+    "6 min à 90 % puis 10 min faciles (version des études)",
+    "20 min puis 10 min faciles",
+    "Variante « fatigue de course » : 3-5 min de récup seulement et 30/15 visés 5 % plus bas"
+   ],
+   "quand": {
+    "phases": [
+     "construction",
+     "spécifique"
+    ],
+    "parSemaine": "1 tous les 10-14 jours, à la place d'une séance VO2",
+    "recuperation": "48 h"
+   },
+   "conseils": [
+    "Garde au moins 10 min faciles entre les deux parties : avec 3 min, tu tiens moins bien les répétitions.",
+    "Sans ERG : choisis ton braquet avant chaque effort (un ou deux pignons plus dur), lance les 5 premières secondes un peu au-dessus de la cible puis stabilise."
+   ],
+   "preuve": {
+    "niveau": "plausible",
+    "resultat": "Un effort préalable dur suivi de 9 à 20 min de récupération allonge l'effort très dur suivant de 15 à 30 % ; avec 3 min, il le raccourcit de 16 % (Bailey 2009, Jones 2003). Effet prouvé sur une séance seulement : aucun essai ne montre plus de progrès sur plusieurs semaines, et les répétitions VO2 peuvent être moins puissantes (Spragg 2024).",
+    "references": [
+     {
+      "auteurs": "Bailey SJ, Vanhatalo A, Wilkerson DP, DiMenna FJ, Jones AM",
+      "annee": 2009,
+      "titre": "Optimizing the 'priming' effect: influence of prior exercise intensity and recovery duration on O2 uptake kinetics and severe-intensity exercise tolerance",
+      "revue": "J Appl Physiol",
+      "pmid": "19797685"
+     },
+     {
+      "auteurs": "Jones AM, Wilkerson DP, Burnley M, Koppo K",
+      "annee": 2003,
+      "titre": "Prior heavy exercise enhances performance during subsequent perimaximal exercise",
+      "revue": "Med Sci Sports Exerc",
+      "pmid": "14652506"
+     },
+     {
+      "auteurs": "Bossi AH, Mesquida C, Passfield L, Rønnestad BR, Hopker JG",
+      "annee": 2020,
+      "titre": "Optimizing interval training through power-output variation within the work intervals",
+      "revue": "Int J Sports Physiol Perform",
+      "pmid": "32244222"
+     },
+     {
+      "auteurs": "Spragg J, Leo P, Giorgi A, Gonzalez BM, Swart J",
+      "annee": 2024,
+      "titre": "The intensity rather than the quantity of prior work determines the subsequent downward shift in the power duration relationship in professional cyclists",
+      "revue": "Eur J Sport Sci",
+      "doi": "10.1002/ejsc.12077"
+     }
+    ]
+   },
+   "disciplines": [
+    "route"
    ]
   },
   {
@@ -4596,7 +5045,8 @@
       "auteurs": "Spragg J, Leo P, Giorgi A, Gonzalez BM, Swart J",
       "annee": 2024,
       "titre": "The intensity rather than the quantity of prior work determines the subsequent downward shift in the power duration relationship in professional cyclists",
-      "revue": "Eur J Sport Sci"
+      "revue": "Eur J Sport Sci",
+      "doi": "10.1002/ejsc.12077"
      },
      {
       "auteurs": "van Erp T, Sanders D, Lamberts RP",
@@ -5328,6 +5778,159 @@
    }
   },
   {
+   "id": "vtt-simulation-xco",
+   "sport": "vtt",
+   "famille": "specifique",
+   "nom": "Simulation de course XCO",
+   "objectif": "Reproduire une course XCO : départ très rapide puis tours à relances",
+   "resume": "Échauffement avec 5 min à 90-95 % puis 10 min faciles ; départ de 1 min 30 au-dessus de 150 % de la CP ; 4 tours de 8 min à 80-90 % avec une relance de 8 s toutes les 30 s ; 2 min faciles entre les tours.",
+   "disciplines": [
+    "xco"
+   ],
+   "unite": "%CP",
+   "zone": "Z3 + Z6-Z7",
+   "rpe": "9",
+   "niveau": "confirmé",
+   "dureeMin": 82,
+   "travailMin": 38.5,
+   "deroule": [
+    {
+     "type": "echauffement",
+     "duree": 900,
+     "intensite": [
+      50,
+      75
+     ]
+    },
+    {
+     "type": "effort",
+     "duree": 300,
+     "intensite": [
+      90,
+      95
+     ],
+     "note": "pré-effort",
+     "cadence": "85-95"
+    },
+    {
+     "type": "recup",
+     "duree": 600,
+     "intensite": [
+      45,
+      55
+     ],
+     "note": "au moins 10 min"
+    },
+    {
+     "type": "effort",
+     "duree": 90,
+     "intensite": [
+      150,
+      170
+     ],
+     "note": "départ",
+     "cadence": "90-105"
+    },
+    {
+     "type": "repetition",
+     "fois": 4,
+     "etapes": [
+      {
+       "type": "repetition",
+       "fois": 16,
+       "etapes": [
+        {
+         "type": "effort",
+         "duree": 22,
+         "intensite": [
+          80,
+          90
+         ],
+         "cadence": "85-95"
+        },
+        {
+         "type": "effort",
+         "duree": 8,
+         "intensite": [
+          150,
+          180
+         ],
+         "note": "relance",
+         "cadence": "90-105"
+        }
+       ]
+      },
+      {
+       "type": "recup",
+       "duree": 120,
+       "intensite": [
+        45,
+        55
+       ]
+      }
+     ]
+    },
+    {
+     "type": "retour",
+     "duree": 600,
+     "intensite": [
+      45,
+      55
+     ]
+    }
+   ],
+   "variantes": [
+    "3 tours",
+    "4 tours",
+    "5 tours (avant une course importante)"
+   ],
+   "quand": {
+    "phases": [
+     "spécifique"
+    ],
+    "parSemaine": "1 par bloc, 7-10 jours avant la course",
+    "recuperation": "48-72 h"
+   },
+   "conseils": [
+    "Si les relances s'écroulent au 3e tour, c'est normal : en course aussi, la réserve dépensée par tour baisse de près de moitié.",
+    "Sans ERG : choisis ton braquet avant chaque effort (un ou deux pignons plus dur), lance les 5 premières secondes un peu au-dessus de la cible puis stabilise."
+   ],
+   "preuve": {
+    "niveau": "plausible",
+    "resultat": "En XCO (≈ 96 min), ≈ 40 % du temps au-dessus de la CP en efforts d'environ 8 s, avec une baisse de la réserve dépensée par tour de ≈ 45 % entre le 1er et le dernier tour (Næss) ; plus de 300 efforts au-dessus de la PMA (Prinz) ; départ nettement plus rapide (Granier). Un pré-effort suivi d'au moins 10 min faciles aide l'effort très dur (Bailey). Le format est un choix d'entraîneur.",
+    "references": [
+     {
+      "auteurs": "Næss S, Sollie O, Gløersen ØN, Losnegard T",
+      "annee": 2021,
+      "titre": "Exercise intensity and pacing pattern during a cross-country Olympic mountain bike race",
+      "revue": "Front Physiol",
+      "doi": "10.3389/fphys.2021.702415"
+     },
+     {
+      "auteurs": "Prinz B, Simon D, Tschan H, Nimmerichter A",
+      "annee": 2021,
+      "titre": "Aerobic and anaerobic power distribution during cross-country mountain bike racing",
+      "revue": "Int J Sports Physiol Perform",
+      "doi": "10.1123/ijspp.2020-0758"
+     },
+     {
+      "auteurs": "Granier C, Abbiss CR, Aubry A, et al.",
+      "annee": 2018,
+      "titre": "Power output and pacing during international cross-country mountain bike cycling",
+      "revue": "Int J Sports Physiol Perform",
+      "pmid": "29688109"
+     },
+     {
+      "auteurs": "Bailey SJ, Vanhatalo A, Wilkerson DP, DiMenna FJ, Jones AM",
+      "annee": 2009,
+      "titre": "Optimizing the 'priming' effect: influence of prior exercise intensity and recovery duration on O2 uptake kinetics and severe-intensity exercise tolerance",
+      "revue": "J Appl Physiol",
+      "pmid": "19797685"
+     }
+    ]
+   }
+  },
+  {
    "id": "vtt-xcc-variable",
    "sport": "vtt",
    "famille": "repetition-efforts",
@@ -5403,7 +6006,8 @@
    "variantes": [
     "2 × 8 min",
     "2 × 10 min",
-    "1 × 20 min (veille de course exclue)"
+    "1 × 20 min (veille de course exclue)",
+    "1 × 20 min avec un départ de 30 s à fond, après l'échauffement de course"
    ],
    "quand": {
     "phases": [
@@ -5531,7 +6135,8 @@
     "3 h avec 4 montées de 8 min",
     "3 h 30 avec 4 montées de 10 min",
     "4 h avec 5 montées de 12 min",
-    "5 h avec 6 montées de 15 min (seulement 2-3 semaines avant l'objectif)"
+    "5 h avec 6 montées de 15 min (seulement 2-3 semaines avant l'objectif)",
+    "Effort final : dernière montée à 95-100 % de la CP après 3 h ou plus (durabilité, Novak 2018)"
    ],
    "quand": {
     "phases": [
@@ -7934,6 +8539,57 @@
       "annee": 2011,
       "titre": "5/3/1: The Simplest and Most Effective Training System to Increase Raw Strength (2e éd.)",
       "revue": "Jim Wendler LLC (livre)"
+     }
+    ]
+   }
+  },
+  {
+   "id": "methode-echauffement-course",
+   "sport": "methode",
+   "famille": "organisation",
+   "nom": "Échauffement de course (efforts courts et très durs)",
+   "objectif": "Arriver prêt au départ d'un XCC, d'un XCO, d'une course en ligne courte ou d'un contre-la-montre",
+   "resume": "15 min progressives, puis 5-6 min à 90-100 % de la CP, puis 10 à 20 min faciles (jamais moins de 10) avant le départ. Inutile pour une cyclosportive (départ lent).",
+   "disciplines": [
+    "route",
+    "xco",
+    "xcc"
+   ],
+   "zone": "—",
+   "rpe": "—",
+   "niveau": "—",
+   "variantes": [],
+   "quand": {
+    "phases": [
+     "compétition"
+    ],
+    "parSemaine": "",
+    "recuperation": ""
+   },
+   "conseils": [],
+   "preuve": {
+    "niveau": "plausible",
+    "resultat": "Prouvé en labo, sur une séance : un effort préalable dur suivi de 9 à 20 min de récupération allonge l'effort très dur suivant de 15 à 30 % ; avec 3 min, il le raccourcit (Bailey 2009, Burnley 2005, Jones 2003). Aucune étude en vraie course.",
+    "references": [
+     {
+      "auteurs": "Bailey SJ, Vanhatalo A, Wilkerson DP, DiMenna FJ, Jones AM",
+      "annee": 2009,
+      "titre": "Optimizing the 'priming' effect: influence of prior exercise intensity and recovery duration on O2 uptake kinetics and severe-intensity exercise tolerance",
+      "revue": "J Appl Physiol",
+      "pmid": "19797685"
+     },
+     {
+      "auteurs": "Burnley M, Doust JH, Jones AM",
+      "annee": 2005,
+      "titre": "Effects of prior warm-up regime on severe-intensity cycling performance",
+      "revue": "Med Sci Sports Exerc"
+     },
+     {
+      "auteurs": "Jones AM, Wilkerson DP, Burnley M, Koppo K",
+      "annee": 2003,
+      "titre": "Prior heavy exercise enhances performance during subsequent perimaximal exercise",
+      "revue": "Med Sci Sports Exerc",
+      "pmid": "14652506"
      }
     ]
    }

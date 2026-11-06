@@ -197,7 +197,7 @@ export const CADENCE_SPRINT = '100-120'
 /** Une séance vélo générée (stockée dans la séance prévue). */
 export interface SeanceVelo {
   /** vtt-terrain : sortie VTT technique ; vtt-speciales : spéciales d'enduro (sur le terrain, sans cible en watts) */
-  famille: Famille | 'z2' | 'z2-long' | 'test' | 'vtt-terrain' | 'vtt-speciales'
+  famille: Famille | 'z2' | 'z2-long' | 'test' | 'vtt-terrain' | 'vtt-speciales' | 'simulation-ligne' | 'cyclo-montees' | 'simulation-xco'
   formatId?: string
   palier?: number
   allegee?: boolean
@@ -368,6 +368,135 @@ export const COTES = [
 ]
 /** Montées de la n-ième sortie en côtes : 6 × 15' seulement dans les 3 semaines avant une course. */
 export const cotesDe = (nLongs: number, courseProche: boolean) => COTES[courseProche ? 3 : Math.min(nLongs, 2)]
+
+/** Enchaîne des étapes (sans debutSec) et calcule les kJ ; les efforts à fond sans cible comptent pour 2,5 × la Z2. */
+function enchainer(blocs: Omit<Etape, 'debutSec'>[], z2W: number) {
+  let h = 0
+  const etapes: Etape[] = blocs.map((b) => {
+    const e = { ...b, debutSec: h } as Etape
+    h += b.dureeSec
+    return e
+  })
+  const kjDe = (e: { dureeSec: number; w?: number }) => e.dureeSec * (e.w ?? z2W * 2.5)
+  const kj = etapes.reduce((t, e) => {
+    if (!e.repetition) return t + kjDe(e)
+    const { fois, etapes: sous, derniere = sous.length } = e.repetition
+    return t + sous.reduce((a, x) => a + kjDe(x), 0) * (fois - 1) + sous.slice(0, derniere).reduce((a, x) => a + kjDe(x), 0)
+  }, 0) / 1000
+  return { etapes, dureeMin: Math.round(h / 60), kj: Math.round(kj) }
+}
+const p = (w: number, lo: number, hi: number) => ({ w, wMin: arrondi5(w * lo), wMax: arrondi5(w * hi) })
+
+/**
+ * Simulation de course en ligne (course FFC, relue le 6/11/2026 : Sanders & van Erp 2021, Spragg 2024, Leo 2022 ;
+ * format : choix d'entraîneur) : Z2, 3 blocs de 12' à 80-90 % de la CP avec une attaque de 30" toutes les 3', une
+ * échappée de 5', puis en finale 2 × (1' à 110-120 % + sprint de 15") fatigué. Séance dure, à la place de la sortie longue.
+ */
+export function construireSimulationLigne(cpW: number, z2W: number, maxMin = 150): SeanceConstruite {
+  const wEch = arrondi5(z2W * 0.85)
+  const z2Min = Math.max(20, Math.min(60, maxMin - 90))
+  const z2 = (min: number, libelle = 'Z2') => ({ dureeSec: min * 60, libelle, w: z2W, ...plage(z2W, 'z2') })
+  const t = arrondi5(cpW * 0.85)
+  const { etapes, dureeMin, kj } = enchainer([
+    { dureeSec: 900, libelle: 'Échauffement progressif', w: wEch },
+    z2(z2Min, 'Z2 : le peloton roule'),
+    ...[0, 1, 2].flatMap((b) => [
+      {
+        dureeSec: 12 * 60, w: t, libelle: `Bloc ${b + 1}/3 : 12' à ${t} W avec une attaque de 30" à fond toutes les 3'`,
+        repetition: {
+          fois: 4,
+          etapes: [
+            { dureeSec: 150, libelle: 'Peloton', ...p(t, 0.94, 1.06) },
+            { dureeSec: 30, libelle: 'Attaque à fond', cadence: '95-115' },
+          ],
+        },
+      },
+      ...(b < 2 ? [{ dureeSec: 300, libelle: 'Facile', w: wEch }] : []),
+    ]),
+    { dureeSec: 300, libelle: 'Échappée ou bosse', ...p(arrondi5(cpW * 1.02), 0.98, 1.04), cadence: '85-95' },
+    z2(10),
+    {
+      dureeSec: 2 * (60 + 15) + 180, w: arrondi5(cpW * 1.15), libelle: 'Finale : 2 × (1\' à 110-120 % puis sprint de 15" à fond), 3\' faciles entre',
+      repetition: {
+        fois: 2, derniere: 2,
+        etapes: [
+          { dureeSec: 60, libelle: 'Placement', ...p(arrondi5(cpW * 1.15), 0.96, 1.04), cadence: '90-105' },
+          { dureeSec: 15, libelle: 'Sprint final à fond', cadence: '100-120' },
+          { dureeSec: 180, libelle: 'Facile', w: wEch },
+        ],
+      },
+    },
+    { dureeSec: 600, libelle: 'Retour au calme', w: wEch },
+  ], z2W)
+  return {
+    titre: 'Simulation de course en ligne', dureeMin, kj,
+    detail: `${z2Min}' de Z2 · 3 × 12' à ${t} W avec une attaque de 30" toutes les 3' (les attaques à fond) · 5' d'échappée · finale : 2 × (1' fort + sprint de 15") · mange comme en course`,
+    velo: { famille: 'simulation-ligne', cibleW: t, etapes },
+  }
+}
+
+/**
+ * Sortie longue + montées en fin de sortie (cyclosportive ; Mateo-March 2022, 2024, Barsumyan 2025, Van Erp 2021 ;
+ * durées : choix d'entraîneur) : Z2 puis 2-3 montées de 20-30' à 85-92 % de la CP dans la dernière heure.
+ * Séance dure (48 h sans autre intensité).
+ */
+export function construireCycloMontees(duree: number, z2W: number, cpW: number, n = 2, minMontee = 20): SeanceConstruite {
+  const dureeMin = Math.round(duree)
+  const wEch = arrondi5(z2W * 0.85)
+  const wM = arrondi5(cpW * 0.88)
+  const montees = n * minMontee + (n - 1) * 10
+  const z2Min = Math.max(30, dureeMin - 15 - montees - 10)
+  const { etapes, kj } = enchainer([
+    { dureeSec: 900, libelle: 'Mise en route progressive', w: wEch },
+    { dureeSec: z2Min * 60, libelle: 'Z2 régulière : mange 60-90 g de glucides par heure dès la 1re heure', w: z2W, ...plage(z2W, 'z2') },
+    {
+      dureeSec: montees * 60, w: wM, libelle: `${n} montées de ${minMontee}' à ${arrondi5(cpW * 0.85)}-${arrondi5(cpW * 0.92)} W, 10' faciles entre : la dernière aussi forte que la première`,
+      repetition: {
+        fois: n, derniere: 1,
+        etapes: [
+          { dureeSec: minMontee * 60, libelle: 'Montée', w: wM, wMin: arrondi5(cpW * 0.85), wMax: arrondi5(cpW * 0.92), cadence: '70-90' },
+          { dureeSec: 600, libelle: 'Facile', w: wEch },
+        ],
+      },
+    },
+    { dureeSec: 600, libelle: 'Retour au calme', w: wEch },
+  ], z2W)
+  const total = 15 + z2Min + montees + 10
+  return {
+    titre: `Sortie longue + ${n} montées en fin de sortie`, dureeMin: total, kj,
+    detail: `${Math.floor(total / 60)} h ${String(total % 60).padStart(2, '0')} : Z2 à ${z2W} W puis ${n} × ${minMontee}' à ${wM} W dans la dernière heure · 60-90 g de glucides par heure · teste ta nutrition de course`,
+    velo: { famille: 'cyclo-montees', cibleW: wM, etapes },
+  }
+}
+
+/**
+ * Simulation de course XCO (Næss 2021, Prinz 2021, Granier 2018, Bailey 2009 ; format : choix d'entraîneur) :
+ * pré-effort de 5' puis 10' faciles, départ de 1'30 très fort, 4 tours de 8' à relances. Séance dure.
+ */
+export function construireSimulationXco(cpW: number, z2W: number, tours = 4): SeanceConstruite {
+  const wEch = arrondi5(z2W * 0.85)
+  const fond = arrondi5(cpW * 0.85)
+  const relance = arrondi5(cpW * 1.6)
+  const { etapes, dureeMin, kj } = enchainer([
+    { dureeSec: 900, libelle: 'Échauffement progressif', w: wEch },
+    { dureeSec: 300, libelle: 'Pré-effort', ...p(arrondi5(cpW * 0.92), 0.98, 1.03) },
+    { dureeSec: 600, libelle: 'Facile (au moins 10\')', w: wEch },
+    { dureeSec: 90, libelle: 'Départ très rapide', ...p(arrondi5(cpW * 1.55), 0.97, 1.1), cadence: '90-110' },
+    ...Array.from({ length: tours }, (_, k) => [
+      {
+        dureeSec: 480, w: fond, libelle: `Tour ${k + 1}/${tours} : 8' à ${fond} W avec une relance de 8" à ${relance} W toutes les 30"`,
+        repetition: { fois: 16, etapes: [{ dureeSec: 22, libelle: 'Fond', ...p(fond, 0.94, 1.06) }, { dureeSec: 8, libelle: 'Relance', w: relance, cadence: '90-110' }] },
+      },
+      ...(k < tours - 1 ? [{ dureeSec: 120, libelle: 'Facile', w: wEch }] : []),
+    ]).flat(),
+    { dureeSec: 600, libelle: 'Retour au calme', w: wEch },
+  ], z2W)
+  return {
+    titre: `Simulation de course XCO (${tours} tours)`, dureeMin, kj,
+    detail: `Pré-effort de 5' puis 10' faciles · départ de 1'30 à ${arrondi5(cpW * 1.55)} W · ${tours} tours de 8' à ${fond} W avec une relance de 8" toutes les 30"`,
+    velo: { famille: 'simulation-xco', cibleW: fond, etapes },
+  }
+}
 
 /**
  * Sortie longue en côtes (marathon VTT : Engelbrecht 2018, Reinpõld 2022) : Z2 avec des montées à 85-95 % de la CP,
@@ -698,7 +827,10 @@ export function formatsPour(famille: Famille, discipline: Discipline = 'route') 
  *    VO2 la 3e.
  * Retourne undefined pour les autres phases (cycles classiques).
  */
-function familleSaison(type: TypePhase, semaine: number, rang: number, discipline: Discipline, avant: HistoIntensite[]):
+/** Type de course sur route : course en ligne (FFC, UFOLEP, critérium) ou cyclosportive / longue distance. */
+export type TypeCourse = 'en-ligne' | 'cyclo'
+
+function familleSaison(type: TypePhase, semaine: number, rang: number, discipline: Discipline, avant: HistoIntensite[], typeCourse: TypeCourse = 'cyclo'):
   { famille: Famille; formatId?: string; palier?: number; dominante: 'vo2' | 'seuil' | 'sous-seuil' } | undefined {
   const vtt = discipline === 'xco' || discipline === 'xcc'
   const derniere = (l: Famille[]) => [...avant].reverse().find((h) => l.includes(h.famille))?.famille
@@ -711,6 +843,15 @@ function familleSaison(type: TypePhase, semaine: number, rang: number, disciplin
     if (rang === 1) return vtt ? { famille: 'vo2-longs', formatId: 'inoue', dominante: 'vo2' } : { famille: 'seuil-plus', formatId: 'tirage-seuil', dominante: 'seuil' }
     return vtt ? { famille: familleVtt(discipline, 'seuil', avant)!, dominante: 'seuil' } : { famille: 'seuil', formatId: 'seuil-maintien', dominante: 'seuil' }
   }
+  // Proche de la course, sur route (relu le 6/11/2026) : course en ligne = VO2 courts et over-unders (efforts de moins de
+  // 2 min, Sanders & van Erp 2021) ; cyclosportive = seuil, VO2 longs en rappel, sweet spot long (montées longues)
+  if (type === 'specifique' && discipline === 'route') {
+    if (typeCourse === 'en-ligne') return rang === 1 ? { famille: 'seuil-variable', dominante: 'seuil' } : { famille: 'vo2-courts', dominante: 'vo2' }
+    if (rang === 1) return semaine % 3 === 2 ? { famille: 'seuil', formatId: 'seuil-12-20', dominante: 'seuil' } : { famille: 'sweet-spot', formatId: 'sweet-spot-long', dominante: 'sous-seuil' }
+    if (semaine % 3 === 1) return { famille: 'vo2-longs', dominante: 'vo2' }
+    if (semaine % 3 === 2) return { famille: 'sweet-spot', formatId: 'sweet-spot-long', dominante: 'sous-seuil' }
+    return { famille: 'seuil', formatId: 'seuil-12-20', dominante: 'seuil' }
+  }
   if (type === 'fin-prepa') {
     if (rang === 1 && semaine < 2) return { famille: 'sweet-spot', formatId: 'sweet-spot-long', dominante: 'sous-seuil' }
     if (vtt) return derniere(['sprints', 'vo2-longs']) === 'sprints' ? { famille: 'vo2-longs', formatId: 'inoue', dominante: 'vo2' } : { famille: 'sprints', formatId: 'sit-series', dominante: 'vo2' }
@@ -720,10 +861,10 @@ function familleSaison(type: TypePhase, semaine: number, rang: number, disciplin
 }
 
 /** Choisit la famille et le format de la séance d'intensité de la semaine (`rang` 1 : 2e séance intensive). */
-export function choisirFormat(lundi: string, phases: Phase[], histo: HistoIntensite[], discipline: Discipline = 'route', rang = 0) {
+export function choisirFormat(lundi: string, phases: Phase[], histo: HistoIntensite[], discipline: Discipline = 'route', rang = 0, typeCourse?: TypeCourse) {
   const { phase, semaine: semaineDansPhase } = phaseDe(lundi, phases)
   const avantSaison = histo.filter((h) => h.date < lundi).sort((a, b) => a.date.localeCompare(b.date))
-  const saison = familleSaison(phase.type, semaineDansPhase, rang, discipline, avantSaison)
+  const saison = familleSaison(phase.type, semaineDansPhase, rang, discipline, avantSaison, typeCourse)
   if (saison) {
     const formats = formatsPour(saison.famille, discipline)
     const dernier = [...avantSaison].reverse().find((h) => h.famille === saison.famille)
@@ -1095,6 +1236,7 @@ export function projeterSaison(o: {
   discipline?: Discipline
   /** Saison calculée : reprise sans intensité */
   repriseSansIntensite?: boolean
+  typeCourse?: TypeCourse
 }): SemaineSaison[] {
   const triees = [...o.phases].sort((a, b) => a.debut.localeCompare(b.debut))
   const histo = [...o.histo]
@@ -1119,7 +1261,7 @@ export function projeterSaison(o: {
     else if (phase.type === 'recuperation') intensite = 'Pas d’intensité (récupération)'
     else if (phase.type === 'reprise' && o.repriseSansIntensite) intensite = 'Base d’endurance (pas d’intensité)'
     else {
-      const choix = choisirFormat(l, triees, histo, o.discipline)
+      const choix = choisirFormat(l, triees, histo, o.discipline, 0, o.typeCourse)
       const famille = NOMS_FAMILLES[choix.famille]
       intensite = famille.toLowerCase() === choix.format.nom ? famille : `${famille} · ${choix.format.nom}`
       histo.push({ date: decaler(l, 1), famille: choix.famille, formatId: choix.format.id, palier: 0 })
