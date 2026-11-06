@@ -25,30 +25,42 @@ export interface Seuils {
   picMax: number
   /** CV 7 j au-dessus de… fois le CV habituel */
   cvFacteur: number
-  /** Nuit courte : moins de… heures (Craven 2022 : ≤ 6 h dégrade la performance) */
+  /** Nuit courte : moins de… heures (plancher absolu) */
   nuitMinH: number
-  /** Dette : moyenne 7 j sous… heures (Walsh 2021 : < 7 h = sommeil court) */
+  /** Nuit courte personnelle : moins que ta normale (30 nuits d'avant) de plus de… heures */
+  nuitEcartPersoH: number
+  /** Dette : moyenne 7 j sous… heures (plancher absolu : 6 h ou moins pendant 2 semaines dégrade la vigilance, Van Dongen 2003) */
   moyenne7MinH: number
-  /** Dette personnelle : moyenne 7 j sous ta moyenne 30 j de plus de… heures */
+  /** Dette personnelle : moyenne 7 j sous ta normale de plus de… heures */
   ecartPersoH: number
+  /** Repère conseillé (ligne d'information, sans effet sur la couleur) */
+  repereH: number
 }
 
 export const SEUILS_DEFAUT: Seuils = {
-  fcReposEcart: 5, tsbMin: -20, ressentiMin: 2.5, sommeilMax: 2, picMax: 1.3, cvFacteur: 1.5, nuitMinH: 6, moyenne7MinH: 7, ecartPersoH: 0.75,
+  fcReposEcart: 5, tsbMin: -20, ressentiMin: 2.5, sommeilMax: 2, picMax: 1.3, cvFacteur: 1.5, nuitMinH: 6, nuitEcartPersoH: 1.5, moyenne7MinH: 6, ecartPersoH: 0.75, repereH: 7,
 }
 
 /** Conseil affiché après une nuit courte ou une dette de sommeil. */
 export const CONSEIL_SIESTE = 'Si tu peux : une sieste courte (une demi-heure) en début d’après-midi, au moins une heure avant ta séance'
 
-/** Durée de sommeil : nuit, moyenne 7 jours (au moins 3 nuits) et moyenne des 30 jours d'avant (au moins 10 nuits). */
+/** Durée de sommeil : nuit, moyenne 7 jours (au moins 3 nuits) et ta normale = moyenne des 30 jours d'avant (au moins 14 nuits, comme la VFC). */
 export function analyserSommeil(nuits: { date: string; h?: number }[], date: string) {
   const entre = (du: string, au: string) => nuits.filter((n) => n.h !== undefined && n.date >= du && n.date <= au).map((n) => n.h!)
   const moy = (x: number[], min: number) => (x.length >= min ? x.reduce((a, b) => a + b, 0) / x.length : undefined)
   return {
     nuit: nuits.find((n) => n.date === date)?.h,
     moyenne7: moy(entre(decaler(date, -6), date), 3),
-    moyenne30: moy(entre(decaler(date, -36), decaler(date, -7)), 10),
+    moyenne30: moy(entre(decaler(date, -36), decaler(date, -7)), 14),
   }
+}
+
+/** Nuit courte et dette de sommeil, comparées à ta normale (planchers absolus de 6 h). */
+export function etatSommeil(h: { nuit?: number; moyenne7?: number; moyenne30?: number } | undefined, s: Seuils = SEUILS_DEFAUT) {
+  const nuitCourte = h?.nuit !== undefined && (h.nuit < s.nuitMinH || (h.moyenne30 !== undefined && h.nuit < h.moyenne30 - s.nuitEcartPersoH))
+  const dette = h?.moyenne7 !== undefined && (h.moyenne7 < s.moyenne7MinH || (h.moyenne30 !== undefined && h.moyenne7 < h.moyenne30 - s.ecartPersoH))
+  const sousRepere = h?.moyenne7 !== undefined && h.moyenne7 < s.repereH
+  return { nuitCourte, dette, sousRepere }
 }
 
 /** "7 h 05" */
@@ -120,11 +132,12 @@ export function calculerSignal(e: EntreeSignal, s: Seuils = SEUILS_DEFAUT): Sign
 
   // Ressenti et sommeil : une seule alerte, quelle que soit la cause (note, nuit courte, dette)
   const textes: string[] = []
+  // Sommeil comparé à TA normale (Walsh 2021 : approche individuelle), avec un plancher absolu de 6 h ; le repère de 7 h
+  // n'est qu'une information (relecture du 6/11/2026)
   const h = e.sommeilH
-  if (h?.nuit !== undefined && h.nuit < s.nuitMinH) textes.push(`nuit courte (${enHeures(h.nuit)}, moins de ${s.nuitMinH} h)`)
-  if (h?.moyenne7 !== undefined && h.moyenne7 < s.moyenne7MinH) textes.push(`dette de sommeil (${enHeures(h.moyenne7)} en moyenne sur 7 j, moins de ${s.moyenne7MinH} h)`)
-  else if (h?.moyenne7 !== undefined && h.moyenne30 !== undefined && h.moyenne7 < h.moyenne30 - s.ecartPersoH)
-    textes.push(`dette de sommeil (${enHeures(h.moyenne7)} sur 7 j contre ${enHeures(h.moyenne30)} d'habitude)`)
+  const etat = etatSommeil(h, s)
+  if (etat.nuitCourte) textes.push(h!.nuit! < s.nuitMinH ? `nuit courte (${enHeures(h!.nuit!)}, moins de ${s.nuitMinH} h)` : `nuit courte (${enHeures(h!.nuit!)} contre ${enHeures(h!.moyenne30!)} d'habitude)`)
+  if (etat.dette) textes.push(h!.moyenne7! < s.moyenne7MinH ? `dette de sommeil (${enHeures(h!.moyenne7!)} en moyenne sur 7 j, moins de ${s.moyenne7MinH} h)` : `dette de sommeil (${enHeures(h!.moyenne7!)} sur 7 j contre ${enHeures(h!.moyenne30!)} d'habitude)`)
   if (e.sommeil !== undefined && e.sommeil <= s.sommeilMax) textes.push('sommeil mauvais cette nuit')
   if (e.ressenti !== undefined && e.ressenti < s.ressentiMin) textes.push(`ressenti bas ce matin (${f1(e.ressenti)}/5)`)
   if (textes.length) alertes.push({ code: 'ressenti', texte: textes.join(', ').replace(/^./, (c) => c.toUpperCase()), compte: true })
@@ -190,13 +203,15 @@ function detailsSignal(e: EntreeSignal, alertes: Alerte[], calibration: boolean,
 
   // Sommeil
   const h = e.sommeilH
-  const dette = h?.moyenne7 !== undefined && (h.moyenne7 < s.moyenne7MinH || (h.moyenne30 !== undefined && h.moyenne7 < h.moyenne30 - s.ecartPersoH))
-  if (h?.nuit !== undefined && h.nuit < s.nuitMinH) alerte('😴', dette ? 'Nuit courte, et manque de sommeil sur la semaine' : 'Nuit courte', ['sommeil', 'Nuit courte'])
+  const { nuitCourte, dette, sousRepere } = etatSommeil(h, s)
+  if (nuitCourte) alerte('😴', dette ? 'Nuit courte, et manque de sommeil sur la semaine' : 'Nuit courte', ['sommeil', 'Nuit courte'])
   else if (dette) alerte('😴', 'Manque de sommeil accumulé sur la semaine', ['sommeil', 'En retard'])
   // Conseil (le feu ne change pas) : sieste courte en début d'après-midi (Mesas 2023, Lastella 2021)
-  if ((h?.nuit !== undefined && h.nuit < s.nuitMinH) || dette) info('💤', CONSEIL_SIESTE)
+  if (nuitCourte || dette) info('💤', CONSEIL_SIESTE)
+  // Repère conseillé (sans effet sur la couleur) : on s'habitue à manquer de sommeil sans le sentir (Van Dongen 2003)
+  else if (sousRepere) info('🛏️', 'Un peu moins de sept heures en moyenne : dormir plus reste un vrai levier de progrès')
   else if (e.sommeil !== undefined && e.sommeil <= s.sommeilMax) alerte('😴', 'Mauvaise nuit d’après toi', ['sommeil', 'Mauvaise nuit'])
-  else if (h?.nuit !== undefined || h?.moyenne7 !== undefined) ok('😴', 'Sommeil suffisant', ['sommeil', 'Suffisant'])
+  else if (h?.nuit !== undefined || h?.moyenne7 !== undefined) ok('😴', sousRepere ? 'Sommeil dans ta normale' : 'Sommeil suffisant', ['sommeil', sousRepere ? 'Normal' : 'Suffisant'])
 
   // Ressenti du matin
   if (e.ressenti === undefined) info('🙂', 'Ressenti du matin pas encore noté', ['ressenti', 'Pas noté'])
