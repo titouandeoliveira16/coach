@@ -9,7 +9,7 @@ const jj = (d: string) => depuisJour(d).toLocaleDateString('fr-FR', { day: 'nume
 const moyenne = (l: number[]) => (l.length ? l.reduce((a, b) => a + b, 0) / l.length : undefined)
 
 /** Progrès : ce que j'ai mangé (journal du soir) face au besoin estimé, sur 4 semaines. */
-export function SuiviRepas() {
+export function SuiviRepas({ nu = false }: { nu?: boolean }) {
   const lignes = useLiveQuery(() => suiviRepas(28))
   if (!lignes?.length) return null
   const remplis = lignes.filter((l) => l.repas?.kcal !== undefined)
@@ -17,8 +17,8 @@ export function SuiviRepas() {
   const ecart = moyenne(sept.map((l) => l.repas!.kcal! - l.besoin))
   const prot = moyenne(remplis.filter((l) => l.repas?.proteines !== undefined).slice(-7).map((l) => l.repas!.proteines! / l.kg))
 
-  return (
-    <Carte titre="Ce que je mange">
+  const contenu = (
+    <>
       <p className="text-sm text-texte-2">
         {remplis.length} jour{remplis.length > 1 ? 's' : ''} renseigné{remplis.length > 1 ? 's' : ''} sur {lignes.length}
         {ecart !== undefined && <> · 7 derniers jours : <b className="text-texte">{ecart >= 0 ? '+' : ''}{formatNombre(ecart)} kcal/j</b> par rapport au besoin</>}
@@ -32,6 +32,7 @@ export function SuiviRepas() {
           ]} />
         </div>
       )}
-    </Carte>
+    </>
   )
+  return nu ? contenu : <Carte titre="Ce que je mange">{contenu}</Carte>
 }

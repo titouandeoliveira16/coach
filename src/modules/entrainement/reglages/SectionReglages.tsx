@@ -14,6 +14,8 @@ import { SectionIntervals } from './SectionIntervals'
 import { SectionProfil } from './SectionProfil'
 import { SectionVelo } from './SectionVelo'
 import { ZonesVelo } from './ZonesVelo'
+import { Calculateurs } from '../analyse/Calculateurs'
+import { useProfil } from '../../../core/profil'
 
 /**
  * Réglages du module Entraînement, en encarts courts qu'on ouvre et qu'on réduit :
@@ -29,6 +31,7 @@ export function SectionReglagesEntrainement() {
   const sports = [...new Set([...(ps.sports.length ? ps.sports.map((x) => VERS_CATALOGUE[x]).filter(Boolean) : ['velo']), 'force'])] as SeanceCatalogue['sport'][]
   const [agenda, setAgenda] = useState(false)
   const [avance, setAvance] = useState(false)
+  const [profil] = useProfil()
   return (
     <>
       <SectionProfil />
@@ -38,7 +41,7 @@ export function SectionReglagesEntrainement() {
       <div className="grid grid-cols-3 gap-2">
         <Tuile titre="Google Agenda" ouvert={agenda} onClick={() => setAgenda(!agenda)} />
         <Tuile titre="Catalogue scientifique" ouvert={catalogue} onClick={() => setCatalogue(!catalogue)} />
-        <Tuile titre="Avancé : zones" ouvert={avance} onClick={() => setAvance(!avance)} />
+        <Tuile titre="Avancé : zones et calculs" ouvert={avance} onClick={() => setAvance(!avance)} />
       </div>
       {agenda && <SectionAgenda className="border-accent!" />}
       {catalogue && (
@@ -54,6 +57,7 @@ export function SectionReglagesEntrainement() {
           <ZonesVelo zones={r.zonesVelo} cpW={r.cpW} onModifier={(zonesVelo) => modifier({ zonesVelo })} />
         </Carte>
       )}
+      {avance && <Calculateurs cpW={r.cpW} wPrimeKj={r.wPrimeKj} poidsKg={profil.poidsKg} />}
     </>
   )
 }
