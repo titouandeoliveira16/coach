@@ -3,7 +3,7 @@
  * (on juge la moyenne d'un bloc, pas la puissance seconde par seconde : Liedl 1999, Bossi 2020).
  * La séance faite est d'abord recalée dans le temps sur la séance prévue (décalage de départ).
  */
-import { deplier, type Etape, type Famille } from './programme'
+import { deplier, type Etape, type SeanceVelo } from './programme'
 
 export type Verdict = 'ok' | 'bas' | 'haut'
 export interface LigneControle {
@@ -168,7 +168,7 @@ export function trouverTours(plat: { dureeSec: number }[], tours: Tour[], arretD
 
 export function controlerSeance(o: {
   etapes: Etape[]
-  famille: Famille | 'z2' | 'z2-long' | 'test' | 'vtt-terrain' | 'vtt-speciales'
+  famille: SeanceVelo['famille']
   w1Hz: number[]
   fc1Hz?: number[]
   cpW: number

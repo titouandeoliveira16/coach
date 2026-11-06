@@ -87,7 +87,14 @@ VAN_HOOREN_2018 = ref("Van Hooren B, Peake JM", 2018, "Do we need a cool-down af
 MAUNDER_2021 = ref("Maunder E, Seiler S, Mildenhall MJ, Kilding AE, Plews DJ", 2021, "The importance of 'durability' in the physiological profiling of endurance athletes", "Sports Med", "33886100")
 VAN_ERP_2021 = ref("van Erp T, Sanders D, Lamberts RP", 2021, "Maintaining power output with accumulating levels of work done is a key determinant for success in professional cycling", "Med Sci Sports Exerc")
 SPRAGG_2023 = ref("Spragg J, Leo P, Swart J", 2023, "The relationship between physiological characteristics and durability in male professional cyclists", "Med Sci Sports Exerc", "35977108")
-SPRAGG_2024 = ref("Spragg J, Leo P, Giorgi A, Gonzalez BM, Swart J", 2024, "The intensity rather than the quantity of prior work determines the subsequent downward shift in the power duration relationship in professional cyclists", "Eur J Sport Sci")
+SPRAGG_2024 = ref("Spragg J, Leo P, Giorgi A, Gonzalez BM, Swart J", 2024, "The intensity rather than the quantity of prior work determines the subsequent downward shift in the power duration relationship in professional cyclists", "Eur J Sport Sci", doi="10.1002/ejsc.12077")
+MATEO_MARCH_2022 = ref("Mateo-March M, Valenzuela PL, Muriel X, et al.", 2022, "The record power profile of male professional cyclists: fatigue matters", "Int J Sports Physiol Perform")
+MATEO_MARCH_2024 = ref("Mateo-March M, Leo P, Muriel X, et al.", 2024, "Is all work the same? Performance after accumulated work of different intensities in male professional cyclists", "J Sci Med Sport")
+LEO_2022 = ref("Leo P, Spragg J, Simon D, et al.", 2022, "(intitulé non relevé) simulation de course intermittente de 150 min vs effort régulier : baisse de la puissance sur 12 min", "Ger J Exerc Sport Res")
+SANDERS_VANERP_2021 = ref("Sanders D, van Erp T", 2021, "The physical demands and power profile of professional men's cycling races: an updated review", "Int J Sports Physiol Perform")
+BARSUMYAN_2025 = ref("Barsumyan A, et al.", 2025, "(intitulé non relevé) durabilité chez 14 cyclistes amateurs : puissance sur 5 et 20 min après ≈ 1000 kJ", "Front Sports Act Living")
+COX_2010 = ref("Cox GR, Clark SA, Cox AJ, et al.", 2010, "Daily training with high carbohydrate availability increases exogenous carbohydrate oxidation during endurance cycling", "J Appl Physiol", "20466803")
+JONES_2003 = ref("Jones AM, Wilkerson DP, Burnley M, Koppo K", 2003, "Prior heavy exercise enhances performance during subsequent perimaximal exercise", "Med Sci Sports Exerc", "14652506")
 RONNESTAD_2011 = ref("Rønnestad BR, Hansen EA, Raastad T", 2011, "Strength training improves 5-min all-out performance following 185 min of cycling", "Scand J Med Sci Sports", "19903319")
 ALMQUIST_2020 = ref("Almquist NW, et al.", 2020, "Effects of including sprints in one weekly low-intensity training session during the transition period of elite cyclists", "Front Physiol", "33041839")
 SEILER_2013 = ref("Seiler S, Jøranson K, Olesen BV, Hetlelid KJ", 2013, "Adaptations to aerobic interval training: interactive effects of exercise intensity and total work duration", "Scand J Med Sci Sports", "21812820")
@@ -268,6 +275,36 @@ seance("velo-seuil-4x16", famille="seuil", nom="4 × 16 min (Seiler, Sylta)",
        variantes=["3 × 16", "4 × 16"], phases=["base", "construction"], parSemaine="1", recuperation="48 h",
        conseils=["Le %CP est une estimation : les études règlent l'intensité à l'effort, pas en watts.", SANS_ERG],
        preuve=P("prouvé", "Chez des amateurs, 4 × 16 min a moins progressé que 4 × 8 min sur 7 semaines. Sur 12 semaines (63 cyclistes), alterner 4 × 16, 4 × 8 et 4 × 4 a donné +5 à 10 % de puissance sur 40 min, quel que soit l'ordre.", SEILER_2013, SYLTA_2016), **V)
+
+seance("velo-simulation-course-ligne", famille="specifique", nom="Simulation de course en ligne",
+       objectif="Attaquer, relancer et sprinter en étant déjà fatigué (course FFC, UFOLEP, critérium)",
+       resume="60 min de Z2, puis 3 blocs de 12 min à 80-90 % de la CP avec une attaque de 30 s toutes les 3 min, une échappée de 5 min, et une finale : 2 × (1 min à 110-120 % puis un sprint de 15 s).",
+       zone="Z2-Z3 + Z5-Z7", rpe="8", niveau="confirmé",
+       deroule=[ECH(15), E(60, 56, 70), X(3, X(4, E(0, 80, 90, sec=150), E(0, 140, 160, sec=30, note="attaque")), R(5)), E(5, 100, 105, note="bosse ou échappée"), E(10, 56, 70),
+                X(2, E(1, 110, 120), MAX(15, cad="> 100", note="sprint final"), R(3)), CALME(10)],
+       variantes=["2 blocs (reprise)", "3 blocs", "Dehors : attaques en bosse, sprint sur un panneau"], phases=["spécifique"], parSemaine="1 tous les 10-14 jours",
+       recuperation="48 h", conseils=["Une vraie course dans la semaine la remplace.", "Mange comme en course (60-90 g de glucides par heure).", SANS_ERG],
+       preuve=P("plausible", "Les courses plates ou vallonnées se jouent sur des efforts de moins de 2 min ; c'est surtout le travail intense fait avant qui fait baisser le sprint (Spragg 2024), et une course intermittente fatigue plus qu'un effort régulier (Leo 2022). Le format est un choix d'entraîneur : aucun essai ne montre qu'une simulation fait mieux qu'une séance classique.", SANDERS_VANERP_2021, SPRAGG_2024, LEO_2022, MATEO_MARCH_2024), **V)
+
+seance("velo-cyclo-montees-fin", famille="durabilite", nom="Sortie longue + montées en fin de sortie (cyclosportive)",
+       objectif="Garder ta puissance dans les cols après des heures de selle",
+       resume="3 h à 4 h 30 en Z2, puis 2 à 3 montées de 20-30 min à 85-92 % de la CP dans la dernière heure ; 60-90 g de glucides par heure dès la 1re heure.",
+       zone="Z2 + Z3-Z4", rpe="6-7", niveau="confirmé",
+       deroule=[ECH(15, 50, 65), E(150, 56, 70), X(2, E(25, 85, 92, note="montée"), R(10, 50, 60)), CALME(10)],
+       variantes=["3 h avec 2 × 20 min", "3 h 30 avec 2 × 25 min", "4 h avec 3 × 20 min", "4 h 30 avec 3 × 30 min (2-3 semaines avant l'objectif)"],
+       phases=["construction", "spécifique"], parSemaine="1 tous les 7-14 jours", recuperation="48 h",
+       conseils=["C'est une séance dure : 48 h avant et après sans autre intensité.", "Teste ta nutrition de course : c'est aussi un entraînement de l'estomac.", "La dernière montée doit être aussi forte que la première : c'est le but."],
+       preuve=P("plausible", "Après beaucoup de travail, les meilleures puissances baissent (1,6 à 3 % après 15 kJ/kg, 6 à 10 % après 45 kJ/kg chez les pros) ; chez des amateurs, ceux qui gagnent perdent deux fois moins sur 20 min après ≈ 1000 kJ ; en cyclosportive, la puissance dans les cols est liée au temps final. S'entraîner avec beaucoup de glucides augmente leur utilisation à l'effort, et entraîner l'estomac réduit probablement les troubles digestifs. Les durées sont un choix d'entraîneur.", MATEO_MARCH_2022, MATEO_MARCH_2024, BARSUMYAN_2025, VAN_ERP_2021, COX_2010, JONES_KIRBY_2025), **V)
+
+seance("velo-mixte-ss-3015", famille="vo2max", nom="Séance mixte : sweet spot puis 30/15",
+       objectif="Faire monter le souffle plus vite dans les répétitions dures grâce à un effort préalable",
+       resume="20 min à 88-92 % de la CP, 10 min faciles (pas moins), puis 2 × 10 × 30/15.",
+       zone="Z3-Z4 puis Z5-Z6", rpe="8", niveau="confirmé",
+       deroule=[ECH(15), E(20, 88, 92), R(10, 45, 55, note="au moins 10 min"), X(2, X(10, E(0, 115, 125, sec=30), R(0, 45, 55, sec=15)), R(3)), CALME(10)],
+       variantes=["6 min à 90 % puis 10 min faciles (version des études)", "20 min puis 10 min faciles", "Variante « fatigue de course » : 3-5 min de récup seulement et 30/15 visés 5 % plus bas"],
+       phases=["construction", "spécifique"], parSemaine="1 tous les 10-14 jours, à la place d'une séance VO2", recuperation="48 h",
+       conseils=["Garde au moins 10 min faciles entre les deux parties : avec 3 min, tu tiens moins bien les répétitions.", SANS_ERG],
+       preuve=P("plausible", "Un effort préalable dur suivi de 9 à 20 min de récupération allonge l'effort très dur suivant de 15 à 30 % ; avec 3 min, il le raccourcit de 16 % (Bailey 2009, Jones 2003). Effet prouvé sur une séance seulement : aucun essai ne montre plus de progrès sur plusieurs semaines, et les répétitions VO2 peuvent être moins puissantes (Spragg 2024).", BAILEY_2009, JONES_2003, BOSSI_2020, SPRAGG_2024), **V)
 
 seance("velo-tirage-seuil", famille="seuil", nom="Tirer le seuil 5 × 5 → 4 × 8 min",
        objectif="Faire monter la puissance au seuil (1re étape du travail du 2e seuil)", resume="Blocs plus courts qu'au seuil classique mais un peu au-dessus de la CP : 5 × 5, puis 5 × 6, puis 4 × 8 min, récupération 3 min.",
@@ -581,11 +618,22 @@ seance("vtt-depart-xco", famille="specifique", nom="Simulation de départ XCO",
        conseils=["Départ debout, gros braquet ; relance-toi assis au bout de 15-20 s.", SANS_ERG],
        preuve=PRATIQUE("En course, le départ et le 1er tour sont nettement plus rapides, puis l'allure se stabilise (Granier, Hays). Séance d'entraîneur qui reproduit ce profil, sans étude d'entraînement.", GRANIER_2018, HAYS_2018, IMPELLIZZERI_2002), **VT)
 
+seance("vtt-simulation-xco", famille="specifique", nom="Simulation de course XCO",
+       objectif="Reproduire une course XCO : départ très rapide puis tours à relances",
+       resume="Échauffement avec 5 min à 90-95 % puis 10 min faciles ; départ de 1 min 30 au-dessus de 150 % de la CP ; 4 tours de 8 min à 80-90 % avec une relance de 8 s toutes les 30 s ; 2 min faciles entre les tours.",
+       zone="Z3 + Z6-Z7", rpe="9", niveau="confirmé",
+       deroule=[ECH(15), E(5, 90, 95, note="pré-effort"), R(10, 45, 55, note="au moins 10 min"), E(1.5, 150, 170, note="départ"),
+                X(4, X(16, E(0, 80, 90, sec=22), E(0, 150, 180, sec=8, note="relance")), R(2)), CALME(10)],
+       variantes=["3 tours", "4 tours", "5 tours (avant une course importante)"], phases=["spécifique"], parSemaine="1 par bloc, 7-10 jours avant la course",
+       recuperation="48-72 h", disciplines=["xco"],
+       conseils=["Si les relances s'écroulent au 3e tour, c'est normal : en course aussi, la réserve dépensée par tour baisse de près de moitié.", SANS_ERG],
+       preuve=P("plausible", "En XCO (≈ 96 min), ≈ 40 % du temps au-dessus de la CP en efforts d'environ 8 s, avec une baisse de la réserve dépensée par tour de ≈ 45 % entre le 1er et le dernier tour (Næss) ; plus de 300 efforts au-dessus de la PMA (Prinz) ; départ nettement plus rapide (Granier). Un pré-effort suivi d'au moins 10 min faciles aide l'effort très dur (Bailey). Le format est un choix d'entraîneur.", NAESS_2021, PRINZ_2021, GRANIER_2018, BAILEY_2009), **VT)
+
 seance("vtt-xcc-variable", famille="repetition-efforts", nom="Short track : 20 min à relances",
        objectif="Tenir ≈ 20 min autour de la CP avec des relances répétées", resume="2 × 10 min à 95-100 % de la CP avec une relance de 12 s à 130-150 % chaque minute ; 6 min faciles entre les blocs.",
        zone="Z4 + Z6", rpe="9", niveau="confirmé",
        deroule=[ECH(20), X(2, X(10, E(0, 95, 100, sec=48), E(0, 130, 150, sec=12, note="relance")), R(6)), CALME(10)],
-       variantes=["2 × 8 min", "2 × 10 min", "1 × 20 min (veille de course exclue)"], phases=["spécifique"], parSemaine="0-1",
+       variantes=["2 × 8 min", "2 × 10 min", "1 × 20 min (veille de course exclue)", "1 × 20 min avec un départ de 30 s à fond, après l'échauffement de course"], phases=["spécifique"], parSemaine="0-1",
        recuperation="48 h", disciplines=["xcc"],
        conseils=["Le short track est court et peu technique : la puissance y compte plus qu'en XCO.", SANS_ERG],
        preuve=PRATIQUE("Une seule étude descriptive : en Coupe du monde, le XCC dure ≈ 21 min à ≈ 21 % de puissance en plus que le XCO (365 contre 301 W), avec une allure variable. La moyenne ≈ 95-100 % de la CP est notre estimation. Aucun essai d'entraînement.", ARRIEL_2023), **VT)
@@ -594,7 +642,7 @@ seance("vtt-marathon-cotes", famille="endurance", nom="Sortie longue en côtes (
        objectif="Puissance au 2e seuil et durabilité sur plusieurs heures", resume="3 à 5 h en Z2 avec 4 à 6 montées de 8-15 min à 85-95 % de la CP.",
        zone="Z2 + Z3-Z4", rpe="4-6", niveau="confirmé",
        deroule=[ECH(15, 50, 65), X(5, E(25, 56, 70), E(12, 85, 95, note="montée")), E(25, 56, 70), CALME(10)],
-       variantes=["3 h avec 4 montées de 8 min", "3 h 30 avec 4 montées de 10 min", "4 h avec 5 montées de 12 min", "5 h avec 6 montées de 15 min (seulement 2-3 semaines avant l'objectif)"],
+       variantes=["3 h avec 4 montées de 8 min", "3 h 30 avec 4 montées de 10 min", "4 h avec 5 montées de 12 min", "5 h avec 6 montées de 15 min (seulement 2-3 semaines avant l'objectif)", "Effort final : dernière montée à 95-100 % de la CP après 3 h ou plus (durabilité, Novak 2018)"],
        phases=["construction", "spécifique"], parSemaine="1", recuperation="48 h", disciplines=["xcm"],
        conseils=["C'est une séance dure (jusqu'à 90 min près du seuil) : 48 h avant et après sans autre intensité.", "Mange 60-90 g de glucides par heure dès la 1re heure : on entraîne aussi l'estomac.", "Garde les dernières montées aussi fortes que les premières : c'est le but (durabilité)."],
        preuve=P("plausible", "En course par étapes, la puissance absolue au 2e seuil lactique est le meilleur prédicteur du temps (r = −0,80, 24 amateurs) ; il faut tenir une puissance élevée des heures et répéter des efforts (Cape Epic, répartition pyramidale proposée). FC ≈ 85 % de la FC max sur la Transalp. Le format exact est un choix d'entraîneur.", ENGELBRECHT_2018, REINPOLD_2022, WIRNITZER_2008, JONES_KIRBY_2025), **VT)
@@ -839,6 +887,10 @@ def methode(id, nom, objectif, resume, preuve, conseils=(), phases=(), famille="
     seance(id, famille=famille, disciplines=disciplines, nom=nom, objectif=objectif, resume=resume, zone="—", rpe="—", niveau="—",
            variantes=[], phases=phases, conseils=conseils, preuve=preuve, **M)
 
+methode("methode-echauffement-course", "Échauffement de course (efforts courts et très durs)", "Arriver prêt au départ d'un XCC, d'un XCO, d'une course en ligne courte ou d'un contre-la-montre",
+        "15 min progressives, puis 5-6 min à 90-100 % de la CP, puis 10 à 20 min faciles (jamais moins de 10) avant le départ. Inutile pour une cyclosportive (départ lent).",
+        P("plausible", "Prouvé en labo, sur une séance : un effort préalable dur suivi de 9 à 20 min de récupération allonge l'effort très dur suivant de 15 à 30 % ; avec 3 min, il le raccourcit (Bailey 2009, Burnley 2005, Jones 2003). Aucune étude en vraie course.", BAILEY_2009, BURNLEY_2005, JONES_2003),
+        phases=["compétition"], famille="organisation", disciplines=["route", "xco", "xcc"])
 methode("methode-polarise", "Répartition polarisée (80/20)", "Répartir l'intensité sur la semaine",
         "≈ 80 % des séances sous le premier seuil, ≈ 20 % au-dessus du second, très peu entre les deux.",
         P("plausible", "Au moins aussi efficace que les autres répartitions ; méta-analyse 2024 (17 études) : léger avantage sur la VO2max seulement (athlètes très entraînés, moins de 12 semaines), pas sur les contre-la-montre. Chez 12 cyclistes entraînés (6 semaines, ordre tiré au sort), 80 % facile / 20 % dur a fait plus progresser la puissance max et le seuil lactique qu'un programme centré sur le seuil (43 % au milieu), en moins d'heures. Revue 2023 chez des cyclistes entraînés : aucun modèle de périodisation supérieur sur 8-12 semaines ; 7 à 12 h par semaine conseillées.", OLIVEIRA_2024, ROSENBLAT_2019, STOGGL_2014, ROSENBLAT_2025, NEAL_2013, GALAN_RIOJA_2023, COVE_2025), phases=["toutes"])
@@ -1005,7 +1057,7 @@ for x in S:
 # ——— Disciplines des séances route et renfo (le VTT pioche aussi dedans) ———
 DISC_EN_PLUS = {
     "velo-endurance-courte": ["xco", "xcc", "xcm", "enduro"], "velo-endurance-longue": ["xco", "xcm", "enduro"],
-    "velo-endurance-sprints": ["xco", "xcc", "enduro"], "velo-durabilite-effort-final": ["xcm", "xco"],
+    "velo-endurance-sprints": ["xco", "xcc", "enduro"], "velo-durabilite-effort-final": ["xcm"],
     "velo-tempo-2x20": ["xcm"], "velo-sweet-spot-3x15": ["xcm", "xco"], "velo-sweet-spot-long": ["xcm"],
     "velo-seuil-2x20": ["xco", "xcm"], "velo-tirage-seuil": ["xcm"], "velo-seuil-maintien": ["xcm"], "velo-seuil-4x10": ["xco", "xcc", "xcm"], "velo-seuil-4x16": ["xcm"], "velo-seuil-continu": ["xcm"],
     "velo-over-unders": ["xco", "xcc"], "velo-vo2-30-15-ronnestad": ["xco", "xcc"], "velo-vo2-30-30": ["xco", "xcc"], "velo-vo2-15-15": ["xco", "xcc"],
