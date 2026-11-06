@@ -38,6 +38,12 @@ Points décidés ou mis de côté, à reprendre au bon moment.
 - Quand il roulera dehors avec un capteur : refaire un test pour avoir des zones « dehors » (et un facteur capteur si
   besoin).
 
+## Vacances de Noël 2026 : mesurer son besoin de sommeil
+- Titouan reste sur le seuil de 7 h (moyenne 7 j) pour le feu en attendant (choix du 6/11/2026). Sa moyenne sur un an :
+  ≈ 6 h 50 (Garmin estime son besoin vers 8 h 20, non validé). Proposé : 10-14 jours sans réveil, coucher fixe, moyenne
+  des 7 dernières nuits = besoin estimé (protocole à faire relire, Kitamura 2016 cité de mémoire). Ensuite : son besoin
+  comme repère dans le feu (et pour les élèves qui font le test) ; normale = max(30 j, 90 j) proposée, pas retenue.
+
 ## Après le 5 km du 13/12/2026
 - Le vélo repasse en priorité : **4 séances vélo par semaine** au lieu de 3.
 - La course passe de **3 à 2 séances** par semaine.

@@ -29,7 +29,8 @@ export interface Seuils {
   nuitMinH: number
   /** Nuit courte personnelle : moins que ta normale (30 nuits d'avant) de plus de… heures */
   nuitEcartPersoH: number
-  /** Dette : moyenne 7 j sous… heures (plancher absolu : 6 h ou moins pendant 2 semaines dégrade la vigilance, Van Dongen 2003) */
+  /** Dette : moyenne 7 j sous… heures (7 h : recommandation santé, Watson 2015 ; choix de Titouan le 6/11/2026, en attendant
+   *  de mesurer son besoin personnel pendant les vacances de Noël) */
   moyenne7MinH: number
   /** Dette personnelle : moyenne 7 j sous ta normale de plus de… heures */
   ecartPersoH: number
@@ -38,7 +39,7 @@ export interface Seuils {
 }
 
 export const SEUILS_DEFAUT: Seuils = {
-  fcReposEcart: 5, tsbMin: -20, ressentiMin: 2.5, sommeilMax: 2, picMax: 1.3, cvFacteur: 1.5, nuitMinH: 6, nuitEcartPersoH: 1.5, moyenne7MinH: 6, ecartPersoH: 0.75, repereH: 7,
+  fcReposEcart: 5, tsbMin: -20, ressentiMin: 2.5, sommeilMax: 2, picMax: 1.3, cvFacteur: 1.5, nuitMinH: 6, nuitEcartPersoH: 1.5, moyenne7MinH: 7, ecartPersoH: 0.75, repereH: 7,
 }
 
 /** Conseil affiché après une nuit courte ou une dette de sommeil. */
@@ -133,8 +134,7 @@ export function calculerSignal(e: EntreeSignal, s: Seuils = SEUILS_DEFAUT): Sign
 
   // Ressenti et sommeil : une seule alerte, quelle que soit la cause (note, nuit courte, dette)
   const textes: string[] = []
-  // Sommeil comparé à TA normale (Walsh 2021 : approche individuelle), avec un plancher absolu de 6 h ; le repère de 7 h
-  // n'est qu'une information (relecture du 6/11/2026)
+  // Sommeil : moyenne 7 j sous 7 h, ou nettement sous ta normale ; nuit de 6 h ou moins, ou 1 h 30 sous ta normale
   const h = e.sommeilH
   const etat = etatSommeil(h, s)
   if (etat.nuitCourte) textes.push(h!.nuit! <= s.nuitMinH ? `nuit courte (${enHeures(h!.nuit!)}, ${s.nuitMinH} h ou moins)` : `nuit courte (${enHeures(h!.nuit!)} contre ${enHeures(h!.moyenne30!)} d'habitude)`)
