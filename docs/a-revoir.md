@@ -33,7 +33,6 @@ Points décidés ou mis de côté, à reprendre au bon moment.
   VO2 courts + over-unders + simulation semaines 1 et 3 ; cyclo = seuil / VO2 longs / sweet spot long + montées en fin de
   sortie (aussi une semaine sur deux en fin de prépa) ; XCO = simulation semaine 2 ; longues plafonnées XCO 2 h 30, XCC 2 h ;
   marathon : la sortie en côtes compte comme dure. Rappel d'échauffement la veille (XCO, XCC, en ligne).
-  Mis de côté : contre-la-montre (la position, pas dans l'appli).
 - **Sa saison à lui (phase VO2 prévue le 14/12) : à décider avant le 14/12** ; Étape du Tour 2027 : pas d'inscription
   pour l'instant (places manquées), objectif vélo principal à redéfinir.
 - Quand il roulera dehors avec un capteur : refaire un test pour avoir des zones « dehors » (et un facteur capteur si
@@ -103,7 +102,7 @@ Points décidés ou mis de côté, à reprendre au bon moment.
   fermées) ; questionnaire d'arrivée (Toi, profil, semaine, course principale → saison calculée `metrics/saison.ts`, puis
   Intervals.icu) ; accueil = Entraînement seul ; pas d'accès de Titouan aux données des élèves (pas voulu pour l'instant).
   Course à pied mise de côté (pas de programme pour les autres ; plan Campus de Titouan inchangé, à rediscuter) ;
-  enduro et descente retirés des propositions. Ancienne appli `suivi-coaching` : à supprimer quand plus personne ne s'en sert.
+  enduro et descente retirés des propositions. Ancienne appli `suivi-coaching` : dépôt supprimé par Titouan le 6/11/2026.
   Semaine allégée comptée sur toute la saison (pour tout le monde, validé par Titouan).
   **Plus tard** : questionnaire santé PAR-Q+ (si on ouvre à plus de monde ; accord parental pour un mineur) ;
   renfo / muscu « type force » selon la science et ses conseils d'entraîneurs ; mode sans capteur.
@@ -163,6 +162,8 @@ Points décidés ou mis de côté, à reprendre au bon moment.
   au calme dégressif sont faits (v0.54.0).
 - SV1 / SV2 (29/10) : la CP ≈ SV2 ; SV1 n'est pas mesuré (Z2 calée par découplage + RPE). Plus tard : estimer SV1 avec
   la ceinture (DFA α1 ≈ 0,75, Rogers 2021 ; calculé par Intervals.icu) pour caler la Z2.
+  6/11 : impossible avec les données actuelles (Zwift n'enregistre pas les intervalles RR ; l'appli ne les importe pas).
+  Il faut enregistrer la séance sur un appareil Garmin avec l'enregistrement de la VFC activé, avec la HRM-Pro Plus.
 - Règles chiffrées de progression (4 paliers, +2,5 % / −5 % de watts) : règles d'entraîneur (PDF kJ), sans essai dédié.
   Proposé le 29/10 de les faire relire ; à refaire si les tests CP ne progressent pas.
 - Capteur de puissance dehors : vrais kJ des sorties extérieures. D'ici là, Titouan ne fait que du home trainer.
