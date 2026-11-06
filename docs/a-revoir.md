@@ -13,6 +13,18 @@ Points décidés ou mis de côté, à reprendre au bon moment.
 - Question ouverte : garder le contrôle du dimanche, ou seulement le relevé du 5 ?
 - Il veut remplir le Budget au bon moment, à chaque fois : vérifier que le rappel du soir est activé (Budget → Réglages).
 
+## Conseils de Mathias Chauvin (6/11/2026, en cours)
+- Décidé : forme de l'entraîneur (ordre reprise → 2e seuil → sweet spot + VO2 court → spécifique → affûtage), contenu
+  validé par la science ; blocs au 1er seuil (fin de Z2) dans la sortie longue tout l'hiver ; 4 séances et plus = 2
+  intensives, 3 séances = 1 intensive + sortie longue avec blocs ; nombre de jours d'entraînement demandé au questionnaire ;
+  sprints max 1 fois par semaine ; sweet spot en fin de prépa ; semaines de 7 jours (pas de blocs de 8 jours) ; rappel
+  léger le lendemain d'une intensive, repos actif la veille ; Z2 découpée seulement pour les longues séances au home trainer.
+  Muscu lourde : option, plus tard.
+- **Sa saison à lui (phase VO2 prévue le 14/12) : à décider avant le 14/12** ; Étape du Tour 2027 : pas d'inscription
+  pour l'instant (places manquées), objectif vélo principal à redéfinir.
+- Quand il roulera dehors avec un capteur : refaire un test pour avoir des zones « dehors » (et un facteur capteur si
+  besoin).
+
 ## Après le 5 km du 13/12/2026
 - Le vélo repasse en priorité : **4 séances vélo par semaine** au lieu de 3.
 - La course passe de **3 à 2 séances** par semaine.
