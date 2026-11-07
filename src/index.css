@@ -65,3 +65,20 @@ input[type='date'] {
 input[type='date']::-webkit-date-and-time-value {
   text-align: left;
 }
+
+/* Petits moments de victoire */
+@keyframes apparition {
+  0% { transform: scale(0.7); opacity: 0; }
+  60% { transform: scale(1.06); opacity: 1; }
+  100% { transform: scale(1); }
+}
+@keyframes confetti {
+  0% { transform: translateY(-30px) rotate(0); opacity: 1; }
+  100% { transform: translateY(60vh) rotate(320deg); opacity: 0; }
+}
+.apparition { animation: apparition 0.45s ease-out both; }
+.confetti { animation: confetti 1.8s ease-in both; }
+@media (prefers-reduced-motion: reduce) {
+  .apparition, .confetti { animation: none; }
+  .confetti { display: none; }
+}

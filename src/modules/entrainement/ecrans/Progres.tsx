@@ -16,6 +16,8 @@ import { progressionFamilles } from '../plan/programme'
 import { programmeDe, useReglagesEntrainement } from '../reglagesEntrainement'
 import { NOMS_FAMILLES } from '../../../metrics/programme'
 import { Historique } from './Historique'
+import { ListeVictoires } from '../forme/Celebration'
+import { victoiresRecentes } from '../forme/victoires'
 import { SuiviRepas } from '../forme/SuiviRepas'
 import { CourbePuissance } from '../analyse/CourbePuissance'
 
@@ -29,6 +31,7 @@ export function Progres() {
   const [dateTest, setDateTest] = useState('')
   const [court, setCourt] = useState(true)
   const [ps] = useReglage<ProfilSportif>('profil-sportif', { sports: [], materiel: [] })
+  const nVictoires = useLiveQuery(async () => (await victoiresRecentes(30)).length)
   if (!t) return null
   const pct = (a?: number, b?: number) => (a !== undefined && b ? ((a - b) / b) * 100 : undefined)
   const prog = programmeDe(r.programme)
@@ -126,7 +129,8 @@ export function Progres() {
         </Repliable>
       )}
 
-      <Repliable titre="Petites victoires" libelle="Voir" resume={t.regularite ? `Régularité : ${t.regularite.faites}/${t.regularite.prevues} séances faites (4 sem.)` : 'Tes progrès d’une séance à l’autre'}>
+      <Repliable titre="Petites victoires" libelle="Voir" resume={nVictoires ? `🏅 ${nVictoires} victoire${nVictoires > 1 ? 's' : ''} ce mois-ci` : t.regularite ? `Régularité : ${t.regularite.faites}/${t.regularite.prevues} séances faites (4 sem.)` : 'Tes progrès d’une séance à l’autre'}>
+        <ListeVictoires />
         <PetitesVictoires t={t} nu />
       </Repliable>
 

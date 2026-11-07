@@ -19,6 +19,7 @@ import { CarteRemise } from '../forme/CarteRemise'
 import { CarteResultat } from '../forme/CarteResultat'
 import { SaisieMatin } from '../forme/SaisieMatin'
 import { BandeauAVoir } from '../forme/BandeauAVoir'
+import { BravoSeance, CarteVictoire } from '../forme/Celebration'
 import { QUESTIONS, mesuresRecentes } from '../forme/donnees'
 
 /**
@@ -69,7 +70,9 @@ export function Aujourdhui() {
     <div className="fixed inset-x-0 mx-auto flex max-w-lg flex-col gap-2.5 overflow-y-auto overscroll-contain px-4"
       style={zone ? { top: zone.haut, bottom: zone.bas } : { visibility: 'hidden' }}>
       {/* Cartes ponctuelles : un seul bandeau qui les ouvre */}
+      <BravoSeance />
       <BandeauAVoir>
+        <CarteVictoire />
         <CarteRemise />
         <CartePlanCampus />
         <CarteResultat />
