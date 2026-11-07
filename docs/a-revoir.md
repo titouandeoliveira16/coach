@@ -38,6 +38,10 @@ Points décidés ou mis de côté, à reprendre au bon moment.
 - Quand il roulera dehors avec un capteur : refaire un test pour avoir des zones « dehors » (et un facteur capteur si
   besoin).
 
+## Quand Titouan donnera le lien (frère, élèves)
+- Prise en main guidée des premiers jours (« voici ta séance, fais-la, note ton ressenti »), demandée le 7/11/2026.
+  Le questionnaire d'arrivée reste tel quel (il le trouve bien et indispensable à la personnalisation).
+
 ## Vacances de Noël 2026 : mesurer son besoin de sommeil
 - Titouan reste sur le seuil de 7 h (moyenne 7 j) pour le feu en attendant (choix du 6/11/2026). Sa moyenne sur un an :
   ≈ 6 h 50 (Garmin estime son besoin vers 8 h 20, non validé). Proposé : 10-14 jours sans réveil, coucher fixe, moyenne
