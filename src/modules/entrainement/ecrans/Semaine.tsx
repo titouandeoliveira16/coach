@@ -6,6 +6,8 @@ import { aujourdhui, decalerJour, depuisJour } from '../../../core/dates'
 import { Aide } from '../../../core/ui/Aide'
 import { Bouton } from '../../../core/ui/Bouton'
 import { Carte } from '../../../core/ui/Carte'
+import { formatNombre } from '../../../core/format'
+import { Repliable } from '../../../core/ui/Repliable'
 import { Feuille } from '../../../core/ui/Feuille'
 import { Puces } from '../../../core/ui/Puces'
 import { AIDES } from '../aides'
@@ -56,18 +58,16 @@ export function Semaine() {
 
   if (!prevues || !seances) return null
 
+  const auj = aujourdhui()
+  const court = (d: string) => depuisJour(d).toLocaleDateString('fr-FR', { weekday: 'short' })
+
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <button type="button" onClick={() => setLundi(decalerJour(lundi, -7))} className="px-3 py-2 text-2xl text-accent" aria-label="Semaine précédente">‹</button>
-        <p className="font-semibold">Semaine du {depuisJour(lundi).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}</p>
-        <button type="button" onClick={() => setLundi(decalerJour(lundi, 7))} className="px-3 py-2 text-2xl text-accent" aria-label="Semaine suivante">›</button>
-      </div>
-
+    <div className="space-y-2.5">
       {/* Semaine terminée (ou dimanche) : son bilan */}
-      {decalerJour(lundi, 6) <= aujourdhui() && <CarteBilan lundi={lundi} deps={[prevues, seances]} />}
+      {decalerJour(lundi, 6) <= auj && <CarteBilan lundi={lundi} deps={[prevues, seances]} />}
 
-      <CarteVelo lundi={lundi} deps={[prevues, seances]} onMessage={(m) => setMessage(m.length ? m : undefined)} />
+      <CarteVelo lundi={lundi} deps={[prevues, seances]} onMessage={(m) => setMessage(m.length ? m : undefined)}
+        onPrecedente={() => setLundi(decalerJour(lundi, -7))} onSuivante={() => setLundi(decalerJour(lundi, 7))} />
 
       {message && (
         <Carte>
@@ -76,47 +76,51 @@ export function Semaine() {
         </Carte>
       )}
 
-      {decalerJour(lundi, 6) >= aujourdhui() && <CarteChargee lundi={lundi} deps={[prevues]} onMessage={setMessage} />}
+      <AVoir lundi={lundi} deps={[prevues, seances]} onMessage={setMessage} />
 
-      <Alertes lundi={lundi} deps={[prevues, seances]} />
-
-      {jours.map((d) => {
-        const duJour = prevues.filter((p) => p.date === d)
-        const horsPlan = seances.filter((s) => s.date === d && !duJour.some((p) => p.id === s.prevueId))
-        return (
-          <section key={d} className={`rounded-2xl border bg-surface p-3 ${d === aujourdhui() ? 'border-accent' : 'border-bordure'}`}>
-            <div className="flex items-center justify-between">
-              <p className="font-semibold capitalize">
-                {depuisJour(d).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric' })}
-                {pannes?.has(d) && <span className="ml-2 text-xs font-normal normal-case text-[#fb923c]">🔧 vélo en panne</span>}
-              </p>
-              <button type="button" onClick={() => setAjout(d)} aria-label="Ajouter une séance" className="px-2 text-xl text-accent">+</button>
+      {/* Une ligne par séance (version compacte validée le 7/11/2026) */}
+      <div className="space-y-1.5">
+        {jours.map((d) => {
+          const duJour = prevues.filter((p) => p.date === d)
+          const horsPlan = seances.filter((s) => s.date === d && !duJour.some((p) => p.id === s.prevueId))
+          const panne = pannes?.has(d)
+          if (!duJour.length && !horsPlan.length)
+            return (
+              <div key={d} className={`flex items-center gap-2.5 rounded-xl border-l-[3px] px-3 py-2 ${d === auj ? 'border-accent bg-accent/10' : 'border-transparent bg-surface'}`}>
+                <span className="w-9 shrink-0 text-[13px] text-texte-3">{court(d)}</span>
+                <span className="text-sm text-texte-3">Repos{panne ? ' · 🔧 vélo en panne' : ''}</span>
+              </div>
+            )
+          return (
+            <div key={d} className="space-y-1.5">
+              {duJour.map((p, k) => {
+                const e = etatVisuel(p, auj)
+                const aujourdhuiPrevue = d === auj && p.statut === 'prevue'
+                const couleur = e.couleur ?? (aujourdhuiPrevue ? 'var(--color-accent)' : 'transparent')
+                return (
+                  <button key={p.id} type="button" onClick={() => setChoisie(p)}
+                    className={`flex w-full items-center gap-2.5 rounded-xl border-l-[3px] px-3 py-2.5 text-left ${aujourdhuiPrevue ? 'bg-accent/10' : 'bg-surface'}`}
+                    style={{ borderLeftColor: couleur }}>
+                    <span className="w-9 shrink-0 text-[13px] text-texte-3">{k === 0 ? court(d) : ''}</span>
+                    <span className={`min-w-0 flex-1 truncate text-sm ${e.couleur === ROUGE ? 'line-through opacity-60' : ''}`}>{iconeSport(p.sport)} {p.titre}</span>
+                    <span className="shrink-0 text-xs font-semibold" style={{ color: e.couleur ?? (aujourdhuiPrevue ? 'var(--color-accent)' : undefined) }}>
+                      {e.libelle || (aujourdhuiPrevue ? 'aujourd’hui' : <span className="font-normal text-texte-3">{p.dureeMin} min</span>)}
+                    </span>
+                  </button>
+                )
+              })}
+              {horsPlan.map((x, k) => (
+                <div key={x.id} className="flex items-center gap-2.5 rounded-xl border-l-[3px] bg-surface px-3 py-2.5" style={{ borderLeftColor: VERT }}>
+                  <span className="w-9 shrink-0 text-[13px] text-texte-3">{k === 0 && !duJour.length ? court(d) : ''}</span>
+                  <span className="min-w-0 flex-1 truncate text-sm">{iconeSport(x.sport, x.homeTrainer)} {x.titre ?? x.type ?? 'Séance'}</span>
+                  <span className="shrink-0 text-xs text-texte-3">hors plan ✓</span>
+                </div>
+              ))}
             </div>
-            {duJour.map((p) => {
-              const e = etatVisuel(p, aujourdhui())
-              return (
-              <button key={p.id} type="button" onClick={() => setChoisie(p)}
-                className="mt-2 block w-full rounded-xl border-l-4 bg-surface-2 p-2.5 text-left"
-                style={{ borderLeftColor: e.couleur ?? 'transparent', background: e.couleur ? `color-mix(in srgb, ${e.couleur} 12%, var(--color-surface-2))` : undefined }}>
-                <span className="flex items-center justify-between gap-2">
-                  <span className={`font-semibold ${e.couleur === ROUGE ? 'line-through opacity-70' : ''}`}>{iconeSport(p.sport)} {p.titre}</span>
-                  <span className="shrink-0 text-xs font-semibold" style={{ color: e.couleur }}>{e.libelle}</span>
-                </span>
-                <span className="block text-sm text-texte-2">
-                  {p.dureeMin} min{p.kjPrevu ? ` · ${p.kjPrevu} kJ` : ''}
-                </span>
-              </button>
-              )
-            })}
-            {horsPlan.map((s) => (
-              <p key={s.id} className="mt-2 rounded-xl border border-dashed p-2 text-sm text-texte-2" style={{ borderColor: VERT }}>
-                <span style={{ color: VERT }}>✓</span> {iconeSport(s.sport, s.homeTrainer)} {s.titre ?? s.type ?? 'Séance'} · {Math.round(s.dureeSec / 60)} min · hors plan
-              </p>
-            ))}
-            {!duJour.length && !horsPlan.length && <p className="mt-1 text-sm text-texte-3">Repos</p>}
-          </section>
-        )
-      })}
+          )
+        })}
+      </div>
+      <button type="button" onClick={() => setAjout(auj >= jours[0] && auj <= jours[6] ? auj : jours[0])} className="w-full py-2 text-sm font-semibold text-accent">+ Ajouter une séance</button>
 
       {ajout && (
         <Feuille titre="Ajouter une séance" onFermer={() => setAjout(null)}>
@@ -132,25 +136,8 @@ export function Semaine() {
   )
 }
 
-/** Semaine chargée : garder le minimum (séance clé + une facile courte), ou annuler. */
-function CarteChargee({ lundi, deps, onMessage }: { lundi: string; deps: unknown[]; onMessage: (m: string[]) => void }) {
-  const chargee = useLiveQuery(async () => (await lireSemaineChargee(lundi)) ?? null, [lundi, ...deps])
-  if (chargee === undefined) return null
-  return chargee ? (
-    <Carte>
-      <p className="text-sm">📚 <b>Semaine chargée</b> : on garde le minimum, sans rattraper.<Aide titre="Semaine chargée" texte={AIDES.semaineChargee} /></p>
-      <button type="button" onClick={() => annulerSemaineChargee(lundi)} className="mt-1 text-sm text-texte-3 underline">Annuler : remettre la semaine normale</button>
-    </Carte>
-  ) : (
-    <button type="button" onClick={async () => onMessage(await passerSemaineChargee(lundi))}
-      className="w-full rounded-2xl border border-dashed border-bordure py-3 text-sm font-semibold text-texte-2">
-      📚 Semaine chargée ? Garder le minimum
-    </button>
-  )
-}
-
 /** Vélo de la semaine : une jauge de kJ (fait / prévu) et le bouton pour générer les séances. */
-function CarteVelo({ lundi, deps, onMessage }: { lundi: string; deps: unknown[]; onMessage: (m: string[]) => void }) {
+function CarteVelo({ lundi, deps, onMessage, onPrecedente, onSuivante }: { lundi: string; deps: unknown[]; onMessage: (m: string[]) => void; onPrecedente: () => void; onSuivante: () => void }) {
   const [r] = useReglagesEntrainement()
   const meta = useLiveQuery(async () => (await lireMeta(lundi)) ?? null, [lundi, ...deps])
   const kj = useLiveQuery(() => chargesSemaine(lundi), [lundi, ...deps])
@@ -172,42 +159,63 @@ function CarteVelo({ lundi, deps, onMessage }: { lundi: string; deps: unknown[];
     }
   }
 
+  const semaine = `Sem. du ${depuisJour(lundi).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}`
   return (
     <Carte>
+      <div className="flex items-center justify-between gap-2">
+        <span className="flex items-center text-sm text-texte-2">
+          <button type="button" onClick={onPrecedente} className="pr-2 text-xl text-accent" aria-label="Semaine précédente">‹</button>
+          {semaine}
+          <button type="button" onClick={onSuivante} className="pl-2 text-xl text-accent" aria-label="Semaine suivante">›</button>
+        </span>
+        {(meta || kj.kjPrevus > 0) && (
+          <span className="flex items-center gap-2 text-sm">
+            <span><b className="text-lg">{formatNombre(Math.round(kj.kjRealises))}</b> / {formatNombre(Math.round(kj.kjPrevus))} kJ</span>
+            {!passee && <button type="button" onClick={generer} disabled={occupe} className="px-1 text-lg text-accent disabled:opacity-40" aria-label="Recalculer le vélo de la semaine">{occupe ? '…' : '↻'}</button>}
+          </span>
+        )}
+      </div>
       {meta || kj.kjPrevus > 0 ? (
         <>
-          <p className="flex items-baseline justify-between">
-            <span className="text-texte-2">🚴 Vélo<Aide titre="Budget kJ" texte={AIDES.budgetAuto} /></span>
-            <span><b className="text-xl">{Math.round(kj.kjRealises)}</b> / {Math.round(kj.kjPrevus)} kJ</span>
-          </p>
-          <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-surface-2">
+          <div className="mt-2 h-2 overflow-hidden rounded-full bg-surface-2">
             <div className="h-full rounded-full bg-accent" style={{ width: `${Math.min(100, kj.kjPrevus ? (kj.kjRealises / kj.kjPrevus) * 100 : 0)}%` }} />
           </div>
-          {meta && <p className="mt-2 text-xs text-texte-3">{meta.phase}{meta.allegee ? ' · semaine allégée' : ''} · {meta.raison}</p>}
+          {meta && <p className="mt-1.5 text-xs text-texte-3">{meta.phase}{meta.allegee ? ' · semaine allégée' : ''} · {meta.raison}<Aide titre="Budget kJ" texte={AIDES.budgetAuto} /></p>}
         </>
       ) : (
-        <p className="text-sm text-texte-2">
-          1. Ajoute tes séances Campus Coach et ton renfo avec le + de chaque jour.<br />
-          2. Génère ton vélo : il se place autour, sans deux jours durs d'affilée.<Aide titre="Programme vélo" texte={AIDES.programme} />
-        </p>
-      )}
-      {!passee && (
-        <Bouton variante={meta ? 'secondaire' : 'principal'} className="mt-3" disabled={occupe} onClick={generer}>
-          {occupe ? 'Calcul…' : meta ? '↻ Recalculer le vélo' : 'Générer mon vélo de la semaine'}
-        </Bouton>
+        <>
+          <p className="mt-2 text-sm text-texte-2">Ajoute tes séances de course et ton renfo, puis génère ton vélo : il se place autour, sans deux jours durs d'affilée.<Aide titre="Programme vélo" texte={AIDES.programme} /></p>
+          {!passee && <Bouton className="mt-3" disabled={occupe} onClick={generer}>{occupe ? 'Calcul…' : 'Générer mon vélo de la semaine'}</Bouton>}
+        </>
       )}
     </Carte>
   )
 }
 
-/** Uniquement si quelque chose coince (vélo + course). */
-function Alertes({ lundi, deps }: { lundi: string; deps: unknown[] }) {
+/** Un seul bandeau pour ce qui demande ton attention : alertes de la semaine et « semaine chargée ». */
+function AVoir({ lundi, deps, onMessage }: { lundi: string; deps: unknown[]; onMessage: (m: string[]) => void }) {
   const alertes = useLiveQuery(() => alertesCumul(lundi), [lundi, ...deps])
-  if (!alertes?.length) return null
+  const chargee = useLiveQuery(async () => (await lireSemaineChargee(lundi)) ?? null, [lundi, ...deps])
+  const aVenir = decalerJour(lundi, 6) >= aujourdhui()
+  if (alertes === undefined || chargee === undefined) return null
+  const n = alertes.length
+  if (!n && !chargee && !aVenir) return null
+  const resume = n ? `⚠️ ${n} point${n > 1 ? 's' : ''} à voir` : chargee ? '📚 Semaine chargée : le minimum' : 'Rien à signaler · semaine chargée ?'
   return (
-    <Carte>
-      <ul className="space-y-1.5 text-sm">{alertes.map((a, i) => <li key={i}>⚠️ {a}</li>)}</ul>
-    </Carte>
+    <Repliable titre="À voir cette semaine" resume={resume} libelle="Voir" className={n ? 'border-[#fb923c]/50' : ''}>
+      {n > 0 && <ul className="space-y-1.5 text-sm">{alertes.map((a, i) => <li key={i}>⚠️ {a}</li>)}</ul>}
+      {aVenir && (chargee ? (
+        <div className="mt-2 text-sm">
+          📚 <b>Semaine chargée</b> : on garde le minimum, sans rattraper.<Aide titre="Semaine chargée" texte={AIDES.semaineChargee} />
+          <button type="button" onClick={() => annulerSemaineChargee(lundi)} className="mt-1 block text-texte-3 underline">Annuler : remettre la semaine normale</button>
+        </div>
+      ) : (
+        <button type="button" onClick={async () => onMessage(await passerSemaineChargee(lundi))}
+          className="mt-2 w-full rounded-xl border border-dashed border-bordure py-2.5 text-sm font-semibold text-texte-2">
+          📚 Semaine chargée ? Garder le minimum
+        </button>
+      ))}
+    </Repliable>
   )
 }
 

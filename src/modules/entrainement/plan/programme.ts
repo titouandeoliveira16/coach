@@ -112,7 +112,7 @@ async function bilanPrecedent(lundi: string): Promise<BilanSemaine | undefined> 
 }
 
 /** Part du budget kJ réalisée, semaine par semaine, en remontant depuis la semaine d'avant `lundi` (6 au plus). */
-async function partsRealisees(lundi: string) {
+export async function partsRealisees(lundi: string) {
   const parts: (number | undefined)[] = []
   for (let i = 1; i <= 6; i++) {
     const l = decalerJour(lundi, -7 * i)
