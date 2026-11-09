@@ -36,6 +36,8 @@ export interface ReponsesArrivee {
   course: { nom: string; date: string }
   /** Route : course en ligne (FFC…) ou cyclosportive / longue distance */
   typeCourse?: 'en-ligne' | 'cyclo'
+  /** Durée prévue de la course (min) : route et marathon VTT */
+  dureeCourseMin?: number
 }
 
 export const SEMAINE_TYPE_DEPART: Role[] = ['libre', 'velo-dur', 'libre', 'velo-z2', 'libre', 'velo-long', 'libre']
@@ -99,6 +101,7 @@ export function preparerArrivee(r: ReponsesArrivee, jour: string, testsFaits: Re
       semaineType: r.semaineType, maxSemaineMin: r.maxSemaineMin, minLongMin: r.minLongMin, maxLongMin: r.maxLongMin,
       phases: saison.phases, testsCp: saison.testsCp, testsCourts: saison.testsCourts,
       competitions: [{ date: r.course.date, nom: r.course.nom.trim() || 'Course principale' }], discipline: r.discipline, modele: 'chauvin', ...(r.discipline === 'route' ? { typeCourse: r.typeCourse ?? 'cyclo' } : {}),
+      ...((r.discipline === 'route' || r.discipline === 'xcm') && r.dureeCourseMin ? { dureeCourseMin: r.dureeCourseMin } : {}),
     },
   }
   return { profil, entrainement, profilSportif: ps, saison, cpConnue: r.cpW !== undefined, fcConnue: r.fcMax !== undefined }
@@ -127,6 +130,7 @@ export async function reponsesExistantes() {
       semaineType: prog.semaineType.map((x) => (x === 'course' ? 'libre' : x)),
       maxSemaineMin: prog.maxSemaineMin, minLongMin: prog.minLongMin, maxLongMin: prog.maxLongMin,
       ...(prog.typeCourse ? { typeCourse: prog.typeCourse } : {}),
+      ...(prog.dureeCourseMin ? { dureeCourseMin: prog.dureeCourseMin } : {}),
     } : {}),
   }
   const texte = (v?: number) => (v ? String(v) : '')

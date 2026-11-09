@@ -63,6 +63,9 @@ export function ProgrammeAvance() {
         </select>
       </label>
       {(p.discipline ?? 'route') !== 'route' && <p className="pb-1 text-xs text-texte-3">Régénère ta semaine (onglet Semaine) pour appliquer le changement.</p>}
+      {((p.discipline ?? 'route') === 'route' || p.discipline === 'xcm') && (
+        <ChampNombre libelle="Durée prévue de ta course" unite="min" decimales={0} valeur={p.dureeCourseMin} onValider={(dureeCourseMin) => changer({ dureeCourseMin })} />
+      )}
       <ChampNombre libelle="Z2 de départ" unite="W" decimales={0} valeur={p.z2W} onValider={(z2W) => changer({ z2W })} />
       {z2 && (
         <p className="py-1 text-right text-xs text-texte-3">

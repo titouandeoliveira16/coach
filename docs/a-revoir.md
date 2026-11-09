@@ -55,6 +55,11 @@ Points décidés ou mis de côté, à reprendre au bon moment.
   réussie, un de moins en cas de dérive (choix d'entraîneur relus le 9/11). Avec une sortie longue de 2 h max, il plafonne
   à 2 × 30 : en parler s'il veut allonger sa sortie longue. Proposé, pas fait : blocs en fin de sortie (durabilité),
   une sortie sur 3-4 en phase spécifique, −5 W, dérive non comptée (Stevenson 2022).
+- Sortie longue qui s'allonge (9.4, 9/11/2026) : +10 min/sem. vers la durée visée par la course (en ligne = durée de
+  course 2-4 h ; cyclo et marathon = 75 % 3-5 h ; XCO 2 h 30 ; XCC 2 h ; choix d'entraîneur), jamais au-dessus de son max ;
+  affûtage ~55 % de la cible puis 90 min la semaine de course. Le surplus est pris sur les Z2 de semaine.
+  À regarder : la semaine de récupération après la course peut garder une longue sortie (budget à 60 % du précédent) ;
+  chiffres de Stevenson 2022 à revérifier sur l'article complet (seuls des résumés ont pu être lus).
 
 ## À reprendre ensuite (dans l'ordre proposé)
 1. Phases spécifique et affûtage : attendre les courses vélo 2027.

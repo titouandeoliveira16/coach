@@ -128,3 +128,20 @@ describe('sommeil', () => {
     expect(etatSommeil({ nuit: 6 }).nuitCourte).toBe(true)
   })
 })
+
+describe('sortie longue qui s’allonge vers la course', () => {
+  it('cible selon la course, +10 min par semaine, jamais sous le minimum ni au-dessus de la cible', async () => {
+    const { cibleSortieLongue, dureeLongueVisee } = await import('./programme')
+    expect(cibleSortieLongue('route', 'en-ligne', 150)).toBe(150)
+    expect(cibleSortieLongue('route', 'en-ligne', 300)).toBe(240)
+    expect(cibleSortieLongue('route', 'cyclo', 360)).toBe(270)
+    expect(cibleSortieLongue('route', 'cyclo')).toBe(225) // 5 h par défaut
+    expect(cibleSortieLongue('xcm', undefined, 200)).toBe(180)
+    expect(cibleSortieLongue('xco')).toBe(150)
+    expect(cibleSortieLongue('enduro')).toBeUndefined()
+    expect(dureeLongueVisee(180, 90)).toBe(90)
+    expect(dureeLongueVisee(180, 90, 110)).toBe(120)
+    expect(dureeLongueVisee(180, 90, 175)).toBe(180)
+    expect(dureeLongueVisee(120, 150, 100)).toBe(150)
+  })
+})
