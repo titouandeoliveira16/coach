@@ -4,9 +4,9 @@ import { enregistrer } from '../../../core/stockage'
 import { db } from '../../../core/db'
 import { Bouton } from '../../../core/ui/Bouton'
 import { Carte } from '../../../core/ui/Carte'
-import { ANCIENNETES, DISCIPLINES_PROPOSEES, HEURES_RECENTES, NOMS_DISCIPLINES, NOMS_PHASES, niveauDuProfil, niveauxCourses, verifierSemaineType } from '../../../metrics/programme'
+import { ANCIENNETES, DISCIPLINES_PROPOSEES, HEURES_RECENTES, NOMS_DISCIPLINES, NOMS_PHASES, epreuveDe, niveauDuProfil, niveauxCourses, verifierSemaineType } from '../../../metrics/programme'
 import { Defileur, EditeurSemaine } from '../reglages/EditeurSemaine'
-import { ListeCourses } from '../reglages/ListeCourses'
+import { champsParcours, ChampsParcours, ListeCourses, parcoursDe } from '../reglages/ListeCourses'
 import { AIDES } from '../aides'
 import { importerIntervals, relierIntervals } from '../import/intervals'
 import { enregistrerArrivee, preparerArrivee, reponsesExistantes, SEMAINE_TYPE_DEPART, semaineDepuisJours, type EtatArrivee, type ReponsesArrivee } from './donnees'
@@ -14,7 +14,6 @@ import { enregistrerArrivee, preparerArrivee, reponsesExistantes, SEMAINE_TYPE_D
 const HEURES = ['Moins de 4 h', '4 à 6 h', '6 à 8 h', '8 à 10 h', '10 à 12 h', 'Plus de 12 h']
 const MUSCU = ['Pas pour l’instant', '1 séance par semaine', '2 séances par semaine']
 const ARRETS: [string, number][] = [['Non', 0], ['2 à 3 semaines', 2], ['1 mois ou plus', 4]]
-const DUREES_COURSE: [string, number][] = [['1 h 30', 90], ['2 h', 120], ['2 h 30', 150], ['3 h', 180], ['4 h', 240], ['5 h', 300], ['6 h et plus', 360]]
 const LONGUES: [string, number, number][] = [['1 h à 1 h 30', 60, 90], ['1 h 30 à 2 h', 90, 120], ['2 h à 3 h', 120, 180], ['2 h 30 à 4 h', 150, 240]]
 const COULEURS_PHASES: Record<string, string> = {
   reprise: '#60a5fa', entretien: '#34d399', vo2: '#4ade80', seuil: '#facc15', 'seuil-tirage': '#4ade80', 'seuil-maintien': '#facc15', 'fin-prepa': '#c084fc', specifique: '#fb923c', affutage: '#f87171',
@@ -72,6 +71,7 @@ export function QuestionnaireArrivee({ montreSeulement = false }: { montreSeulem
     !!r.course?.date && r.course.date > jour,
   ]
   const apercu = etape === 3 && pret[3] ? preparerArrivee(reponses(), jour) : undefined
+  const contexteCourses = { discipline: r.discipline ?? 'route', typeCourse: r.typeCourse, dureeCourseMin: r.dureeCourseMin, cpW: nombre(textes.cp), poidsKg: nombre(textes.poids) } as const
 
   const titres = ['Faisons connaissance', 'Ton profil', 'Ta semaine', 'Ton objectif', 'Relie ta montre']
   return (
@@ -177,15 +177,14 @@ export function QuestionnaireArrivee({ montreSeulement = false }: { montreSeulem
                   <Choix options={[['Course en ligne (FFC, UFOLEP…)', 'en-ligne'], ['Cyclosportive, longue distance', 'cyclo']]} valeur={r.typeCourse ?? 'cyclo'} onChoisir={(typeCourse) => maj({ typeCourse })} />
                 </Question>
               )}
-              {(r.discipline === 'route' || r.discipline === 'xcm') && (
-                <Question libelle="Durée prévue de ta course" aide="Ta sortie longue s'allongera de 10 min par semaine vers une durée proche (sans dépasser ton maximum). Ne sais pas : 3 h en course en ligne, 5 h en cyclosportive ou marathon.">
-                  <Choix options={DUREES_COURSE.map(([nom, v]) => [nom, v])} valeur={r.dureeCourseMin} onChoisir={(dureeCourseMin) => maj({ dureeCourseMin })} />
-                </Question>
-              )}
+              <Question libelle="Distance et dénivelé" aide="Comme pour tes autres courses : l'appli en tire la durée de ta course, et ta sortie longue s'allongera de 10 min par semaine vers une durée proche (sans dépasser ton maximum).">
+                <ChampsParcours epreuve={epreuveDe(r.discipline ?? 'route', r.typeCourse)} valeur={parcoursDe(r.course)} contexte={contexteCourses}
+                  onChanger={(p) => maj({ course: { nom: r.course?.nom ?? '', date: r.course?.date ?? '', ...champsParcours(p) } })} />
+              </Question>
             </div>
           </Carte>
           <Carte titre="Autres courses (facultatif)">
-            <ListeCourses courses={r.autresCourses ?? []} min={jour} contexte={{ discipline: r.discipline ?? 'route', typeCourse: r.typeCourse, dureeCourseMin: r.dureeCourseMin, cpW: nombre(textes.cp), poidsKg: nombre(textes.poids) }}
+            <ListeCourses courses={r.autresCourses ?? []} min={jour} contexte={contexteCourses}
               effectifs={niveauxCourses([...(r.course?.date ? [{ ...r.course, niveau: 'A' as const }] : []), ...(r.autresCourses ?? [])], apercu?.saison.phases ?? [])}
               onChanger={(autresCourses) => maj({ autresCourses })} />
             <p className="mt-1.5 text-xs text-texte-3">Tu pourras en ajouter plus tard dans Réglages → Mon profil sportif.</p>

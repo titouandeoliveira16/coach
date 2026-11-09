@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react'
 import { useReglage } from '../../../core/reglages'
 import { ChampNombre } from '../../../core/ui/ChampNombre'
 import { Repliable } from '../../../core/ui/Repliable'
-import { ANCIENNETES, DISCIPLINES_PROPOSEES, HEURES_RECENTES, NOMS_DISCIPLINES, facteursVitesse, niveauDuProfil, niveauxCourses, type Discipline, type ReponsesNiveau } from '../../../metrics/programme'
+import { ANCIENNETES, DISCIPLINES_PROPOSEES, HEURES_RECENTES, NOMS_DISCIPLINES, dureeDeCourse, facteursVitesse, niveauDuProfil, niveauxCourses, type Discipline, type ReponsesNiveau } from '../../../metrics/programme'
 import { AIDES } from '../aides'
 import { programmeDe, useReglagesEntrainement } from '../reglagesEntrainement'
 import { useLiveQuery } from 'dexie-react-hooks'
@@ -110,7 +110,11 @@ export function SectionProfilSportif() {
         </Ligne>
       )}
       <Ligne {...props('objectifs')} libelle="Mes courses" valeur={objectifs.map((c) => `${niveaux.get(c.date) ?? ''} ${c.nom}`).join(', ')}>
-        <ListeCourses courses={prog.competitions} effectifs={niveaux} contexte={{ discipline, typeCourse: prog.typeCourse, dureeCourseMin: prog.dureeCourseMin, cpW: r.cpW, poidsKg: poidsDesTests(r), facteurs: { route: vitesse?.facteurs.route?.facteur, vtt: vitesse?.facteurs.vtt?.facteur } }} onChanger={(competitions) => changerProg({ competitions })} />
+        <ListeCourses courses={prog.competitions} effectifs={niveaux} contexte={{ discipline, typeCourse: prog.typeCourse, dureeCourseMin: prog.dureeCourseMin, cpW: r.cpW, poidsKg: poidsDesTests(r), facteurs: { route: vitesse?.facteurs.route?.facteur, vtt: vitesse?.facteurs.vtt?.facteur } }} onChanger={(competitions) => {
+          // La durée de la course principale règle aussi la sortie longue visée
+          const a = competitions.find((c) => c.niveau === 'A')
+          changerProg({ competitions, ...(a && (a.distanceKm || a.dureeMin) ? { dureeCourseMin: dureeDeCourse(a, { discipline, typeCourse: prog.typeCourse, cpW: r.cpW, poidsKg: poidsDesTests(r), facteurs: { route: vitesse?.facteurs.route?.facteur, vtt: vitesse?.facteurs.vtt?.facteur } }) } : {}) })
+        }} />
         <CalageVitesse refs={prog.coursesReference ?? []} auto={vitesse?.auto ?? 0} facteurs={vitesse?.facteurs ?? {}} onChanger={(coursesReference) => changerProg({ coursesReference })} />
         <p className="mt-1.5 text-xs text-texte-3">{AIDES.niveauxCourses}</p>
       </Ligne>
