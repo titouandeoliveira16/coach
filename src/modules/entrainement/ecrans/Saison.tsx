@@ -5,7 +5,7 @@ import { Aide } from '../../../core/ui/Aide'
 import { Carte } from '../../../core/ui/Carte'
 import { Repliable } from '../../../core/ui/Repliable'
 import { programmeDe, useReglagesEntrainement } from '../reglagesEntrainement'
-import { NOMS_PHASES, type SemaineSaison, type TypePhase } from '../../../metrics/programme'
+import { NOMS_PHASES, niveauxCourses, type SemaineSaison, type TypePhase } from '../../../metrics/programme'
 import { AIDES } from '../aides'
 import { saison } from '../plan/programme'
 
@@ -49,6 +49,7 @@ export function Saison() {
   const prochaine = s.phases.find((p) => p.debut > aujourdhui())
   const dansFrise = (d: string) => d >= debut && d <= s.fin
   const courses = prog.competitions.filter((c) => dansFrise(c.date) && c.date >= aujourdhui())
+  const niveaux = niveauxCourses(prog.competitions, prog.phases)
   const tests = prog.testsCp.filter((d) => dansFrise(d) && d >= aujourdhui())
 
   // Semaines regroupées par phase
@@ -95,7 +96,7 @@ export function Saison() {
         </div>
         {(courses.length > 0 || tests.length > 0) && (
           <p className="text-xs text-texte-3">
-            {courses.map((c) => `🏁 ${c.nom} le ${jm(c.date)}`).join(' · ')}
+            {courses.map((c) => `🏁 ${c.nom} (${niveaux.get(c.date) ?? 'B'}) le ${jm(c.date)}`).join(' · ')}
             {courses.length > 0 && tests.length > 0 ? ' · ' : ''}
             {tests.length > 0 && `🧪 tests CP ${tests.slice(0, 3).map(jm).join(', ')}`}
           </p>

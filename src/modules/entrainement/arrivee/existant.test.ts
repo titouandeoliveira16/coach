@@ -23,6 +23,6 @@ it('ses tests, sa CP et ses réglages restent ; le programme est recalculé ; la
     const e = (await db.reglages.get('entrainement'))!.valeur as { tests: unknown[]; wPrimeKj: number; programme: { competitions: unknown[] } }
     expect(e.tests).toEqual(tests)
     expect(e.wPrimeKj).toBe(18)
-    expect(e.programme.competitions).toEqual([{ date: '2027-05-16', nom: 'Manche XCO' }])
+    expect(e.programme.competitions).toEqual([{ date: '2027-05-16', nom: 'Manche XCO', niveau: 'A' }])
     expect(((await db.reglages.get('profil'))!.valeur as { objectif: string }).objectif).toBe('perte')
   })

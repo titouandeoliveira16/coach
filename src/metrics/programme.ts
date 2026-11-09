@@ -197,7 +197,7 @@ export const CADENCE_SPRINT = '100-120'
 /** Une séance vélo générée (stockée dans la séance prévue). */
 export interface SeanceVelo {
   /** vtt-terrain : sortie VTT technique ; vtt-speciales : spéciales d'enduro (sur le terrain, sans cible en watts) */
-  famille: Famille | 'z2' | 'z2-long' | 'test' | 'vtt-terrain' | 'vtt-speciales' | 'simulation-ligne' | 'cyclo-montees' | 'simulation-xco'
+  famille: Famille | 'z2' | 'z2-long' | 'test' | 'vtt-terrain' | 'vtt-speciales' | 'simulation-ligne' | 'cyclo-montees' | 'simulation-xco' | 'course'
   formatId?: string
   palier?: number
   allegee?: boolean
@@ -1146,6 +1146,8 @@ export interface Placement {
 
 export interface OptionsPlacement {
   competitions?: string[]
+  /** Jours sans séance dure après une course (2 : le lendemain seulement) */
+  delaiApresCourse?: number
   dateTest?: string
   /** Faut-il encore placer la séance d'intensité / la sortie longue (déjà faites sinon) ? */
   intensite?: boolean
@@ -1158,7 +1160,7 @@ export interface OptionsPlacement {
  * Place les séances vélo sur les jours libres :
  *  - jamais deux séances le même jour ;
  *  - la séance d'intensité jamais la veille ni le lendemain d'une séance dure (course) ;
- *  - ni dans les 2 jours avant une compétition, ni le lendemain.
+ *  - ni dans les 2 jours avant une compétition, ni avant la fin du délai qui la suit (le lendemain au moins).
  */
 export function placer(semaine: string[], roles: Role[], autres: Occupation[], indispos: Set<string>, aPartirDe: string, o: OptionsPlacement = {}): Placement {
   const competitions = o.competitions ?? []
@@ -1166,7 +1168,7 @@ export function placer(semaine: string[], roles: Role[], autres: Occupation[], i
   const libre = (d: string) => d >= aPartirDe && !indispos.has(d) && !pris.has(d)
   const dur = new Set(autres.filter((x) => x.dure).map((x) => x.date))
   const procheDur = (d: string) =>
-    dur.has(decaler(d, -1)) || dur.has(decaler(d, 1)) || competitions.some((c) => c === decaler(d, 1) || c === decaler(d, 2) || c === decaler(d, -1))
+    dur.has(decaler(d, -1)) || dur.has(decaler(d, 1)) || procheCourse(d, competitions, o.delaiApresCourse)
   const role = (d: string) => roles[semaine.indexOf(d)]
   const utilises = new Set<string>()
   const prendre = (d?: string) => (d && utilises.add(d), d)
@@ -1193,7 +1195,9 @@ export function placer(semaine: string[], roles: Role[], autres: Occupation[], i
   const z2: string[] = []
   const nZ2 = (o.nZ2 ?? roles.filter((r) => r === 'velo-z2').length) + (o.intensite !== false && !intensite ? 1 : 0) + (o.long !== false && !long ? 1 : 0)
   const candidats = [
-    ...semaine.filter((d) => role(d) === 'velo-z2' || role(d) === 'velo-dur'),
+    // Les jours Z2 d'abord, puis un jour « dur » resté libre (2e jour dur, ou semaine de course sans intensité)
+    ...semaine.filter((d) => role(d) === 'velo-z2'),
+    ...semaine.filter((d) => role(d) === 'velo-dur'),
     ...semaine.filter((d) => !['velo-dur', 'velo-z2'].includes(role(d))),
   ]
   for (const d of candidats) {
@@ -1378,7 +1382,7 @@ export function projeterSaison(o: {
   phases: Phase[]
   testsCp: string[]
   testsCourts?: string[]
-  competitions: { date: string; nom: string }[]
+  competitions: Competition[]
   histo: HistoIntensite[]
   budgetDepart: number
   plafond: number
@@ -1394,6 +1398,7 @@ export function projeterSaison(o: {
   const semaines: SemaineSaison[] = []
   let ref = o.budgetDepart
   let precedenteAllegee = false
+  const niveaux = niveauxCourses(o.competitions, triees)
   for (let l = o.lundi; l <= o.jusquA; l = decaler(l, 7)) {
     const fin = decaler(l, 6)
     const { phase, semaine } = phaseDe(l, triees)
@@ -1401,7 +1406,8 @@ export function projeterSaison(o: {
     const competition = o.competitions.find((c) => c.date >= l && c.date <= fin)
     const test = o.testsCp.find((d) => d >= l && d <= fin)
     const coef = coefficientPhase(l, triees, o.competitions)
-    const allegee = coef === undefined && (estSemaineAllegee(l, triees) || !!competition)
+    // Seule une course B allège la semaine (A : affûtage ; C : semaine normale)
+    const allegee = coef === undefined && (estSemaineAllegee(l, triees) || (!!competition && niveaux.get(competition.date) === 'B'))
     const plafond = o.plafondDe?.(l) ?? o.plafond
     if (semaines.length && !precedenteAllegee && coef === undefined) ref = ref * 1.075
     ref = Math.min(plafond, ref)
@@ -1462,4 +1468,102 @@ export function gardeFouCourse(o: { hausseCoursePct?: number; ratioPic?: number 
     raisons.push(`pic de charge totale (× ${o.ratioPic.toFixed(1).replace('.', ',')})`)
   }
   return pct ? { pct, raison: `−${Math.round(pct * 100)} % sur tes Z2 vélo : ${raisons.join(' et ')}` } : undefined
+}
+
+/**
+ * Courses : niveaux A / B / C (relecture du 9/11/2026). Le classement vient de Friel (convention d'entraîneur, sans
+ * étude) ; A = course principale (saison construite autour) ; B = importante : semaine allégée d'environ un tiers en
+ * gardant les watts et le nombre de sorties (Bosquet 2007, Wang 2023 : −41 à −60 % de volume sur les affûtages, même
+ * de 7 jours ou moins ; −35 % = choix prudent) ; C = pour s'entraîner : semaine normale. Dans tous les cas la course
+ * est la séance dure de la semaine (Metcalfe 2017, Sanders 2019 : les courses sont plus intenses que l'entraînement).
+ */
+export type NiveauCourse = 'A' | 'B' | 'C'
+export interface Competition { date: string; nom: string; niveau?: NiveauCourse }
+
+/** Écart entre deux courses B (jours) et zone avant la A où une course devient C : choix d'entraîneur. */
+export const ECART_B_JOURS = 21
+export const AVANT_A_JOURS = 10
+
+/**
+ * Niveau effectif de chaque course (par date) :
+ *  - sans niveau (anciennes données) : la plus lointaine est la A, les autres des B ;
+ *  - une course pendant la reprise, à moins de 10 jours de la A, ou à moins de 3 semaines d'une B : C.
+ */
+export function niveauxCourses(competitions: Competition[], phases: Phase[]): Map<string, NiveauCourse> {
+  const triees = [...competitions].sort((a, b) => a.date.localeCompare(b.date))
+  const aExplicite = triees.some((c) => c.niveau === 'A')
+  const brut = (c: Competition, i: number): NiveauCourse => c.niveau ?? (!aExplicite && i === triees.length - 1 ? 'A' : 'B')
+  const datesA = triees.filter((c, i) => brut(c, i) === 'A').map((c) => c.date)
+  const jours = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse(a)) / 86_400_000)
+  const res = new Map<string, NiveauCourse>()
+  let derniereB: string | undefined
+  triees.forEach((c, i) => {
+    let n = brut(c, i)
+    if (n !== 'A') {
+      const reprise = phases.length > 0 && phaseDe(c.date, phases).phase.type === 'reprise'
+      const procheA = datesA.some((a) => a > c.date && jours(c.date, a) < AVANT_A_JOURS)
+      const procheB = !!derniereB && jours(derniereB, c.date) < ECART_B_JOURS
+      if (n === 'B' && (reprise || procheA || procheB)) n = 'C'
+    }
+    if (n === 'B') derniereB = c.date
+    res.set(c.date, n)
+  })
+  return res
+}
+
+/** Durée estimée d'une course (min) selon ta discipline : sert au budget et au délai après la course. */
+export function dureeEstimeeCourse(discipline: Discipline, typeCourse?: 'en-ligne' | 'cyclo', dureeCourseMin?: number) {
+  if (discipline === 'xco') return 90
+  if (discipline === 'xcc') return 30
+  if (discipline === 'xcm') return dureeCourseMin ?? DUREE_COURSE_DEFAUT.xcm
+  if (discipline === 'route') return dureeCourseMin ?? DUREE_COURSE_DEFAUT[typeCourse === 'en-ligne' ? 'en-ligne' : 'cyclo']
+  return 60
+}
+
+/**
+ * Jours sans séance dure après une course (choix d'entraîneur ; Stanley 2013 : 48 h au moins ; Rodrigues 2016 : CK
+ * élevée jusqu'à 72 h après 130 km) : course courte (2 h ou moins) → séance dure au plus tôt à J+3 ; longue → J+4.
+ */
+export const delaiApresCourse = (dureeMin: number) => (dureeMin > 120 ? 4 : 3)
+
+/** Jour bloqué pour une séance dure : les 2 jours avant une course, ou avant la fin du délai qui suit. */
+export function procheCourse(d: string, competitions: string[], delai = 2) {
+  return competitions.some((c) => c === decaler(d, 1) || c === decaler(d, 2) || Array.from({ length: delai - 1 }, (_, k) => decaler(d, -(k + 1))).includes(c))
+}
+
+/** La course elle-même, dans le plan : séance dure (et sortie longue au-delà de 2 h). Puissance moyenne ~75 % de la CP (choix d'entraîneur). */
+export function construireCourse(nom: string, niveau: NiveauCourse, dureeMin: number, cpW: number): SeanceConstruite {
+  return {
+    titre: `🏁 ${nom} (course ${niveau})`, dureeMin, kj: Math.round((dureeMin * 60 * 0.75 * cpW) / 1000),
+    detail: `Ta course ${niveau} : c'est ta séance dure de la semaine${dureeMin > 120 ? ' et ta sortie longue' : ''}.\nÉchauffement de 15' progressif avec 5-6' à 90-100 % de ta CP, puis au moins 10' faciles avant le départ. Mange comme en course (60-90 g de glucides par heure au-delà d'1 h 30).`,
+    velo: { famille: 'course', pourquoi: niveau === 'B' ? 'Course B : semaine allégée d’un tiers, mêmes watts.' : niveau === 'C' ? 'Course C : semaine normale, la course remplace ta séance dure.' : 'Ta course principale.' },
+  }
+}
+
+/**
+ * Veille d'une course B (facultatif ; essais à 24 h seulement en sports collectifs, effet nul à léger : choix
+ * d'entraîneur) : 45 min de Z2 avec 3 × 1' à ~107 % de la CP (3' entre) et 2 sprints de 10", moins de 5 min au-dessus de la CP.
+ */
+export function construireOuverture(z2W: number, cpW: number): SeanceConstruite {
+  const w = arrondi5(cpW * 1.07)
+  const etapes: Etape[] = [
+    { debutSec: 0, dureeSec: 600, libelle: 'Mise en route progressive', w: arrondi5(z2W * 0.85) },
+    { debutSec: 600, dureeSec: 300, libelle: 'Z2 régulière', w: z2W, ...plage(z2W, 'z2') },
+  ]
+  let t = 900
+  for (let i = 0; i < 3; i++) {
+    etapes.push({ debutSec: t, dureeSec: 60, libelle: '1′ un peu au-dessus de ta CP', w }, { debutSec: t + 60, dureeSec: 180, libelle: 'Récup facile', w: arrondi5(z2W * 0.85) })
+    t += 240
+  }
+  for (let i = 0; i < 2; i++) {
+    etapes.push({ debutSec: t, dureeSec: 10, libelle: 'Sprint 10″ à fond' }, { debutSec: t + 10, dureeSec: 230, libelle: 'Récup facile', w: arrondi5(z2W * 0.85) })
+    t += 240
+  }
+  etapes.push({ debutSec: t, dureeSec: 2700 - t, libelle: 'Retour au calme', w: arrondi5(z2W * 0.8) })
+  const kj = Math.round(etapes.reduce((a, e) => a + e.dureeSec * (e.w ?? cpW * 1.5), 0) / 1000)
+  return {
+    titre: 'Veille de course (facultatif)', dureeMin: 45, kj,
+    detail: `Z2 à ${z2W} W · 3 × 1' à ${w} W (3' faciles entre) · 2 sprints de 10" · facultatif : si tu préfères, repos ou 30' faciles`,
+    velo: { famille: 'z2', formatId: 'ouverture', allegee: true, cibleW: z2W, etapes, pourquoi: 'Veille de ta course B : petit rappel d’intensité, moins de 5 min au-dessus de ta CP.' },
+  }
 }

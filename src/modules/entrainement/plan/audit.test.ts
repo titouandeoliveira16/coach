@@ -80,4 +80,32 @@ describe('audit du moteur sur une saison entière', () => {
     expect(jours.some((j) => j.join() === '2,5')).toBe(true)
     expect(jours.every((j) => j.every((d) => d === 2 || d === 5))).toBe(true)
   }, 60_000)
+
+  it('courses B et C : la course seule le jour J, pas d’autre séance dure, rien de dur juste après', async () => {
+    await db.delete(); await db.open()
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-11-09T07:00:00'))
+    const B = '2027-03-28', C = '2027-02-21'
+    await enregistrerArrivee({ ...base, typeCourse: 'en-ligne', dureeCourseMin: 90, autresCourses: [{ date: B, nom: 'Course B', niveau: 'B' }, { date: C, nom: 'Course C', niveau: 'C' }] })
+    for (const l of ['2027-02-15', '2027-02-22', '2027-03-22', '2027-03-29']) {
+      vi.setSystemTime(new Date(`${l}T06:00:00`))
+      await genererSemaineVelo(l)
+    }
+    vi.useRealTimers()
+    const velo = (await db.prevues.toArray()).filter((x) => x.sport === 'velo')
+    const du = (d: string) => velo.filter((x) => x.date === d)
+    for (const d of [B, C]) {
+      expect(du(d).map((x) => x.velo?.famille)).toEqual(['course'])
+      expect(du(d)[0].intensite).toBe('haute')
+      // Semaine de la course : la course est la seule séance dure ; J+1 et J+2 : rien de dur
+      const lundi = decalerJour(d, -6)
+      const dures = velo.filter((x) => x.date >= lundi && x.date <= decalerJour(d, 2) && x.intensite === 'haute' && x.velo?.famille !== 'test').map((x) => x.date)
+      expect(dures).toEqual([d])
+    }
+    expect(du(decalerJour(B, -1))[0]?.velo?.formatId).toBe('ouverture')
+    const metaB = (await db.reglages.get('semaine-2027-03-22'))?.valeur as { allegee: boolean; raison: string }
+    expect(metaB.allegee).toBe(true)
+    const metaC = (await db.reglages.get('semaine-2027-02-15'))?.valeur as { raison: string }
+    expect(metaC.raison).not.toMatch(/course/)
+  }, 60_000)
 })

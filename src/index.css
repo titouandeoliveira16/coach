@@ -61,9 +61,14 @@ input[type='date'] {
   appearance: none;
   min-width: 0;
   max-width: 100%;
+  /* Valeur centrée verticalement dans l'encadré (Safari la colle en haut avec ses propres marges) */
+  display: flex;
+  align-items: center;
 }
 input[type='date']::-webkit-date-and-time-value {
   text-align: left;
+  margin: 0;
+  line-height: normal;
 }
 
 /* Petits moments de victoire */
@@ -82,3 +87,4 @@ input[type='date']::-webkit-date-and-time-value {
   .apparition, .confetti { animation: none; }
   .confetti { display: none; }
 }
+
