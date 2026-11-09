@@ -75,8 +75,9 @@ Points décidés ou mis de côté, à reprendre au bon moment.
   rien d'autre le jour J ; pas de séance dure avant J+3 (course ≤ 2 h) ou J+4 (plus longue, repos à J+1). Choix d'entraîneur :
   3 semaines entre deux B, course à < 10 j de la A ou en reprise = C ; kJ de la course estimés à 75 % de la CP × durée
   estimée (durée de la course principale, XCO 1 h 30, XCC 30'). 9.8 : chaque course a sa discipline, sa distance et son
-  dénivelé ; durée estimée = plat à vitesse de course (en ligne 40, cyclo 29, XCO 20, XCC 22, XCM 19 km/h, cyclo/XCM ajustés
-  à la CP) + montées par la physique (Martin 1998, 80-95 % CP), corrigeable. Vitesses = choix d'entraîneur (aucune donnée
+  dénivelé ; durée estimée = plat à vitesse de course (9.8.1, vitesses d'amateurs : en ligne 35, cyclo 25, XCO 16, XCC 18,
+  XCM 15 km/h, cyclo/XCM ajustés à la CP) + montées par la physique (Martin 1998, 75-90 % CP), corrigeable. **À recaler sur
+  ses vrais temps de course quand il en aura (distance, D+, temps : fichier privé, rien dans le dépôt).** Vitesses = choix d'entraîneur (aucune donnée
   amateur publiée) : à recaler sur ses vraies courses. Études Quebrantahuesos 2026 / Faulkner 2025 pas lues (sites bloqués) ;
   openers la veille non prouvés (essais à 24 h seulement en sports collectifs).
 - **Titouan a encore « 2-3 trucs à travailler »** (9/11 au soir, pas encore dits) : les lui demander à la prochaine conversation.
