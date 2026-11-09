@@ -6,6 +6,7 @@ import { Repliable } from '../../../core/ui/Repliable'
 import { ANCIENNETES, DISCIPLINES_PROPOSEES, HEURES_RECENTES, NOMS_DISCIPLINES, niveauDuProfil, type Discipline, type ReponsesNiveau } from '../../../metrics/programme'
 import { AIDES } from '../aides'
 import { programmeDe, useReglagesEntrainement } from '../reglagesEntrainement'
+import { recalculerSemainesAVenir } from '../plan/programme'
 import type { ReglagesProgramme } from '../types'
 
 /**
@@ -55,7 +56,11 @@ export function SectionProfilSportif() {
   const [ps, modifierPs] = useReglage<ProfilSportif>('profil-sportif', DEFAUT)
   const [r, modifier] = useReglagesEntrainement()
   const prog = programmeDe(r.programme)
-  const changerProg = (c: Partial<ReglagesProgramme>) => modifier({ programme: { ...prog, ...c } })
+  // Durées changées : la semaine en cours (et les suivantes déjà calculées) suit tout de suite
+  const changerProg = async (c: Partial<ReglagesProgramme>) => {
+    await modifier({ programme: { ...prog, ...c } })
+    await recalculerSemainesAVenir()
+  }
   const [ligne, setLigne] = useState<string>()
   const [compet, setCompet] = useState({ date: '', nom: '' })
 

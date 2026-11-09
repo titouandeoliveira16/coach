@@ -31,8 +31,8 @@ describe('questionnaire d’arrivée', () => {
 describe('semaine type de départ', () => {
   it('1 dur, 1 longue, le reste en Z2 selon le nombre de jours', async () => {
     const { semaineDepuisJours } = await import('./donnees')
-    expect(semaineDepuisJours(3)).toEqual(['libre', 'velo-dur', 'libre', 'velo-z2', 'libre', 'velo-long', 'libre'])
-    expect(semaineDepuisJours(4)).toEqual(['libre', 'velo-dur', 'velo-z2', 'libre', 'velo-z2', 'velo-long', 'libre'])
+    expect(semaineDepuisJours(3)).toEqual(['libre', 'velo-dur', 'libre', 'velo-z2', 'libre', 'libre', 'velo-long'])
+    expect(semaineDepuisJours(4)).toEqual(['libre', 'velo-dur', 'libre', 'velo-z2', 'libre', 'velo-z2', 'velo-long'])
     expect(semaineDepuisJours(5).filter((r) => r === 'velo-z2').length).toBe(3)
     expect(semaineDepuisJours(6).filter((r) => r === 'velo-dur').length).toBe(1)
   })
