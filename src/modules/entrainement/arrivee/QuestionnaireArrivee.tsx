@@ -170,8 +170,8 @@ export function QuestionnaireArrivee({ montreSeulement = false }: { montreSeulem
         <>
           <Carte titre="Ta course principale">
             <div className="space-y-3">
-              <Question libelle="Nom"><input value={r.course?.nom ?? ''} placeholder="Ex. cyclosportive, manche XCO…" onChange={(e) => maj({ course: { date: r.course?.date ?? '', nom: e.target.value } })} className={champ} /></Question>
-              <Question libelle="Date"><input type="date" min={jour} value={r.course?.date ?? ''} onChange={(e) => maj({ course: { nom: r.course?.nom ?? '', date: e.target.value } })} className={champ} /></Question>
+              <Question libelle="Nom"><input value={r.course?.nom ?? ''} placeholder="Ex. cyclosportive, manche XCO…" onChange={(e) => maj({ course: { ...r.course, date: r.course?.date ?? '', nom: e.target.value } })} className={champ} /></Question>
+              <Question libelle="Date"><input type="date" min={jour} value={r.course?.date ?? ''} onChange={(e) => maj({ course: { ...r.course, nom: r.course?.nom ?? '', date: e.target.value } })} className={champ} /></Question>
               {r.discipline === 'route' && (
                 <Question libelle="Type de course" aide="On ne prépare pas une course FFC comme une cyclosportive : les 3 dernières semaines changent.">
                   <Choix options={[['Course en ligne (FFC, UFOLEP…)', 'en-ligne'], ['Cyclosportive, longue distance', 'cyclo']]} valeur={r.typeCourse ?? 'cyclo'} onChoisir={(typeCourse) => maj({ typeCourse })} />

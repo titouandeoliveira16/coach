@@ -9,16 +9,17 @@ const NOTES: Record<NiveauCourse, string> = {
   C: 'compte comme ta séance dure',
 }
 const puce = (actif: boolean) => `rounded-full border px-3 py-1.5 text-sm ${actif ? 'border-accent bg-accent text-fond font-semibold' : 'border-bordure text-texte-2'}`
-const champ = 'min-w-0 rounded-lg border border-bordure bg-surface-2 px-2 py-2 text-sm'
+const champ = 'min-w-0 rounded-lg border border-bordure bg-surface-2 px-2 py-2 text-sm text-texte'
 
 const heures = (min: number) => `${Math.floor(min / 60)} h ${String(min % 60).padStart(2, '0')}`.replace(/^0 h /, '').replace(/ h 00$/, ' h')
+const virgule = (v: number) => v.toLocaleString('fr-FR', { maximumFractionDigits: 1 })
 const nombre = (t: string) => { const v = Number(t.replace(',', '.')); return t.trim() && v > 0 ? v : undefined }
 type Contexte = { discipline: Discipline; typeCourse?: 'en-ligne' | 'cyclo'; dureeCourseMin?: number; cpW?: number; poidsKg?: number; facteurs?: Partial<Record<FamilleVitesse, number>> }
 
 export interface Parcours { distance: string; denivele: string; duree: string }
 export const parcoursVide: Parcours = { distance: '', denivele: '', duree: '' }
 export const parcoursDe = (c?: Partial<Competition>): Parcours => ({
-  distance: c?.distanceKm ? String(c.distanceKm) : '', denivele: c?.deniveleM ? String(c.deniveleM) : '', duree: c?.dureeMin ? String(c.dureeMin) : '',
+  distance: c?.distanceKm ? virgule(c.distanceKm) : '', denivele: c?.deniveleM ? String(c.deniveleM) : '', duree: c?.dureeMin ? String(c.dureeMin) : '',
 })
 /** Distance, dénivelé, durée donnée : ce que la course enregistre. */
 export const champsParcours = (p: Parcours): Pick<Competition, 'distanceKm' | 'deniveleM' | 'dureeMin'> => {
@@ -86,7 +87,7 @@ export function ListeCourses({ courses, effectifs, onChanger, min, contexte }: {
               <Pastille niveau={n} />
               <button type="button" className="min-w-0 flex-1 text-left" aria-label={`Modifier ${c.nom}`} onClick={() => editer(c)}>
                 <p className="truncate text-sm">{c.nom}</p>
-                <p className="text-xs text-texte-3">{[c.epreuve && NOMS_EPREUVES[c.epreuve], c.distanceKm && `${c.distanceKm} km`, c.deniveleM && `${c.deniveleM} m`, `≈ ${heures(dureeDeCourse(c, contexte))}`].filter(Boolean).join(' · ')}</p>
+                <p className="text-xs text-texte-3">{[c.epreuve && NOMS_EPREUVES[c.epreuve], c.distanceKm && `${virgule(c.distanceKm)} km`, c.deniveleM && `${c.deniveleM} m`, `≈ ${heures(dureeDeCourse(c, contexte))}`].filter(Boolean).join(' · ')}</p>
                 <p className="text-xs text-texte-3">{depuisJour(c.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: c.date.slice(0, 4) === new Date().getFullYear().toString() ? undefined : 'numeric' })} · {declasse ? 'trop proche d’une autre course ou en reprise : comptée comme une C' : NOTES[n]}</p>
               </button>
               {n !== 'A' && (
@@ -153,7 +154,7 @@ export function CalageVitesse({ refs, auto, facteurs, onChanger }: {
       <ul>
         {refs.map((x, i) => (
           <li key={i} className="flex items-center justify-between gap-2 py-1 text-xs text-texte-2">
-            <span>{NOMS_EPREUVES[x.epreuve]} · {x.distanceKm} km · {x.deniveleM} m · {heures(x.dureeMin)}</span>
+            <span>{NOMS_EPREUVES[x.epreuve]} · {virgule(x.distanceKm)} km · {x.deniveleM} m · {heures(x.dureeMin)}</span>
             <button type="button" className="px-2 text-texte-3" aria-label="Retirer cette course" onClick={() => onChanger(refs.filter((_, k) => k !== i))}>×</button>
           </li>
         ))}
