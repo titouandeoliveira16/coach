@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { budgetSemaine, deuxIntensitesPossibles, hausseBudget, heuresDe, jourDeuxiemeIntensite, niveauDe } from './programme'
+import { budgetSemaine, deuxIntensitesPossibles, hausseBudget, heuresDe, jourDeuxiemeIntensite, niveauDe, verifierSemaineType } from './programme'
 
 describe('profil sportif → moteur', () => {
   it('niveau lu depuis la réponse, intermédiaire par défaut', () => {
@@ -29,4 +29,20 @@ describe('profil sportif → moteur', () => {
     expect(jourDeuxiemeIntensite(['2026-11-11', '2026-11-12', '2026-11-14'], ['2026-11-10'])).toBe('2026-11-14')
     expect(jourDeuxiemeIntensite(['2026-11-11'], ['2026-11-10'])).toBeUndefined()
 })
+})
+
+describe('semaine type choisie par l’athlète', () => {
+  it('le 2e jour dur choisi passe en premier s’il respecte les 48 h', () => {
+    expect(jourDeuxiemeIntensite(['2026-11-11', '2026-11-13', '2026-11-14'], ['2026-11-10'], ['2026-11-13'])).toBe('2026-11-13')
+    expect(jourDeuxiemeIntensite(['2026-11-11', '2026-11-14'], ['2026-11-10'], ['2026-11-11'])).toBe('2026-11-14')
+  })
+  it('dit ce qui manque', () => {
+    expect(verifierSemaineType(['libre', 'velo-dur', 'velo-z2', 'renfo', 'velo-z2', 'libre', 'velo-z2']))
+      .toMatchObject({ ok: false, message: expect.stringMatching(/sortie longue/) })
+    expect(verifierSemaineType(['libre', 'velo-dur', 'velo-z2', 'renfo', 'velo-dur', 'libre', 'velo-long']))
+      .toEqual({ ok: true, message: '✓ 4 jours de vélo · 2 séances dures · 1 sortie longue' })
+    expect(verifierSemaineType(['velo-dur', 'velo-dur', 'velo-dur', 'libre', 'velo-z2', 'libre', 'velo-long']).ok).toBe(false)
+    expect(verifierSemaineType(['libre', 'velo-dur', 'velo-dur', 'libre', 'velo-z2', 'libre', 'velo-long']).message).toMatch(/se suivent/)
+    expect(verifierSemaineType(['libre', 'velo-dur', 'velo-z2', 'libre', 'velo-dur', 'libre', 'velo-long'], true).message).toMatch(/débutant/)
+  })
 })
