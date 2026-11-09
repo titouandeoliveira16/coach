@@ -12,6 +12,7 @@
  */
 import catalogue from '../../catalogue/seances.json'
 import { decaler } from './vfc'
+import { vitesseMontee } from './col'
 
 export type Famille = 'vo2-courts' | 'vo2-longs' | 'seuil-plus' | 'seuil' | 'seuil-variable' | 'sweet-spot' | 'tempo' | 'relances' | 'sprints'
 /** Discipline visée : route (programme d'origine) ou une discipline VTT (catalogue, profils de discipline). */
@@ -1146,8 +1147,8 @@ export interface Placement {
 
 export interface OptionsPlacement {
   competitions?: string[]
-  /** Jours sans séance dure après une course (2 : le lendemain seulement) */
-  delaiApresCourse?: number
+  /** Jours sans séance dure après une course (2 : le lendemain seulement), le même pour toutes ou par course */
+  delaiApresCourse?: number | ((course: string) => number)
   dateTest?: string
   /** Faut-il encore placer la séance d'intensité / la sortie longue (déjà faites sinon) ? */
   intensite?: boolean
@@ -1478,7 +1479,23 @@ export function gardeFouCourse(o: { hausseCoursePct?: number; ratioPic?: number 
  * est la séance dure de la semaine (Metcalfe 2017, Sanders 2019 : les courses sont plus intenses que l'entraînement).
  */
 export type NiveauCourse = 'A' | 'B' | 'C'
-export interface Competition { date: string; nom: string; niveau?: NiveauCourse }
+/** Type d'épreuve d'une course (sa discipline ; route : en ligne ou cyclosportive) */
+export type Epreuve = 'en-ligne' | 'cyclo' | 'xco' | 'xcc' | 'xcm'
+export const NOMS_EPREUVES: Record<Epreuve, string> = { 'en-ligne': 'Route en ligne', cyclo: 'Cyclo', xco: 'VTT XCO', xcc: 'VTT XCC', xcm: 'Marathon VTT' }
+export interface Competition {
+  date: string
+  nom: string
+  niveau?: NiveauCourse
+  epreuve?: Epreuve
+  distanceKm?: number
+  deniveleM?: number
+  /** Durée donnée par l'athlète (min) : remplace l'estimation */
+  dureeMin?: number
+}
+
+/** Épreuve par défaut d'une course sans précision : celle de ta discipline visée. */
+export const epreuveDe = (discipline: Discipline, typeCourse?: 'en-ligne' | 'cyclo'): Epreuve =>
+  discipline === 'route' ? (typeCourse === 'en-ligne' ? 'en-ligne' : 'cyclo') : discipline === 'xco' || discipline === 'xcc' || discipline === 'xcm' ? discipline : 'xco'
 
 /** Écart entre deux courses B (jours) et zone avant la A où une course devient C : choix d'entraîneur. */
 export const ECART_B_JOURS = 21
@@ -1527,8 +1544,9 @@ export function dureeEstimeeCourse(discipline: Discipline, typeCourse?: 'en-lign
 export const delaiApresCourse = (dureeMin: number) => (dureeMin > 120 ? 4 : 3)
 
 /** Jour bloqué pour une séance dure : les 2 jours avant une course, ou avant la fin du délai qui suit. */
-export function procheCourse(d: string, competitions: string[], delai = 2) {
-  return competitions.some((c) => c === decaler(d, 1) || c === decaler(d, 2) || Array.from({ length: delai - 1 }, (_, k) => decaler(d, -(k + 1))).includes(c))
+export function procheCourse(d: string, competitions: string[], delai: number | ((course: string) => number) = 2) {
+  const delaiDe = (c: string) => (typeof delai === 'number' ? delai : delai(c))
+  return competitions.some((c) => c === decaler(d, 1) || c === decaler(d, 2) || Array.from({ length: Math.max(0, delaiDe(c) - 1) }, (_, k) => decaler(d, -(k + 1))).includes(c))
 }
 
 /** La course elle-même, dans le plan : séance dure (et sortie longue au-delà de 2 h). Puissance moyenne ~75 % de la CP (choix d'entraîneur). */
@@ -1566,4 +1584,49 @@ export function construireOuverture(z2W: number, cpW: number): SeanceConstruite 
     detail: `Z2 à ${z2W} W · 3 × 1' à ${w} W (3' faciles entre) · 2 sprints de 10" · facultatif : si tu préfères, repos ou 30' faciles`,
     velo: { famille: 'z2', formatId: 'ouverture', allegee: true, cibleW: z2W, etapes, pourquoi: 'Veille de ta course B : petit rappel d’intensité, moins de 5 min au-dessus de ta CP.' },
   }
+}
+
+/**
+ * Estimation de la durée d'une course (relecture du 9/11/2026 ; aucune donnée publiée sur les vitesses des amateurs :
+ * vitesses et parts de CP = choix d'entraîneur ; montées par le modèle physique de Martin 1998, comme le calculateur
+ * de col) : durée = (distance − longueur des montées) / vitesse sur le plat + montées à k × CP (poids + 9 kg de vélo).
+ * Les descentes comptent au rythme du plat (ça compense à peu près). Estimation à ±20 % : l'athlète peut la corriger.
+ */
+export const VITESSES_EPREUVE: Record<Epreuve, { kmh: number; pente: number; partCp: number; crr: number; ajustee: boolean }> = {
+  'en-ligne': { kmh: 40, pente: 0.06, partCp: 0.95, crr: 0.004, ajustee: false },
+  cyclo: { kmh: 29, pente: 0.06, partCp: 0.8, crr: 0.004, ajustee: true },
+  xco: { kmh: 20, pente: 0.1, partCp: 0.95, crr: 0.012, ajustee: false },
+  xcc: { kmh: 22, pente: 0.1, partCp: 0.95, crr: 0.012, ajustee: false },
+  xcm: { kmh: 19, pente: 0.1, partCp: 0.8, crr: 0.012, ajustee: true },
+}
+
+/** Durée estimée d'une course (min, arrondie à 5, entre 20 min et 10 h). Sans CP ni poids : 3,5 W/kg et 70 kg. */
+export function estimerDureeCourse(epreuve: Epreuve, distanceKm: number, deniveleM = 0, athlete?: { cpW?: number; poidsKg?: number }) {
+  const v = VITESSES_EPREUVE[epreuve]
+  const poids = athlete?.poidsKg ?? 70
+  const wkg = Math.min(5.5, Math.max(2, (athlete?.cpW ?? 3.5 * poids) / poids))
+  const route = epreuve === 'en-ligne' || epreuve === 'cyclo'
+  // Plat : la vitesse suit à peu près la racine cubique de la puissance (air) ; en course en ligne, le peloton la fixe
+  const kmhPlat = v.ajustee ? v.kmh * (wkg / 3.5) ** (1 / 3) : v.kmh
+  const pente = Math.min(v.pente, deniveleM / 1000 / Math.max(distanceKm, 0.1))
+  const kmMontee = pente > 0 ? Math.min(distanceKm, deniveleM / 1000 / pente) : 0
+  const kmhMontee = pente > 0 ? vitesseMontee(v.partCp * wkg * poids, poids + 9, pente, v.crr) * 3.6 : kmhPlat
+  let heures = (distanceKm - kmMontee) / kmhPlat + kmMontee / kmhMontee
+  // Bornes : vitesse moyenne plausible (route 18-42 km/h, VTT 8-25 km/h)
+  const [vMin, vMax] = route ? [18, 42] : [8, 25]
+  heures = Math.min(distanceKm / vMin, Math.max(distanceKm / vMax, heures))
+  // Short track (XCC) : 20-30 min, d'où un plancher à 20 min (la relecture proposait 45 min, trop pour le XCC)
+  return Math.min(600, Math.max(20, Math.round((heures * 60) / 5) * 5))
+}
+
+/**
+ * Durée d'une course pour le plan : celle que tu as donnée, sinon estimée (distance + dénivelé), sinon la valeur par
+ * défaut de ta discipline (ou la durée de ta course principale).
+ */
+export function dureeDeCourse(c: Competition, o: { discipline: Discipline; typeCourse?: 'en-ligne' | 'cyclo'; dureeCourseMin?: number; cpW?: number; poidsKg?: number }) {
+  if (c.dureeMin) return c.dureeMin
+  const epreuve = c.epreuve ?? epreuveDe(o.discipline, o.typeCourse)
+  if (c.distanceKm) return estimerDureeCourse(epreuve, c.distanceKm, c.deniveleM, o)
+  if (c.epreuve) return dureeEstimeeCourse(epreuve === 'en-ligne' || epreuve === 'cyclo' ? 'route' : epreuve, epreuve === 'en-ligne' ? 'en-ligne' : 'cyclo', epreuveDe(o.discipline, o.typeCourse) === epreuve ? o.dureeCourseMin : undefined)
+  return dureeEstimeeCourse(o.discipline, o.typeCourse, o.dureeCourseMin)
 }

@@ -10,9 +10,9 @@ const RHO = 1.15
 const RENDEMENT = 0.975
 
 /** Vitesse (m/s) à puissance constante sur une pente (fraction : 0,08 = 8 %), masse totale cycliste + vélo (kg). */
-export function vitesseMontee(puissanceW: number, masseKg: number, pente: number) {
+export function vitesseMontee(puissanceW: number, masseKg: number, pente: number, crr = CRR) {
   const theta = Math.atan(pente)
-  const resistance = masseKg * G * (Math.sin(theta) + CRR * Math.cos(theta))
+  const resistance = masseKg * G * (Math.sin(theta) + crr * Math.cos(theta))
   const besoin = (v: number) => v * resistance + 0.5 * RHO * CDA * v ** 3
   let bas = 0
   let haut = 30

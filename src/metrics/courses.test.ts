@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { delaiApresCourse, niveauxCourses, procheCourse, construireOuverture, construireCourse } from './programme'
+import { delaiApresCourse, dureeDeCourse, estimerDureeCourse, niveauxCourses, procheCourse, construireOuverture, construireCourse } from './programme'
 
 const phases = [{ debut: '2026-11-09', type: 'reprise' as const }, { debut: '2026-12-07', type: 'seuil-tirage' as const }]
 
@@ -40,5 +40,22 @@ describe('courses A / B / C', () => {
   })
   it('la course compte ses kJ (≈ 75 % de la CP)', () => {
     expect(construireCourse('x', 'C', 120, 260).kj).toBe(1404)
+  })
+})
+
+describe('durée estimée d’une course', () => {
+  it('ordres de grandeur de la relecture (3,5 W/kg, 70 kg)', () => {
+    const a = { cpW: 245, poidsKg: 70 }
+    const h = (m: number) => m / 60
+    expect(h(estimerDureeCourse('cyclo', 170, 4500, a))).toBeGreaterThan(7.5)
+    expect(h(estimerDureeCourse('cyclo', 170, 4500, a))).toBeLessThan(10)
+    expect(h(estimerDureeCourse('en-ligne', 100, 1000, a))).toBeGreaterThan(2.5)
+    expect(h(estimerDureeCourse('en-ligne', 100, 1000, a))).toBeLessThan(3.5)
+    expect(h(estimerDureeCourse('xco', 25, 800, a))).toBeGreaterThan(1.2)
+    expect(h(estimerDureeCourse('xco', 25, 800, a))).toBeLessThan(2.2)
+  })
+  it('la durée donnée passe en premier ; un coureur plus fort met moins de temps en cyclo', () => {
+    expect(dureeDeCourse({ date: '2027-03-28', nom: 'x', epreuve: 'cyclo', distanceKm: 100, dureeMin: 200 }, { discipline: 'route' })).toBe(200)
+    expect(estimerDureeCourse('cyclo', 150, 2000, { cpW: 320, poidsKg: 70 })).toBeLessThan(estimerDureeCourse('cyclo', 150, 2000, { cpW: 200, poidsKg: 70 }))
   })
 })
