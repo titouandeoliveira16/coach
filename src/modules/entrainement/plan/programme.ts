@@ -4,12 +4,12 @@ import { enregistrer, supprimer } from '../../../core/stockage'
 import {
   ajustementZ2, BLOCS_SV1, signalSv1, sprintsDeLaPhase, SV1_DEPART_PCT, SV1_MAX_PCT, budgetDePhase, budgetSemaine, formatDe, gardeFouCourse, NOMS_FAMILLES, plafondsReprise, projeterSaison, choisirFormat, construireIntervalles, construireTest, construireZ2, coefficientPhase, estSemaineAllegee, etatProgression, palierRaccourci,
   construireCycloMontees, construireLongueCotes, construireSimulationLigne, construireSimulationXco, construireSpeciales, construireTerrain, cotesDe, minutesPourKj, NOMS_DISCIPLINES, NOMS_PHASES, deuxIntensitesPossibles, formatsPour, hausseBudget, heuresDe, jourDeuxiemeIntensite, niveauDuProfil, palierPossible, phaseDe, placer, retourDeCoupure, semainesChamboulees, type BilanSemaine, type Famille, type HistoIntensite,
-  type SeanceConstruite,
+  cibleSortieLongue, dureeLongueVisee, type SeanceConstruite, type TypePhase,
 } from '../../../metrics/programme'
 import { programmeDe } from '../reglagesEntrainement'
 import type { ProfilSportif } from '../reglages/ProfilSportif'
 import { chargeDe, chargerContexte, domaineDe, lundiDe } from '../seances/donnees'
-import type { ReglagesEntrainement, Seance, SeancePrevue } from '../types'
+import type { ReglagesEntrainement, ReglagesProgramme, Seance, SeancePrevue } from '../types'
 import { chargePrevue, joursDe } from './donnees'
 import { chargesHebdo } from '../analyse/donnees'
 import { hausseCharge } from '../../../metrics/planif'
@@ -106,6 +106,22 @@ export async function sv1Actuel(z2W: number) {
   const longues = new Set((await db.prevues.toArray()).filter((p) => p.velo?.blocsSv1 && p.velo.famille === 'z2-long').map((p) => p.id))
   const palier = seances.filter((s) => longues.has(s.prevueId!)).reduce((n, s) => Math.max(0, Math.min(BLOCS_SV1.length - 1, n + signal(s))), 0)
   return { w, palier }
+}
+
+/** 150 → « 2 h 30 », 120 → « 2 h » */
+const heuresMin = (min: number) => `${Math.floor(min / 60)} h${min % 60 ? ` ${String(min % 60).padStart(2, '0')}` : ''}`
+
+/**
+ * Sortie longue de la semaine qui commence `lundi` (relecture du 9/11/2026, choix d'entraîneur) : elle s'allonge de
+ * 10 min par semaine vers la durée visée par ta course (`cibleSortieLongue`), hors reprise, affûtage et récupération,
+ * sans dépasser ton maximum. Renvoie la cible et la durée minimale de la semaine (undefined : règle habituelle).
+ */
+export async function longueDeLaSemaine(lundi: string, prog: ReglagesProgramme, phase: TypePhase) {
+  const cible = cibleSortieLongue(prog.discipline ?? 'route', prog.typeCourse, prog.dureeCourseMin)
+  if (!cible || phase === 'reprise' || phase === 'affutage' || phase === 'recuperation') return { cible, visee: undefined }
+  const recentes = (await db.prevues.where('date').between(decalerJour(lundi, -21), lundi, true, false).toArray())
+    .filter((p) => p.velo?.famille === 'z2-long' && p.statut === 'faite').map((p) => p.dureeMin)
+  return { cible, visee: dureeLongueVisee(cible, prog.minLongMin, recentes.length ? Math.max(...recentes) : undefined) }
 }
 
 /** Bilan de la semaine précédente (si elle a été générée). */
@@ -319,7 +335,9 @@ export async function genererSemaineVelo(lundi: string) {
 
   // Budget kJ de la semaine
   const kjIntensite = (intensite?.kj ?? 0) + (intensite2?.s.kj ?? 0)
-  const nominal = kjIntensite + construireZ2(Math.min(60, cap.z2), z2W).kj + construireZ2(Math.min(100, cap.long), z2W).kj
+  // Sortie longue qui s'allonge vers la durée visée par ta course : le budget de référence suit
+  const longue = await longueDeLaSemaine(lundi, prog, phase.type)
+  const nominal = kjIntensite + construireZ2(Math.min(60, cap.z2), z2W).kj + construireZ2(Math.min(Math.max(100, longue.visee ?? 0), cap.long), z2W).kj
   const plafond = kjIntensite + roles.filter((x) => x === 'velo-z2').length * construireZ2(cap.z2, z2W).kj + construireZ2(cap.long, z2W).kj
   // Plafond aussi limité par tes heures : le haut de ta tranche, moins la course prévue cette semaine
   const minutesCourse = prevues.filter((p) => p.sport === 'course' && dansSemaine(p.date)).reduce((a, p) => a + p.dureeMin, 0)
@@ -371,9 +389,17 @@ export async function genererSemaineVelo(lundi: string) {
     // durée de la sortie longue (sinon plus le palier monte, plus la sortie raccourcit et les blocs ne rentrent plus)
     // Semaine allégée, affûtage, récupération : la sortie longue peut descendre sous son minimum habituel
     // Près de la course, sortie longue plafonnée en XCO (2 h 30) et en short track (2 h) ; au moins 3 h en cyclosportive
-    const capLong = phase.type === 'specifique' && discipline === 'xco' ? Math.min(cap.long, 150) : phase.type === 'specifique' && discipline === 'xcc' ? Math.min(cap.long, 120) : cap.long
-    const minLong = longueCourse === 'cyclo-montees' ? Math.min(capLong, 180) : Math.min(prog.minLongMin, capLong)
-    const min = borner(minLong * (coefPhase ?? (allegee ? 0.7 : 1)), capLong, minutesPourKj(kjLong, z2W))
+    // Affûtage : dernière vraie sortie longue à ~55 % de la durée visée, semaine de course 90 min au plus
+    // (relecture du 9/11/2026 : volume en baisse, intensité gardée, Bosquet 2007 ; durées = choix d'entraîneur)
+    const semaineCourse = prog.competitions.some((x) => x.date >= lundi && x.date <= semaine[6])
+    const affutage = phase.type === 'affutage' && longue.cible ? (semaineCourse ? Math.min(90, longue.cible) : arrondi5(longue.cible * 0.55)) : undefined
+    const capLong = Math.min(affutage ?? Infinity, phase.type === 'specifique' && discipline === 'xco' ? Math.min(cap.long, 150) : phase.type === 'specifique' && discipline === 'xcc' ? Math.min(cap.long, 120) : cap.long)
+    const minLong = Math.min(capLong, Math.max(longueCourse === 'cyclo-montees' ? 180 : prog.minLongMin, longue.visee ?? 0))
+    const min = affutage
+      ? borner(Math.min(affutage, capLong), capLong, minutesPourKj(kjLong, z2W))
+      : borner(minLong * (coefPhase ?? (allegee ? 0.7 : 1)), capLong, minutesPourKj(kjLong, z2W))
+    if (longue.visee && longue.cible && longue.cible > prog.maxLongMin && !allegee)
+      phrases.push(`Ta course demande une sortie longue d'environ ${heuresMin(longue.cible)} ; ton maximum est ${heuresMin(prog.maxLongMin)} : allonge-le dans Réglages (Ma semaine type) si tu peux.`)
     if (longueCourse === 'cyclo-montees' && capLong < 180) phrases.push('Ta sortie longue maximale est sous 3 h : la sortie avec montées en fin de sortie sera plus courte que conseillé pour une cyclosportive.')
     // Marathon VTT (hors reprise et semaine allégée) : sortie longue en côtes
     const courseProche = prog.competitions.some((x) => x.date >= lundi && x.date <= decalerJour(lundi, 20))
@@ -384,8 +410,9 @@ export async function genererSemaineVelo(lundi: string) {
         : cotes
       ? construireLongueCotes(min, z2W, r.cpW, cotesDe(nLongs, courseProche))
       : construireZ2(min, z2W, jourSprints || blocs ? undefined : sprints, { longue: true, sv1: blocs, espacementSec: sprints.espacementSec })])
-    const longue = aCreer[aCreer.length - 1][1]
-    if (longue.velo.blocsSv1) extraSv1 = Math.max(0, longue.kj - construireZ2(longue.dureeMin, z2W, undefined, { longue: true }).kj)
+    const sl = aCreer[aCreer.length - 1][1]
+    // Ce que la sortie longue prend au-delà de sa part (blocs au 1er seuil, allongement) est pris sur les Z2 de semaine
+    extraSv1 = Math.max(0, sl.kj - kjLong)
   }
   placement.z2.forEach((d) => {
     const min = borner(Math.min(45, cap.z2), Math.min(maxDuJour(d), cap.z2), minutesPourKj((reste * (1 - partLong) - extraSv1) / placement.z2.length, z2W))
@@ -623,7 +650,8 @@ export async function bilanDimanche(lundi: string) {
     kjIntensite = s.kj
   }
   const nZ2 = prog.semaineType.filter((x) => x === 'velo-z2').length
-  const nominal = kjIntensite + construireZ2(Math.min(60, cap.z2), z2W).kj + construireZ2(Math.min(100, cap.long), z2W).kj
+  const longue = await longueDeLaSemaine(suivant, prog, phase.type)
+  const nominal = kjIntensite + construireZ2(Math.min(60, cap.z2), z2W).kj + construireZ2(Math.min(Math.max(100, longue.visee ?? 0), cap.long), z2W).kj
   const plafond = kjIntensite + nZ2 * construireZ2(cap.z2, z2W).kj + construireZ2(cap.long, z2W).kj
   const meta = await lireMeta(lundi)
   const ps = (await db.reglages.get('profil-sportif'))?.valeur as Partial<ProfilSportif> | undefined
@@ -636,7 +664,7 @@ export async function bilanDimanche(lundi: string) {
     `budget vélo ${b.budget} kJ${ecart !== undefined ? ` (${ecart >= 0 ? '+' : ''}${ecart})` : ''}`,
     `intensité : ${intensite}`,
     `${NOMS_PHASES[phase.type]}, semaine ${nSemaine + 1}${allegee ? ' (allégée)' : ''}`,
-    `sortie longue jusqu'à ${cap.long} min`,
+    longue.visee ? `sortie longue d'au moins ${Math.min(longue.visee, cap.long)} min (vers ${Math.min(longue.cible!, cap.long)} min)` : `sortie longue jusqu'à ${cap.long} min`,
   ].join(' · ')
 
   // 3. Pourquoi

@@ -87,6 +87,8 @@ export interface ReglagesProgramme {
   modele?: 'chauvin'
   /** Route : course en ligne (FFC…) ou cyclosportive / longue distance (absent : cyclosportive) */
   typeCourse?: 'en-ligne' | 'cyclo'
+  /** Durée prévue de la course principale (min), route et marathon VTT : règle la durée visée de la sortie longue */
+  dureeCourseMin?: number
 }
 
 /** Objectif de travail cumulé (kJ) entre deux dates. */

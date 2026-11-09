@@ -15,6 +15,7 @@ const ARRETS: [string, number][] = [['Non', 0], ['2 à 3 semaines', 2], ['1 mois
 const ROLES: { role: Role; court: string }[] = [
   { role: 'libre', court: '—' }, { role: 'velo-z2', court: 'Z2' }, { role: 'velo-dur', court: 'dur' }, { role: 'velo-long', court: 'long' }, { role: 'renfo', court: 'renfo' },
 ]
+const DUREES_COURSE: [string, number][] = [['1 h 30', 90], ['2 h', 120], ['2 h 30', 150], ['3 h', 180], ['4 h', 240], ['5 h', 300], ['6 h et plus', 360]]
 const LONGUES: [string, number, number][] = [['1 h à 1 h 30', 60, 90], ['1 h 30 à 2 h', 90, 120], ['2 h à 3 h', 120, 180], ['2 h 30 à 4 h', 150, 240]]
 const COULEURS_PHASES: Record<string, string> = {
   reprise: '#60a5fa', entretien: '#34d399', vo2: '#4ade80', seuil: '#facc15', 'seuil-tirage': '#4ade80', 'seuil-maintien': '#facc15', 'fin-prepa': '#c084fc', specifique: '#fb923c', affutage: '#f87171',
@@ -188,6 +189,11 @@ export function QuestionnaireArrivee({ montreSeulement = false }: { montreSeulem
               {r.discipline === 'route' && (
                 <Question libelle="Type de course" aide="On ne prépare pas une course FFC comme une cyclosportive : les 3 dernières semaines changent.">
                   <Choix options={[['Course en ligne (FFC, UFOLEP…)', 'en-ligne'], ['Cyclosportive, longue distance', 'cyclo']]} valeur={r.typeCourse ?? 'cyclo'} onChoisir={(typeCourse) => maj({ typeCourse })} />
+                </Question>
+              )}
+              {(r.discipline === 'route' || r.discipline === 'xcm') && (
+                <Question libelle="Durée prévue de ta course" aide="Ta sortie longue s'allongera de 10 min par semaine vers une durée proche (sans dépasser ton maximum). Ne sais pas : 3 h en course en ligne, 5 h en cyclosportive ou marathon.">
+                  <Choix options={DUREES_COURSE.map(([nom, v]) => [nom, v])} valeur={r.dureeCourseMin} onChoisir={(dureeCourseMin) => maj({ dureeCourseMin })} />
                 </Question>
               )}
             </div>

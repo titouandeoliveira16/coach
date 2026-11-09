@@ -639,6 +639,36 @@ export const BLOCS_SV1: { reps: number; min: number }[] = [
   { reps: 2, min: 15 }, { reps: 3, min: 15 }, { reps: 2, min: 25 }, { reps: 3, min: 20 }, { reps: 2, min: 30 }, { reps: 3, min: 25 }, { reps: 2, min: 40 },
 ]
 export const PART_MAX_SV1 = 0.6
+
+/** Durées de course par défaut quand elle n'est pas donnée (min) : choix d'entraîneur. */
+export const DUREE_COURSE_DEFAUT = { 'en-ligne': 180, cyclo: 300, xcm: 300 } as const
+/** Allongement de la sortie longue d'une semaine sur l'autre (min) : même pas que la reprise (choix d'entraîneur). */
+export const PAS_LONGUE_MIN = 10
+
+/**
+ * Durée visée de la sortie longue en fin de prépa, selon la course (relecture du 9/11/2026 : aucune étude ne fixe la
+ * durée de la sortie longue par rapport à l'épreuve ; conseils publiés ≈ 70-80 % de la durée de course ; choix
+ * d'entraîneur) : route en ligne = durée de course (2 h à 4 h) ; cyclosportive et marathon VTT = 75 % (3 h à 5 h) ;
+ * XCO 2 h 30 ; XCC 2 h ; enduro / DH : pas de cible.
+ */
+export function cibleSortieLongue(discipline: Discipline, typeCourse?: 'en-ligne' | 'cyclo', dureeCourseMin?: number) {
+  const borne = (min: number, max: number, v: number) => Math.round(Math.min(max, Math.max(min, v)) / 5) * 5
+  if (discipline === 'route') return typeCourse === 'en-ligne'
+    ? borne(120, 240, dureeCourseMin ?? DUREE_COURSE_DEFAUT['en-ligne'])
+    : borne(180, 300, 0.75 * (dureeCourseMin ?? DUREE_COURSE_DEFAUT.cyclo))
+  if (discipline === 'xcm') return borne(180, 300, 0.75 * (dureeCourseMin ?? DUREE_COURSE_DEFAUT.xcm))
+  if (discipline === 'xco') return 150
+  if (discipline === 'xcc') return 120
+  return undefined
+}
+
+/**
+ * Durée minimale de la sortie longue cette semaine : la plus longue faite ces 3 dernières semaines (une semaine allégée
+ * ne fait pas reculer) + 10 min, sans dépasser la cible ni descendre sous ton minimum habituel.
+ */
+export function dureeLongueVisee(cible: number, minLong: number, plusLongueRecente?: number) {
+  return Math.min(Math.max(cible, minLong), Math.max(minLong, (plusLongueRecente ?? minLong - PAS_LONGUE_MIN) + PAS_LONGUE_MIN))
+}
 const RECUP_SV1_MIN = 5
 
 /**
