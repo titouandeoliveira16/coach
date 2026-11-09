@@ -1,5 +1,5 @@
 import type { Note } from '../../core/ui/ChoixNote'
-import type { Competition, Discipline, Phase, Role, SeanceVelo } from '../../metrics/programme'
+import type { Competition, CourseReference, Discipline, Phase, Role, SeanceVelo } from '../../metrics/programme'
 
 export type { Note }
 
@@ -81,6 +81,8 @@ export interface ReglagesProgramme {
   testsCourts?: string[]
   /** Courses : A principale (saison construite autour), B importante, C pour s'entraîner (sans niveau : la plus lointaine est la A) */
   competitions: Competition[]
+  /** Courses déjà faites données à la main pour caler ta vitesse en course (s'ajoutent aux courses prévues puis importées) */
+  coursesReference?: CourseReference[]
   /** Puissance Z2 de départ (W) : ajustée ensuite automatiquement */
   z2W?: number
   /** Saison calculée depuis la course (forme Chauvin) : reprise sans intensité ; absent = saison écrite à la main */

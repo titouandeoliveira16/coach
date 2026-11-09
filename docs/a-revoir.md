@@ -76,8 +76,12 @@ Points décidés ou mis de côté, à reprendre au bon moment.
   3 semaines entre deux B, course à < 10 j de la A ou en reprise = C ; kJ de la course estimés à 75 % de la CP × durée
   estimée (durée de la course principale, XCO 1 h 30, XCC 30'). 9.8 : chaque course a sa discipline, sa distance et son
   dénivelé ; durée estimée = plat à vitesse de course (9.8.1, vitesses d'amateurs : en ligne 35, cyclo 25, XCO 16, XCC 18,
-  XCM 15 km/h, cyclo/XCM ajustés à la CP) + montées par la physique (Martin 1998, 75-90 % CP), corrigeable. **À recaler sur
-  ses vrais temps de course quand il en aura (distance, D+, temps : fichier privé, rien dans le dépôt).** Vitesses = choix d'entraîneur (aucune donnée
+  XCM 15 km/h, cyclo/XCM ajustés à la CP) + montées par la physique (Martin 1998, 75-90 % CP), corrigeable. 9.9 : facteur de vitesse
+  personnel (route / VTT) = estimation ÷ temps réel, moyenne des 3 dernières courses (données à la main dans Mes courses →
+  « Caler sur une course faite », ou courses prévues puis importées), borné 0,6-1,8, appliqué à toute la course (essai « plat
+  seulement » abandonné : en peloton les bosses vont aussi bien plus vite que le modèle). **Titouan doit entrer sa cyclo
+  d'août dans « Caler sur une course faite ».** Limite : en grand col, le facteur d'une cyclo roulante peut rendre l'estimation
+  trop optimiste ; à revoir s'il prépare une course de montagne. Vitesses = choix d'entraîneur (aucune donnée
   amateur publiée) : à recaler sur ses vraies courses. Études Quebrantahuesos 2026 / Faulkner 2025 pas lues (sites bloqués) ;
   openers la veille non prouvés (essais à 24 h seulement en sports collectifs).
 - **Titouan a encore « 2-3 trucs à travailler »** (9/11 au soir, pas encore dits) : les lui demander à la prochaine conversation.

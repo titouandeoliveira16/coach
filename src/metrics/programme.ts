@@ -1602,7 +1602,13 @@ export const VITESSES_EPREUVE: Record<Epreuve, { kmh: number; pente: number; par
 }
 
 /** Durée estimée d'une course (min, arrondie à 5, entre 20 min et 10 h). Sans CP ni poids : 3,5 W/kg et 70 kg. */
-export function estimerDureeCourse(epreuve: Epreuve, distanceKm: number, deniveleM = 0, athlete?: { cpW?: number; poidsKg?: number }) {
+export function estimerDureeCourse(epreuve: Epreuve, distanceKm: number, deniveleM = 0, athlete?: { cpW?: number; poidsKg?: number }, facteur = 1) {
+  // Short track (XCC) : 20-30 min, d'où un plancher à 20 min (la relecture proposait 45 min, trop pour le XCC)
+  return Math.min(600, Math.max(20, Math.round(estimerDureeCourseBrute(epreuve, distanceKm, deniveleM, athlete, facteur) / 5) * 5))
+}
+
+/** Même calcul, sans arrondi ni plancher (min). */
+function estimerDureeCourseBrute(epreuve: Epreuve, distanceKm: number, deniveleM = 0, athlete?: { cpW?: number; poidsKg?: number }, facteur = 1) {
   const v = VITESSES_EPREUVE[epreuve]
   const poids = athlete?.poidsKg ?? 70
   const wkg = Math.min(5.5, Math.max(2, (athlete?.cpW ?? 3.5 * poids) / poids))
@@ -1617,18 +1623,45 @@ export function estimerDureeCourse(epreuve: Epreuve, distanceKm: number, denivel
   // Bornes : vitesse moyenne plausible (route 18-42 km/h, VTT 8-25 km/h)
   const [vMin, vMax] = route ? [18, 42] : [8, 25]
   heures = Math.min(distanceKm / vMin, Math.max(distanceKm / vMax, heures))
-  // Short track (XCC) : 20-30 min, d'où un plancher à 20 min (la relecture proposait 45 min, trop pour le XCC)
-  return Math.min(600, Math.max(20, Math.round((heures * 60) / 5) * 5))
+  // Facteur personnel (calé sur tes courses faites), sur toute la course : en peloton, plat et bosses vont plus vite
+  // que le modèle (abri, élan) ; il peut sortir des bornes de l'estimation de base (un peloton roule à plus de 42 km/h)
+  heures /= facteur
+  return heures * 60
 }
 
 /**
  * Durée d'une course pour le plan : celle que tu as donnée, sinon estimée (distance + dénivelé), sinon la valeur par
  * défaut de ta discipline (ou la durée de ta course principale).
  */
-export function dureeDeCourse(c: Competition, o: { discipline: Discipline; typeCourse?: 'en-ligne' | 'cyclo'; dureeCourseMin?: number; cpW?: number; poidsKg?: number }) {
+export function dureeDeCourse(c: Competition, o: { discipline: Discipline; typeCourse?: 'en-ligne' | 'cyclo'; dureeCourseMin?: number; cpW?: number; poidsKg?: number; facteurs?: Partial<Record<'route' | 'vtt', number>> }) {
   if (c.dureeMin) return c.dureeMin
   const epreuve = c.epreuve ?? epreuveDe(o.discipline, o.typeCourse)
-  if (c.distanceKm) return estimerDureeCourse(epreuve, c.distanceKm, c.deniveleM, o)
+  if (c.distanceKm) return estimerDureeCourse(epreuve, c.distanceKm, c.deniveleM, o, o.facteurs?.[epreuve === 'en-ligne' || epreuve === 'cyclo' ? 'route' : 'vtt'])
   if (c.epreuve) return dureeEstimeeCourse(epreuve === 'en-ligne' || epreuve === 'cyclo' ? 'route' : epreuve, epreuve === 'en-ligne' ? 'en-ligne' : 'cyclo', epreuveDe(o.discipline, o.typeCourse) === epreuve ? o.dureeCourseMin : undefined)
   return dureeEstimeeCourse(o.discipline, o.typeCourse, o.dureeCourseMin)
+}
+
+/** Course déjà faite qui sert à caler les vitesses (donnée à la main, ou course prévue puis importée). */
+export interface CourseReference { epreuve: Epreuve; distanceKm: number; deniveleM: number; dureeMin: number; date?: string }
+export type FamilleVitesse = 'route' | 'vtt'
+export const familleVitesse = (e: Epreuve): FamilleVitesse => (e === 'en-ligne' || e === 'cyclo' ? 'route' : 'vtt')
+/** Bornes du facteur et nombre de courses retenues (les plus récentes) : choix d'entraîneur. */
+export const FACTEUR_VITESSE_BORNES = [0.6, 1.8] as const
+export const COURSES_POUR_FACTEUR = 3
+
+/**
+ * Facteur de vitesse personnel par famille (route, VTT) : estimation de base ÷ temps réel, moyenne des 3 courses les
+ * plus récentes, borné entre 0,6 et 1,8. Il multiplie ta vitesse sur toute la course (peloton, abri, élan dans les bosses).
+ */
+export function facteursVitesse(refs: CourseReference[], athlete?: { cpW?: number; poidsKg?: number }): Partial<Record<FamilleVitesse, { facteur: number; n: number }>> {
+  const res: Partial<Record<FamilleVitesse, { facteur: number; n: number }>> = {}
+  for (const f of ['route', 'vtt'] as const) {
+    const liste = refs.filter((x) => familleVitesse(x.epreuve) === f && x.dureeMin > 0 && x.distanceKm > 0)
+      .sort((a, b) => (b.date ?? '').localeCompare(a.date ?? '')).slice(0, COURSES_POUR_FACTEUR)
+    if (!liste.length) continue
+    const ratios = liste.map((x) => estimerDureeCourseBrute(x.epreuve, x.distanceKm, x.deniveleM, athlete) / x.dureeMin)
+    const moyenne = ratios.reduce((a, b) => a + b, 0) / ratios.length
+    res[f] = { facteur: Math.round(Math.min(FACTEUR_VITESSE_BORNES[1], Math.max(FACTEUR_VITESSE_BORNES[0], moyenne)) * 100) / 100, n: liste.length }
+  }
+  return res
 }

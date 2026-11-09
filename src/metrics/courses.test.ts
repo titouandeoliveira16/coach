@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { delaiApresCourse, dureeDeCourse, estimerDureeCourse, niveauxCourses, procheCourse, construireOuverture, construireCourse } from './programme'
+import { delaiApresCourse, dureeDeCourse, estimerDureeCourse, facteursVitesse, niveauxCourses, procheCourse, construireOuverture, construireCourse } from './programme'
 
 const phases = [{ debut: '2026-11-09', type: 'reprise' as const }, { debut: '2026-12-07', type: 'seuil-tirage' as const }]
 
@@ -57,5 +57,23 @@ describe('durée estimée d’une course', () => {
   it('la durée donnée passe en premier ; un coureur plus fort met moins de temps en cyclo', () => {
     expect(dureeDeCourse({ date: '2027-03-28', nom: 'x', epreuve: 'cyclo', distanceKm: 100, dureeMin: 200 }, { discipline: 'route' })).toBe(200)
     expect(estimerDureeCourse('cyclo', 150, 2000, { cpW: 320, poidsKg: 70 })).toBeLessThan(estimerDureeCourse('cyclo', 150, 2000, { cpW: 200, poidsKg: 70 }))
+  })
+})
+
+describe('vitesse calée sur les courses faites', () => {
+  const a = { cpW: 245, poidsKg: 70 }
+  it('une cyclo en peloton bien plus rapide que l’estimation de base : facteur > 1, et la cyclo suivante plus courte', () => {
+    const f = facteursVitesse([{ epreuve: 'cyclo', distanceKm: 100, deniveleM: 600, dureeMin: 150 }], a)
+    expect(f.route!.facteur).toBeGreaterThan(1.3)
+    expect(f.vtt).toBeUndefined()
+    const base = dureeDeCourse({ date: 'x', nom: 'x', epreuve: 'cyclo', distanceKm: 100, deniveleM: 600 }, { discipline: 'route', ...a })
+    const calee = dureeDeCourse({ date: 'x', nom: 'x', epreuve: 'cyclo', distanceKm: 100, deniveleM: 600 }, { discipline: 'route', ...a, facteurs: { route: f.route!.facteur } })
+    expect(Math.abs(calee - 150)).toBeLessThanOrEqual(10)
+    expect(calee).toBeLessThan(base)
+  })
+  it('borné entre 0,6 et 1,8 ; les 3 courses les plus récentes', () => {
+    expect(facteursVitesse([{ epreuve: 'xco', distanceKm: 25, deniveleM: 800, dureeMin: 30 }], a).vtt!.facteur).toBe(1.8)
+    const refs = [1, 2, 3, 4].map((i) => ({ epreuve: 'en-ligne' as const, distanceKm: 90, deniveleM: 800, dureeMin: 150, date: `2026-0${i}-01` }))
+    expect(facteursVitesse(refs, a).route!.n).toBe(3)
   })
 })
