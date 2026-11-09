@@ -11,7 +11,9 @@ import { Repliable } from '../../../core/ui/Repliable'
 import { Feuille } from '../../../core/ui/Feuille'
 import { Puces } from '../../../core/ui/Puces'
 import { AIDES } from '../aides'
-import { CarteBilan } from '../plan/CarteBilan'
+import { CarteBilan, lundiDuBilan } from '../plan/CarteBilan'
+import { CarteBilanNutrition } from '../forme/CarteBilanNutrition'
+import { useNutritionActive } from '../reglages/ProfilSportif'
 import { BoutonsEnvoi } from '../plan/BoutonsEnvoi'
 import { Deroule } from '../plan/Deroule'
 import { FicheSeance } from '../plan/FicheSeance'
@@ -63,8 +65,14 @@ export function Semaine() {
 
   return (
     <div className="space-y-2.5">
-      {/* Semaine terminée (ou dimanche) : son bilan */}
-      {decalerJour(lundi, 6) <= auj && <CarteBilan lundi={lundi} deps={[prevues, seances]} />}
+      {/* Bilan de la semaine qui finit : le dimanche, puis en rappel le lundi (bilan nutrition encore modifiable).
+          Plus rien ensuite, ni sur les semaines passées */}
+      {lundi === lundiDe(auj) && lundiDuBilan(auj) && (
+        <>
+          <CarteBilan lundi={lundiDuBilan(auj)!} deps={[prevues, seances]} />
+          <CarteBilanNutrition lieu="semaine" />
+        </>
+      )}
 
       <CarteVelo lundi={lundi} deps={[prevues, seances]} onMessage={(m) => setMessage(m.length ? m : undefined)}
         onPrecedente={() => setLundi(decalerJour(lundi, -7))} onSuivante={() => setLundi(decalerJour(lundi, 7))} />
@@ -225,6 +233,7 @@ function DetailSeance({ p, jours, prevues, onFermer, onMessage }: {
 }) {
   const navigate = useNavigate()
   const [mode, setMode] = useState<'actions' | 'annuler' | 'confirmer' | 'modifier' | 'jour'>('actions')
+  const nutrition = useNutritionActive()
   const [raison, setRaison] = useState<Raison>()
   const [supprimerOk, setSupprimerOk] = useState(false)
   const possibles = useLiveQuery(() => (mode === 'annuler' ? joursPourDeplacer(p) : Promise.resolve([])), [mode, p.id, p.date])
@@ -243,7 +252,7 @@ function DetailSeance({ p, jours, prevues, onFermer, onMessage }: {
       {p.detail && <p className="mt-2 text-sm">{p.detail}</p>}
       {p.velo?.etapes && <Deroule etapes={p.velo.etapes} />}
       {p.velo?.etapes && p.statut === 'prevue' && p.date >= aujourdhui() && <BoutonsEnvoi p={p} etapes={p.velo.etapes} />}
-      <NutritionSeance p={p} />
+      {nutrition && <NutritionSeance p={p} />}
       {p.velo?.pourquoi && <p className="mt-2 text-xs text-texte-3">Pourquoi cette séance : {p.velo.pourquoi}</p>}
       {p.velo?.famille?.startsWith('vtt') && <p className="mt-1 text-xs text-texte-3">Sur le terrain : jugée sur ton effort perçu, pas sur la FC ni les watts.<Aide titre="Sortie VTT sur le terrain" texte={AIDES.vttTerrain} /></p>}
       {p.velo?.famille === 'sprints' && <p className="mt-1 text-xs text-texte-3">Sprints à fond : pas de watts à viser.<Aide titre="Sprints à fond" texte={AIDES.aFond} /></p>}

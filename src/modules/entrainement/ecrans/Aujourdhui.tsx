@@ -1,12 +1,11 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useRef, useState } from 'react'
-import { aujourdhui, decalerJour } from '../../../core/dates'
-import { CarteBilan } from '../plan/CarteBilan'
-import { lundiDe } from '../seances/donnees'
+import { aujourdhui } from '../../../core/dates'
+import { CarteBilan, lundiDuBilan } from '../plan/CarteBilan'
+import { lireReglagesNutrition } from '../forme/besoins'
 import { CarteAujourdhui } from '../forme/CarteAujourdhui'
 import { CarteNutrition } from '../forme/CarteNutrition'
-import { useReglage } from '../../../core/reglages'
-import type { ProfilSportif } from '../reglages/ProfilSportif'
+import { useNutritionActive } from '../reglages/ProfilSportif'
 import { CarteCalibration } from '../forme/CarteCalibration'
 import { CarteCpEnHausse } from '../forme/CarteCpEnHausse'
 import { CarteHorsPlan } from '../forme/CarteHorsPlan'
@@ -53,9 +52,11 @@ export function Aujourdhui() {
   const recentes = useLiveQuery(() => mesuresRecentes(1))
   const [edition, setEdition] = useState(false)
   const [nutriOuverte, setNutriOuverte] = useState(false)
-  // Nutrition en option (Réglages → Mon profil sportif)
-  const [ps] = useReglage<ProfilSportif>('profil-sportif', { sports: [], materiel: [] })
+  // Nutrition en option (Réglages → Mon profil sportif → Module nutrition)
+  const nutrition = useNutritionActive()
   const { ref, zone } = useZoneEcran(recentes !== undefined)
+  // Bilan du dimanche : une fois le bilan nutrition rempli, il quitte Aujourd'hui (rappel le lundi dans Semaine)
+  const bilanRempli = useLiveQuery(async () => !!(await lireReglagesNutrition()).bilans?.some((b) => b.date === aujourdhui()))
 
   if (!recentes) return null
   const jourSemaine = new Date(`${aujourdhui()}T12:00:00`).getDay()
@@ -79,10 +80,9 @@ export function Aujourdhui() {
         <CarteFcMax />
         <CarteCpEnHausse />
         <CarteHorsPlan />
-        {/* Le dimanche : bilan de la semaine ; le lundi : celui de la semaine écoulée */}
-        {jourSemaine === 0 && <CarteBilan lundi={lundiDe(aujourdhui())} />}
-        {jourSemaine === 1 && <CarteBilan lundi={decalerJour(lundiDe(aujourdhui()), -7)} />}
-        <CarteBilanNutrition />
+        {/* Le dimanche seulement : bilan de la semaine (le lundi, il est rappelé dans Semaine) */}
+        {jourSemaine === 0 && !(nutrition && bilanRempli) && <CarteBilan lundi={lundiDuBilan()!} />}
+        <CarteBilanNutrition lieu="aujourdhui" />
         <CarteCalibration />
       </BandeauAVoir>
       {complet && !edition ? (
@@ -90,7 +90,7 @@ export function Aujourdhui() {
       ) : (
         <SaisieMatin key={duJour?.modifieLe} existante={duJour} onTermine={() => setEdition(false)} />
       )}
-      {ps.nutrition !== false && <CarteNutrition ouverte={nutriOuverte} onBasculer={setNutriOuverte} />}
+      {nutrition && <CarteNutrition ouverte={nutriOuverte} onBasculer={setNutriOuverte} />}
       {/* En bas : pesée et imprévu sur une ligne */}
       <div className="flex shrink-0 gap-2">
         <CartePesee compact />

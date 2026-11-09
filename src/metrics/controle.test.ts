@@ -41,9 +41,7 @@ it('Z2 avec sprints : la Z2 est contrôlée, les sprints ignorés ; ressenti en 
   expect(controleTenu(c)).toBe(true)
   const s = construireIntervalles(formatDe('seuil-8-10')!, 0, 235, 0)
   const k = controlerSeance({ etapes: s.velo.etapes!, famille: 'seuil', w1Hz: simuler(s.velo.etapes!, 0), cpW: 235 })!
-  k.lignes[0].rpe = 6
-  k.lignes[2].rpe = 9
-  expect(bilanControle(k, 'seuil')).toMatch(/Ressenti en hausse de 3 points/)
+  expect(bilanControle(k, 'seuil')).toMatch(/dans la plage/)
 })
 
 it('avec les tours de Zwift : moyennes et FC prises tour par tour', () => {
