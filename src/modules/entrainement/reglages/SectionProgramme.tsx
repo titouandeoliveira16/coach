@@ -11,8 +11,8 @@ import { programmeDe, useReglagesEntrainement } from '../reglagesEntrainement'
 import type { ReglagesProgramme } from '../types'
 
 const JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
-const ROLES: Record<Role, string> = {
-  course: '🏃 Course', renfo: '🏋️ Renfo', 'velo-dur': '🚴 Vélo intensité', 'velo-z2': '🚴 Vélo Z2', 'velo-long': '🚴 Vélo long', libre: '— Libre / repos',
+const ROLES: Partial<Record<Role, string>> = {
+  renfo: '🏋️ Renfo', 'velo-dur': '🚴 Vélo intensité', 'velo-z2': '🚴 Vélo Z2', 'velo-long': '🚴 Vélo long', libre: '— Libre / repos',
 }
 const select = 'rounded-lg border border-bordure bg-surface-2 px-2 py-2 text-sm'
 
@@ -25,7 +25,7 @@ export function JoursVelo() {
   return (
     <div className="mt-3 border-t border-bordure pt-3">
       <p className="text-sm font-semibold">Ma semaine type<Aide titre="Programme vélo" texte={AIDES.programme} /></p>
-      <p className="mb-2 text-xs text-texte-3">Les jours où tu fais habituellement chaque chose : l'appli y place ton vélo, et met l'intensité loin de ta séance dure de course.</p>
+      <p className="mb-2 text-xs text-texte-3">Les jours où tu fais habituellement chaque chose : l'appli y place ton vélo.</p>
       {JOURS.map((j, i) => (
         <label key={j} className="flex items-center justify-between py-1">
           <span className="text-texte-2">{j}</span>

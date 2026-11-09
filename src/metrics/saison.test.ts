@@ -55,11 +55,15 @@ describe('séances des phases calculées (forme Chauvin)', () => {
 })
 
 describe('sortie longue au 1er seuil, sprints de la semaine', () => {
-  it('blocs au 1er seuil : au plus la moitié de la sortie, en haut de la Z2', async () => {
-    const { construireZ2, signalSv1, sprintsDeLaPhase } = await import('./programme')
+  it('blocs au 1er seuil : au plus 60 % de la sortie, en haut de la Z2, le plus haut palier qui rentre', async () => {
+    const { construireZ2, signalSv1, sprintsDeLaPhase, BLOCS_SV1 } = await import('./programme')
     const s = construireZ2(120, 150, undefined, { longue: true, sv1: { w: 180, reps: 6, min: 20 } })
     expect(s.velo.famille).toBe('z2-long')
-    expect(s.velo.blocsSv1! * 20).toBeLessThanOrEqual(60)
+    expect(s.velo.blocsSv1! * 20).toBeLessThanOrEqual(72)
+    // Palier 6 (2 × 40) demandé : 2 × 30 dans 2 h, 2 × 25 dans 1 h 30
+    const haut = { w: 180, ...BLOCS_SV1[6], repli: BLOCS_SV1.slice(0, 6).reverse() }
+    expect(construireZ2(120, 150, undefined, { longue: true, sv1: haut }).titre).toMatch(/2 × 30'/)
+    expect(construireZ2(90, 150, undefined, { longue: true, sv1: haut }).titre).toMatch(/2 × 25'/)
     const bloc = s.velo.etapes!.find((e) => e.repetition)!.repetition!.etapes[0]
     expect(bloc.wMax).toBeLessThanOrEqual(185)
     expect(s.dureeMin).toBe(120)

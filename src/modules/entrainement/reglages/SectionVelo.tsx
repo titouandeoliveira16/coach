@@ -12,7 +12,6 @@ import { poidsAu } from '../forme/pesees'
 import { recalculerApresTest } from '../plan/programme'
 
 const ROLES: { role: Role; nom: string; icone: string; court?: string }[] = [
-  { role: 'course', nom: 'Course', icone: '🏃' },
   { role: 'velo-dur', nom: 'Vélo intensité', icone: '🚴', court: 'dur' },
   { role: 'velo-z2', nom: 'Vélo Z2', icone: '🚴', court: 'Z2' },
   { role: 'velo-long', nom: 'Vélo long', icone: '🚴', court: 'long' },
@@ -68,7 +67,7 @@ export function SectionVelo() {
       <p className="mt-3 text-xs text-texte-3">Ma semaine type : l'appli place le vélo sur ces jours. Touche un jour pour le changer.</p>
       <div className="mt-1.5 grid grid-cols-7 gap-1 text-center">
         {prog.semaineType.map((role, i) => {
-          const x = ROLES.find((y) => y.role === role) ?? ROLES[5]
+          const x = ROLES.find((y) => y.role === role) ?? ROLES[ROLES.length - 1]
           return (
             <button key={i} type="button" onClick={() => setJour(i)}
               className={`rounded-lg py-1.5 text-[11px] ${role === 'velo-dur' ? 'bg-accent/20' : 'bg-surface-2'}`}>

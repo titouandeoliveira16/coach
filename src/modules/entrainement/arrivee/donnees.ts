@@ -1,5 +1,5 @@
 import { db } from '../../../core/db'
-import { aujourdhui, decalerJour } from '../../../core/dates'
+import { aujourdhui, decalerJour, ecartJours } from '../../../core/dates'
 import { enregistrer } from '../../../core/stockage'
 import { zonesDepuisCp } from '../../../core/zones'
 import { ageAu, type Profil } from '../../../core/profil'
@@ -66,7 +66,7 @@ function zonesFc(fcMax: number): { fcMin?: number; fcMax?: number }[] {
 }
 
 /** Tout ce que le questionnaire enregistre (pur : testé). */
-export function preparerArrivee(r: ReponsesArrivee, jour: string) {
+export function preparerArrivee(r: ReponsesArrivee, jour: string, testsFaits: ReglagesEntrainement['tests'] = []) {
   const age = ageAu(r.naissance, jour)
   const fcMax = r.fcMax ?? fcMaxTanaka(age)
   const cpW = r.cpW ?? cpProvisoire(r.poidsKg)
@@ -82,6 +82,12 @@ export function preparerArrivee(r: ReponsesArrivee, jour: string) {
     debut: jour, course: r.course.date, arretSemaines: r.arretSemaines, debutant: niveauDuProfil(ps) === 'debutant',
     jourLong: jourLong >= 0 ? jourLong : 6, jourDur: jourDur >= 0 ? jourDur : 1, aujourdhui: jour,
   })
+  // CP déjà testée ces 4 dernières semaines (compte déjà utilisé) : pas de nouveau test dans les 2 premières semaines
+  if (testsFaits.some((t) => t.type === 'cp' && t.date <= jour && ecartJours(t.date, jour) <= 28)) {
+    const garder = (d: string) => d >= decalerJour(jour, 14)
+    saison.testsCp = saison.testsCp.filter(garder)
+    saison.testsCourts = saison.testsCourts.filter(garder)
+  }
   const profil: Profil = { naissance: r.naissance, sexe: r.sexe, tailleCm: r.tailleCm, poidsKg: r.poidsKg, fcMax, objectif: 'maintien' }
   const entrainement: ReglagesEntrainement = {
     ...DEFAUT_ENTRAINEMENT,
@@ -98,15 +104,56 @@ export function preparerArrivee(r: ReponsesArrivee, jour: string) {
   return { profil, entrainement, profilSportif: ps, saison, cpConnue: r.cpW !== undefined, fcConnue: r.fcMax !== undefined }
 }
 
+/**
+ * Réponses déjà connues d'un compte qui a déjà servi (Titouan, passé au questionnaire en 11/2026) : profil, CP, FC max,
+ * profil sportif et programme. Undefined pour un compte neuf. Les jours de course de l'ancienne semaine type deviennent libres.
+ */
+export async function reponsesExistantes() {
+  const [p, e, ps] = await Promise.all(['profil', 'entrainement', 'profil-sportif'].map((id) => db.reglages.get(id)))
+  const profil = p?.valeur as Profil | undefined
+  const ent = e?.valeur as ReglagesEntrainement | undefined
+  const sportif = ps?.valeur as ProfilSportif | undefined
+  if (!profil && !ent && !sportif) return undefined
+  const prog = ent?.programme
+  const reponses: Partial<ReponsesArrivee> = {
+    ...(profil?.naissance ? { naissance: profil.naissance } : {}),
+    ...(profil?.sexe ? { sexe: profil.sexe } : {}),
+    ...(prog?.discipline ? { discipline: prog.discipline } : {}),
+    ...(sportif ? {
+      anciennete: sportif.anciennete, heuresRecentes: sportif.heuresRecentes, intervalles: sportif.intervalles, heuresSemaine: sportif.heuresSemaine,
+      pointsSensibles: sportif.pointsSensibles, muscu: sportif.muscu, nutrition: sportif.nutrition !== false,
+    } : {}),
+    ...(prog ? {
+      semaineType: prog.semaineType.map((x) => (x === 'course' ? 'libre' : x)),
+      maxSemaineMin: prog.maxSemaineMin, minLongMin: prog.minLongMin, maxLongMin: prog.maxLongMin,
+      ...(prog.typeCourse ? { typeCourse: prog.typeCourse } : {}),
+    } : {}),
+  }
+  const texte = (v?: number) => (v ? String(v) : '')
+  return {
+    reponses: Object.fromEntries(Object.entries(reponses).filter(([, v]) => v !== undefined)) as Partial<ReponsesArrivee>,
+    textes: { taille: texte(profil?.tailleCm), poids: texte(profil?.poidsKg), cp: texte(ent?.cpW), fc: texte(profil?.fcMax) },
+  }
+}
+
 /** Réglage « arrivee » : le questionnaire est fait (sinon il s'affiche à l'ouverture d'un compte créé avec un code). */
 export interface EtatArrivee { fait?: string; montre?: 'reliee' | 'plus-tard' }
 
 export async function enregistrerArrivee(r: ReponsesArrivee) {
   const jour = aujourdhui()
-  const p = preparerArrivee(r, jour)
-  await enregistrer(db.reglages, { id: 'profil', valeur: p.profil })
-  await enregistrer(db.reglages, { id: 'entrainement', valeur: p.entrainement })
-  await enregistrer(db.reglages, { id: 'profil-sportif', valeur: p.profilSportif })
+  const lire = async <T,>(id: string) => (await db.reglages.get(id))?.valeur as T | undefined
+  const [profilAvant, entAvant, psAvant] = [await lire<Profil>('profil'), await lire<ReglagesEntrainement>('entrainement'), await lire<ProfilSportif>('profil-sportif')]
+  const p = preparerArrivee(r, jour, entAvant?.tests)
+  // Compte déjà utilisé : les données acquises restent (tests CP, bornes de FC calées, W', réglages divers, objectif
+  // nutrition…) ; seuls le programme (saison calculée) et les réponses du questionnaire changent
+  await enregistrer(db.reglages, { id: 'profil', valeur: { ...profilAvant, ...p.profil, objectif: profilAvant?.objectif ?? p.profil.objectif } })
+  await enregistrer(db.reglages, {
+    id: 'entrainement',
+    valeur: entAvant
+      ? { ...entAvant, cpW: p.entrainement.cpW, zonesVelo: entAvant.zonesVelo?.length ? zonesDepuisCp(p.entrainement.cpW!, entAvant.zonesVelo) as ZoneVelo[] : p.entrainement.zonesVelo, programme: p.entrainement.programme }
+      : p.entrainement,
+  })
+  await enregistrer(db.reglages, { id: 'profil-sportif', valeur: { ...psAvant, ...p.profilSportif, materiel: psAvant?.materiel?.length ? psAvant.materiel : p.profilSportif.materiel } })
   await enregistrer(db.reglages, { id: 'arrivee', valeur: { fait: jour } satisfies EtatArrivee })
   // La semaine en cours (et la suivante si on est déjà en fin de semaine) est construite tout de suite
   const { genererSemaineVelo } = await import('../plan/programme')

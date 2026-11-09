@@ -37,3 +37,10 @@ describe('semaine type de départ', () => {
     expect(semaineDepuisJours(6).filter((r) => r === 'velo-dur').length).toBe(1)
   })
 })
+
+describe('compte déjà utilisé passé au questionnaire', () => {
+  it('CP testée il y a moins de 4 semaines : pas de nouveau test les 2 premières semaines', () => {
+    const p = preparerArrivee({ ...base, cpW: 250 }, '2026-11-09', [{ date: '2026-11-01', type: 'cp', valeur: 250 }])
+    expect(p.entrainement.programme.testsCp.every((d) => d >= '2026-11-23')).toBe(true)
+  })
+})

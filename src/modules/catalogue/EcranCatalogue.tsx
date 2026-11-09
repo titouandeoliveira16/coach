@@ -4,7 +4,8 @@ import { CATALOGUE, NOMS_DISCIPLINES, NOMS_FAMILLES, NOMS_SPORTS, PREUVES, sansA
 import { Fiche } from './Fiche'
 
 type Sport = SeanceCatalogue['sport']
-const SPORTS = Object.keys(NOMS_SPORTS) as Sport[]
+// L'appli ne planifie plus la course à pied (11/2026) : ses séances ne sont plus affichées
+const SPORTS = (Object.keys(NOMS_SPORTS) as Sport[]).filter((sp) => sp !== 'course')
 
 function Puce({ actif, onClick, children }: { actif: boolean; onClick: () => void; children: string }) {
   return (
@@ -22,7 +23,7 @@ export function EcranCatalogue() {
   const [preuve, setPreuve] = useState<string>()
   const [discipline, setDiscipline] = useState<string>()
   const [texte, setTexte] = useState('')
-  const S = CATALOGUE.seances
+  const S = CATALOGUE.seances.filter((s) => s.sport !== 'course')
   const familles = [...new Set(S.filter((s) => !sport || s.sport === sport).map((s) => s.famille))]
   const t = sansAccents(texte.trim())
   const liste = S.filter((s) => (!sport || s.sport === sport) && (!famille || s.famille === famille) && (!preuve || s.preuve.niveau === preuve)
@@ -61,7 +62,7 @@ export function EcranCatalogue() {
         ))}
         {!liste.length && <p className="py-8 text-center text-texte-3">Aucune séance pour ces filtres.</p>}
         <p className="pt-2 text-xs text-texte-3">
-          Vélo en % de la CP (≈ FTP), course en % de la VMA. Prouvé : essai contrôlé ou méta-analyse · plausible : données partielles ·
+          Vélo en % de la CP (≈ FTP). Prouvé : essai contrôlé ou méta-analyse · plausible : données partielles ·
           mitigé : études contradictoires · pratique : méthode d'entraîneur sans essai dédié.
         </p>
       </div>

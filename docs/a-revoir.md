@@ -48,15 +48,18 @@ Points décidés ou mis de côté, à reprendre au bon moment.
   des 7 dernières nuits = besoin estimé (protocole à faire relire, Kitamura 2016 cité de mémoire). Ensuite : son besoin
   comme repère dans le feu (et pour les élèves qui font le test) ; normale = max(30 j, 90 j) proposée, pas retenue.
 
-## Après le 5 km du 13/12/2026
-- Le vélo repasse en priorité : **4 séances vélo par semaine** au lieu de 3.
-- La course passe de **3 à 2 séances** par semaine.
-- À adapter alors : semaine type (Réglages → Vélo), budget kJ (le plafond actuel de ~2 300 kJ/sem. vient des 3 créneaux), placement des séances dures.
+## Vélo seul (9/11/2026)
+- Course à pied, plan Campus et 5 km du 13/12 retirés. Titouan remplit le questionnaire d'arrivée (objectif vélo, jours) :
+  sa saison est calculée comme celle des élèves ; ses tests CP et données restent.
+- 1er seuil de la sortie longue : paliers 2 × 15 → 2 × 40 (30 → 80 min), 60 % de la sortie au plus, un cran par sortie
+  réussie, un de moins en cas de dérive (choix d'entraîneur relus le 9/11). Avec une sortie longue de 2 h max, il plafonne
+  à 2 × 30 : en parler s'il veut allonger sa sortie longue. Proposé, pas fait : blocs en fin de sortie (durabilité),
+  une sortie sur 3-4 en phase spécifique, −5 W, dérive non comptée (Stevenson 2022).
 
 ## À reprendre ensuite (dans l'ordre proposé)
 1. Phases spécifique et affûtage : attendre les courses vélo 2027.
 2. Point après 4 semaines de données réelles (watts Z2, durées, seuils du feu). Relecture scientifique du 27/10 :
-   Z2 : ±5 W maintenant après 2 sorties de suite (fait le 27/10). Vérifier aussi le garde-fou course → vélo.
+   Z2 : ±5 W maintenant après 2 sorties de suite (fait le 27/10). (Garde-fou course → vélo : sans objet depuis le retrait de la course.)
 3. Nutrition « perte de gras légère » (depuis le 26/10/2026) : regarder la tendance du poids (visé ≈ −0,4 kg/sem.) et les performances ; ajuster le déficit si besoin.
    Depuis le 27/10 (v0.43.0) : glucides et déficit continus (3 g/kg + 1,5 × glucides brûlés ; déficit 500 − 0,6 × glucides
    brûlés, 100 à 500). Les jours de repos passent de 4 à 3 g/kg : vérifier la faim et les performances.

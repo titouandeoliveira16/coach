@@ -92,7 +92,8 @@ export async function z2Actuel() {
 /**
  * 1er seuil (blocs de la sortie longue) : 70 % de la CP au départ, puis ±5 W quand 2 sorties de suite donnent le même
  * signal (dérive de la FC d'un bloc à l'autre, effort ressenti : signalSv1), entre la Z2 + 5 W et 85 % de la CP.
- * Palier des blocs : un cran par sortie réussie (sans dérive), 4 crans (3 × 15 → 6 × 20).
+ * Palier des blocs (sorties longues seulement, 7 crans : 2 × 15 → 2 × 40) : sortie réussie (cœur stable, effort modéré)
+ * = un cran de plus, sortie neutre = même palier, dérive ou effort dur = un cran de moins (relecture du 9/11/2026).
  */
 export async function sv1Actuel(z2W: number) {
   const r = await lireReglages()
@@ -102,7 +103,8 @@ export async function sv1Actuel(z2W: number) {
   const signal = (s: (typeof seances)[number]) => signalSv1((s.controle?.lignes ?? []).filter((l) => l.libelle.startsWith('1er seuil') && l.fc).map((l) => l.fc!), s.rpe)
   const signaux = seances.filter((s) => s.date > dernierTest).map(signal).filter((x) => x !== 0)
   const w = Math.min(arrondi5(r.cpW * SV1_MAX_PCT), Math.max(z2W + 5, arrondi5(r.cpW * SV1_DEPART_PCT) + ajustementZ2(signaux)))
-  const palier = Math.min(BLOCS_SV1.length - 1, seances.filter((s) => signal(s) >= 0).length)
+  const longues = new Set((await db.prevues.toArray()).filter((p) => p.velo?.blocsSv1 && p.velo.famille === 'z2-long').map((p) => p.id))
+  const palier = seances.filter((s) => longues.has(s.prevueId!)).reduce((n, s) => Math.max(0, Math.min(BLOCS_SV1.length - 1, n + signal(s))), 0)
   return { w, palier }
 }
 
@@ -351,7 +353,9 @@ export async function genererSemaineVelo(lundi: string) {
     await enregistrer(db.reglages, { id: 'entrainement', valeur: { ...reglagesE, zonesVelo: nouvelles } })
   }
   const sansBlocs = (phase.type === 'reprise' && nSemaine === 0) || phase.type === 'affutage' || phase.type === 'recuperation' || coupure.semaineReprise === 0
-  const palierSv1 = BLOCS_SV1[allegee ? Math.max(0, sv1.palier - 1) : sv1.palier]
+  // Semaine allégée : un cran de moins. Si le palier ne rentre pas dans la sortie, le plus haut qui rentre
+  const nPalier = allegee ? Math.max(0, sv1.palier - 1) : sv1.palier
+  const palierSv1 = { ...BLOCS_SV1[nPalier], repli: BLOCS_SV1.slice(0, nPalier).reverse() }
   const sprints = sprintsDeLaPhase(phase.type, discipline, nLongs)
   const intensifs = [placement.intensite, intensite2?.date].filter((d): d is string => !!d)
   const lendemains = new Set(intensifs.map((d) => decalerJour(d, 1)))
@@ -359,16 +363,17 @@ export async function genererSemaineVelo(lundi: string) {
   const jourSprints = placement.z2.find((d) => d !== terrain && !lendemains.has(d)) ?? placement.z2.find((d) => d !== terrain)
   const rappel = niveau === 'confirme' || niveau === 'expert'
 
+  let extraSv1 = 0
   if (placement.long) {
     const kjLong = reste * partLong
     const blocs = !sansBlocs && !cotes && !longueCourse ? { w: sv1.w, ...palierSv1 } : undefined
-    // Les blocs au 1er seuil coûtent plus de kJ par minute : la sortie raccourcit d'autant (budget kJ)
-    const extra = blocs ? (blocs.reps * blocs.min * 60 * (blocs.w - z2W)) / 1000 : 0
+    // Les blocs au 1er seuil coûtent plus de kJ par minute : ce surplus est pris sur les Z2 de semaine, pas sur la
+    // durée de la sortie longue (sinon plus le palier monte, plus la sortie raccourcit et les blocs ne rentrent plus)
     // Semaine allégée, affûtage, récupération : la sortie longue peut descendre sous son minimum habituel
     // Près de la course, sortie longue plafonnée en XCO (2 h 30) et en short track (2 h) ; au moins 3 h en cyclosportive
     const capLong = phase.type === 'specifique' && discipline === 'xco' ? Math.min(cap.long, 150) : phase.type === 'specifique' && discipline === 'xcc' ? Math.min(cap.long, 120) : cap.long
     const minLong = longueCourse === 'cyclo-montees' ? Math.min(capLong, 180) : Math.min(prog.minLongMin, capLong)
-    const min = borner(minLong * (coefPhase ?? (allegee ? 0.7 : 1)), capLong, minutesPourKj(kjLong - extra, z2W))
+    const min = borner(minLong * (coefPhase ?? (allegee ? 0.7 : 1)), capLong, minutesPourKj(kjLong, z2W))
     if (longueCourse === 'cyclo-montees' && capLong < 180) phrases.push('Ta sortie longue maximale est sous 3 h : la sortie avec montées en fin de sortie sera plus courte que conseillé pour une cyclosportive.')
     // Marathon VTT (hors reprise et semaine allégée) : sortie longue en côtes
     const courseProche = prog.competitions.some((x) => x.date >= lundi && x.date <= decalerJour(lundi, 20))
@@ -379,9 +384,11 @@ export async function genererSemaineVelo(lundi: string) {
         : cotes
       ? construireLongueCotes(min, z2W, r.cpW, cotesDe(nLongs, courseProche))
       : construireZ2(min, z2W, jourSprints || blocs ? undefined : sprints, { longue: true, sv1: blocs, espacementSec: sprints.espacementSec })])
+    const longue = aCreer[aCreer.length - 1][1]
+    if (longue.velo.blocsSv1) extraSv1 = Math.max(0, longue.kj - construireZ2(longue.dureeMin, z2W, undefined, { longue: true }).kj)
   }
   placement.z2.forEach((d) => {
-    const min = borner(Math.min(45, cap.z2), Math.min(maxDuJour(d), cap.z2), minutesPourKj((reste * (1 - partLong)) / placement.z2.length, z2W))
+    const min = borner(Math.min(45, cap.z2), Math.min(maxDuJour(d), cap.z2), minutesPourKj((reste * (1 - partLong) - extraSv1) / placement.z2.length, z2W))
     // VTT : la première Z2 de la semaine se fait sur le terrain (technique), jamais la sortie longue
     if (d === terrain && discipline !== 'route') aCreer.push([d, construireTerrain(discipline, min, z2W)])
     else if (d === jourSprints) aCreer.push([d, construireZ2(min, z2W, sprints, { longue: false, espacementSec: sprints.espacementSec })])
