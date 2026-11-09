@@ -3,7 +3,7 @@ import { aujourdhui, decalerJour, ecartJours } from '../../../core/dates'
 import { enregistrer } from '../../../core/stockage'
 import { zonesDepuisCp } from '../../../core/zones'
 import { ageAu, type Profil } from '../../../core/profil'
-import type { Discipline, Role } from '../../../metrics/programme'
+import type { Competition, Discipline, Role } from '../../../metrics/programme'
 import { calculerSaison } from '../../../metrics/saison'
 import { niveauDuProfil } from '../../../metrics/programme'
 import type { ProfilSportif } from '../reglages/ProfilSportif'
@@ -34,6 +34,8 @@ export interface ReponsesArrivee {
   minLongMin: number
   maxLongMin: number
   course: { nom: string; date: string }
+  /** Autres courses (facultatif) : B importante, C pour s'entraîner */
+  autresCourses?: Competition[]
   /** Route : course en ligne (FFC…) ou cyclosportive / longue distance */
   typeCourse?: 'en-ligne' | 'cyclo'
   /** Durée prévue de la course (min) : route et marathon VTT */
@@ -100,7 +102,7 @@ export function preparerArrivee(r: ReponsesArrivee, jour: string, testsFaits: Re
     programme: {
       semaineType: r.semaineType, maxSemaineMin: r.maxSemaineMin, minLongMin: r.minLongMin, maxLongMin: r.maxLongMin,
       phases: saison.phases, testsCp: saison.testsCp, testsCourts: saison.testsCourts,
-      competitions: [{ date: r.course.date, nom: r.course.nom.trim() || 'Course principale' }], discipline: r.discipline, modele: 'chauvin', ...(r.discipline === 'route' ? { typeCourse: r.typeCourse ?? 'cyclo' } : {}),
+      competitions: [{ date: r.course.date, nom: r.course.nom.trim() || 'Course principale', niveau: 'A' }, ...(r.autresCourses ?? []).filter((x) => x.date !== r.course.date)], discipline: r.discipline, modele: 'chauvin', ...(r.discipline === 'route' ? { typeCourse: r.typeCourse ?? 'cyclo' } : {}),
       ...((r.discipline === 'route' || r.discipline === 'xcm') && r.dureeCourseMin ? { dureeCourseMin: r.dureeCourseMin } : {}),
     },
   }
@@ -131,6 +133,8 @@ export async function reponsesExistantes() {
       maxSemaineMin: prog.maxSemaineMin, minLongMin: prog.minLongMin, maxLongMin: prog.maxLongMin,
       ...(prog.typeCourse ? { typeCourse: prog.typeCourse } : {}),
       ...(prog.dureeCourseMin ? { dureeCourseMin: prog.dureeCourseMin } : {}),
+      // Courses B et C déjà notées : gardées (la A se redemande)
+      ...(prog.competitions.some((x) => x.niveau === 'B' || x.niveau === 'C') ? { autresCourses: prog.competitions.filter((x) => x.niveau === 'B' || x.niveau === 'C') } : {}),
     } : {}),
   }
   const texte = (v?: number) => (v ? String(v) : '')

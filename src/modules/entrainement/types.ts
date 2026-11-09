@@ -1,5 +1,5 @@
 import type { Note } from '../../core/ui/ChoixNote'
-import type { Discipline, Phase, Role, SeanceVelo } from '../../metrics/programme'
+import type { Competition, Discipline, Phase, Role, SeanceVelo } from '../../metrics/programme'
 
 export type { Note }
 
@@ -79,8 +79,8 @@ export interface ReglagesProgramme {
   testsCp: string[]
   /** Parmi eux, les tests courts (3' + 12') ; les autres sont complets (12-7-3) */
   testsCourts?: string[]
-  /** Compétitions (course à pied ou vélo) : semaine allégée, pas d'intensité vélo juste avant */
-  competitions: { date: string; nom: string }[]
+  /** Courses : A principale (saison construite autour), B importante, C pour s'entraîner (sans niveau : la plus lointaine est la A) */
+  competitions: Competition[]
   /** Puissance Z2 de départ (W) : ajustée ensuite automatiquement */
   z2W?: number
   /** Saison calculée depuis la course (forme Chauvin) : reprise sans intensité ; absent = saison écrite à la main */

@@ -4,8 +4,9 @@ import { enregistrer } from '../../../core/stockage'
 import { db } from '../../../core/db'
 import { Bouton } from '../../../core/ui/Bouton'
 import { Carte } from '../../../core/ui/Carte'
-import { ANCIENNETES, DISCIPLINES_PROPOSEES, HEURES_RECENTES, NOMS_DISCIPLINES, NOMS_PHASES, niveauDuProfil, verifierSemaineType } from '../../../metrics/programme'
+import { ANCIENNETES, DISCIPLINES_PROPOSEES, HEURES_RECENTES, NOMS_DISCIPLINES, NOMS_PHASES, niveauDuProfil, niveauxCourses, verifierSemaineType } from '../../../metrics/programme'
 import { Defileur, EditeurSemaine } from '../reglages/EditeurSemaine'
+import { ListeCourses } from '../reglages/ListeCourses'
 import { AIDES } from '../aides'
 import { importerIntervals, relierIntervals } from '../import/intervals'
 import { enregistrerArrivee, preparerArrivee, reponsesExistantes, SEMAINE_TYPE_DEPART, semaineDepuisJours, type EtatArrivee, type ReponsesArrivee } from './donnees'
@@ -183,13 +184,19 @@ export function QuestionnaireArrivee({ montreSeulement = false }: { montreSeulem
               )}
             </div>
           </Carte>
+          <Carte titre="Autres courses (facultatif)">
+            <ListeCourses courses={r.autresCourses ?? []} min={jour}
+              effectifs={niveauxCourses([...(r.course?.date ? [{ ...r.course, niveau: 'A' as const }] : []), ...(r.autresCourses ?? [])], apercu?.saison.phases ?? [])}
+              onChanger={(autresCourses) => maj({ autresCourses })} />
+            <p className="mt-1.5 text-xs text-texte-3">Tu pourras en ajouter plus tard dans Réglages → Mon profil sportif.</p>
+          </Carte>
           {apercu && (
             <Carte titre="Ta saison, calculée pour toi" className="border-accent!">
               <div className="flex h-7 overflow-hidden rounded-lg text-[10px] font-bold text-fond">
                 {apercu.saison.phases.filter((p) => p.type !== 'recuperation' && p.type !== 'entretien' || p.debut < r.course!.date).map((p, i, l) => {
                   const fin = l[i + 1]?.debut ?? r.course!.date
                   const n = Math.max(1, Math.round((Date.parse(fin) - Date.parse(p.debut)) / (7 * 86_400_000)))
-                  return <div key={p.debut} style={{ flex: n, background: COULEURS_PHASES[p.type] ?? '#9ca3af' }} className="flex items-center justify-center overflow-hidden whitespace-nowrap">{n >= 2 ? COURTS[p.type] : ''}</div>
+                  return <div key={p.debut} style={{ flex: n, background: COULEURS_PHASES[p.type] ?? '#9ca3af' }} className="flex items-center justify-center overflow-hidden whitespace-nowrap">{/* Le nom seulement s'il tient dans le segment (la liste dessous les donne tous) */ n >= Math.max(2, Math.ceil((COURTS[p.type]?.length ?? 0) / 2.5)) ? COURTS[p.type] : ''}</div>
                 })}
               </div>
               <ul className="mt-2 space-y-0.5 text-sm text-texte-2">

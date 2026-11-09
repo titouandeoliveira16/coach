@@ -1,12 +1,12 @@
 import { useState, type ReactNode } from 'react'
-import { jourCourt } from '../../../core/dates'
 import { useReglage } from '../../../core/reglages'
 import { ChampNombre } from '../../../core/ui/ChampNombre'
 import { Repliable } from '../../../core/ui/Repliable'
-import { ANCIENNETES, DISCIPLINES_PROPOSEES, HEURES_RECENTES, NOMS_DISCIPLINES, niveauDuProfil, type Discipline, type ReponsesNiveau } from '../../../metrics/programme'
+import { ANCIENNETES, DISCIPLINES_PROPOSEES, HEURES_RECENTES, NOMS_DISCIPLINES, niveauDuProfil, niveauxCourses, type Discipline, type ReponsesNiveau } from '../../../metrics/programme'
 import { AIDES } from '../aides'
 import { programmeDe, useReglagesEntrainement } from '../reglagesEntrainement'
 import { recalculerSemainesAVenir } from '../plan/programme'
+import { ListeCourses } from './ListeCourses'
 import type { ReglagesProgramme } from '../types'
 
 /**
@@ -62,11 +62,11 @@ export function SectionProfilSportif() {
     await recalculerSemainesAVenir()
   }
   const [ligne, setLigne] = useState<string>()
-  const [compet, setCompet] = useState({ date: '', nom: '' })
 
   const objectifs = [...prog.competitions].sort((a, b) => a.date.localeCompare(b.date))
+  const niveaux = niveauxCourses(prog.competitions, prog.phases)
   const discipline = prog.discipline ?? 'route'
-  const resume = [NOMS_DISCIPLINES[discipline], objectifs[objectifs.length - 1]?.nom, ps.heuresSemaine && `${ps.heuresSemaine}/sem.`].filter(Boolean).join(' · ')
+  const resume = [NOMS_DISCIPLINES[discipline], objectifs.find((c) => niveaux.get(c.date) === 'A')?.nom, ps.heuresSemaine && `${ps.heuresSemaine}/sem.`].filter(Boolean).join(' · ')
 
   const props = (id: string) => ({ ouvert: ligne === id, onBasculer: () => setLigne(ligne === id ? undefined : id) })
   const choixMultiple = (liste: string[], valeurs: string[], onChanger: (v: string[]) => void) => (
@@ -103,23 +103,9 @@ export function SectionProfilSportif() {
           <p className="mt-1.5 text-xs text-texte-3">{AIDES.typeCourse}</p>
         </Ligne>
       )}
-      <Ligne {...props('objectifs')} libelle="Objectifs (courses)" valeur={objectifs.map((c) => c.nom).join(', ')}>
-        <ul className="space-y-1 text-sm">
-          {objectifs.map((c) => (
-            <li key={c.date + c.nom} className="flex items-center justify-between gap-2">
-              <span>{c.nom} <span className="text-texte-3">· {jourCourt(c.date)}</span></span>
-              <button type="button" className="px-2 text-texte-3" aria-label={`Retirer ${c.nom}`}
-                onClick={() => changerProg({ competitions: prog.competitions.filter((x) => x !== c) })}>×</button>
-            </li>
-          ))}
-        </ul>
-        <div className="mt-2 flex gap-2">
-          <input type="date" value={compet.date} onChange={(e) => setCompet({ ...compet, date: e.target.value })} className="rounded-lg border border-bordure bg-surface-2 px-2 py-2 text-sm" />
-          <input value={compet.nom} onChange={(e) => setCompet({ ...compet, nom: e.target.value })} placeholder="Nom (ex. Étape du Tour)" className="min-w-0 flex-1 rounded-lg border border-bordure bg-surface-2 px-2 py-2 text-sm" />
-          <button type="button" disabled={!compet.date || !compet.nom.trim()} className="rounded-lg bg-accent px-3 font-bold text-fond disabled:opacity-40"
-            onClick={() => { changerProg({ competitions: [...prog.competitions, { date: compet.date, nom: compet.nom.trim() }] }); setCompet({ date: '', nom: '' }) }}>+</button>
-        </div>
-        <p className="mt-1.5 text-xs text-texte-3">La semaine d'une course est allégée toute seule.</p>
+      <Ligne {...props('objectifs')} libelle="Mes courses" valeur={objectifs.map((c) => `${niveaux.get(c.date) ?? ''} ${c.nom}`).join(', ')}>
+        <ListeCourses courses={prog.competitions} effectifs={niveaux} onChanger={(competitions) => changerProg({ competitions })} />
+        <p className="mt-1.5 text-xs text-texte-3">{AIDES.niveauxCourses}</p>
       </Ligne>
       <Ligne {...props('anciennete')} libelle="Vélo régulier depuis" valeur={ps.anciennete ?? ''}>
         <p className="mb-1.5 text-xs text-texte-3">Au moins 2 fois par semaine, sans arrêt de plus de 2 mois.</p>

@@ -13,7 +13,7 @@ describe('questionnaire d’arrivée', () => {
     expect(p.entrainement.cpW).toBe(cpProvisoire(60))
     expect(p.profil.fcMax).toBe(fcMaxTanaka(26))
     expect(p.entrainement.tests).toEqual([])
-    expect(p.entrainement.programme.competitions).toEqual([{ date: '2027-05-16', nom: 'Manche XCO' }])
+    expect(p.entrainement.programme.competitions).toEqual([{ date: '2027-05-16', nom: 'Manche XCO', niveau: 'A' }])
     expect(p.entrainement.programme.discipline).toBe('xco')
     expect(p.profilSportif.sports).toEqual(['VTT'])
     // Rien de la saison de Titouan

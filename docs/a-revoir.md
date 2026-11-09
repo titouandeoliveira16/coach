@@ -68,6 +68,14 @@ Points décidés ou mis de côté, à reprendre au bon moment.
 
 - 9.2 (9/11/2026) : un seul RPE par séance ; bilan du dimanche seulement ; nutrition en option (réglage « Module
   nutrition », question « Conseil nutrition ? » au questionnaire, Non par défaut) ; carte EF ; nutrition J-1/J-2.
+- 9.6 (9/11/2026) : semaine type avec flèches ‹ ›, 2 jours durs au choix, recalcul auto de la semaine quand on change semaine
+  type ou durées.
+- Courses A / B / C (9.7, 9/11/2026, relues) : B = semaine −35 %, veille facultative (45' Z2 + 3 × 1' à 107 % CP + 2 sprints),
+  la course = séance dure et sortie longue ; C = semaine normale, la course remplace la séance dure (et la longue si > 2 h) ;
+  rien d'autre le jour J ; pas de séance dure avant J+3 (course ≤ 2 h) ou J+4 (plus longue, repos à J+1). Choix d'entraîneur :
+  3 semaines entre deux B, course à < 10 j de la A ou en reprise = C ; kJ de la course estimés à 75 % de la CP × durée
+  estimée (durée de la course principale, XCO 1 h 30, XCC 30'). À revoir : durée propre à chaque course secondaire si besoin ;
+  openers la veille non prouvés (essais à 24 h seulement en sports collectifs).
 - **Titouan a encore « 2-3 trucs à travailler »** (9/11 au soir, pas encore dits) : les lui demander à la prochaine conversation.
 - Les deux conversations ont été regroupées le 9/11/2026 (« Corrections et améliorations appli » supprimée par Titouan).
 
