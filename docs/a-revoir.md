@@ -80,8 +80,9 @@ Points décidés ou mis de côté, à reprendre au bon moment.
   personnel (route / VTT) = estimation ÷ temps réel, moyenne des 3 dernières courses (données à la main dans Mes courses →
   « Caler sur une course faite », ou courses prévues puis importées), borné 0,6-1,8, appliqué à toute la course (essai « plat
   seulement » abandonné : en peloton les bosses vont aussi bien plus vite que le modèle). **Titouan doit entrer sa cyclo
-  d'août dans « Caler sur une course faite ».** Limite : en grand col, le facteur d'une cyclo roulante peut rendre l'estimation
-  trop optimiste ; à revoir s'il prépare une course de montagne. Vitesses = choix d'entraîneur (aucune donnée
+  d'août dans « Caler sur une course faite ».** 9.9.1 : course de route de montagne (≥ 15 m/km,
+  choix d'entraîneur) : facteur sur le plat seulement, cols à la CP ; sinon sur toute la course. Facteur de chaque course
+  calculé avec le même calcul (dichotomie). À vérifier sur sa 1re course de montagne. Vitesses = choix d'entraîneur (aucune donnée
   amateur publiée) : à recaler sur ses vraies courses. Études Quebrantahuesos 2026 / Faulkner 2025 pas lues (sites bloqués) ;
   openers la veille non prouvés (essais à 24 h seulement en sports collectifs).
 - **Titouan a encore « 2-3 trucs à travailler »** (9/11 au soir, pas encore dits) : les lui demander à la prochaine conversation.
