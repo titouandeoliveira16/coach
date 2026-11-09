@@ -2,7 +2,7 @@ import { db } from '../../../core/db'
 import { aujourdhui, decalerJour, NOMS_JOURS, depuisJour } from '../../../core/dates'
 import { enregistrer, supprimer } from '../../../core/stockage'
 import {
-  ajustementZ2, BLOCS_SV1, signalSv1, sprintsDeLaPhase, SV1_DEPART_PCT, SV1_MAX_PCT, budgetDePhase, budgetSemaine, formatDe, gardeFouCourse, NOMS_FAMILLES, plafondsReprise, projeterSaison, choisirFormat, construireIntervalles, construireTest, construireZ2, coefficientPhase, estSemaineAllegee, etatProgression, palierRaccourci,
+  ajustementZ2, BLOCS_SV1, signalSv1, signalFcSv1, plageFcSv1, sprintsDeLaPhase, SV1_DEPART_PCT, SV1_MAX_PCT, budgetDePhase, budgetSemaine, formatDe, gardeFouCourse, NOMS_FAMILLES, plafondsReprise, projeterSaison, choisirFormat, construireIntervalles, construireTest, construireZ2, coefficientPhase, estSemaineAllegee, etatProgression, palierRaccourci,
   construireCycloMontees, construireLongueCotes, construireSimulationLigne, construireSimulationXco, construireSpeciales, construireTerrain, cotesDe, minutesPourKj, NOMS_DISCIPLINES, NOMS_PHASES, deuxIntensitesPossibles, formatsPour, hausseBudget, heuresDe, jourDeuxiemeIntensite, niveauDuProfil, palierPossible, phaseDe, placer, retourDeCoupure, semainesChamboulees, type BilanSemaine, type Famille, type HistoIntensite,
   cibleSortieLongue, dureeLongueVisee, type SeanceConstruite, type TypePhase,
 } from '../../../metrics/programme'
@@ -90,22 +90,29 @@ export async function z2Actuel() {
 }
 
 /**
- * 1er seuil (blocs de la sortie longue) : 70 % de la CP au départ, puis ±5 W quand 2 sorties de suite donnent le même
- * signal (dérive de la FC d'un bloc à l'autre, effort ressenti : signalSv1), entre la Z2 + 5 W et 85 % de la CP.
- * Palier des blocs (sorties longues seulement, 7 crans : 2 × 15 → 2 × 40) : sortie réussie (cœur stable, effort modéré)
- * = un cran de plus, sortie neutre = même palier, dérive ou effort dur = un cran de moins (relecture du 9/11/2026).
+ * 1er seuil (blocs de la sortie longue) : 70 % de la CP au départ, puis les watts suivent le cœur (relecture du
+ * 9/11/2026) : FC moyenne des blocs sous la plage visée → +5 W, au-dessus → −5 W, après 2 sorties de suite
+ * (signalFcSv1), entre la Z2 + 5 W et 85 % de la CP. Sorties d'avant la plage de FC : découplage (signalSv1).
+ * Palier des blocs (sorties longues seulement, 7 crans : 2 × 15 → 2 × 40) : découplage < 4 % et effort ≤ 6/10 = un cran
+ * de plus, neutre = même palier, découplage > 5 % ou effort ≥ 7/10 = un cran de moins.
+ * `nFaites` : sorties longues au 1er seuil faites (cycle de la plage de FC, plageFcSv1).
  */
 export async function sv1Actuel(z2W: number) {
   const r = await lireReglages()
   const dernierTest = r.tests.filter((t) => t.type === 'cp').map((t) => t.date).sort().pop() ?? ''
-  const avecBlocs = new Set((await db.prevues.toArray()).filter((p) => p.velo?.blocsSv1).map((p) => p.id))
-  const seances = (await db.seances.toArray()).filter((s) => s.prevueId && avecBlocs.has(s.prevueId)).sort((a, b) => a.date.localeCompare(b.date))
-  const signal = (s: (typeof seances)[number]) => signalSv1((s.controle?.lignes ?? []).filter((l) => l.libelle.startsWith('1er seuil') && l.fc).map((l) => l.fc!), s.rpe)
-  const signaux = seances.filter((s) => s.date > dernierTest).map(signal).filter((x) => x !== 0)
+  const prevues = new Map((await db.prevues.toArray()).filter((p) => p.velo?.blocsSv1).map((p) => [p.id, p]))
+  const seances = (await db.seances.toArray()).filter((s) => s.prevueId && prevues.has(s.prevueId)).sort((a, b) => a.date.localeCompare(b.date))
+  const blocs = (s: Seance) => (s.controle?.lignes ?? []).filter((l) => l.libelle.startsWith('1er seuil') && l.fc).map((l) => ({ fc: l.fc!, w: l.w }))
+  const signal = (s: Seance) => signalSv1(blocs(s), s.rpe)
+  const signalW = (s: Seance) => {
+    const plage = prevues.get(s.prevueId!)?.velo?.fcSv1
+    return plage ? signalFcSv1(blocs(s).map((b) => b.fc), plage) : signal(s)
+  }
+  const signaux = seances.filter((s) => s.date > dernierTest).map(signalW).filter((x) => x !== 0)
   const w = Math.min(arrondi5(r.cpW * SV1_MAX_PCT), Math.max(z2W + 5, arrondi5(r.cpW * SV1_DEPART_PCT) + ajustementZ2(signaux)))
-  const longues = new Set((await db.prevues.toArray()).filter((p) => p.velo?.blocsSv1 && p.velo.famille === 'z2-long').map((p) => p.id))
-  const palier = seances.filter((s) => longues.has(s.prevueId!)).reduce((n, s) => Math.max(0, Math.min(BLOCS_SV1.length - 1, n + signal(s))), 0)
-  return { w, palier }
+  const longues = seances.filter((s) => prevues.get(s.prevueId!)?.velo?.famille === 'z2-long')
+  const palier = longues.reduce((n, s) => Math.max(0, Math.min(BLOCS_SV1.length - 1, n + signal(s))), 0)
+  return { w, palier, nFaites: longues.length }
 }
 
 /** 150 → « 2 h 30 », 120 → « 2 h » */
@@ -373,7 +380,9 @@ export async function genererSemaineVelo(lundi: string) {
   const sansBlocs = (phase.type === 'reprise' && nSemaine === 0) || phase.type === 'affutage' || phase.type === 'recuperation' || coupure.semaineReprise === 0
   // Semaine allégée : un cran de moins. Si le palier ne rentre pas dans la sortie, le plus haut qui rentre
   const nPalier = allegee ? Math.max(0, sv1.palier - 1) : sv1.palier
-  const palierSv1 = { ...BLOCS_SV1[nPalier], repli: BLOCS_SV1.slice(0, nPalier).reverse() }
+  // Plage de FC des blocs (les watts suivent le cœur) : FC du 1er seuil = haut de ta Z2 de FC
+  const fcSv1 = plageFcSv1({ fcMax: c.fcMax, fcSeuil1: c.bornes[1], nFaites: sv1.nFaites, debutant: niveau === 'debutant' })
+  const palierSv1 = { ...BLOCS_SV1[nPalier], repli: BLOCS_SV1.slice(0, nPalier).reverse(), fc: fcSv1 }
   const sprints = sprintsDeLaPhase(phase.type, discipline, nLongs)
   const intensifs = [placement.intensite, intensite2?.date].filter((d): d is string => !!d)
   const lendemains = new Set(intensifs.map((d) => decalerJour(d, 1)))
@@ -419,7 +428,7 @@ export async function genererSemaineVelo(lundi: string) {
     // VTT : la première Z2 de la semaine se fait sur le terrain (technique), jamais la sortie longue
     if (d === terrain && discipline !== 'route') aCreer.push([d, construireTerrain(discipline, min, z2W)])
     else if (d === jourSprints) aCreer.push([d, construireZ2(min, z2W, sprints, { longue: false, espacementSec: sprints.espacementSec })])
-    else aCreer.push([d, construireZ2(min, z2W, undefined, lendemains.has(d) && rappel && !sansBlocs ? { sv1: { w: sv1.w, reps: 2, min: 10 } } : {})])
+    else aCreer.push([d, construireZ2(min, z2W, undefined, lendemains.has(d) && rappel && !sansBlocs ? { sv1: { w: sv1.w, reps: 2, min: 10, fc: fcSv1 } } : {})])
   })
 
   // Genoux sensibles : pédaler souple, la charge sur le genou baisse quand la cadence monte (Kutzner 2012 ; résultats mitigés)

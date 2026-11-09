@@ -60,6 +60,11 @@ Points décidés ou mis de côté, à reprendre au bon moment.
   affûtage ~55 % de la cible puis 90 min la semaine de course. Le surplus est pris sur les Z2 de semaine.
   À regarder : la semaine de récupération après la course peut garder une longue sortie (budget à 60 % du précédent) ;
   chiffres de Stevenson 2022 à revérifier sur l'article complet (seuls des résumés ont pu être lus).
+- 1er seuil piloté par le cœur (9.5, 9/11/2026, d'après la vidéo Méthodic + relecture) : plage de FC sur les blocs
+  (78 → 82 % FC max sur les 4 premières sorties, débutant 76 → 78 %, plafond FC du 1er seuil + 3), watts ±5 W selon la FC
+  (2 sorties de suite), palier selon le découplage watts/FC (< 4 % : +1, > 5 % : −1 ; repli dérive FC), RPE ≤ 6 réussi.
+  Point à faire après 4 sorties : la plage colle-t-elle à ses sensations (parler en phrases) ? Les Z2 de semaine à 45 min
+  quand la sortie longue s'allonge : validé par Titouan.
 
 ## À reprendre ensuite (dans l'ordre proposé)
 1. Phases spécifique et affûtage : attendre les courses vélo 2027.
