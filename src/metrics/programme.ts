@@ -208,6 +208,8 @@ export interface SeanceVelo {
   /** Sortie avec blocs au 1er seuil : watts et nombre de blocs */
   sv1W?: number
   blocsSv1?: number
+  /** Plage de FC visée sur les blocs au 1er seuil (bpm) */
+  fcSv1?: [number, number]
   /** W' (kJ) qui a limité les watts du travail (garde-fou : une répétition ne vide pas plus de 80 % du W') */
   wPrimeKj?: number
   /** Explication du choix (phase, alternance, progression) */
@@ -681,7 +683,7 @@ const RECUP_SV1_MIN = 5
  *  - Z2 de 90 min ou plus sans rien d'autre : découpée en 8 min de Z2 + 2 min plus faciles (monotonie, home trainer).
  * Une sortie avec `sprints` ou `longue` est la sortie longue (famille z2-long).
  */
-export function construireZ2(duree: number, z2W: number, sprints?: { n: number; sec: number }, o: { longue?: boolean; sv1?: { w: number; reps: number; min: number; repli?: { reps: number; min: number }[] }; espacementSec?: number } = {}): SeanceConstruite {
+export function construireZ2(duree: number, z2W: number, sprints?: { n: number; sec: number }, o: { longue?: boolean; sv1?: { w: number; reps: number; min: number; repli?: { reps: number; min: number }[]; fc?: [number, number] }; espacementSec?: number } = {}): SeanceConstruite {
   const dureeMin = Math.round(duree)
   const ech = Math.min(10, dureeMin) * 60
   const wEch = arrondi5(z2W * 0.85)
@@ -697,6 +699,7 @@ export function construireZ2(duree: number, z2W: number, sprints?: { n: number; 
 
   // Blocs au 1er seuil : au plus 60 % de la sortie, 20 min de Z2 avant (mise en route comprise) et 10 min après
   let sv1: { w: number; reps: number; min: number } | undefined
+  const fcSv1 = o.sv1?.fc
   if (o.sv1) {
     const rentre = (reps: number, min: number) =>
       reps * min * 60 <= fin * PART_MAX_SV1 && (reps * min + (reps - 1) * RECUP_SV1_MIN) * 60 <= corpsFin - ech - 10 * 60 - 10 * 60
@@ -721,14 +724,14 @@ export function construireZ2(duree: number, z2W: number, sprints?: { n: number; 
     const p = plage(sv1.w, 'tempo')
     etapes.push(z2(ech, debut - ech), {
       debutSec: debut, dureeSec: total, w: sv1.w,
-      libelle: `${sv1.reps} × ${sv1.min}' au 1er seuil (${sv1.w} W) : haut de ta Z2, tu parles encore en phrases, le cœur ne dérive pas ; ${RECUP_SV1_MIN}' de Z2 entre`,
+      libelle: `${sv1.reps} × ${sv1.min}' au 1er seuil (${sv1.w} W${fcSv1 ? ` · FC ${fcSv1[0]}-${fcSv1[1]}` : ''}) : haut de ta Z2, tu parles encore en phrases (effort 4-6/10), le cœur ne dérive pas ; ${RECUP_SV1_MIN}' de Z2 entre`,
       repetition: {
         fois: sv1.reps, derniere: 1,
         etapes: [{ dureeSec: sv1.min * 60, libelle: 'Bloc 1er seuil', w: sv1.w, wMin: p.wMin, wMax: Math.min(p.wMax, sv1.w + 5), cadence: '85-95' }, { dureeSec: RECUP_SV1_MIN * 60, libelle: 'Z2', w: z2W, ...plage(z2W, 'z2') }],
       },
     }, z2(debut + total, corpsFin - debut - total, 'Z2 régulière jusqu’au retour au calme'))
     titre = `${titre} + ${sv1.reps} × ${sv1.min}' au 1er seuil`
-    detailPlus = ` · ${sv1.reps} × ${sv1.min}' au 1er seuil (${sv1.w} W)`
+    detailPlus = ` · ${sv1.reps} × ${sv1.min}' au 1er seuil (${sv1.w} W${fcSv1 ? `, FC ${fcSv1[0]}-${fcSv1[1]}` : ''})`
     kjPlus = (sv1.reps * sv1.min * 60 * (sv1.w - z2W)) / 1000
   } else if (sprints && minutes.length) {
     const sec = sprints.sec
@@ -769,7 +772,7 @@ export function construireZ2(duree: number, z2W: number, sprints?: { n: number; 
     titre,
     detail: `10' progressif puis Z2 à ${z2W} W (RPE ≤ 3)${detailPlus}`,
     dureeMin, kj: Math.round(kj),
-    velo: { famille: longue ? 'z2-long' : 'z2', cibleW: z2W, etapes, ...(sv1 ? { sv1W: sv1.w, blocsSv1: sv1.reps } : {}) },
+    velo: { famille: longue ? 'z2-long' : 'z2', cibleW: z2W, etapes, ...(sv1 ? { sv1W: sv1.w, blocsSv1: sv1.reps, ...(fcSv1 ? { fcSv1 } : {}) } : {}) },
   }
 }
 
@@ -1281,15 +1284,40 @@ export const SV1_DEPART_PCT = 0.7
 export const SV1_MAX_PCT = 0.85
 
 /**
- * Signal d'une sortie avec blocs au 1er seuil (talk test et dérive : Rodríguez-Marroyo 2013 ; 5 % : convention) :
- * +1 si la FC du dernier bloc dépasse celle du premier de moins de 3 % et l'effort ressenti reste modéré (≤ 5),
- * −1 si elle dérive de plus de 5 % ou si l'effort était dur (≥ 7). Sinon, pas de signal.
+ * Plage de FC des blocs au 1er seuil (relecture du 9/11/2026 ; repères d'entraîneurs, Méthodic Cycling) : le 1er seuil
+ * est personnel, un % fixe le vise mal (Meixner 2025), donc les watts suivent le cœur. Cible en % de la FC max selon
+ * le nombre de sorties au 1er seuil déjà faites (cycle de 4 : 78 → 80 → 81 → 82 %, débutant 76 → 78 %), plafonnée à
+ * ta FC du 1er seuil + 3 bpm ; la plage va de 2 points de FC max sous la cible jusqu'à la cible. Choix d'entraîneur.
  */
-export function signalSv1(fcBlocs: number[], rpe?: number) {
-  if (fcBlocs.length < 2) return 0
-  const derive = ((fcBlocs[fcBlocs.length - 1] - fcBlocs[0]) / fcBlocs[0]) * 100
+export const CIBLES_FC_SV1 = { confirme: [78, 80, 81, 82], debutant: [76, 77, 78, 78] } as const
+export function plageFcSv1(o: { fcMax: number; fcSeuil1?: number; nFaites: number; debutant?: boolean }): [number, number] {
+  const t = o.debutant ? CIBLES_FC_SV1.debutant : CIBLES_FC_SV1.confirme
+  const pct = t[Math.min(o.nFaites, t.length - 1)]
+  let max = Math.round((o.fcMax * pct) / 100)
+  if (o.fcSeuil1) max = Math.min(max, o.fcSeuil1 + 3)
+  return [max - Math.round(o.fcMax * 0.02), max]
+}
+
+/** Watts au 1er seuil pilotés par le cœur : FC moyenne des blocs sous la plage → +1, au-dessus → −1 (±5 W après 2 de suite). */
+export function signalFcSv1(fcBlocs: number[], plage: [number, number]) {
+  if (!fcBlocs.length) return 0
+  const fc = fcBlocs.reduce((a, b) => a + b, 0) / fcBlocs.length
+  return fc > plage[1] ? -1 : fc < plage[0] ? 1 : 0
+}
+
+/**
+ * Signal d'une sortie avec blocs au 1er seuil (palier des blocs) : découplage = baisse du rapport watts / FC du 1er au
+ * dernier bloc (repli : dérive de la FC seule quand les watts manquent ou bougent de moins de 3 %). +1 si moins de 4 %
+ * (Méthodic) et effort ≤ 6/10 ; −1 si plus de 5 % (Friel, convention) ou effort ≥ 7/10 ; sinon 0. La dérive est un
+ * vrai signal d'endurance (Rothschild 2025) et n'est pas excusée après 2 h (Stevenson 2022).
+ */
+export function signalSv1(blocs: { fc: number; w?: number }[], rpe?: number) {
+  if (blocs.length < 2) return 0
+  const [a, z] = [blocs[0], blocs[blocs.length - 1]]
+  const avecWatts = !!a.w && !!z.w && Math.abs(z.w - a.w) / a.w >= 0.03
+  const derive = avecWatts ? ((a.w! / a.fc - z.w! / z.fc) / (a.w! / a.fc)) * 100 : ((z.fc - a.fc) / a.fc) * 100
   if (derive > 5 || (rpe !== undefined && rpe >= 7)) return -1
-  if (derive < 3 && (rpe === undefined || rpe <= 5)) return 1
+  if (derive < 4 && (rpe === undefined || rpe <= 6)) return 1
   return 0
 }
 

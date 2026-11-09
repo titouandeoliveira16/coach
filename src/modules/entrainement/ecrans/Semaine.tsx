@@ -258,7 +258,7 @@ function DetailSeance({ p, jours, prevues, onFermer, onMessage }: {
       {p.velo?.famille === 'sprints' && <p className="mt-1 text-xs text-texte-3">Sprints à fond : pas de watts à viser.<Aide titre="Sprints à fond" texte={AIDES.aFond} /></p>}
       {(p.velo?.famille === 'simulation-ligne' || p.velo?.famille === 'cyclo-montees' || p.velo?.famille === 'simulation-xco') && <p className="mt-1 text-xs text-texte-3">Séance de course : séance dure, 48 h sans autre intensité.<Aide titre="Simulation de course" texte={AIDES.simulationCourse} /></p>}
       {p.velo?.famille === 'z2-long' && <p className="mt-1 text-xs text-texte-3">Sortie longue : elle s'allonge de semaine en semaine vers la durée de ta course.<Aide titre="Sortie longue" texte={AIDES.sortieLongue} /></p>}
-      {!!p.velo?.blocsSv1 && <p className="mt-1 text-xs text-texte-3">Blocs au 1er seuil : haut de ta Z2, le cœur ne dérive pas.<Aide titre="1er seuil" texte={AIDES.blocsSv1} /></p>}
+      {!!p.velo?.blocsSv1 && <p className="mt-1 text-xs text-texte-3">Blocs au 1er seuil : haut de ta Z2{p.velo.fcSv1 ? `, FC ${p.velo.fcSv1[0]}-${p.velo.fcSv1[1]}` : ''}, le cœur ne dérive pas.<Aide titre="1er seuil" texte={AIDES.blocsSv1} /></p>}
       {p.velo?.etapes?.some((e) => e.repetition?.etapes.some((x) => x.libelle === 'Sprint à fond')) && <p className="mt-1 text-xs text-texte-3">Sprints à fond, longue récupération.<Aide titre="Sprints" texte={AIDES.sprintsSemaine} /></p>}
       <FicheSeance velo={p.velo} />
       {mode === 'actions' ? (
