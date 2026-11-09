@@ -185,7 +185,7 @@ export function QuestionnaireArrivee({ montreSeulement = false }: { montreSeulem
             </div>
           </Carte>
           <Carte titre="Autres courses (facultatif)">
-            <ListeCourses courses={r.autresCourses ?? []} min={jour}
+            <ListeCourses courses={r.autresCourses ?? []} min={jour} contexte={{ discipline: r.discipline ?? 'route', typeCourse: r.typeCourse, dureeCourseMin: r.dureeCourseMin, cpW: nombre(textes.cp), poidsKg: nombre(textes.poids) }}
               effectifs={niveauxCourses([...(r.course?.date ? [{ ...r.course, niveau: 'A' as const }] : []), ...(r.autresCourses ?? [])], apercu?.saison.phases ?? [])}
               onChanger={(autresCourses) => maj({ autresCourses })} />
             <p className="mt-1.5 text-xs text-texte-3">Tu pourras en ajouter plus tard dans Réglages → Mon profil sportif.</p>

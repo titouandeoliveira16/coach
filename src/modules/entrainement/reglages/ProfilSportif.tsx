@@ -104,7 +104,7 @@ export function SectionProfilSportif() {
         </Ligne>
       )}
       <Ligne {...props('objectifs')} libelle="Mes courses" valeur={objectifs.map((c) => `${niveaux.get(c.date) ?? ''} ${c.nom}`).join(', ')}>
-        <ListeCourses courses={prog.competitions} effectifs={niveaux} onChanger={(competitions) => changerProg({ competitions })} />
+        <ListeCourses courses={prog.competitions} effectifs={niveaux} contexte={{ discipline, typeCourse: prog.typeCourse, dureeCourseMin: prog.dureeCourseMin, cpW: r.cpW, poidsKg: [...r.tests].reverse().find((t) => t.poidsKg)?.poidsKg }} onChanger={(competitions) => changerProg({ competitions })} />
         <p className="mt-1.5 text-xs text-texte-3">{AIDES.niveauxCourses}</p>
       </Ligne>
       <Ligne {...props('anciennete')} libelle="Vélo régulier depuis" valeur={ps.anciennete ?? ''}>
