@@ -4,7 +4,8 @@ import { enregistrer } from '../../../core/stockage'
 import { db } from '../../../core/db'
 import { Bouton } from '../../../core/ui/Bouton'
 import { Carte } from '../../../core/ui/Carte'
-import { ANCIENNETES, DISCIPLINES_PROPOSEES, HEURES_RECENTES, NOMS_DISCIPLINES, NOMS_PHASES, type Role } from '../../../metrics/programme'
+import { ANCIENNETES, DISCIPLINES_PROPOSEES, HEURES_RECENTES, NOMS_DISCIPLINES, NOMS_PHASES, niveauDuProfil, verifierSemaineType } from '../../../metrics/programme'
+import { Defileur, EditeurSemaine } from '../reglages/EditeurSemaine'
 import { AIDES } from '../aides'
 import { importerIntervals, relierIntervals } from '../import/intervals'
 import { enregistrerArrivee, preparerArrivee, reponsesExistantes, SEMAINE_TYPE_DEPART, semaineDepuisJours, type EtatArrivee, type ReponsesArrivee } from './donnees'
@@ -12,9 +13,6 @@ import { enregistrerArrivee, preparerArrivee, reponsesExistantes, SEMAINE_TYPE_D
 const HEURES = ['Moins de 4 h', '4 à 6 h', '6 à 8 h', '8 à 10 h', '10 à 12 h', 'Plus de 12 h']
 const MUSCU = ['Pas pour l’instant', '1 séance par semaine', '2 séances par semaine']
 const ARRETS: [string, number][] = [['Non', 0], ['2 à 3 semaines', 2], ['1 mois ou plus', 4]]
-const ROLES: { role: Role; court: string }[] = [
-  { role: 'libre', court: '—' }, { role: 'velo-z2', court: 'Z2' }, { role: 'velo-dur', court: 'dur' }, { role: 'velo-long', court: 'long' }, { role: 'renfo', court: 'renfo' },
-]
 const DUREES_COURSE: [string, number][] = [['1 h 30', 90], ['2 h', 120], ['2 h 30', 150], ['3 h', 180], ['4 h', 240], ['5 h', 300], ['6 h et plus', 360]]
 const LONGUES: [string, number, number][] = [['1 h à 1 h 30', 60, 90], ['1 h 30 à 2 h', 90, 120], ['2 h à 3 h', 120, 180], ['2 h 30 à 4 h', 150, 240]]
 const COULEURS_PHASES: Record<string, string> = {
@@ -69,7 +67,7 @@ export function QuestionnaireArrivee({ montreSeulement = false }: { montreSeulem
   const pret = [
     !!r.naissance && !!nombre(textes.taille) && !!nombre(textes.poids),
     !!r.anciennete && !!r.heuresRecentes && r.intervalles !== undefined && !!r.heuresSemaine,
-    !!r.semaineType?.includes('velo-long') && !!r.semaineType?.includes('velo-dur'),
+    !!r.semaineType && verifierSemaineType(r.semaineType).ok,
     !!r.course?.date && r.course.date > jour,
   ]
   const apercu = etape === 3 && pret[3] ? preparerArrivee(reponses(), jour) : undefined
@@ -144,38 +142,25 @@ export function QuestionnaireArrivee({ montreSeulement = false }: { montreSeulem
       )}
 
       {etape === 2 && (
-        <Carte titre="Ta semaine type : touche un jour">
+        <Carte titre="Ta semaine type">
           <div className="mb-3">
             <Question libelle="Jours de vélo par semaine" aide="À partir de 4 jours, 2 séances intensives par semaine (sauf en débutant) ; avec 3, une seule et ta sortie longue avec des blocs au 1er seuil.">
               <Choix options={[3, 4, 5, 6].map((n) => [`${n} jours`, n])} valeur={r.semaineType?.filter((x) => x.startsWith('velo')).length}
                 onChoisir={(n) => maj({ semaineType: semaineDepuisJours(n) })} />
             </Question>
           </div>
-          <div className="grid grid-cols-7 gap-1 text-center text-xs">
-            {(r.semaineType ?? SEMAINE_TYPE_DEPART).map((role, i) => {
-              const x = ROLES.find((y) => y.role === role) ?? ROLES[0]
-              return (
-                <button key={i} type="button" className={`rounded-lg border py-2 ${role === 'velo-dur' ? 'border-accent text-accent' : 'border-bordure'} ${role === 'libre' ? 'text-texte-3' : ''}`}
-                  onClick={() => {
-                    const suivant = ROLES[(ROLES.indexOf(x) + 1) % ROLES.length].role
-                    // Un seul jour dur et une seule sortie longue : l'ancien jour devient une Z2
-                    const t = (r.semaineType ?? SEMAINE_TYPE_DEPART).map((v, j) => (j === i ? suivant : (suivant === 'velo-dur' || suivant === 'velo-long') && v === suivant ? 'velo-z2' : v))
-                    maj({ semaineType: t })
-                  }}>
-                  <span className="block text-texte-3">{'LMMJVSD'[i]}</span>{x.court}
-                </button>
-              )
-            })}
-          </div>
-          <p className="mt-2 text-xs text-texte-3">1 jour dur, 1 sortie longue, le reste en Z2 (endurance) ; — = repos ou autre sport. La 2e séance intensive se place toute seule sur une Z2, au moins 48 h après la première.</p>
+          <p className="mb-1 text-xs text-texte-3">Pour remplir vite, puis ajuste chaque jour avec ‹ ›.</p>
+          <EditeurSemaine semaine={r.semaineType ?? SEMAINE_TYPE_DEPART} debutant={niveauDuProfil(r) === 'debutant'} onChanger={(semaineType) => maj({ semaineType })} />
           <div className="mt-3 space-y-3">
-            <Question libelle="Vélo en semaine, au plus">
-              <Choix options={[45, 60, 75, 90, 120].map((m) => [`${m} min`, m])} valeur={r.maxSemaineMin} onChoisir={(maxSemaineMin) => maj({ maxSemaineMin })} />
-            </Question>
-            <Question libelle="Sortie longue">
-              <Choix options={LONGUES.map(([nom, a]) => [nom, a])} valeur={r.minLongMin}
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm text-texte-2">Vélo en semaine, au plus</span>
+              <Defileur etiquette="Vélo en semaine" options={[45, 60, 75, 90, 120].map((m) => [`${m} min`, m])} valeur={r.maxSemaineMin} onChoisir={(maxSemaineMin) => maj({ maxSemaineMin })} />
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm text-texte-2">Sortie longue</span>
+              <Defileur etiquette="Sortie longue" options={LONGUES.map(([nom, a]) => [nom, a])} valeur={r.minLongMin}
                 onChoisir={(minLongMin) => maj({ minLongMin, maxLongMin: LONGUES.find((x) => x[1] === minLongMin)![2] })} />
-            </Question>
+            </div>
           </div>
         </Carte>
       )}

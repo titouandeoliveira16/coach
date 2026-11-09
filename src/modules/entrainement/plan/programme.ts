@@ -232,7 +232,8 @@ export async function genererSemaineVelo(lundi: string) {
   const longFaite = veloSemaine.some((p) => p.velo?.famille === 'z2-long' || (p.longue && p.statut === 'faite'))
   const z2Faites = veloSemaine.filter((p) => p.velo?.famille === 'z2').length
   const roles = prog.semaineType
-  const nZ2 = Math.max(0, roles.filter((x) => x === 'velo-z2').length - z2Faites)
+  // Un 2e jour « dur » compte comme une Z2 (il devient la 2e intensité quand elle est possible)
+  const nZ2 = Math.max(0, roles.filter((x) => x === 'velo-z2').length + Math.max(0, roles.filter((x) => x === 'velo-dur').length - 1) - z2Faites)
   const competitions = prog.competitions.map((x) => x.date)
   const dateTest = prog.testsCp.find((d) => dansSemaine(d) && d >= aPartirDe)
 
@@ -325,7 +326,7 @@ export async function genererSemaineVelo(lundi: string) {
   if (intensite && placement.intensite && placement.intensite !== dateTest && deuxIntensitesPossibles(niveau, joursVelo)
     && phase.type !== 'reprise' && !allegee && !courseDure.length && !longueCourse) {
     const dures = [placement.intensite, ...occupations.filter((o) => o.dure).map((o) => o.date), ...(cotes && placement.long ? [placement.long] : [])]
-    const jour2 = jourDeuxiemeIntensite(placement.z2, dures)
+    const jour2 = jourDeuxiemeIntensite(placement.z2, dures, placement.z2.filter((d) => roles[semaine.indexOf(d)] === 'velo-dur'))
     if (jour2) {
       // L'autre dominante de la phase : la première séance compte comme déjà faite
       const premier = intensite.velo
@@ -601,7 +602,10 @@ export async function mettreAJourFormatSeances() {
   for (const l of aRefaire) if (await lireMeta(l)) await genererSemaineVelo(l).catch(() => {})
 }
 
-export async function recalculerApresTest() {
+export const recalculerApresTest = () => recalculerSemainesAVenir()
+
+/** Recalcule la semaine en cours et les 2 suivantes déjà générées (après un test, ou un changement de semaine type / durées). */
+export async function recalculerSemainesAVenir() {
   const lundi = lundiDe(aujourdhui())
   for (const l of [lundi, decalerJour(lundi, 7), decalerJour(lundi, 14)]) {
     if (await lireMeta(l)) await genererSemaineVelo(l).catch(() => {})

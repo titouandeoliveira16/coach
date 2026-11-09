@@ -4,37 +4,34 @@ import { depuisJour } from '../../../core/dates'
 import { Aide } from '../../../core/ui/Aide'
 import { Carte } from '../../../core/ui/Carte'
 import { ChampNombre } from '../../../core/ui/ChampNombre'
-import { NOMS_DISCIPLINES, NOMS_PHASES, type Discipline, type Role } from '../../../metrics/programme'
+import { NOMS_DISCIPLINES, NOMS_PHASES, niveauDuProfil, verifierSemaineType, type Discipline } from '../../../metrics/programme'
 import { AIDES } from '../aides'
-import { z2Actuel } from '../plan/programme'
+import { recalculerSemainesAVenir, z2Actuel } from '../plan/programme'
+import { useReglage } from '../../../core/reglages'
+import { EditeurSemaine } from './EditeurSemaine'
+import type { ProfilSportif } from './ProfilSportif'
 import { programmeDe, useReglagesEntrainement } from '../reglagesEntrainement'
 import type { ReglagesProgramme } from '../types'
 
-const JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
-const ROLES: Partial<Record<Role, string>> = {
-  renfo: '🏋️ Renfo', 'velo-dur': '🚴 Vélo intensité', 'velo-z2': '🚴 Vélo Z2', 'velo-long': '🚴 Vélo long', libre: '— Libre / repos',
-}
 const select = 'rounded-lg border border-bordure bg-surface-2 px-2 py-2 text-sm'
 
 /** Mes jours : semaine type et créneaux (le programme vélo se place sur ces jours). */
 export function JoursVelo() {
   const [r, modifier] = useReglagesEntrainement()
   const p = programmeDe(r.programme)
-  const changer = (c: Partial<ReglagesProgramme>) => modifier({ programme: { ...p, ...c } })
+  const [profil] = useReglage<ProfilSportif>('profil-sportif', { sports: [], materiel: [] })
+  // La semaine en cours (et les suivantes déjà calculées) suit tout de suite le changement
+  const changer = async (c: Partial<ReglagesProgramme>) => {
+    await modifier({ programme: { ...p, ...c } })
+    // Semaine type incomplète (ex. sortie longue pas encore placée) : on attend qu'elle soit valide
+    if (verifierSemaineType(c.semaineType ?? p.semaineType).ok) await recalculerSemainesAVenir()
+  }
 
   return (
     <div className="mt-3 border-t border-bordure pt-3">
       <p className="text-sm font-semibold">Ma semaine type<Aide titre="Programme vélo" texte={AIDES.programme} /></p>
-      <p className="mb-2 text-xs text-texte-3">Les jours où tu fais habituellement chaque chose : l'appli y place ton vélo.</p>
-      {JOURS.map((j, i) => (
-        <label key={j} className="flex items-center justify-between py-1">
-          <span className="text-texte-2">{j}</span>
-          <select value={p.semaineType[i]} className={select}
-            onChange={(e) => changer({ semaineType: p.semaineType.map((x, k) => (k === i ? (e.target.value as Role) : x)) })}>
-            {Object.entries(ROLES).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-          </select>
-        </label>
-      ))}
+      <p className="mb-2 text-xs text-texte-3">Les jours où tu fais habituellement chaque chose : l'appli y place ton vélo. Ta semaine en cours se recalcule dès que tu changes quelque chose ici.</p>
+      <EditeurSemaine semaine={p.semaineType} debutant={niveauDuProfil(profil) === 'debutant'} onChanger={(semaineType) => changer({ semaineType })} />
 
       <div className="mt-2 border-t border-bordure pt-2">
         <ChampNombre libelle="Vélo en semaine, max" unite="min" decimales={0} valeur={p.maxSemaineMin} onValider={(v) => v && changer({ maxSemaineMin: v })} />

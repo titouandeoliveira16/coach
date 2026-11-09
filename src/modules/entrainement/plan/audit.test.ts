@@ -23,6 +23,7 @@ const profils: [string, Partial<ReponsesArrivee>][] = [
   ['XCC 3 j', { discipline: 'xcc', semaineType: semaineDepuisJours(3) }],
   ['marathon VTT 5 j', { discipline: 'xcm' }],
   ['débutant 3 j après arrêt', { anciennete: 'Moins d’un an', heuresRecentes: 'Moins de 3 h', intervalles: false, arretSemaines: 4, semaineType: semaineDepuisJours(3), heuresSemaine: 'Moins de 4 h' }],
+  ['route 4 j, 2 jours durs choisis (mardi, vendredi)', { semaineType: ['libre', 'velo-dur', 'velo-z2', 'renfo', 'velo-dur', 'libre', 'velo-long'] }],
   ['expert 6 j, course proche', { anciennete: 'Plus de 5 ans', heuresRecentes: 'Plus de 10 h', heuresSemaine: 'Plus de 12 h', semaineType: semaineDepuisJours(6), course: { nom: 'Proche', date: '2027-01-10' } }],
 ]
 
@@ -60,4 +61,23 @@ describe('audit du moteur sur une saison entière', () => {
       vi.useRealTimers()
       expect(problemes).toEqual([])
     }, 60_000)
+
+  it('les 2 jours durs choisis portent les 2 intensités (hors reprise)', async () => {
+    await db.delete(); await db.open()
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-11-09T07:00:00'))
+    await enregistrerArrivee({ ...base, semaineType: ['libre', 'velo-dur', 'velo-z2', 'renfo', 'velo-dur', 'libre', 'velo-long'] })
+    const jours: number[][] = []
+    for (let l = '2026-11-09'; l <= '2027-03-01'; l = decalerJour(l, 7)) {
+      vi.setSystemTime(new Date(`${l}T06:00:00`))
+      await genererSemaineVelo(l)
+      const semaine = (await db.prevues.where('date').between(l, decalerJour(l, 6), true, true).toArray()).filter((x) => x.sport === 'velo')
+      jours.push(semaine.filter((x) => x.intensite === 'haute' && x.velo?.famille !== 'test').map((x) => new Date(`${x.date}T12:00:00`).getDay()).sort())
+      // 4 jours de vélo chaque semaine, le vendredi compris
+      expect(semaine.length).toBe(4)
+    }
+    vi.useRealTimers()
+    expect(jours.some((j) => j.join() === '2,5')).toBe(true)
+    expect(jours.every((j) => j.every((d) => d === 2 || d === 5))).toBe(true)
+  }, 60_000)
 })

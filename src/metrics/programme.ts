@@ -1260,10 +1260,36 @@ export const deuxIntensitesPossibles = (niveau: Niveau, joursVelo: number) => ni
  * (48 h entre deux séances dures). La veille de la sortie longue est permise (semaine type de Chauvin : intensif le
  * samedi, longue le dimanche) : la sortie longue reste en endurance. Undefined si aucun jour ne convient.
  */
-export function jourDeuxiemeIntensite(z2: string[], dures: string[]) {
+export function jourDeuxiemeIntensite(z2: string[], dures: string[], preferes: string[] = []) {
   const ecart = (a: string, b: string) => Math.abs(Date.parse(a) - Date.parse(b)) / 86_400_000
   const proche = (d: string) => Math.min(Infinity, ...dures.map((x) => ecart(d, x)))
-  return z2.filter((d) => proche(d) >= 2).sort((a, b) => proche(b) - proche(a) || b.localeCompare(a))[0]
+  const possibles = z2.filter((d) => proche(d) >= 2)
+  // Le 2e jour « dur » choisi dans la semaine type passe d'abord, s'il respecte les 48 h
+  const choisi = possibles.find((d) => preferes.includes(d))
+  return choisi ?? possibles.sort((a, b) => proche(b) - proche(a) || b.localeCompare(a))[0]
+}
+
+/**
+ * Semaine type : ce qui manque ou gêne, en une phrase (écran « Ta semaine » et Réglages).
+ * Bloquant : pas de jour dur, pas de sortie longue, plus d'une sortie longue, plus de 2 jours durs.
+ */
+export function verifierSemaineType(roles: Role[], debutant = false): { ok: boolean; message: string } {
+  const n = (r: Role) => roles.filter((x) => x === r).length
+  const velo = roles.filter((x) => x.startsWith('velo')).length
+  const durs = n('velo-dur')
+  if (!n('velo-long')) return { ok: false, message: 'Il manque ta sortie longue : mets « long » sur un jour (souvent le dimanche).' }
+  if (n('velo-long') > 1) return { ok: false, message: 'Une seule sortie longue par semaine : remets l’autre jour en Z2.' }
+  if (!durs) return { ok: false, message: 'Il manque ton jour dur (la séance d’intensité).' }
+  if (durs > 2) return { ok: false, message: '2 jours durs au plus : remets les autres en Z2.' }
+  if (velo < 3) return { ok: false, message: 'Il faut au moins 3 jours de vélo.' }
+  const resume = `✓ ${velo} jours de vélo · ${durs} séance${durs > 1 ? 's' : ''} dure${durs > 1 ? 's' : ''} · 1 sortie longue`
+  if (durs === 2) {
+    const i = roles.indexOf('velo-dur'), j = roles.lastIndexOf('velo-dur')
+    if (j - i < 2 || i + 7 - j < 2) return { ok: true, message: `${resume}. Tes 2 jours durs se suivent : laisse au moins un jour entre eux, sinon l'appli déplace le 2e.` }
+    if (debutant || velo < 4) return { ok: true, message: `${resume}. ${debutant ? 'En débutant' : 'Avec 3 jours de vélo'}, une seule séance dure : le 2e jour dur sera une Z2.` }
+  }
+  if (durs === 1 && velo >= 4 && !debutant) return { ok: true, message: `${resume}. La 2e séance dure se place toute seule sur une Z2 (ou choisis-la en mettant un 2e jour « dur »).` }
+  return { ok: true, message: resume }
 }
 
 /**
