@@ -49,8 +49,8 @@ export const SEMAINE_TYPE_DEPART: Role[] = ['libre', 'velo-dur', 'libre', 'velo-
  */
 export function semaineDepuisJours(n: number): Role[] {
   const t: Role[] = ['libre', 'velo-dur', 'libre', 'libre', 'libre', 'libre', 'libre']
-  if (n <= 3) { t[3] = 'velo-z2'; t[5] = 'velo-long'; return t }
-  if (n === 4) { t[2] = 'velo-z2'; t[4] = 'velo-z2'; t[5] = 'velo-long'; return t }
+  if (n <= 3) { t[3] = 'velo-z2'; t[6] = 'velo-long'; return t }
+  if (n === 4) { t[3] = 'velo-z2'; t[5] = 'velo-z2'; t[6] = 'velo-long'; return t }
   t[2] = 'velo-z2'; t[3] = 'velo-z2'; t[5] = 'velo-z2'; t[6] = 'velo-long'
   if (n >= 6) t[0] = 'velo-z2'
   return t
