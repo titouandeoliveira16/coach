@@ -28,7 +28,7 @@ export function ModeEmploi() {
       <EnTete titre="Mode d'emploi" />
       <div className="space-y-3 px-4">
         <Rubrique titre="L'idée en 30 secondes" ouverte>
-          <p>Tu fais ta course avec <b className="text-texte">Campus Coach</b>. L'appli s'occupe de ton <b className="text-texte">vélo</b> : elle le place autour de ta course, et l'adapte chaque matin à ta forme.</p>
+          <p>L'appli construit ton <b className="text-texte">vélo</b> : ta saison jusqu'à ton objectif, ta semaine sur tes jours, et chaque séance adaptée le matin à ta forme.</p>
           <p>Ton travail : <b className="text-texte">1 minute le matin</b>, <b className="text-texte">5 minutes le dimanche</b>. Le reste se fait tout seul.</p>
           <p>À l'ouverture, l'<b className="text-texte">Accueil</b> te propose les modules. Le bouton 🏠 Accueil en bas y ramène.</p>
         </Rubrique>
@@ -46,10 +46,10 @@ export function ModeEmploi() {
 
         <Rubrique titre="📅 Chaque dimanche : Semaine">
           <Etape n={1}>Va sur la semaine suivante (flèche ›).</Etape>
-          <Etape n={2}>Avec le <b className="text-texte">+</b> de chaque jour, ajoute tes séances <b className="text-texte">Campus Coach</b> (type, durée) et ton renfo.</Etape>
+          <Etape n={2}>Si besoin, ajoute avec le <b className="text-texte">+</b> d'un jour une séance à toi (renfo, sortie imposée).</Etape>
           <Etape n={3}>Appuie sur <b className="text-texte">Générer mon vélo de la semaine</b>.</Etape>
-          <p>Si ta course change en cours de semaine : modifie-la, puis « Recalculer le vélo ». Ce qui est déjà fait est gardé.</p>
-          <p>Le dimanche (et le lundi), le <b className="text-texte">bilan</b> s'affiche dans Aujourd'hui : ce qui a été fait, ce qui change la semaine suivante, et pourquoi.</p>
+          <p>Si ta semaine change : déplace ou annule la séance, puis « Recalculer le vélo ». Ce qui est déjà fait est gardé.</p>
+          <p>Le dimanche, le <b className="text-texte">bilan</b> s'affiche dans Aujourd'hui (rappel le lundi dans Semaine) : ce qui a été fait, ce qui change la semaine suivante, et pourquoi.</p>
           <p className="pt-1 font-semibold text-texte">Les couleurs</p>
           <p>🟢 faite · 🟠 à valider (rien n'est remonté, ou « Tenue ? » sans réponse) · 🔴 pas faite · sans couleur : à venir.</p>
           <p>Touche une séance pour voir son <b className="text-texte">déroulé minute par minute</b>, la marquer faite ou pas faite, la modifier, ou <b className="text-texte">↔ changer de jour</b> (si le jour choisi est pris, les deux séances échangent).</p>
@@ -76,7 +76,7 @@ export function ModeEmploi() {
         </Rubrique>
 
         <Rubrique titre="🗺️ Saison : où j'en suis">
-          <p>Ta phase du moment (reprise, VO2, seuil…), la frise jusqu'en mars et les semaines à venir : séance d'intensité, budget, semaines allégées, tests, course.</p>
+          <p>Ta phase du moment (reprise, VO2, seuil…), la frise jusqu'à ton objectif et les semaines à venir : séance d'intensité, budget, semaines allégées, tests, course.</p>
         </Rubrique>
 
         <Rubrique titre="📈 Progrès : est-ce que j'avance ?">

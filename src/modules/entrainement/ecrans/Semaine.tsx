@@ -21,7 +21,7 @@ import { NutritionSeance } from '../plan/NutritionSeance'
 import { joursPanneVelo } from '../plan/imprevus'
 import { annulerSemaineChargee, lireSemaineChargee, passerSemaineChargee } from '../plan/semaineChargee'
 import { FormulairePrevue } from '../plan/FormulairePrevue'
-import { annulerPrevue, changerDeJour, chargesSemaine, joursDe, joursPourDeplacer, remplacerParVelo, supprimerPrevue } from '../plan/donnees'
+import { annulerPrevue, changerDeJour, chargesSemaine, joursDe, joursPourDeplacer, supprimerPrevue } from '../plan/donnees'
 import { alertesCumul, estIntensite, genererSemaineVelo, lireMeta, noterResultat } from '../plan/programme'
 import { programmeDe, useReglagesEntrainement } from '../reglagesEntrainement'
 import { lundiDe, nouvelId } from '../seances/donnees'
@@ -133,7 +133,7 @@ export function Semaine() {
       {ajout && (
         <Feuille titre="Ajouter une séance" onFermer={() => setAjout(null)}>
           <FormulairePrevue
-            initiale={{ id: nouvelId(), date: ajout, sport: 'course', titre: '', intensite: 'basse', dureeMin: 45, priorite: 'normale', statut: 'prevue', origine: 'manuel' }}
+            initiale={{ id: nouvelId(), date: ajout, sport: 'velo', titre: '', intensite: 'basse', dureeMin: 45, priorite: 'normale', statut: 'prevue', origine: 'manuel' }}
             jours={jours}
             onTermine={() => setAjout(null)}
           />
@@ -280,12 +280,6 @@ function DetailSeance({ p, jours, prevues, onFermer, onMessage }: {
                 ))}
               </div>
             </div>
-          )}
-          {p.statut === 'prevue' && p.sport === 'course' && (
-            <>
-              <p className="text-xs text-texte-3">Si tu peux, décale plutôt ta course dans la semaine (« Changer de jour ») : le vélo garde ton moteur, pas ta foulée.<Aide titre="Vélo à la place de la course" texte={AIDES.veloALaPlace} /></p>
-              <Bouton variante="secondaire" onClick={async () => { onMessage(await remplacerParVelo(p)); onFermer() }}>🚴 Faire du vélo à la place</Bouton>
-            </>
           )}
           {p.statut === 'prevue' && <Bouton variante="secondaire" onClick={() => setMode('jour')}>↔ Changer de jour</Bouton>}
           {p.statut === 'prevue' && <Bouton variante="secondaire" onClick={() => setMode('annuler')}>✗ Je ne peux pas la faire</Bouton>}

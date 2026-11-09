@@ -1,9 +1,12 @@
 import { useReglage } from '../../core/reglages'
 import type { ReglagesEntrainement, ReglagesProgramme } from './types'
 
-/** Semaine type : footing lundi, intensité vélo mardi, renfo mercredi, intensité course jeudi, Z2 vendredi, sortie longue course samedi, vélo long dimanche. */
+/**
+ * Programme de repli, le temps que le questionnaire d'arrivée calcule la saison (tous les comptes y passent depuis
+ * 11/2026 : l'ancienne saison écrite à la main de Titouan, course à pied comprise, est abandonnée). Vélo seul.
+ */
 export const PROGRAMME_DEFAUT: ReglagesProgramme = {
-  semaineType: ['course', 'velo-dur', 'renfo', 'course', 'velo-z2', 'course', 'velo-long'],
+  semaineType: ['libre', 'velo-dur', 'renfo', 'libre', 'velo-z2', 'libre', 'velo-long'],
   maxSemaineMin: 75,
   maxLongMin: 120,
   minLongMin: 90,
@@ -16,7 +19,7 @@ export const PROGRAMME_DEFAUT: ReglagesProgramme = {
   // Tests complets le dimanche (créneau long : 30' de récupération entre les efforts), tests courts en début de phase
   testsCp: ['2026-11-01', '2026-12-15', '2027-02-02', '2027-03-21'],
   testsCourts: ['2026-12-15', '2027-02-02'],
-  competitions: [{ date: '2026-12-13', nom: '5 km route' }],
+  competitions: [],
 }
 
 /**

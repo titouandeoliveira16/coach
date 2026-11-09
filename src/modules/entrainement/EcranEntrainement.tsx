@@ -10,7 +10,7 @@ import { Semaine } from './ecrans/Semaine'
 import { AideFit } from './import/AideFit'
 import { importerIntervalsSiBesoin } from './import/intervals'
 import { nettoyerPeseesEffacees } from './forme/pesees'
-import { corrigerSortieReprise } from './plan/remiseAZero'
+import { retirerCourseAVenir } from './plan/donnees'
 import { nettoyerDoublons } from './seances/donnees'
 import { regrouperEnchainements } from './seances/enchainements'
 import { FormulaireSeance } from './seances/FormulaireSeance'
@@ -27,7 +27,7 @@ export function EcranEntrainement() {
   // Nouvelles données Intervals.icu à l'ouverture (au plus une fois par heure)
   // (et fusion des éventuels doublons déjà enregistrés)
   useEffect(() => {
-    nettoyerDoublons().then(regrouperEnchainements).then(nettoyerPeseesEffacees).then(corrigerSortieReprise).then(importerIntervalsSiBesoin)
+    nettoyerDoublons().then(regrouperEnchainements).then(nettoyerPeseesEffacees).then(retirerCourseAVenir).then(importerIntervalsSiBesoin)
   }, [])
 
   return (

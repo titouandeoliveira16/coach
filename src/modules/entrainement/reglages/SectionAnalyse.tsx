@@ -10,10 +10,10 @@ import type { TestPhysio } from '../types'
 
 const CHARGES = ['trimp', 'srpe'] as const
 
-/** Paramètres d'analyse : charge de référence, distribution visée, seuil course, historique des tests. */
+/** Paramètres d'analyse : charge de référence, historique des tests CP (les anciens tests de VMA restent affichés). */
 export function SectionAnalyse() {
   const [r, modifier] = useReglagesEntrainement()
-  const [nouveau, setNouveau] = useState<Partial<TestPhysio>>({ type: 'vma' })
+  const [nouveau, setNouveau] = useState<Partial<TestPhysio>>({ type: 'cp' })
 
   return (
     <Carte titre="Analyse">
@@ -34,12 +34,8 @@ export function SectionAnalyse() {
           </div>
         ))}
         <div className="mt-2 flex items-center gap-2">
-          <select value={nouveau.type} onChange={(e) => setNouveau({ ...nouveau, type: e.target.value as TestPhysio['type'] })}
-            className="rounded-lg border border-bordure bg-surface-2 px-2 py-2">
-            <option value="vma">VMA</option>
-            <option value="cp">CP</option>
-          </select>
-          <input inputMode="decimal" placeholder={nouveau.type === 'vma' ? 'km/h' : 'W'} value={nouveau.valeur ?? ''}
+          <span className="text-sm text-texte-2">CP</span>
+          <input inputMode="decimal" placeholder="W" value={nouveau.valeur ?? ''}
             onChange={(e) => setNouveau({ ...nouveau, valeur: Number(e.target.value.replace(',', '.')) || undefined })}
             className="w-20 rounded-lg border border-bordure bg-surface-2 px-2 py-2 text-right" />
           <button type="button" disabled={!nouveau.valeur}
@@ -47,13 +43,13 @@ export function SectionAnalyse() {
             onClick={() => {
               const test = { date: aujourdhui(), type: nouveau.type!, valeur: nouveau.valeur! }
               // Le dernier test devient la valeur de référence
-              modifier({ tests: [...r.tests, test], ...(test.type === 'vma' ? { vmaKmh: test.valeur } : { cpW: test.valeur }) })
+              modifier({ tests: [...r.tests, test], cpW: test.valeur })
               setNouveau({ type: nouveau.type })
             }}>
             + Ajouter
           </button>
         </div>
-        <p className="mt-1 text-xs text-texte-3">Le test ajouté met à jour ta VMA ou ta CP de référence.</p>
+        <p className="mt-1 text-xs text-texte-3">Le test ajouté met à jour ta CP de référence.</p>
       </div>
     </Carte>
   )

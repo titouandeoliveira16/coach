@@ -13,8 +13,6 @@ import { CarteBilanNutrition } from '../forme/CarteBilanNutrition'
 import { CarteFcMax } from '../forme/CarteFcMax'
 import { CartePanne } from '../forme/CartePanne'
 import { CartePesee } from '../forme/CartePesee'
-import { CartePlanCampus } from '../forme/CartePlanCampus'
-import { CarteRemise } from '../forme/CarteRemise'
 import { CarteResultat } from '../forme/CarteResultat'
 import { SaisieMatin } from '../forme/SaisieMatin'
 import { BandeauAVoir } from '../forme/BandeauAVoir'
@@ -74,8 +72,6 @@ export function Aujourdhui() {
       <BravoSeance />
       <BandeauAVoir>
         <CarteVictoire />
-        <CarteRemise />
-        <CartePlanCampus />
         <CarteResultat />
         <CarteFcMax />
         <CarteCpEnHausse />

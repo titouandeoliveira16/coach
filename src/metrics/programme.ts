@@ -630,20 +630,28 @@ export function construireSpeciales(palier: number, cpW: number): SeanceConstrui
 }
 
 /** Séance d'endurance (Z2), avec sprints pour la sortie longue. */
-/** Blocs au 1er seuil de la sortie longue : palier 0 → 3 (choix d'entraîneur, forme Chauvin). */
-export const BLOCS_SV1: { reps: number; min: number }[] = [{ reps: 3, min: 15 }, { reps: 5, min: 15 }, { reps: 5, min: 20 }, { reps: 6, min: 20 }]
+/**
+ * Blocs au 1er seuil de la sortie longue, palier 0 → 6 : 30 → 80 min au total (relecture du 9/11/2026 : aucun essai
+ * sur la dose ; 2 h à 90 % du 1er seuil sont tenables par des cyclistes entraînés, Stevenson 2022 ; paliers = choix
+ * d'entraîneur). Au plus 60 % de la sortie (PART_MAX_SV1), après 20 min de Z2, 10 min de Z2 après.
+ */
+export const BLOCS_SV1: { reps: number; min: number }[] = [
+  { reps: 2, min: 15 }, { reps: 3, min: 15 }, { reps: 2, min: 25 }, { reps: 3, min: 20 }, { reps: 2, min: 30 }, { reps: 3, min: 25 }, { reps: 2, min: 40 },
+]
+export const PART_MAX_SV1 = 0.6
 const RECUP_SV1_MIN = 5
 
 /**
  * Sortie Z2. Options :
  *  - `sprints` : sprints à fond, un toutes les `espacementSec` (10 min par défaut) à partir de la 20e minute ;
- *  - `sv1` : blocs au 1er seuil (haut de la Z2, jamais en Z3), 5 min de Z2 entre, au plus la moitié de la sortie,
- *    à partir de la 45e minute (relecture du 6/11/2026 : talk test, dérive cardiaque) ;
+ *  - `sv1` : blocs au 1er seuil (haut de la Z2, jamais en Z3), 5 min de Z2 entre, au plus 60 % de la sortie, après
+ *    20 min de Z2 au moins et 10 min avant le retour au calme (relectures des 6 et 9/11/2026) ; si le palier demandé ne
+ *    rentre pas, les paliers de `repli` (du plus haut au plus bas), puis moins de blocs ;
  *  - `rappelSv1` : 2 × 10 min au 1er seuil (lendemain d'une séance intensive, confirmé et plus) ;
  *  - Z2 de 90 min ou plus sans rien d'autre : découpée en 8 min de Z2 + 2 min plus faciles (monotonie, home trainer).
  * Une sortie avec `sprints` ou `longue` est la sortie longue (famille z2-long).
  */
-export function construireZ2(duree: number, z2W: number, sprints?: { n: number; sec: number }, o: { longue?: boolean; sv1?: { w: number; reps: number; min: number }; espacementSec?: number } = {}): SeanceConstruite {
+export function construireZ2(duree: number, z2W: number, sprints?: { n: number; sec: number }, o: { longue?: boolean; sv1?: { w: number; reps: number; min: number; repli?: { reps: number; min: number }[] }; espacementSec?: number } = {}): SeanceConstruite {
   const dureeMin = Math.round(duree)
   const ech = Math.min(10, dureeMin) * 60
   const wEch = arrondi5(z2W * 0.85)
@@ -657,14 +665,21 @@ export function construireZ2(duree: number, z2W: number, sprints?: { n: number; 
   let detailPlus = ''
   let kjPlus = 0
 
-  // Blocs au 1er seuil : au plus la moitié de la sortie, en laissant 15 min de Z2 avant et 10 min après
-  let sv1 = o.sv1
-  if (sv1) {
-    let reps = sv1.reps
-    const total = (n: number) => (n * sv1!.min + (n - 1) * RECUP_SV1_MIN) * 60
-    while (reps > 1 && (reps * sv1.min * 60 > fin / 2 || total(reps) > corpsFin - ech - 15 * 60 - 10 * 60)) reps--
-    if (reps * sv1.min * 60 > fin / 2 || total(reps) > corpsFin - ech - 25 * 60) sv1 = undefined
-    else sv1 = { ...sv1, reps }
+  // Blocs au 1er seuil : au plus 60 % de la sortie, 20 min de Z2 avant (mise en route comprise) et 10 min après
+  let sv1: { w: number; reps: number; min: number } | undefined
+  if (o.sv1) {
+    const rentre = (reps: number, min: number) =>
+      reps * min * 60 <= fin * PART_MAX_SV1 && (reps * min + (reps - 1) * RECUP_SV1_MIN) * 60 <= corpsFin - ech - 10 * 60 - 10 * 60
+    const essais = [{ reps: o.sv1.reps, min: o.sv1.min }, ...(o.sv1.repli ?? [])]
+    const choisi = essais.find((x) => rentre(x.reps, x.min))
+    if (choisi) sv1 = { w: o.sv1.w, ...choisi }
+    else {
+      // Sortie courte (semaine allégée) : moins de blocs du plus petit palier
+      const dernier = essais[essais.length - 1]
+      let reps = dernier.reps
+      while (reps > 1 && !rentre(reps, dernier.min)) reps--
+      if (rentre(reps, dernier.min)) sv1 = { w: o.sv1.w, reps, min: dernier.min }
+    }
   }
   // Sortie longue : premier sprint à la 20e minute ; Z2 de semaine (plus courte) : dès la 15e
   const premier = longue ? 20 : 15
@@ -672,7 +687,7 @@ export function construireZ2(duree: number, z2W: number, sprints?: { n: number; 
 
   if (sv1) {
     const total = (sv1.reps * sv1.min + (sv1.reps - 1) * RECUP_SV1_MIN) * 60
-    const debut = Math.max(ech + 15 * 60, Math.min(45 * 60, corpsFin - 10 * 60 - total))
+    const debut = Math.max(ech + 10 * 60, Math.min(45 * 60, corpsFin - 10 * 60 - total))
     const p = plage(sv1.w, 'tempo')
     etapes.push(z2(ech, debut - ech), {
       debutSec: debut, dureeSec: total, w: sv1.w,

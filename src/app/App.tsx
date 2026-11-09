@@ -29,9 +29,10 @@ function Coquille() {
   // Personne de connecté sur cet appareil : connexion, ou création du compte avec un code
   if (!pret) return null
   if (!session) return <Entree />
-  // Compte créé avec un code : questionnaire d'arrivée (après la 1re synchro, pour ne pas le reposer sur un 2e appareil),
-  // puis la montre (Intervals.icu)
-  if (compte.invite && derniereSynchro && !arrivee.fait) return <QuestionnaireArrivee />
+  // Questionnaire d'arrivée (après la 1re synchro, pour ne pas le reposer sur un 2e appareil) : tout compte qui ne l'a
+  // pas fait, y compris celui de Titouan (sa saison est calculée depuis 11/2026), puis la montre pour les comptes créés
+  // avec un code
+  if (derniereSynchro && !arrivee.fait) return <QuestionnaireArrivee />
   if (compte.invite && arrivee.fait && !arrivee.montre) return <QuestionnaireArrivee montreSeulement />
 
   // Dans un module, la page est toujours un peu plus haute que l'écran : sur iPhone (appli installée),

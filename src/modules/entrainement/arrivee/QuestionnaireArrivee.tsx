@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { aujourdhui } from '../../../core/dates'
 import { enregistrer } from '../../../core/stockage'
 import { db } from '../../../core/db'
@@ -7,7 +7,7 @@ import { Carte } from '../../../core/ui/Carte'
 import { ANCIENNETES, DISCIPLINES_PROPOSEES, HEURES_RECENTES, NOMS_DISCIPLINES, NOMS_PHASES, type Role } from '../../../metrics/programme'
 import { AIDES } from '../aides'
 import { importerIntervals, relierIntervals } from '../import/intervals'
-import { enregistrerArrivee, preparerArrivee, SEMAINE_TYPE_DEPART, semaineDepuisJours, type EtatArrivee, type ReponsesArrivee } from './donnees'
+import { enregistrerArrivee, preparerArrivee, reponsesExistantes, SEMAINE_TYPE_DEPART, semaineDepuisJours, type EtatArrivee, type ReponsesArrivee } from './donnees'
 
 const HEURES = ['Moins de 4 h', '4 à 6 h', '6 à 8 h', '8 à 10 h', '10 à 12 h', 'Plus de 12 h']
 const MUSCU = ['Pas pour l’instant', '1 séance par semaine', '2 séances par semaine']
@@ -51,6 +51,15 @@ export function QuestionnaireArrivee({ montreSeulement = false }: { montreSeulem
   const [occupe, setOccupe] = useState(false)
   const [message, setMessage] = useState<string>()
   const maj = (c: Partial<ReponsesArrivee>) => setR({ ...r, ...c })
+  // Compte déjà utilisé (ex. Titouan, passé au questionnaire) : réponses préremplies avec ce que l'appli sait déjà
+  useEffect(() => {
+    if (montreSeulement) return
+    reponsesExistantes().then((x) => {
+      if (!x) return
+      setR((avant) => ({ ...avant, ...x.reponses }))
+      setTextes((avant) => ({ ...avant, ...x.textes }))
+    })
+  }, [montreSeulement])
   const jour = aujourdhui()
 
   const reponses = (): ReponsesArrivee => ({

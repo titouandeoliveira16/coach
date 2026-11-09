@@ -1,11 +1,11 @@
 # Coach — appli personnelle de Titouan
 
 PWA en français (iPhone d'abord, thème sombre) : un accueil, puis des modules. **Entraînement** est construit
-(vélo + course, système kJ, CP, feu du jour par VFC) ; **Budget** est construit (saisie manuelle, plafonds, patrimoine) ;
+(vélo seul depuis 11/2026 : la course à pied et le plan Campus sont retirés ; système kJ, CP, feu du jour par VFC) ; **Budget** est construit (saisie manuelle, plafonds, patrimoine) ;
 **Révision CAPEPS** est construit (41 notions, rappels J+1…J+90 en feuille blanche, sujets ; concours le 2/03/2027) ;
 **Muscu** est construit (développé couché 5/3/1 adapté, pas encore relié à l'Entraînement ni à la nutrition ; mis de côté,
 plus sur l'accueil) ;
-**Catalogue** affiche le catalogue scientifique de séances (`catalogue/` : route, VTT par discipline, course, renfo, méthodes ;
+**Catalogue** affiche le catalogue scientifique de séances (`catalogue/` : route, VTT par discipline, course (plus affichée), renfo, méthodes ;
 l'Entraînement y pioche ses formats d'intensité vélo ; plus sur l'accueil : encart dépliable dans Entraînement → Réglages,
 limité aux sports du profil sportif, `catalogue/ListeCatalogue.tsx`).
 L'accueil n'affiche que Entraînement, Révision CAPEPS et Budget (modules `masque` dans `src/app/modules.ts`).
@@ -19,7 +19,7 @@ En ligne : https://titouandeoliveira16.github.io/coach/ (GitHub Pages, déployé
   `relecteur-scientifique`) et expliquées dans les « ? » de l'appli (`src/modules/entrainement/aides.ts`).
 - Il veut une appli **simple** : peu d'écrans, peu de chiffres, autonome (pas de service d'IA en ligne).
 - Les points mis de côté sont dans **`docs/a-revoir.md`** : le tenir à jour et le lui rappeler au bon moment
-  (ex. après le 5 km du 13/12/2026 : 4 vélos et 2 courses par semaine).
+  (ex. 4 semaines après sa nouvelle saison calculée : point sur les paliers au 1er seuil).
 - Ne jamais lui demander de coller un mot de passe, une clé ou un jeton dans la conversation.
 - **Le dépôt GitHub est public : aucune donnée personnelle dans le code, les tests ou les docs** (montants, soldes,
   poids, taille, date de naissance, FC, records, employeur, proches). Ses valeurs vivent dans ses données synchronisées ;
@@ -30,8 +30,9 @@ En ligne : https://titouandeoliveira16.github.io/coach/ (GitHub Pages, déployé
 - Une seule appli pour Titouan, son frère et ses élèves : chacun son compte (données séparées par RLS), même moteur.
   Inscription seulement avec un code (`supabase/functions/inscription`, `supabase/sql/04-codes.sql`) ; un compte créé
   avec un code a le réglage `compte.invite` : accueil = Entraînement seul, questionnaire d'arrivée
-  (`modules/entrainement/arrivee/`), saison calculée depuis sa course (`metrics/saison.ts`). La saison de Titouan reste
-  écrite à la main (`PROGRAMME_DEFAUT`) : ne jamais l'appliquer à un autre compte.
+  (`modules/entrainement/arrivee/`), saison calculée depuis sa course (`metrics/saison.ts`). Depuis 11/2026, le compte
+  de Titouan passe aussi par le questionnaire (prérempli, ses tests CP et données gardées) : sa saison écrite à la main
+  est abandonnée, `PROGRAMME_DEFAUT` n'est plus qu'un repli vélo seul.
 
 ## Commandes
 - `npm run dev` · `npm test` (Vitest) · `npx tsc -b` · `npm run lint` (oxlint) · `npm run build`

@@ -122,30 +122,13 @@ export async function annulerPrevue(p: SeancePrevue, raison: Raison) {
 }
 
 /**
- * Remplace une séance de course par son équivalent vélo, le jour même (ou aujourd'hui si elle était passée) :
- * la course passe en « pas faite », le vélo prévu ce jour-là par le programme est retiré (une séance par jour).
+ * L'appli ne planifie plus la course à pied (11/2026) : les séances de course prévues à venir sont retirées
+ * (les courses déjà faites restent dans l'historique et la charge). Sans effet une fois fait.
  */
-export async function remplacerParVelo(p: SeancePrevue) {
-  const { construireEquivalentCourse } = await import('../../../metrics/programme')
-  const { z2Actuel } = await import('./programme')
-  const r = (await db.reglages.get('entrainement'))?.valeur as { cpW?: number } | undefined
-  const date = p.date < aujourdhui() ? aujourdhui() : p.date
-  const s = construireEquivalentCourse(p, r?.cpW ?? 260, (await z2Actuel()).w)
-  for (const x of await db.prevues.where('date').equals(date).toArray())
-    if (x.sport === 'velo' && x.origine === 'auto' && x.statut === 'prevue') await supprimer(db.prevues, x.id)
-  await enregistrer(db.prevues, { ...p, statut: 'non-faite', remplaceeParVelo: true })
-  await enregistrer(db.prevues, {
-    id: `velo-pour-${p.id}`, date, sport: 'velo', titre: s.titre, detail: s.detail, dureeMin: s.dureeMin, kjPrevu: s.kj,
-    type: p.intensite === 'haute' ? 'Fractionné / VMA' : 'Endurance', intensite: p.intensite, priorite: p.priorite, statut: 'prevue', origine: 'manuel', velo: s.velo,
-  })
-  // 48 h entre deux séances dures : on prévient si une séance dure tombe la veille ou le lendemain
-  const voisins = [decalerJour(date, -1), decalerJour(date, 1)]
-  const dureProche = p.intensite === 'haute' && (await db.prevues.where('date').anyOf(voisins).toArray())
-    .some((x) => x.statut !== 'non-faite' && x.intensite === 'haute' && x.id !== p.id)
-  return [
-    `${p.titre} remplacée par : ${s.titre} (${s.dureeMin} min, ${s.kj} kJ).`,
-    ...(dureProche ? ['Attention : une séance dure est prévue la veille ou le lendemain. Garde 48 h entre deux séances dures : déplace l’une des deux si tu peux.'] : []),
-  ]
+export async function retirerCourseAVenir() {
+  const jour = aujourdhui()
+  for (const p of await db.prevues.where('date').aboveOrEqual(jour).toArray())
+    if (p.sport === 'course' && p.statut === 'prevue') await supprimer(db.prevues, p.id)
 }
 
 export const enregistrerPrevue = (p: SeancePrevue) => enregistrer(db.prevues, p)
