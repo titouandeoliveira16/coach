@@ -1593,11 +1593,12 @@ export function construireOuverture(z2W: number, cpW: number): SeanceConstruite 
  * Les descentes comptent au rythme du plat (ça compense à peu près). Estimation à ±20 % : l'athlète peut la corriger.
  */
 export const VITESSES_EPREUVE: Record<Epreuve, { kmh: number; pente: number; partCp: number; crr: number; ajustee: boolean }> = {
-  'en-ligne': { kmh: 40, pente: 0.06, partCp: 0.95, crr: 0.004, ajustee: false },
-  cyclo: { kmh: 29, pente: 0.06, partCp: 0.8, crr: 0.004, ajustee: true },
-  xco: { kmh: 20, pente: 0.1, partCp: 0.95, crr: 0.012, ajustee: false },
-  xcc: { kmh: 22, pente: 0.1, partCp: 0.95, crr: 0.012, ajustee: false },
-  xcm: { kmh: 19, pente: 0.1, partCp: 0.8, crr: 0.012, ajustee: true },
+  // Vitesses d'amateurs (baissées le 9/11/2026 à la demande de Titouan : celles de la relecture étaient de bons coureurs)
+  'en-ligne': { kmh: 35, pente: 0.06, partCp: 0.9, crr: 0.004, ajustee: false },
+  cyclo: { kmh: 25, pente: 0.06, partCp: 0.75, crr: 0.004, ajustee: true },
+  xco: { kmh: 16, pente: 0.1, partCp: 0.9, crr: 0.012, ajustee: false },
+  xcc: { kmh: 18, pente: 0.1, partCp: 0.9, crr: 0.012, ajustee: false },
+  xcm: { kmh: 15, pente: 0.1, partCp: 0.75, crr: 0.012, ajustee: true },
 }
 
 /** Durée estimée d'une course (min, arrondie à 5, entre 20 min et 10 h). Sans CP ni poids : 3,5 W/kg et 70 kg. */
@@ -1608,7 +1609,8 @@ export function estimerDureeCourse(epreuve: Epreuve, distanceKm: number, denivel
   const route = epreuve === 'en-ligne' || epreuve === 'cyclo'
   // Plat : la vitesse suit à peu près la racine cubique de la puissance (air) ; en course en ligne, le peloton la fixe
   const kmhPlat = v.ajustee ? v.kmh * (wkg / 3.5) ** (1 / 3) : v.kmh
-  const pente = Math.min(v.pente, deniveleM / 1000 / Math.max(distanceKm, 0.1))
+  // Ce qui monte redescend : les montées font au plus la moitié de la distance (pente au moins 2 × D+ / distance)
+  const pente = deniveleM > 0 ? Math.max(v.pente, (2 * deniveleM) / 1000 / Math.max(distanceKm, 0.1)) : 0
   const kmMontee = pente > 0 ? Math.min(distanceKm, deniveleM / 1000 / pente) : 0
   const kmhMontee = pente > 0 ? vitesseMontee(v.partCp * wkg * poids, poids + 9, pente, v.crr) * 3.6 : kmhPlat
   let heures = (distanceKm - kmMontee) / kmhPlat + kmMontee / kmhMontee

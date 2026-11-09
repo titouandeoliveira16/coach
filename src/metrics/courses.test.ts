@@ -44,13 +44,13 @@ describe('courses A / B / C', () => {
 })
 
 describe('durée estimée d’une course', () => {
-  it('ordres de grandeur de la relecture (3,5 W/kg, 70 kg)', () => {
+  it('ordres de grandeur pour un amateur (3,5 W/kg, 70 kg)', () => {
     const a = { cpW: 245, poidsKg: 70 }
     const h = (m: number) => m / 60
     expect(h(estimerDureeCourse('cyclo', 170, 4500, a))).toBeGreaterThan(7.5)
-    expect(h(estimerDureeCourse('cyclo', 170, 4500, a))).toBeLessThan(10)
+    expect(h(estimerDureeCourse('cyclo', 170, 4500, a))).toBeLessThan(11)
     expect(h(estimerDureeCourse('en-ligne', 100, 1000, a))).toBeGreaterThan(2.5)
-    expect(h(estimerDureeCourse('en-ligne', 100, 1000, a))).toBeLessThan(3.5)
+    expect(h(estimerDureeCourse('en-ligne', 100, 1000, a))).toBeLessThan(4)
     expect(h(estimerDureeCourse('xco', 25, 800, a))).toBeGreaterThan(1.2)
     expect(h(estimerDureeCourse('xco', 25, 800, a))).toBeLessThan(2.2)
   })
