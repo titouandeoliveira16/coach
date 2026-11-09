@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { delaiApresCourse, dureeDeCourse, estimerDureeCourse, facteursVitesse, niveauxCourses, procheCourse, construireOuverture, construireCourse } from './programme'
+import { delaiApresCourse, dureeDeCourse, estimerDureeCourse, estMontagne, facteursVitesse, niveauxCourses, procheCourse, construireOuverture, construireCourse } from './programme'
 
 const phases = [{ debut: '2026-11-09', type: 'reprise' as const }, { debut: '2026-12-07', type: 'seuil-tirage' as const }]
 
@@ -75,5 +75,22 @@ describe('vitesse calée sur les courses faites', () => {
     expect(facteursVitesse([{ epreuve: 'xco', distanceKm: 25, deniveleM: 800, dureeMin: 30 }], a).vtt!.facteur).toBe(1.8)
     const refs = [1, 2, 3, 4].map((i) => ({ epreuve: 'en-ligne' as const, distanceKm: 90, deniveleM: 800, dureeMin: 150, date: `2026-0${i}-01` }))
     expect(facteursVitesse(refs, a).route!.n).toBe(3)
+  })
+})
+
+describe('montagne ou pas', () => {
+  const a = { cpW: 245, poidsKg: 70 }
+  it('15 m/km ou plus : montagne', () => {
+    expect(estMontagne(113, 730)).toBe(false)
+    expect(estMontagne(154, 4850)).toBe(true)
+  })
+  it('calé sur une cyclo roulante en peloton : la course de montagne garde ses cols à la CP', () => {
+    const f = facteursVitesse([{ epreuve: 'cyclo', distanceKm: 100, deniveleM: 600, dureeMin: 150 }], a).route!.facteur
+    const montagne = { date: 'x', nom: 'x', epreuve: 'cyclo' as const, distanceKm: 154, deniveleM: 4850 }
+    const base = dureeDeCourse(montagne, { discipline: 'route', ...a })
+    const calee = dureeDeCourse(montagne, { discipline: 'route', ...a, facteurs: { route: f } })
+    // Facteur sur toute la course : base / f ; sur le plat seulement : bien moins de gain
+    expect(calee).toBeGreaterThan(base / f + 30)
+    expect(calee).toBeLessThan(base)
   })
 })

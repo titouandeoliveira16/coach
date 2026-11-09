@@ -1607,6 +1607,10 @@ export function estimerDureeCourse(epreuve: Epreuve, distanceKm: number, denivel
   return Math.min(600, Math.max(20, Math.round(estimerDureeCourseBrute(epreuve, distanceKm, deniveleM, athlete, facteur) / 5) * 5))
 }
 
+/** Parcours de montagne : 15 m de dénivelé par km ou plus (moins : roulant ou vallonné). Choix d'entraîneur. */
+export const SEUIL_MONTAGNE_M_PAR_KM = 15
+export const estMontagne = (distanceKm: number, deniveleM = 0) => deniveleM / Math.max(distanceKm, 0.1) >= SEUIL_MONTAGNE_M_PAR_KM
+
 /** Même calcul, sans arrondi ni plancher (min). */
 function estimerDureeCourseBrute(epreuve: Epreuve, distanceKm: number, deniveleM = 0, athlete?: { cpW?: number; poidsKg?: number }, facteur = 1) {
   const v = VITESSES_EPREUVE[epreuve]
@@ -1619,14 +1623,17 @@ function estimerDureeCourseBrute(epreuve: Epreuve, distanceKm: number, deniveleM
   const pente = deniveleM > 0 ? Math.max(v.pente, (2 * deniveleM) / 1000 / Math.max(distanceKm, 0.1)) : 0
   const kmMontee = pente > 0 ? Math.min(distanceKm, deniveleM / 1000 / pente) : 0
   const kmhMontee = pente > 0 ? vitesseMontee(v.partCp * wkg * poids, poids + 9, pente, v.crr) * 3.6 : kmhPlat
-  let heures = (distanceKm - kmMontee) / kmhPlat + kmMontee / kmhMontee
-  // Bornes : vitesse moyenne plausible (route 18-42 km/h, VTT 8-25 km/h)
+  const plat = (distanceKm - kmMontee) / kmhPlat
+  const montees = kmMontee / kmhMontee
+  // Bornes de l'estimation de base : vitesse moyenne plausible (route 18-42 km/h, VTT 8-25 km/h)
   const [vMin, vMax] = route ? [18, 42] : [8, 25]
-  heures = Math.min(distanceKm / vMin, Math.max(distanceKm / vMax, heures))
-  // Facteur personnel (calé sur tes courses faites), sur toute la course : en peloton, plat et bosses vont plus vite
-  // que le modèle (abri, élan) ; il peut sortir des bornes de l'estimation de base (un peloton roule à plus de 42 km/h)
-  heures /= facteur
-  return heures * 60
+  const borne = (h: number) => Math.min(distanceKm / vMin, Math.max(distanceKm / vMax, h))
+  if (facteur === 1) return borne(plat + montees) * 60
+  // Facteur personnel (calé sur tes courses faites). Parcours roulant ou vallonné : sur toute la course (en peloton, plat
+  // et bosses vont plus vite que le modèle : abri, élan). Route de montagne (15 m/km ou plus) : sur le plat seulement,
+  // les cols se montent à ta CP (physique), le peloton n'y change presque rien.
+  if (route && estMontagne(distanceKm, deniveleM)) return (plat / facteur + montees) * 60
+  return (borne(plat + montees) / facteur) * 60
 }
 
 /**
@@ -1651,7 +1658,7 @@ export const COURSES_POUR_FACTEUR = 3
 
 /**
  * Facteur de vitesse personnel par famille (route, VTT) : estimation de base ÷ temps réel, moyenne des 3 courses les
- * plus récentes, borné entre 0,6 et 1,8. Il multiplie ta vitesse sur toute la course (peloton, abri, élan dans les bosses).
+ * plus récentes, borné entre 0,6 et 1,8. Il multiplie ta vitesse sur toute la course, ou seulement sur le plat en montagne.
  */
 export function facteursVitesse(refs: CourseReference[], athlete?: { cpW?: number; poidsKg?: number }): Partial<Record<FamilleVitesse, { facteur: number; n: number }>> {
   const res: Partial<Record<FamilleVitesse, { facteur: number; n: number }>> = {}
@@ -1659,7 +1666,16 @@ export function facteursVitesse(refs: CourseReference[], athlete?: { cpW?: numbe
     const liste = refs.filter((x) => familleVitesse(x.epreuve) === f && x.dureeMin > 0 && x.distanceKm > 0)
       .sort((a, b) => (b.date ?? '').localeCompare(a.date ?? '')).slice(0, COURSES_POUR_FACTEUR)
     if (!liste.length) continue
-    const ratios = liste.map((x) => estimerDureeCourseBrute(x.epreuve, x.distanceKm, x.deniveleM, athlete) / x.dureeMin)
+    // Pour chaque course : le facteur qui redonne ton temps, avec le même calcul que pour tes prochaines courses (dichotomie)
+    const ratios = liste.map((x) => {
+      let [bas, haut] = [0.3, 3]
+      for (let i = 0; i < 40; i++) {
+        const m = (bas + haut) / 2
+        if (estimerDureeCourseBrute(x.epreuve, x.distanceKm, x.deniveleM, athlete, m) > x.dureeMin) bas = m
+        else haut = m
+      }
+      return (bas + haut) / 2
+    })
     const moyenne = ratios.reduce((a, b) => a + b, 0) / ratios.length
     res[f] = { facteur: Math.round(Math.min(FACTEUR_VITESSE_BORNES[1], Math.max(FACTEUR_VITESSE_BORNES[0], moyenne)) * 100) / 100, n: liste.length }
   }
