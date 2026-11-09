@@ -66,6 +66,11 @@ Points décidés ou mis de côté, à reprendre au bon moment.
   Point à faire après 4 sorties : la plage colle-t-elle à ses sensations (parler en phrases) ? Les Z2 de semaine à 45 min
   quand la sortie longue s'allonge : validé par Titouan.
 
+- 9.2 (9/11/2026) : un seul RPE par séance ; bilan du dimanche seulement ; nutrition en option (réglage « Module
+  nutrition », question « Conseil nutrition ? » au questionnaire, Non par défaut) ; carte EF ; nutrition J-1/J-2.
+- **Titouan a encore « 2-3 trucs à travailler »** (9/11 au soir, pas encore dits) : les lui demander à la prochaine conversation.
+- Les deux conversations ont été regroupées le 9/11/2026 (« Corrections et améliorations appli » supprimée par Titouan).
+
 ## À reprendre ensuite (dans l'ordre proposé)
 1. Phases spécifique et affûtage : attendre les courses vélo 2027.
 2. Point après 4 semaines de données réelles (watts Z2, durées, seuils du feu). Relecture scientifique du 27/10 :
@@ -124,7 +129,7 @@ Points décidés ou mis de côté, à reprendre au bon moment.
   un code à usage unique (fonction `inscription`, SQL `04-codes.sql`, Titouan dans la table `coachs`, inscriptions libres
   fermées) ; questionnaire d'arrivée (Toi, profil, semaine, course principale → saison calculée `metrics/saison.ts`, puis
   Intervals.icu) ; accueil = Entraînement seul ; pas d'accès de Titouan aux données des élèves (pas voulu pour l'instant).
-  Course à pied mise de côté (pas de programme pour les autres ; plan Campus de Titouan inchangé, à rediscuter) ;
+  Course à pied mise de côté (pas de programme pour les autres ; plan Campus de Titouan retiré le 9/11) ;
   enduro et descente retirés des propositions. Ancienne appli `suivi-coaching` : dépôt supprimé par Titouan le 6/11/2026.
   Semaine allégée comptée sur toute la saison (pour tout le monde, validé par Titouan).
   **Plus tard** : questionnaire santé PAR-Q+ (si on ouvre à plus de monde ; accord parental pour un mineur) ;
