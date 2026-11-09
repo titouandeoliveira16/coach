@@ -5,7 +5,7 @@ import { zonesDepuisCp } from '../../../core/zones'
 import { ageAu, type Profil } from '../../../core/profil'
 import type { Competition, Discipline, Role } from '../../../metrics/programme'
 import { calculerSaison } from '../../../metrics/saison'
-import { niveauDuProfil } from '../../../metrics/programme'
+import { dureeDeCourse, epreuveDe, niveauDuProfil } from '../../../metrics/programme'
 import type { ProfilSportif } from '../reglages/ProfilSportif'
 import { DEFAUT_ENTRAINEMENT } from '../reglagesEntrainement'
 import type { ReglagesEntrainement, ZoneVelo } from '../types'
@@ -33,7 +33,8 @@ export interface ReponsesArrivee {
   maxSemaineMin: number
   minLongMin: number
   maxLongMin: number
-  course: { nom: string; date: string }
+  /** Course principale : distance, dénivelé et durée donnée comme les autres courses */
+  course: { nom: string; date: string; distanceKm?: number; deniveleM?: number; dureeMin?: number }
   /** Autres courses (facultatif) : B importante, C pour s'entraîner */
   autresCourses?: Competition[]
   /** Route : course en ligne (FFC…) ou cyclosportive / longue distance */
@@ -80,6 +81,13 @@ export function preparerArrivee(r: ReponsesArrivee, jour: string, testsFaits: Re
     anciennete: r.anciennete, heuresRecentes: r.heuresRecentes, intervalles: r.intervalles,
     heuresSemaine: r.heuresSemaine, pointsSensibles: r.pointsSensibles || undefined, muscu: r.muscu, nutrition: r.nutrition,
   }
+  const principale: Competition = {
+    date: r.course.date, nom: r.course.nom.trim() || 'Course principale', niveau: 'A', epreuve: epreuveDe(r.discipline, r.typeCourse),
+    ...(r.course.distanceKm ? { distanceKm: r.course.distanceKm } : {}), ...(r.course.deniveleM ? { deniveleM: r.course.deniveleM } : {}), ...(r.course.dureeMin ? { dureeMin: r.course.dureeMin } : {}),
+  }
+  const dureePrincipale = r.course.distanceKm || r.course.dureeMin
+    ? dureeDeCourse(principale, { discipline: r.discipline, typeCourse: r.typeCourse, cpW: r.cpW, poidsKg: r.poidsKg })
+    : r.dureeCourseMin
   const jourLong = r.semaineType.indexOf('velo-long')
   const jourDur = r.semaineType.indexOf('velo-dur')
   const saison = calculerSaison({
@@ -102,8 +110,9 @@ export function preparerArrivee(r: ReponsesArrivee, jour: string, testsFaits: Re
     programme: {
       semaineType: r.semaineType, maxSemaineMin: r.maxSemaineMin, minLongMin: r.minLongMin, maxLongMin: r.maxLongMin,
       phases: saison.phases, testsCp: saison.testsCp, testsCourts: saison.testsCourts,
-      competitions: [{ date: r.course.date, nom: r.course.nom.trim() || 'Course principale', niveau: 'A' }, ...(r.autresCourses ?? []).filter((x) => x.date !== r.course.date)], discipline: r.discipline, modele: 'chauvin', ...(r.discipline === 'route' ? { typeCourse: r.typeCourse ?? 'cyclo' } : {}),
-      ...((r.discipline === 'route' || r.discipline === 'xcm') && r.dureeCourseMin ? { dureeCourseMin: r.dureeCourseMin } : {}),
+      competitions: [principale, ...(r.autresCourses ?? []).filter((x) => x.date !== r.course.date)], discipline: r.discipline, modele: 'chauvin', ...(r.discipline === 'route' ? { typeCourse: r.typeCourse ?? 'cyclo' } : {}),
+      // Durée de la course principale : donnée, ou estimée par sa distance et son dénivelé (règle la sortie longue visée)
+      ...(dureePrincipale ? { dureeCourseMin: dureePrincipale } : {}),
     },
   }
   return { profil, entrainement, profilSportif: ps, saison, cpConnue: r.cpW !== undefined, fcConnue: r.fcMax !== undefined }
@@ -133,7 +142,12 @@ export async function reponsesExistantes() {
       maxSemaineMin: prog.maxSemaineMin, minLongMin: prog.minLongMin, maxLongMin: prog.maxLongMin,
       ...(prog.typeCourse ? { typeCourse: prog.typeCourse } : {}),
       ...(prog.dureeCourseMin ? { dureeCourseMin: prog.dureeCourseMin } : {}),
-      // Courses B et C déjà notées : gardées (la A se redemande)
+      // Course principale encore à venir : préremplie (distance, dénivelé, durée)
+      ...((() => {
+        const a = prog.competitions.find((x) => x.niveau === 'A' && x.date > aujourdhui())
+        return a ? { course: { nom: a.nom, date: a.date, ...(a.distanceKm ? { distanceKm: a.distanceKm } : {}), ...(a.deniveleM ? { deniveleM: a.deniveleM } : {}), ...(a.dureeMin ? { dureeMin: a.dureeMin } : {}) } } : {}
+      })()),
+      // Courses B et C déjà notées : gardées
       ...(prog.competitions.some((x) => x.niveau === 'B' || x.niveau === 'C') ? { autresCourses: prog.competitions.filter((x) => x.niveau === 'B' || x.niveau === 'C') } : {}),
     } : {}),
   }

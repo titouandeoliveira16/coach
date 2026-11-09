@@ -13,7 +13,7 @@ describe('questionnaire d’arrivée', () => {
     expect(p.entrainement.cpW).toBe(cpProvisoire(60))
     expect(p.profil.fcMax).toBe(fcMaxTanaka(26))
     expect(p.entrainement.tests).toEqual([])
-    expect(p.entrainement.programme.competitions).toEqual([{ date: '2027-05-16', nom: 'Manche XCO', niveau: 'A' }])
+    expect(p.entrainement.programme.competitions).toEqual([{ date: '2027-05-16', nom: 'Manche XCO', niveau: 'A', epreuve: 'xco' }])
     expect(p.entrainement.programme.discipline).toBe('xco')
     expect(p.profilSportif.sports).toEqual(['VTT'])
     // Rien de la saison de Titouan
@@ -42,5 +42,18 @@ describe('compte déjà utilisé passé au questionnaire', () => {
   it('CP testée il y a moins de 4 semaines : pas de nouveau test les 2 premières semaines', () => {
     const p = preparerArrivee({ ...base, cpW: 250 }, '2026-11-09', [{ date: '2026-11-01', type: 'cp', valeur: 250 }])
     expect(p.entrainement.programme.testsCp.every((d) => d >= '2026-11-23')).toBe(true)
+  })
+})
+
+describe('course principale détaillée comme les autres', () => {
+  it('distance et dénivelé : la durée estimée règle la sortie longue visée', () => {
+    const p = preparerArrivee({ ...base, discipline: 'route', typeCourse: 'cyclo', course: { nom: 'Cyclo', date: '2027-06-05', distanceKm: 150, deniveleM: 1500 } }, '2026-11-09')
+    const a = p.entrainement.programme.competitions[0]
+    expect(a).toMatchObject({ niveau: 'A', epreuve: 'cyclo', distanceKm: 150, deniveleM: 1500 })
+    expect(p.entrainement.programme.dureeCourseMin).toBeGreaterThan(240)
+  })
+  it('durée donnée : elle passe en premier', () => {
+    const p = preparerArrivee({ ...base, discipline: 'route', typeCourse: 'cyclo', course: { nom: 'Cyclo', date: '2027-06-05', distanceKm: 150, dureeMin: 270 } }, '2026-11-09')
+    expect(p.entrainement.programme.dureeCourseMin).toBe(270)
   })
 })
