@@ -12,9 +12,12 @@ import { besoinsDe, lireReglagesNutrition, modifierReglagesNutrition } from './b
 import { Formulaire } from './CarteRepas'
 import { jourARemplir } from './repas'
 
+/** « du jour », « d'hier », « d'avant-hier » */
+const nomJour = (d: string, jour = aujourdhui()) => (d === jour ? 'du jour' : d === decalerJour(jour, -1) ? "d'hier" : "d'avant-hier")
+
 /**
  * Nutrition du jour, en une carte : besoin estimé, ce que tu as mangé (noté le soir) et l'écart, ligne par ligne.
- * Le matin, rattrapage de l'assiette d'hier si elle n'a pas été notée. Le détail du calcul s'ouvre à la demande.
+ * Le matin, rattrapage de l'assiette d'hier si elle n'a pas été notée ; hier et avant-hier restent modifiables. Le détail du calcul s'ouvre à la demande.
  */
 export function CarteNutrition({ ouverte: ouverteParent, onBasculer }: {
   /** Dépliée ou non (géré par l'écran Aujourd'hui, pour que les autres encarts descendent sans se déformer) */
@@ -27,9 +30,12 @@ export function CarteNutrition({ ouverte: ouverteParent, onBasculer }: {
   const mange = useLiveQuery(async () => (await db.repas.get(jour)) ?? null, [jour])
   const assietteHier = useLiveQuery(async () => (await db.repas.get(hier)) ?? null, [hier])
   const besoinsHier = useLiveQuery(() => besoinsDe(hier), [hier])
+  // Les 2 jours d'avant restent modifiables (ex. noter hier et rattraper avant-hier oublié)
+  const avantHier = decalerJour(jour, -2)
+  const assietteAvantHier = useLiveQuery(async () => (await db.repas.get(avantHier)) ?? null, [avantHier])
   const cible = useLiveQuery(() => jourARemplir())
   const nutrition = useLiveQuery(lireReglagesNutrition)
-  const [saisie, setSaisie] = useState<'jour' | 'hier'>()
+  const [saisie, setSaisie] = useState<string>()
   const [detail, setDetail] = useState(false)
   const [ouverteLocale, setOuverteLocale] = useState(false)
   const ouverte = ouverteParent ?? ouverteLocale
@@ -39,10 +45,10 @@ export function CarteNutrition({ ouverte: ouverteParent, onBasculer }: {
   // Rattrapage de la veille : l'assiette d'hier pas encore notée (un bouton dans la carte)
   const hierAFaire = cible?.jour === hier && !cible.saisie
   if (saisie) {
-    const j = saisie === 'jour' ? jour : hier
+    const j = saisie
     return (
-      <Formulaire key={j} jour={j} titre={j === jour ? '🍽️ Ton assiette du jour' : "🍽️ Ton assiette d'hier"}
-        existante={(j === jour ? mange : assietteHier) ?? undefined} onFini={() => setSaisie(undefined)} />
+      <Formulaire key={j} jour={j} titre={`🍽️ Ton assiette ${nomJour(j, jour)}`}
+        existante={(j === jour ? mange : j === hier ? assietteHier : assietteAvantHier) ?? undefined} onFini={() => setSaisie(undefined)} />
     )
   }
 
@@ -78,7 +84,7 @@ export function CarteNutrition({ ouverte: ouverteParent, onBasculer }: {
         </button>
       )}
       {hierAFaire && (
-        <button type="button" onClick={() => setSaisie('hier')} className="min-h-11 rounded-xl border border-accent text-sm font-semibold text-accent">
+        <button type="button" onClick={() => setSaisie(hier)} className="min-h-11 rounded-xl border border-accent text-sm font-semibold text-accent">
           Noter mon assiette d'hier
         </button>
       )}
@@ -136,12 +142,19 @@ export function CarteNutrition({ ouverte: ouverteParent, onBasculer }: {
       )}
 
       <div className="mt-3 grid grid-cols-2 gap-2">
-        <button type="button" onClick={() => setSaisie('jour')} className="min-h-12 rounded-xl bg-accent text-sm font-bold text-fond">
+        <button type="button" onClick={() => setSaisie(jour)} className="min-h-12 rounded-xl bg-accent text-sm font-bold text-fond">
           {mange ? 'Modifier mon assiette' : 'Noter mon assiette'}
         </button>
         <button type="button" onClick={() => setDetail(!detail)} className={`min-h-12 rounded-xl border text-sm font-semibold ${detail ? 'border-accent text-accent' : 'border-bordure bg-surface-2'}`}>
           {detail ? 'Masquer le calcul' : 'Détail du calcul'}
         </button>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        {([[hier, assietteHier], [avantHier, assietteAvantHier]] as const).map(([d, a]) => (
+          <button key={d} type="button" onClick={() => setSaisie(d)} className="min-h-10 rounded-xl border border-bordure text-[13px] text-texte-2">
+            {d === hier ? 'Hier' : 'Avant-hier'} · {!a ? <span className="font-semibold text-accent">à noter</span> : a.nonRenseigne ? 'pas renseigné' : `${formatNombre(a.kcal ?? 0)} kcal`}
+          </button>
+        ))}
       </div>
 
       {detail && (
@@ -166,11 +179,6 @@ export function CarteNutrition({ ouverte: ouverteParent, onBasculer }: {
               bouton.textContent = ok ? 'Actualisé ✓' : 'Échec : réessaie dans un moment'
             }}>Actualiser maintenant</button>
           </p>
-          {assietteHier && (
-            <button type="button" onClick={() => setSaisie('hier')} className="pt-1 text-sm font-semibold text-accent">
-              Modifier mon assiette d'hier ({assietteHier.nonRenseigne ? 'pas renseignée' : `${assietteHier.kcal} kcal`})
-            </button>
-          )}
         </div>
       )}
       </>}

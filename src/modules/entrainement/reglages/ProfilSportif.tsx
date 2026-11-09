@@ -18,10 +18,16 @@ export interface ProfilSportif extends ReponsesNiveau {
   materiel: string[]
   pointsSensibles?: string
   muscu?: string
-  /** Suivi de la nutrition (carte « Nutrition du jour ») : absent = suivi */
+  /** Module nutrition (besoins du jour, repas du soir, bilan du dimanche, repères des séances) : absent = activé */
   nutrition?: boolean
 }
 const DEFAUT: ProfilSportif = { sports: [], materiel: [] }
+
+/** Module nutrition activé ? (Réglages → Mon profil sportif → Module nutrition) */
+export function useNutritionActive() {
+  const [ps] = useReglage<ProfilSportif>('profil-sportif', DEFAUT)
+  return ps.nutrition !== false
+}
 
 const SPORTS = ['Vélo route', 'VTT', 'Course à pied', 'Natation', 'Musculation']
 const HEURES = ['Moins de 4 h', '4 à 6 h', '6 à 8 h', '8 à 10 h', '10 à 12 h', 'Plus de 12 h']
@@ -140,9 +146,9 @@ export function SectionProfilSportif() {
           className="w-full rounded-lg border border-bordure bg-surface-2 px-3 py-2 text-sm" />
         {/genou/i.test(ps.pointsSensibles ?? '') && <p className="mt-1.5 text-xs text-texte-3">{AIDES.profilGenoux}</p>}
       </Ligne>
-      <Ligne {...props('nutrition')} libelle="Nutrition" valeur={ps.nutrition === false ? 'Pas suivie' : 'Suivie'}>
-        {choixUnique(['Suivie', 'Pas suivie'], ps.nutrition === false ? 'Pas suivie' : 'Suivie', (v) => modifierPs({ nutrition: v === 'Suivie' }))}
-        <p className="mt-1.5 text-xs text-texte-3">Suivie : tes besoins du jour et le repas du soir dans Aujourd'hui.</p>
+      <Ligne {...props('nutrition')} libelle="Module nutrition" valeur={ps.nutrition === false ? 'Désactivé' : 'Activé'}>
+        {choixUnique(['Activé', 'Désactivé'], ps.nutrition === false ? 'Désactivé' : 'Activé', (v) => modifierPs({ nutrition: v === 'Activé' }))}
+        <p className="mt-1.5 text-xs text-texte-3">Activé : tes besoins du jour, le repas du soir, le bilan nutrition du dimanche et les repères de nutrition des séances.</p>
       </Ligne>
       <Ligne {...props('muscu')} libelle="Musculation" valeur={ps.muscu ?? ''}>
         {choixUnique(MUSCU, ps.muscu, (muscu) => modifierPs({ muscu }))}

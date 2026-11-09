@@ -16,6 +16,7 @@ import { BoutonsEnvoi } from '../plan/BoutonsEnvoi'
 import { Deroule, Profil } from '../plan/Deroule'
 import { NutritionSeance } from '../plan/NutritionSeance'
 import { useReglagesEntrainement } from '../reglagesEntrainement'
+import { useNutritionActive } from '../reglages/ProfilSportif'
 import { iconeSport } from '../sports'
 import { basculerSansMontre, QUESTIONS, scoreRessenti } from './donnees'
 import { SeancesFaites } from './SeancesFaites'
@@ -77,6 +78,7 @@ export function CarteAujourdhui({ onModifierMatin, autreOuvert = false }: {
   // Jour de repos : on montre la séance de demain
   const demain = useLiveQuery(async () => (await db.prevues.where('date').equals(decalerJour(jour, 1)).toArray()).filter((p) => p.statut === 'prevue'), [jour])
   const [r] = useReglagesEntrainement()
+  const nutrition = useNutritionActive()
   const cpW = r.cpW ?? CP_DEFAUT
   const a = useLiveQuery(() => analyser(jour), [jour])
   const prevues = useLiveQuery(() => db.prevues.where('date').equals(jour).toArray(), [jour])
@@ -132,6 +134,8 @@ export function CarteAujourdhui({ onModifierMatin, autreOuvert = false }: {
   }
 
   const etapesDuJour = prevue && (decision?.force ? prevue.velo?.etapes : adaptation!.etapes)
+  // Séance sans déroulé (footing, renfo…) : la carte prend la hauteur de son texte, sans grand vide dessous
+  const ajustee = !!prevue && !etapesDuJour && !faites
   const minutesAdaptees = adaptation?.etapes ? Math.round(adaptation.etapes.reduce((t, e) => t + e.dureeSec, 0) / 60) : undefined
   const cases = (['recuperation', 'pouls', 'sommeil', 'ressenti'] as const).map((cle) => ({ cle, d: signal.details.find((x) => x.cle === cle) }))
   const autres = signal.details.filter((x) => !x.cle || x.cle === 'charge')
@@ -231,7 +235,7 @@ export function CarteAujourdhui({ onModifierMatin, autreOuvert = false }: {
       </Carte>
 
       {/* Séance du jour : la carte qui prend toute la place restante (elle défile seule si besoin) */}
-      <Carte ref={seanceRef} className={`flex flex-col p-3! ${detailOuvert ? 'border-accent!' : ''} ${faites || detailOuvert ? 'shrink-0' : toutFerme ? 'min-h-0 flex-1 overflow-hidden' : 'shrink-0 overflow-hidden'}`}
+      <Carte ref={seanceRef} className={`flex flex-col p-3! ${detailOuvert ? 'border-accent!' : ''} ${faites || detailOuvert ? 'shrink-0' : ajustee ? (toutFerme ? 'min-h-0 overflow-hidden' : 'shrink-0 overflow-hidden') : toutFerme ? 'min-h-0 flex-1 overflow-hidden' : 'shrink-0 overflow-hidden'}`}
         style={!toutFerme && !detailOuvert && !faites && hauteurSeance ? { height: hauteurSeance } : undefined}>
         <div className="flex items-baseline justify-between gap-2">
           <p className="text-xs font-semibold uppercase tracking-wider text-texte-3">Séance du jour</p>
@@ -269,7 +273,7 @@ export function CarteAujourdhui({ onModifierMatin, autreOuvert = false }: {
               </>
             ) : (
               // Renfo, course, séance sans déroulé : le détail est visible directement
-              <div className="mt-1.5 min-h-0 flex-1 overflow-hidden whitespace-pre-line rounded-xl bg-surface-2 px-3 py-1.5 text-[13px] leading-[18px] text-texte-2">
+              <div className="mt-1.5 min-h-0 overflow-hidden whitespace-pre-line rounded-xl bg-surface-2 px-3 py-1.5 text-[13px] leading-[18px] text-texte-2">
                 {prevue.detail || `${prevue.dureeMin} min`}
               </div>
             )}
@@ -279,21 +283,21 @@ export function CarteAujourdhui({ onModifierMatin, autreOuvert = false }: {
                   const seance: Seance = { id: nouvelId(), date: jour, sport: prevue.sport, type: prevue.type, titre: prevue.titre, dureeSec: prevue.dureeMin * 60, source: 'manuel', prevueId: prevue.id }
                   navigate('/entrainement/seance/nouvelle', { state: { seance } })
                 }}>Faite</button>
-                <button type="button" onClick={() => setDetailOuvert(!detailOuvert)}
+                {nutrition && <button type="button" onClick={() => setDetailOuvert(!detailOuvert)}
                   className={`min-h-10 flex-1 rounded-xl border text-sm font-semibold ${detailOuvert ? 'border-accent text-accent' : 'border-bordure bg-surface-2 text-texte-2'}`}>
                   {detailOuvert ? 'Réduire ▴' : 'Nutrition ▾'}
-                </button>
+                </button>}
               </div>
             ) : (
               <button type="button" onClick={() => setDetailOuvert(!detailOuvert)}
                 className={`mt-2 flex min-h-9 w-full shrink-0 items-center justify-between border-t border-bordure pt-2 text-sm font-semibold ${detailOuvert ? 'text-accent' : 'text-texte-2'}`}>
-                <span>Détail et nutrition</span><span>{detailOuvert ? 'Réduire ▴' : '▾'}</span>
+                <span>{nutrition ? 'Détail et nutrition' : 'Détail'}</span><span>{detailOuvert ? 'Réduire ▴' : '▾'}</span>
               </button>
             )}
             {detailOuvert && (
               <div className="shrink-0 space-y-2 pb-1">
                 {etapesDuJour && <Deroule etapes={etapesDuJour} sansProfil />}
-                {!(adaptation?.modifiee && !decision?.force && signal.couleur === 'rouge') && <NutritionSeance p={prevue} />}
+                {nutrition && !(adaptation?.modifiee && !decision?.force && signal.couleur === 'rouge') && <NutritionSeance p={prevue} />}
               </div>
             )}
           </>

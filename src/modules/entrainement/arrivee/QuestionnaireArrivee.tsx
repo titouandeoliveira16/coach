@@ -46,7 +46,7 @@ const nombre = (t: string) => (t.trim() === '' ? undefined : Number(t.replace(',
 /** Questionnaire d'arrivée d'un compte créé avec un code : 4 étapes, la saison calculée, puis la montre (Intervals.icu). */
 export function QuestionnaireArrivee({ montreSeulement = false }: { montreSeulement?: boolean }) {
   const [etape, setEtape] = useState(montreSeulement ? 4 : 0)
-  const [r, setR] = useState<Partial<ReponsesArrivee>>({ sexe: 'homme', discipline: 'route', arretSemaines: 0, semaineType: SEMAINE_TYPE_DEPART, nutrition: true, maxSemaineMin: 75, minLongMin: 90, maxLongMin: 120 })
+  const [r, setR] = useState<Partial<ReponsesArrivee>>({ sexe: 'homme', discipline: 'route', arretSemaines: 0, semaineType: SEMAINE_TYPE_DEPART, nutrition: false, maxSemaineMin: 75, minLongMin: 90, maxLongMin: 120 })
   const [textes, setTextes] = useState({ taille: '', poids: '', cp: '', fc: '' })
   const [occupe, setOccupe] = useState(false)
   const [message, setMessage] = useState<string>()
@@ -123,7 +123,7 @@ export function QuestionnaireArrivee({ montreSeulement = false }: { montreSeulem
             <Question libelle="Points sensibles (facultatif)">
               <input value={r.pointsSensibles ?? ''} placeholder="Ex. genoux, dos…" onChange={(e) => maj({ pointsSensibles: e.target.value })} className={champ} />
             </Question>
-            <Question libelle="Suivre ta nutrition ?" aide="Tes besoins du jour selon tes séances, et le repas du soir. Tu pourras changer d'avis dans Réglages.">
+            <Question libelle="Conseil nutrition ?" aide="Tes besoins du jour selon tes séances, le repas du soir et un bilan le dimanche. Sans, le module n'apparaît pas : tu pourras l'activer plus tard dans Réglages → Mon profil sportif → Module nutrition.">
               <Choix options={[['Oui', true], ['Non', false]]} valeur={r.nutrition} onChoisir={(nutrition) => maj({ nutrition })} />
             </Question>
             <Question libelle="Musculation">

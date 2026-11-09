@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
-import { aujourdhui } from '../../../core/dates'
+import { aujourdhui, decalerJour } from '../../../core/dates'
 import { formatNombre, lireNombre } from '../../../core/format'
 import { Bouton } from '../../../core/ui/Bouton'
 import { Carte } from '../../../core/ui/Carte'
@@ -93,7 +93,7 @@ export function Formulaire({ jour, titre, existante, onFini }: { jour: string; t
       <button type="button" className="mt-1 w-full py-2 text-sm text-texte-3" onClick={async () => {
         await enregistrerRepas({ date: jour, nonRenseigne: true })
         onFini()
-      }}>Pas renseigné {jour === aujourdhui() ? "aujourd'hui" : 'hier'}</button>
+      }}>Pas renseigné {jour === aujourdhui() ? "aujourd'hui" : jour === decalerJour(aujourdhui(), -1) ? 'hier' : 'avant-hier'}</button>
     </Carte>
   )
 }

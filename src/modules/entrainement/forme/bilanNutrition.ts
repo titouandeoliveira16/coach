@@ -5,10 +5,11 @@ import { DEFICIT_BASE, DUREE_PAUSE, propositionNutrition, tendancePoids, type Bi
 import { lireReglagesNutrition, modifierReglagesNutrition } from './besoins'
 import { peseesValides, poidsAu } from './pesees'
 
-/** Dimanche du bilan à faire : aujourd'hui le dimanche, celui de la veille ou de l'avant-veille le lundi et le mardi. */
+/** Dimanche du bilan : aujourd'hui le dimanche (à faire dans Aujourd'hui), celui de la veille le lundi (rappel dans
+ *  Semaine, encore modifiable) ; plus rien les autres jours. */
 export function dimancheDuBilan(jour = aujourdhui()) {
   const j = new Date(`${jour}T12:00:00`).getDay()
-  return j === 0 ? jour : j === 1 ? decalerJour(jour, -1) : j === 2 ? decalerJour(jour, -2) : undefined
+  return j === 0 ? jour : j === 1 ? decalerJour(jour, -1) : undefined
 }
 
 export async function enregistrerBilan(b: BilanNutrition) {

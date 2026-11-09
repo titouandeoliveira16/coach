@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 
 /**
  * Petit « ? » à côté d'un chiffre : un toucher ouvre en bas de l'écran
@@ -19,7 +20,7 @@ export function Aide({ texte, titre }: { texte: string; titre?: string }) {
       >
         ?
       </button>
-      {ouvert && (
+      {ouvert && createPortal(
         <div className="fixed inset-0 z-50 flex items-end bg-black/60" onClick={() => setOuvert(false)}>
           <div className="pb-sur w-full rounded-t-3xl border-t border-bordure bg-surface p-5" onClick={(e) => e.stopPropagation()}>
             {titre && <p className="mb-2 text-lg font-bold">{titre}</p>}
@@ -28,7 +29,8 @@ export function Aide({ texte, titre }: { texte: string; titre?: string }) {
               Compris
             </button>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   )

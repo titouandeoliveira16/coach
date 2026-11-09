@@ -16,7 +16,7 @@ export interface LigneControle {
   tenu: boolean
   /** FC moyenne du bloc */
   fc?: number
-  /** Ressenti du bloc (0-10), saisi après coup */
+  /** Ancien ressenti par bloc (plus demandé : un seul RPE par séance) */
   rpe?: number
 }
 export interface Controle {
@@ -338,11 +338,5 @@ export function bilanControle(c: Controle, famille: string) {
     else if (haut.length) phrases.push(`${haut.length} un peu au-dessus : sans conséquence en VO2.`)
   }
   if ((c.auDessusSeuil1 ?? 0) >= MAX_AU_DESSUS_SEUIL1) phrases.push(`${Math.round(c.auDessusSeuil1! / 60)} min au-dessus du 1er seuil : ce n'était plus vraiment une Z2.`)
-  const rpe = c.lignes.map((l) => l.rpe).filter((r): r is number => r !== undefined)
-  if (rpe.length >= 2 && rpe[rpe.length - 1] - rpe[0] >= 2) {
-    const w0 = c.lignes.find((l) => l.rpe !== undefined)!.w
-    const w1 = [...c.lignes].reverse().find((l) => l.rpe !== undefined)!.w
-    if (w1 <= w0 * 1.02) phrases.push(`Ressenti en hausse de ${rpe[rpe.length - 1] - rpe[0]} points à watts égaux : de la fatigue, à surveiller.`)
-  }
   return phrases.join(' ')
 }
