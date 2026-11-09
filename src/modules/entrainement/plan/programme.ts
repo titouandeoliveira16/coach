@@ -5,7 +5,7 @@ import {
   ajustementZ2, BLOCS_SV1, signalSv1, signalFcSv1, plageFcSv1, sprintsDeLaPhase, SV1_DEPART_PCT, SV1_MAX_PCT, budgetDePhase, budgetSemaine, formatDe, gardeFouCourse, NOMS_FAMILLES, plafondsReprise, projeterSaison, choisirFormat, construireIntervalles, construireTest, construireZ2, coefficientPhase, estSemaineAllegee, etatProgression, palierRaccourci,
   construireCycloMontees, construireLongueCotes, construireSimulationLigne, construireSimulationXco, construireSpeciales, construireTerrain, cotesDe, minutesPourKj, NOMS_DISCIPLINES, NOMS_PHASES, deuxIntensitesPossibles, formatsPour, hausseBudget, heuresDe, jourDeuxiemeIntensite, niveauDuProfil, palierPossible, phaseDe, placer, retourDeCoupure, semainesChamboulees, type BilanSemaine, type Famille, type HistoIntensite,
   cibleSortieLongue, dureeLongueVisee, type SeanceConstruite, type TypePhase,
-  construireCourse, construireOuverture, delaiApresCourse, dureeDeCourse, epreuveDe, niveauxCourses, procheCourse,
+  construireCourse, construireOuverture, delaiApresCourse, dureeDeCourse, epreuveDe, facteursVitesse, type CourseReference, niveauxCourses, procheCourse,
 } from '../../../metrics/programme'
 import { programmeDe } from '../reglagesEntrainement'
 import type { ProfilSportif } from '../reglages/ProfilSportif'
@@ -191,6 +191,30 @@ export const NOTE_GENOUX = 'Genoux : garde une cadence d’au moins 80 tr/min, s
  * Génère (ou regénère) les séances vélo de la semaine autour des séances déjà saisies (course Campus, renfo).
  * Les séances déjà faites sont gardées ; seules les séances auto encore à faire sont remplacées.
  */
+/**
+ * Courses qui calent ta vitesse : celles données à la main, plus chaque course prévue (avec sa discipline) faite et
+ * importée (distance, dénivelé et temps réels de l'activité ; au moins 30 min pour écarter un import partiel).
+ */
+export async function referencesVitesse(prog: ReglagesProgramme): Promise<CourseReference[]> {
+  const auto: CourseReference[] = []
+  for (const c of prog.competitions.filter((x) => x.epreuve && x.date < aujourdhui())) {
+    const s = (await db.seances.where('date').equals(c.date).toArray()).filter((x) => x.sport === 'velo' && x.dureeSec >= 1800)
+      .sort((a, b) => b.dureeSec - a.dureeSec)[0]
+    const distanceKm = s?.distanceKm ?? c.distanceKm
+    if (s && distanceKm) auto.push({ epreuve: c.epreuve!, distanceKm, deniveleM: s.deniveleM ?? c.deniveleM ?? 0, dureeMin: Math.round(s.dureeSec / 60), date: c.date })
+  }
+  return [...(prog.coursesReference ?? []), ...auto]
+}
+
+/** Poids du dernier test CP (pour l'estimation des montées). */
+export const poidsDesTests = (r: Pick<ReglagesEntrainement, 'tests'>) => [...r.tests].reverse().find((t) => t.poidsKg)?.poidsKg
+
+/** Facteurs de vitesse personnels (route, VTT), prêts pour dureeDeCourse. */
+export async function facteursPersonnels(r: Pick<ReglagesEntrainement, 'tests' | 'programme' | 'cpW'>) {
+  const f = facteursVitesse(await referencesVitesse(r.programme), { cpW: r.cpW, poidsKg: poidsDesTests(r) })
+  return { route: f.route?.facteur, vtt: f.vtt?.facteur }
+}
+
 export async function genererSemaineVelo(lundi: string) {
   const jour = aujourdhui()
   const semaine = joursDe(lundi)
@@ -223,10 +247,10 @@ export async function genererSemaineVelo(lundi: string) {
   // Courses (A, B, C) : le jour même, la course seulement ; après une course longue (plus de 2 h), repos le lendemain
   const niveaux = niveauxCourses(prog.competitions, prog.phases)
   // Durée de chaque course (donnée, ou estimée par sa distance et son dénivelé) : délai après, sortie longue, kJ
+  const facteurs = await facteursPersonnels(r)
   const dureeDe = (date: string) => {
     const x = prog.competitions.find((y) => y.date === date)
-    const poidsKg = [...r.tests].reverse().find((t) => t.poidsKg)?.poidsKg
-    return x ? dureeDeCourse(x, { discipline, typeCourse: prog.typeCourse, dureeCourseMin: prog.dureeCourseMin, cpW: r.cpW, poidsKg }) : 90
+    return x ? dureeDeCourse(x, { discipline, typeCourse: prog.typeCourse, dureeCourseMin: prog.dureeCourseMin, cpW: r.cpW, poidsKg: poidsDesTests(r), facteurs }) : 90
   }
   const delaiCourse = (date: string) => delaiApresCourse(dureeDe(date))
   const coursesSemaine = prog.competitions.filter((x) => dansSemaine(x.date)).map((x) => ({ ...x, niveau: niveaux.get(x.date) ?? 'B' }))

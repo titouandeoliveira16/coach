@@ -2,11 +2,12 @@ import { useState, type ReactNode } from 'react'
 import { useReglage } from '../../../core/reglages'
 import { ChampNombre } from '../../../core/ui/ChampNombre'
 import { Repliable } from '../../../core/ui/Repliable'
-import { ANCIENNETES, DISCIPLINES_PROPOSEES, HEURES_RECENTES, NOMS_DISCIPLINES, niveauDuProfil, niveauxCourses, type Discipline, type ReponsesNiveau } from '../../../metrics/programme'
+import { ANCIENNETES, DISCIPLINES_PROPOSEES, HEURES_RECENTES, NOMS_DISCIPLINES, facteursVitesse, niveauDuProfil, niveauxCourses, type Discipline, type ReponsesNiveau } from '../../../metrics/programme'
 import { AIDES } from '../aides'
 import { programmeDe, useReglagesEntrainement } from '../reglagesEntrainement'
-import { recalculerSemainesAVenir } from '../plan/programme'
-import { ListeCourses } from './ListeCourses'
+import { useLiveQuery } from 'dexie-react-hooks'
+import { poidsDesTests, recalculerSemainesAVenir, referencesVitesse } from '../plan/programme'
+import { CalageVitesse, ListeCourses } from './ListeCourses'
 import type { ReglagesProgramme } from '../types'
 
 /**
@@ -65,6 +66,11 @@ export function SectionProfilSportif() {
 
   const objectifs = [...prog.competitions].sort((a, b) => a.date.localeCompare(b.date))
   const niveaux = niveauxCourses(prog.competitions, prog.phases)
+  // Ta vitesse en course : courses données à la main + courses prévues faites et importées
+  const vitesse = useLiveQuery(async () => {
+    const refs = await referencesVitesse(prog)
+    return { facteurs: facteursVitesse(refs, { cpW: r.cpW, poidsKg: poidsDesTests(r) }), auto: refs.length - (prog.coursesReference?.length ?? 0) }
+  }, [r])
   const discipline = prog.discipline ?? 'route'
   const resume = [NOMS_DISCIPLINES[discipline], objectifs.find((c) => niveaux.get(c.date) === 'A')?.nom, ps.heuresSemaine && `${ps.heuresSemaine}/sem.`].filter(Boolean).join(' · ')
 
@@ -104,7 +110,8 @@ export function SectionProfilSportif() {
         </Ligne>
       )}
       <Ligne {...props('objectifs')} libelle="Mes courses" valeur={objectifs.map((c) => `${niveaux.get(c.date) ?? ''} ${c.nom}`).join(', ')}>
-        <ListeCourses courses={prog.competitions} effectifs={niveaux} contexte={{ discipline, typeCourse: prog.typeCourse, dureeCourseMin: prog.dureeCourseMin, cpW: r.cpW, poidsKg: [...r.tests].reverse().find((t) => t.poidsKg)?.poidsKg }} onChanger={(competitions) => changerProg({ competitions })} />
+        <ListeCourses courses={prog.competitions} effectifs={niveaux} contexte={{ discipline, typeCourse: prog.typeCourse, dureeCourseMin: prog.dureeCourseMin, cpW: r.cpW, poidsKg: poidsDesTests(r), facteurs: { route: vitesse?.facteurs.route?.facteur, vtt: vitesse?.facteurs.vtt?.facteur } }} onChanger={(competitions) => changerProg({ competitions })} />
+        <CalageVitesse refs={prog.coursesReference ?? []} auto={vitesse?.auto ?? 0} facteurs={vitesse?.facteurs ?? {}} onChanger={(coursesReference) => changerProg({ coursesReference })} />
         <p className="mt-1.5 text-xs text-texte-3">{AIDES.niveauxCourses}</p>
       </Ligne>
       <Ligne {...props('anciennete')} libelle="Vélo régulier depuis" valeur={ps.anciennete ?? ''}>
