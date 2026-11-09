@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { depuisJour } from '../../../core/dates'
+import { Feuille } from '../../../core/ui/Feuille'
 import { dureeDeCourse, epreuveDe, estimerDureeCourse, NOMS_EPREUVES, type Competition, type CourseReference, type Discipline, type Epreuve, type FamilleVitesse, type NiveauCourse } from '../../../metrics/programme'
 
 const COULEURS: Record<NiveauCourse, string> = { A: 'bg-accent', B: 'bg-yellow-400', C: 'bg-sky-400' }
@@ -58,82 +59,118 @@ export function Pastille({ niveau }: { niveau: NiveauCourse }) {
   return <span className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[13px] font-extrabold text-fond ${COULEURS[niveau]}`}>{niveau}</span>
 }
 
+const dateCourte = (d: string) => depuisJour(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: d.slice(0, 4) === new Date().getFullYear().toString() ? undefined : 'numeric' })
+const resumeParcours = (c: Competition, contexte: Contexte) =>
+  [c.epreuve && NOMS_EPREUVES[c.epreuve], c.distanceKm && `${virgule(c.distanceKm)} km`, c.deniveleM && `${c.deniveleM} m`, `≈ ${heures(dureeDeCourse(c, contexte))}`].filter(Boolean).join(' · ')
+
+/** Ta course principale (A) : distance, dénivelé et durée modifiables sur place ; sa date ne bouge pas (la saison est construite dessus). */
+export function CoursePrincipale({ course, contexte, onChanger }: { course: Competition; contexte: Contexte; onChanger: (c: Competition) => void }) {
+  const [parcours, setParcours] = useState(parcoursDe(course))
+  const [cle, setCle] = useState(0)
+  const change = JSON.stringify(champsParcours(parcours)) !== JSON.stringify(champsParcours(parcoursDe(course)))
+  const epreuve = course.epreuve ?? epreuveDe(contexte.discipline, contexte.typeCourse)
+  return (
+    <div className="rounded-xl border border-accent p-3">
+      <div className="flex items-center gap-2.5">
+        <Pastille niveau="A" />
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-semibold">{course.nom}</p>
+          <p className="text-xs text-texte-2">{dateCourte(course.date)} · {NOMS_EPREUVES[epreuve]} · ≈ {heures(dureeDeCourse({ ...course, ...champsParcours(parcours), epreuve }, contexte))}</p>
+        </div>
+      </div>
+      <div className="mt-2">
+        <ChampsParcours key={cle} epreuve={epreuve} valeur={parcours} onChanger={setParcours} contexte={contexte} />
+      </div>
+      {change && (
+        <button type="button" className="mt-2 w-full rounded-xl bg-accent py-2.5 font-bold text-fond"
+          onClick={() => { onChanger({ date: course.date, nom: course.nom, niveau: 'A', epreuve, ...champsParcours(parcours) }); setCle(cle + 1) }}>Enregistrer</button>
+      )}
+      <p className="mt-1.5 text-xs text-texte-3">Ta saison est construite autour de cette course (sa date ne se change pas ici).</p>
+    </div>
+  )
+}
+
 /**
- * Courses avec leur niveau (A principale, B importante, C pour s'entraîner) et ajout d'une course B ou C.
- * `effectifs` : niveau appliqué par l'appli (une B trop proche de la A, d'une autre B ou en reprise compte comme une C).
+ * Tes autres courses (B importante, C pour s'entraîner) : la liste, et une feuille pour en ajouter ou en modifier une.
+ * `courses` : toutes les courses (la A comprise, gardée telle quelle). `effectifs` : niveau appliqué par l'appli (une B
+ * trop proche de la A, d'une autre B ou en reprise compte comme une C).
  */
 export function ListeCourses({ courses, effectifs, onChanger, min, contexte }: {
   courses: Competition[]; effectifs: Map<string, NiveauCourse>; onChanger: (c: Competition[]) => void; min?: string; contexte: Contexte
 }) {
-  const vide = { date: '', nom: '', niveau: 'B' as NiveauCourse, epreuve: epreuveDe(contexte.discipline, contexte.typeCourse), parcours: parcoursVide }
-  const [nouvelle, setNouvelle] = useState(vide)
-  // Course en cours de modification (touchée dans la liste) : le formulaire la remplace au lieu d'en ajouter une
-  const [enCours, setEnCours] = useState<Competition>()
-  const [cle, setCle] = useState(0)
-  const editer = (c: Competition) => {
-    setEnCours(c)
-    setNouvelle({ date: c.date, nom: c.nom, niveau: c.niveau ?? (effectifs.get(c.date) === 'A' ? 'A' : 'B'), epreuve: c.epreuve ?? vide.epreuve, parcours: parcoursDe(c) })
-    setCle(cle + 1)
-  }
-  const triees = [...courses].sort((a, b) => a.date.localeCompare(b.date))
+  // undefined : feuille fermée ; null : ajout ; une course : modification
+  const [feuille, setFeuille] = useState<Competition | null>()
+  const autres = [...courses].filter((c) => effectifs.get(c.date) !== 'A' && c.niveau !== 'A').sort((a, b) => a.date.localeCompare(b.date))
   return (
     <div>
+      {autres.length === 0 && <p className="text-sm text-texte-2">Aucune pour l’instant.</p>}
       <ul>
-        {triees.map((c) => {
+        {autres.map((c) => {
           const n = effectifs.get(c.date) ?? c.niveau ?? 'B'
           const declasse = c.niveau === 'B' && n === 'C'
           return (
-            <li key={c.date + c.nom} className={`flex items-center gap-2.5 border-b border-bordure py-1.5 ${enCours === c ? 'opacity-50' : ''}`}>
-              <Pastille niveau={n} />
-              <button type="button" className="min-w-0 flex-1 text-left" aria-label={`Modifier ${c.nom}`} onClick={() => editer(c)}>
-                <p className="truncate text-sm">{c.nom}</p>
-                <p className="text-xs text-texte-3">{[c.epreuve && NOMS_EPREUVES[c.epreuve], c.distanceKm && `${virgule(c.distanceKm)} km`, c.deniveleM && `${c.deniveleM} m`, `≈ ${heures(dureeDeCourse(c, contexte))}`].filter(Boolean).join(' · ')}</p>
-                <p className="text-xs text-texte-3">{depuisJour(c.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: c.date.slice(0, 4) === new Date().getFullYear().toString() ? undefined : 'numeric' })} · {declasse ? 'trop proche d’une autre course ou en reprise : comptée comme une C' : NOTES[n]}</p>
+            <li key={c.date + c.nom} className="border-b border-bordure">
+              <button type="button" className="flex w-full items-center gap-2.5 py-1.5 text-left" aria-label={`Modifier ${c.nom}`} onClick={() => setFeuille(c)}>
+                <Pastille niveau={n} />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm">{c.nom}</span>
+                  <span className="block text-xs text-texte-3">{dateCourte(c.date)} · {resumeParcours(c, contexte)}</span>
+                  <span className="block text-xs text-texte-3">{declasse ? 'trop proche d’une autre course ou en reprise : comptée comme une C' : NOTES[n]}</span>
+                </span>
+                <span className="text-texte-3">›</span>
               </button>
-              {n !== 'A' && (
-                <button type="button" className="px-2 text-texte-3" aria-label={`Retirer ${c.nom}`} onClick={() => onChanger(courses.filter((x) => x !== c))}>×</button>
-              )}
             </li>
           )
         })}
       </ul>
-      <p className="mt-2 text-sm text-texte-2">{enCours ? `Modifier « ${enCours.nom} »` : 'Ajouter une course'}</p>
-      {!enCours && <p className="text-xs text-texte-3">Touche une course de la liste pour la modifier.</p>}
-      {nouvelle.niveau === 'A' && <p className="text-xs text-texte-3">Ta saison est construite sur sa date : elle ne se change pas ici.</p>}
-      <div className="mt-1 flex gap-2">
-        <input type="date" min={min} value={nouvelle.date} disabled={nouvelle.niveau === 'A'} onChange={(e) => setNouvelle({ ...nouvelle, date: e.target.value })} className={`${champ} w-36 disabled:opacity-60`} />
-        <input value={nouvelle.nom} onChange={(e) => setNouvelle({ ...nouvelle, nom: e.target.value })} placeholder="Nom" className={`${champ} flex-1`} />
+      <button type="button" className="mt-2 w-full rounded-xl border border-dashed border-accent py-2.5 font-bold text-accent" onClick={() => setFeuille(null)}>+ Ajouter une course</button>
+      {feuille !== undefined && (
+        <Feuille titre={feuille ? `Modifier « ${feuille.nom} »` : 'Ajouter une course'} onFermer={() => setFeuille(undefined)}>
+          <FormulaireCourse course={feuille ?? undefined} min={min} contexte={contexte}
+            dateDejaPrise={(d) => courses.some((x) => x.date === d && x !== feuille)}
+            onValider={(c) => { onChanger(feuille ? courses.map((x) => (x === feuille ? c : x)) : [...courses, c]); setFeuille(undefined) }}
+            onRetirer={feuille ? () => { onChanger(courses.filter((x) => x !== feuille)); setFeuille(undefined) } : undefined} />
+        </Feuille>
+      )}
+    </div>
+  )
+}
+
+/** Formulaire d'une course B ou C (dans la feuille). */
+function FormulaireCourse({ course, min, contexte, dateDejaPrise, onValider, onRetirer }: {
+  course?: Competition; min?: string; contexte: Contexte; dateDejaPrise: (d: string) => boolean; onValider: (c: Competition) => void; onRetirer?: () => void
+}) {
+  const [f, setF] = useState({
+    date: course?.date ?? '', nom: course?.nom ?? '', niveau: (course?.niveau === 'C' ? 'C' : 'B') as 'B' | 'C',
+    epreuve: course?.epreuve ?? epreuveDe(contexte.discipline, contexte.typeCourse), parcours: parcoursDe(course),
+  })
+  return (
+    <div>
+      <div className="flex gap-2">
+        <input type="date" min={min} value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} className={`${champ} w-36`} />
+        <input value={f.nom} onChange={(e) => setF({ ...f, nom: e.target.value })} placeholder="Nom" className={`${champ} flex-1`} />
       </div>
-      <p className="mt-2 text-xs text-texte-3">Discipline</p>
+      <p className="mt-3 text-xs text-texte-3">Discipline</p>
       <div className="mt-1 flex flex-wrap gap-1.5">
         {(Object.keys(NOMS_EPREUVES) as Epreuve[]).map((e) => (
-          <button key={e} type="button" className={puce(nouvelle.epreuve === e)} onClick={() => setNouvelle({ ...nouvelle, epreuve: e })}>{NOMS_EPREUVES[e]}</button>
+          <button key={e} type="button" className={puce(f.epreuve === e)} onClick={() => setF({ ...f, epreuve: e })}>{NOMS_EPREUVES[e]}</button>
         ))}
       </div>
-      <div className="mt-2">
-        <ChampsParcours key={cle} epreuve={nouvelle.epreuve} valeur={nouvelle.parcours} onChanger={(parcours) => setNouvelle({ ...nouvelle, parcours })} contexte={contexte} />
+      <div className="mt-3">
+        <ChampsParcours epreuve={f.epreuve} valeur={f.parcours} onChanger={(parcours) => setF({ ...f, parcours })} contexte={contexte} />
       </div>
-      {nouvelle.niveau !== 'A' && (
-        <>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            <button type="button" className={puce(nouvelle.niveau === 'B')} onClick={() => setNouvelle({ ...nouvelle, niveau: 'B' })}>B · importante</button>
-            <button type="button" className={puce(nouvelle.niveau === 'C')} onClick={() => setNouvelle({ ...nouvelle, niveau: 'C' })}>C · pour s’entraîner</button>
-          </div>
-          <p className="mt-1.5 text-xs text-texte-3">B : semaine allégée d’un tiers, la course est ta séance dure. C : semaine normale, la course remplace ta séance dure (ou ta sortie longue au-delà de 2 h).</p>
-        </>
-      )}
-      <button type="button" disabled={!nouvelle.date || !nouvelle.nom.trim() || courses.some((x) => x.date === nouvelle.date && x !== enCours)}
-        className="mt-2 w-full rounded-xl bg-accent py-2.5 font-bold text-fond disabled:opacity-40"
-        onClick={() => {
-          const course: Competition = { date: nouvelle.date, nom: nouvelle.nom.trim(), niveau: nouvelle.niveau, epreuve: nouvelle.epreuve, ...champsParcours(nouvelle.parcours) }
-          onChanger(enCours ? courses.map((x) => (x === enCours ? course : x)) : [...courses, course])
-          setNouvelle(vide)
-          setEnCours(undefined)
-          setCle(cle + 1)
-        }}>
-        {enCours ? 'Enregistrer' : '+ Ajouter'}
+      <p className="mt-3 text-xs text-texte-3">Niveau</p>
+      <div className="mt-1 flex flex-wrap gap-1.5">
+        <button type="button" className={puce(f.niveau === 'B')} onClick={() => setF({ ...f, niveau: 'B' })}>B · importante</button>
+        <button type="button" className={puce(f.niveau === 'C')} onClick={() => setF({ ...f, niveau: 'C' })}>C · pour s’entraîner</button>
+      </div>
+      <p className="mt-1.5 text-xs text-texte-3">B : semaine allégée d’un tiers, la course est ta séance dure. C : semaine normale, la course remplace ta séance dure (ou ta sortie longue au-delà de 2 h).</p>
+      <button type="button" disabled={!f.date || !f.nom.trim() || dateDejaPrise(f.date)}
+        className="mt-3 w-full rounded-xl bg-accent py-3 font-bold text-fond disabled:opacity-40"
+        onClick={() => onValider({ date: f.date, nom: f.nom.trim(), niveau: f.niveau, epreuve: f.epreuve, ...champsParcours(f.parcours) })}>
+        {course ? 'Enregistrer' : 'Ajouter'}
       </button>
-      {enCours && <button type="button" className="mt-1 w-full py-2 text-sm text-texte-3" onClick={() => { setEnCours(undefined); setNouvelle(vide); setCle(cle + 1) }}>Annuler</button>}
+      {onRetirer && <button type="button" className="mt-1 w-full py-2.5 text-sm text-[#f87171]" onClick={onRetirer}>Retirer cette course</button>}
     </div>
   )
 }
@@ -148,8 +185,7 @@ export function CalageVitesse({ refs, auto, facteurs, onChanger }: {
   const dureeMin = (nombre(f.h) ?? 0) * 60 + (nombre(f.min) ?? 0)
   const texte = (x?: { facteur: number; n: number }) => (x ? `× ${x.facteur.toLocaleString('fr-FR')} (${x.n} course${x.n > 1 ? 's' : ''})` : 'vitesses de base')
   return (
-    <div className="mt-3 border-t border-bordure pt-2">
-      <p className="text-sm text-texte-2">Ta vitesse en course</p>
+    <div className="mt-1">
       <p className="text-xs text-texte-3">Route : {texte(facteurs.route)} · VTT : {texte(facteurs.vtt)}. Calée sur tes 3 dernières courses faites{auto ? ` (dont ${auto} importée${auto > 1 ? 's' : ''} de ta montre)` : ''} : elle se recale toute seule après chaque course prévue.</p>
       <ul>
         {refs.map((x, i) => (

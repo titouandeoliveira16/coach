@@ -7,7 +7,7 @@ import { AIDES } from '../aides'
 import { programmeDe, useReglagesEntrainement } from '../reglagesEntrainement'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { poidsDesTests, recalculerSemainesAVenir, referencesVitesse } from '../plan/programme'
-import { CalageVitesse, ListeCourses } from './ListeCourses'
+import { CalageVitesse, CoursePrincipale, ListeCourses } from './ListeCourses'
 import type { ReglagesProgramme } from '../types'
 
 /**
@@ -64,6 +64,7 @@ export function SectionProfilSportif() {
   }
   const [ligne, setLigne] = useState<string>()
 
+  const discipline = prog.discipline ?? 'route'
   const objectifs = [...prog.competitions].sort((a, b) => a.date.localeCompare(b.date))
   const niveaux = niveauxCourses(prog.competitions, prog.phases)
   // Ta vitesse en course : courses données à la main + courses prévues faites et importées
@@ -71,7 +72,13 @@ export function SectionProfilSportif() {
     const refs = await referencesVitesse(prog)
     return { facteurs: facteursVitesse(refs, { cpW: r.cpW, poidsKg: poidsDesTests(r) }), auto: refs.length - (prog.coursesReference?.length ?? 0) }
   }, [r])
-  const discipline = prog.discipline ?? 'route'
+  const contexteCourses = { discipline, typeCourse: prog.typeCourse, dureeCourseMin: prog.dureeCourseMin, cpW: r.cpW, poidsKg: poidsDesTests(r), facteurs: { route: vitesse?.facteurs.route?.facteur, vtt: vitesse?.facteurs.vtt?.facteur } }
+  const principale = objectifs.find((c) => niveaux.get(c.date) === 'A')
+  // La durée de la course principale règle aussi la sortie longue visée
+  const changerCourses = (competitions: typeof prog.competitions) => {
+    const a = competitions.find((c) => niveaux.get(c.date) === 'A' || c.niveau === 'A')
+    changerProg({ competitions, ...(a && (a.distanceKm || a.dureeMin) ? { dureeCourseMin: dureeDeCourse(a, contexteCourses) } : {}) })
+  }
   const resume = [NOMS_DISCIPLINES[discipline], objectifs.find((c) => niveaux.get(c.date) === 'A')?.nom, ps.heuresSemaine && `${ps.heuresSemaine}/sem.`].filter(Boolean).join(' · ')
 
   const props = (id: string) => ({ ouvert: ligne === id, onBasculer: () => setLigne(ligne === id ? undefined : id) })
@@ -110,11 +117,13 @@ export function SectionProfilSportif() {
         </Ligne>
       )}
       <Ligne {...props('objectifs')} libelle="Mes courses" valeur={objectifs.map((c) => `${niveaux.get(c.date) ?? ''} ${c.nom}`).join(', ')}>
-        <ListeCourses courses={prog.competitions} effectifs={niveaux} contexte={{ discipline, typeCourse: prog.typeCourse, dureeCourseMin: prog.dureeCourseMin, cpW: r.cpW, poidsKg: poidsDesTests(r), facteurs: { route: vitesse?.facteurs.route?.facteur, vtt: vitesse?.facteurs.vtt?.facteur } }} onChanger={(competitions) => {
-          // La durée de la course principale règle aussi la sortie longue visée
-          const a = competitions.find((c) => c.niveau === 'A')
-          changerProg({ competitions, ...(a && (a.distanceKm || a.dureeMin) ? { dureeCourseMin: dureeDeCourse(a, { discipline, typeCourse: prog.typeCourse, cpW: r.cpW, poidsKg: poidsDesTests(r), facteurs: { route: vitesse?.facteurs.route?.facteur, vtt: vitesse?.facteurs.vtt?.facteur } }) } : {}) })
-        }} />
+        <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-texte-3">Ta course principale</p>
+        {principale
+          ? <CoursePrincipale key={principale.date} course={principale} contexte={contexteCourses} onChanger={(a) => changerCourses(prog.competitions.map((c) => (c === principale ? a : c)))} />
+          : <p className="text-sm text-texte-2">Aucune : remplis le questionnaire d'arrivée pour construire ta saison.</p>}
+        <p className="mt-4 mb-1.5 text-xs font-semibold uppercase tracking-wider text-texte-3">Tes autres courses</p>
+        <ListeCourses courses={prog.competitions} effectifs={niveaux} contexte={contexteCourses} onChanger={changerCourses} />
+        <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-texte-3">Ta vitesse en course</p>
         <CalageVitesse refs={prog.coursesReference ?? []} auto={vitesse?.auto ?? 0} facteurs={vitesse?.facteurs ?? {}} onChanger={(coursesReference) => changerProg({ coursesReference })} />
         <p className="mt-1.5 text-xs text-texte-3">{AIDES.niveauxCourses}</p>
       </Ligne>
