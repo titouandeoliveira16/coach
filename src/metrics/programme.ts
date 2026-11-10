@@ -1523,8 +1523,13 @@ export function niveauxCourses(competitions: Competition[], phases: Phase[]): Ma
   const jours = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse(a)) / 86_400_000)
   const res = new Map<string, NiveauCourse>()
   let derniereB: string | undefined
+  let derniereA: string | undefined
+  let nA = 0
   triees.forEach((c, i) => {
     let n = brut(c, i)
+    // Une A trop proche de la précédente (moins de 3 semaines) ou au-delà de 4 A : comptée comme une B
+    if (n === 'A' && derniereA && (jours(derniereA, c.date) < 21 || nA >= 4)) n = 'B'
+    if (n === 'A') { derniereA = c.date; nA++ }
     if (n !== 'A') {
       const reprise = phases.length > 0 && phaseDe(c.date, phases).phase.type === 'reprise'
       const procheA = datesA.some((a) => a > c.date && jours(c.date, a) < AVANT_A_JOURS)

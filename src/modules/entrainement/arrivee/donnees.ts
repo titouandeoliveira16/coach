@@ -4,7 +4,7 @@ import { enregistrer } from '../../../core/stockage'
 import { zonesDepuisCp } from '../../../core/zones'
 import { ageAu, type Profil } from '../../../core/profil'
 import type { Competition, Discipline, Role } from '../../../metrics/programme'
-import { calculerSaison } from '../../../metrics/saison'
+import { calculerSaison, datesCoursesA, phasesAvecCoursesA } from '../../../metrics/saison'
 import { dureeDeCourse, epreuveDe, niveauDuProfil } from '../../../metrics/programme'
 import type { ProfilSportif } from '../reglages/ProfilSportif'
 import { DEFAUT_ENTRAINEMENT } from '../reglagesEntrainement'
@@ -111,7 +111,8 @@ export function preparerArrivee(r: ReponsesArrivee, jour: string, testsFaits: Re
     tests: [],
     programme: {
       semaineType: r.semaineType, maxSemaineMin: r.maxSemaineMin, minLongMin: r.minLongMin, maxLongMin: r.maxLongMin,
-      phases: saison.phases, testsCp: saison.testsCp, testsCourts: saison.testsCourts,
+      // Autres courses A : après la 1re, récupération puis bloc adapté à l'écart jusqu'à la suivante
+      phases: phasesAvecCoursesA(saison.phases, datesCoursesA([principale, ...(r.autresCourses ?? [])])), testsCp: saison.testsCp, testsCourts: saison.testsCourts,
       competitions: [principale, ...(r.autresCourses ?? []).filter((x) => x.date !== r.course.date)], discipline: r.discipline, modele: 'chauvin', ...(r.discipline === 'route' ? { typeCourse: r.typeCourse ?? 'cyclo' } : {}),
       // Durée de la course principale : donnée, ou estimée par sa distance et son dénivelé (règle la sortie longue visée)
       ...(dureePrincipale ? { dureeCourseMin: dureePrincipale } : {}),
