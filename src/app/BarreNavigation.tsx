@@ -17,7 +17,7 @@ export function BarreNavigation({ module: m }: { module: ModuleApp }) {
   ]
 
   return (
-    <nav data-barre-bas className="pb-barre vt-barre fixed inset-x-0 bottom-0 z-20 border-t border-bordure bg-fond">
+    <nav data-barre-bas className="pb-barre fixed inset-x-0 bottom-0 z-20 border-t border-bordure bg-fond">
       <ul className="mx-auto flex max-w-lg">
         {entrees.map(({ id, nom, chemin, Icone, actif }) => (
           <li key={id} className="flex-1">

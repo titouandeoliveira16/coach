@@ -46,7 +46,7 @@ function AvecOnglets() {
       <EnTete titre="Entraînement" aDroite={new Date(`${aujourdhui()}T12:00:00`).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}>
         <Onglets onglets={ONGLETS} />
       </EnTete>
-      <div className="px-4">
+      <div className="vt-page px-4">
         <Routes>
           <Route path="aujourdhui" element={<Aujourdhui />} />
           <Route path="semaine" element={<Semaine />} />

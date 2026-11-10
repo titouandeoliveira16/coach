@@ -51,7 +51,7 @@ export function EcranBudget() {
             <EnTete titre="Budget">
               <Onglets onglets={ONGLETS} />
             </EnTete>
-            <div className="px-4">
+            <div className="vt-page px-4">
               <Routes>
                 <Route path="mois" element={<Mois />} />
                 <Route path="mouvements" element={<Mouvements />} />

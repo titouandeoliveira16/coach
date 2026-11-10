@@ -75,7 +75,7 @@ export function Onglets({ onglets }: { onglets: Onglet[] }) {
   // Pas de portail : les onglets gardent la couleur du module (variable --accent posée sur la page)
   const n = onglets.length
   return (
-    <div className="vt-onglets pointer-events-none fixed inset-x-0 z-20 mx-auto max-w-lg bg-linear-to-b from-transparent to-fond to-40% px-4 pt-3 pb-2" style={{ bottom: bas }}>
+    <div className="pointer-events-none fixed inset-x-0 z-20 mx-auto max-w-lg bg-linear-to-b from-transparent to-fond to-40% px-4 pt-3 pb-2" style={{ bottom: bas }}>
       <nav data-onglets className="pointer-events-auto relative flex rounded-full bg-surface-2 p-1 shadow-lg shadow-black/60">
         {/* La bulle de l'onglet actif glisse d'un onglet à l'autre */}
         {actif >= 0 && (

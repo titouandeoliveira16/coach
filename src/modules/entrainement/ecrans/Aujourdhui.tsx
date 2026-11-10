@@ -70,7 +70,7 @@ export function Aujourdhui() {
     <>
     {/* Repère (là où commence l'écran sous les onglets) et hauteur de page plus grande que l'écran */}
     <div ref={ref} style={{ height: zone ? window.innerHeight - zone.haut + 40 : '100vh' }} aria-hidden />
-    <div className="fixed inset-x-0 mx-auto flex max-w-lg flex-col gap-2.5 overflow-y-auto overscroll-contain px-4"
+    <div className="vt-page-fixe fixed inset-x-0 mx-auto flex max-w-lg flex-col gap-2.5 overflow-y-auto overscroll-contain px-4"
       style={zone ? { top: zone.haut, bottom: zone.bas } : { visibility: 'hidden' }}>
       {/* Cartes ponctuelles : un seul bandeau qui les ouvre */}
       <BravoSeance />

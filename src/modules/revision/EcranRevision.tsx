@@ -37,7 +37,7 @@ export function EcranRevision() {
         </p>
         <Onglets onglets={ONGLETS} />
       </EnTete>
-      <div className="px-4">
+      <div className="vt-page px-4">
         <Routes>
           <Route path="aujourdhui" element={<Aujourdhui />} />
           <Route path="notions" element={<Notions />} />
