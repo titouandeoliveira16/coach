@@ -47,7 +47,7 @@ export function CartePesee({ compact = false }: { compact?: boolean } = {}) {
 
   if (sansPesee && !ouverte) {
     return (
-      <div className="flex w-full items-center justify-between rounded-2xl border border-bordure bg-surface px-4 py-3">
+      <div className="flex w-full items-center justify-between rounded-[14px] bg-surface px-4 py-3">
         <span className="text-texte-2">Pas de pesée aujourd'hui</span>
         <button type="button" className="text-sm text-texte-3 underline" onClick={() => marquerSansPesee(aujourdhui(), false)}>Annuler</button>
       </div>
@@ -57,7 +57,7 @@ export function CartePesee({ compact = false }: { compact?: boolean } = {}) {
   if (!ouverte) {
     return (
       <div className="space-y-1">
-      <button type="button" onClick={() => setOuverte(true)} className="flex w-full items-center justify-between rounded-2xl border border-bordure bg-surface px-4 py-3">
+      <button type="button" onClick={() => setOuverte(true)} className="flex w-full items-center justify-between rounded-[14px] bg-surface px-4 py-3">
         <span className="text-texte-2">Poids</span>
         <span>
           <span className="font-semibold">{derniere ? `${formatNombre(derniere.poidsKg, 1)} kg` : 'Me peser'}</span>

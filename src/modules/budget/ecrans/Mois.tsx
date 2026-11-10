@@ -190,11 +190,11 @@ export function Mois() {
       </Carte>
 
       <div className="grid grid-cols-2 gap-3">
-        <Link to="/budget/patrimoine" className="rounded-2xl border border-bordure bg-surface p-4 active:scale-[0.98]">
+        <Link to="/budget/patrimoine" className="rounded-[14px] bg-surface p-4 active:scale-[0.98]">
           <p className="text-xs font-semibold uppercase tracking-wider text-texte-3">Patrimoine</p>
           <p className="mt-1 text-xl font-bold tabular-nums">{formatEuros(patrimoine)}</p>
         </Link>
-        <Link to="/budget/analyses" className="rounded-2xl border border-bordure bg-surface p-4 active:scale-[0.98]">
+        <Link to="/budget/analyses" className="rounded-[14px] bg-surface p-4 active:scale-[0.98]">
           <p className="text-xs font-semibold uppercase tracking-wider text-texte-3">Historique</p>
           <p className="mt-1 text-xl font-bold">Analyses</p>
         </Link>

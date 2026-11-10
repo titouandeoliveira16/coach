@@ -79,7 +79,7 @@ function CarteSeance({ s }: { s: Seance }) {
     s.deniveleM && `${s.deniveleM} m D+`,
   ].filter(Boolean)
   return (
-    <Link to={`/entrainement/seance/${s.id}`} className="flex items-center gap-3 rounded-2xl border border-bordure bg-surface p-3 active:bg-surface-2">
+    <Link to={`/entrainement/seance/${s.id}`} className="flex items-center gap-3 rounded-[14px] bg-surface p-3 active:bg-surface-2">
       <IconeSport sport={s.sport} homeTrainer={s.homeTrainer} className="h-6 w-6 text-texte-2" />
       <span className="min-w-0 flex-1">
         <span className="block truncate font-semibold">

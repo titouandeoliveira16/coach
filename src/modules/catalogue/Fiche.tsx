@@ -45,7 +45,7 @@ export function Fiche({ s }: { s: SeanceCatalogue }) {
   const meta = [s.zone !== '—' && s.zone, s.rpe !== '—' && `RPE ${s.rpe}`, s.dureeMin && `${s.dureeMin} min`, s.travailMin ? `${String(s.travailMin).replace('.', ',')} min de qualité` : '']
     .filter(Boolean).join(' · ')
   return (
-    <div className="rounded-2xl border border-bordure bg-surface">
+    <div className="rounded-[14px] bg-surface">
       <button type="button" onClick={() => setOuverte(!ouverte)} className="w-full p-3.5 text-left">
         <span className="flex items-baseline justify-between gap-2">
           <span className="font-semibold">{s.nom}</span>

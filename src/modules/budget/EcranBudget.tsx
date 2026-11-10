@@ -65,7 +65,7 @@ export function EcranBudget() {
       </Routes>
 
       {message && (
-        <div className="fixed inset-x-4 bottom-48 z-30 mx-auto max-w-md rounded-2xl border border-bordure bg-surface-2 px-4 py-3 text-center font-semibold shadow-lg shadow-black/50"
+        <div className="fixed inset-x-4 bottom-48 z-30 mx-auto max-w-md rounded-[14px] bg-surface-2 px-4 py-3 text-center font-semibold shadow-lg shadow-black/50"
           onClick={() => setMessage(undefined)}>{message}</div>
       )}
 

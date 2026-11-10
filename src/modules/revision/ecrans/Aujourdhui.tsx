@@ -130,7 +130,7 @@ export function Aujourdhui() {
       </Carte>
 
       {lundiCours && (
-        <label className="flex items-center justify-between rounded-2xl border border-bordure bg-surface px-4 py-3">
+        <label className="flex items-center justify-between rounded-[14px] bg-surface px-4 py-3">
           <span>Pas de stage cet après-midi</span>
           <input type="checkbox" checked={p.lundisSansStage.includes(jour)} className="h-6 w-6 accent-[#60a5fa]"
             onChange={(e) => modifierP({ lundisSansStage: e.target.checked ? [...p.lundisSansStage, jour] : p.lundisSansStage.filter((x) => x !== jour) })} />
