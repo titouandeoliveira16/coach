@@ -17,7 +17,7 @@ export function FeuillePesee({ onFermer }: { onFermer: () => void }) {
   const [poids, setPoids] = useState<number>()
   if (!dernieres || sansPesee === undefined) return null
   const duJour = dernieres[0]?.date === aujourdhui() ? dernieres[0] : undefined
-  const kg = poids ?? duJour?.poidsKg ?? profil.poidsKg
+  const kg = poids ?? duJour?.poidsKg ?? dernieres[0]?.poidsKg ?? profil.poidsKg
   return (
     <Feuille titre="Pesée du jour" onFermer={onFermer}>
       <p className="mb-1 text-xs text-texte-3">Le matin, à jeun, après être passé aux toilettes.</p>
@@ -34,7 +34,7 @@ export function FeuillePesee({ onFermer }: { onFermer: () => void }) {
           onFermer()
         }}>Supprimer la pesée d'aujourd'hui</button>
       ) : (
-        <button type="button" className="mt-1 w-full py-2 text-sm text-[#f87171]" onClick={async () => {
+        <button type="button" className="mt-1 w-full py-2 text-sm text-texte-2" onClick={async () => {
           await marquerSansPesee(aujourdhui(), !sansPesee)
           onFermer()
         }}>{sansPesee ? 'Annuler « pas de pesée »' : 'Pas de pesée aujourd’hui'}</button>
