@@ -4,8 +4,8 @@ import { enregistrer } from '../../../core/stockage'
 import { zonesDepuisCp } from '../../../core/zones'
 import { ageAu, type Profil } from '../../../core/profil'
 import type { Competition, Discipline, Role } from '../../../metrics/programme'
-import { calculerSaison, datesCoursesA, phasesAvecCoursesA } from '../../../metrics/saison'
-import { dureeDeCourse, epreuveDe, niveauDuProfil } from '../../../metrics/programme'
+import { calculerSaison, datesCoursesA, lireHistorique, phasesAvecCoursesA } from '../../../metrics/saison'
+import { dureeDeCourse, epreuveDe, niveauDuProfil, niveauxCourses } from '../../../metrics/programme'
 import type { ProfilSportif } from '../reglages/ProfilSportif'
 import { DEFAUT_ENTRAINEMENT } from '../reglagesEntrainement'
 import type { ReglagesEntrainement, ZoneVelo } from '../types'
@@ -73,7 +73,7 @@ function zonesFc(fcMax: number): { fcMin?: number; fcMax?: number }[] {
 }
 
 /** Tout ce que le questionnaire enregistre (pur : testé). */
-export function preparerArrivee(r: ReponsesArrivee, jour: string, testsFaits: ReglagesEntrainement['tests'] = []) {
+export function preparerArrivee(r: ReponsesArrivee, jour: string, testsFaits: ReglagesEntrainement['tests'] = [], historique?: { entraine: boolean; budgetDepart?: number }) {
   const age = ageAu(r.naissance, jour)
   const fcMax = r.fcMax ?? fcMaxTanaka(age)
   const cpW = r.cpW ?? cpProvisoire(r.poidsKg)
@@ -94,7 +94,7 @@ export function preparerArrivee(r: ReponsesArrivee, jour: string, testsFaits: Re
   const jourLong = r.semaineType.indexOf('velo-long')
   const jourDur = r.semaineType.indexOf('velo-dur')
   const saison = calculerSaison({
-    debut: jour, course: r.course.date, arretSemaines: r.arretSemaines, debutant: niveauDuProfil(ps) === 'debutant',
+    debut: jour, course: r.course.date, arretSemaines: r.arretSemaines, debutant: niveauDuProfil(ps) === 'debutant', entraine: historique?.entraine,
     jourLong: jourLong >= 0 ? jourLong : 6, jourDur: jourDur >= 0 ? jourDur : 1, aujourdhui: jour,
   })
   // CP déjà testée ces 4 dernières semaines (compte déjà utilisé) : pas de nouveau test dans les 2 premières semaines
@@ -117,6 +117,9 @@ export function preparerArrivee(r: ReponsesArrivee, jour: string, testsFaits: Re
       competitions: [principale, ...(r.autresCourses ?? []).filter((x) => x.date !== r.course.date)], discipline: r.discipline, modele: 'chauvin', ...(r.discipline === 'route' ? { typeCourse: r.typeCourse ?? 'cyclo' } : {}),
       // Durée de la course principale : donnée, ou estimée par sa distance et son dénivelé (règle la sortie longue visée)
       ...(dureePrincipale ? { dureeCourseMin: dureePrincipale } : {}),
+      // Tu roulais déjà : le budget de la 1re semaine part de tes kJ réels, pas de la semaine type
+      ...(historique?.budgetDepart ? { budgetDepart: historique.budgetDepart } : {}),
+      saisonV2: true,
     },
   }
   return { profil, entrainement, profilSportif: ps, saison, cpConnue: r.cpW !== undefined, fcConnue: r.fcMax !== undefined }
@@ -162,6 +165,22 @@ export async function reponsesExistantes() {
   }
 }
 
+/** Tes 4 semaines complètes avant celle-ci : sorties vélo et kJ, lus dans tes séances importées. */
+export async function historiqueRecent(jour: string, cpW: number, semaineType: Role[]) {
+  const lundi = decalerJour(jour, -((new Date(`${jour}T12:00:00`).getDay() + 6) % 7))
+  const debut = decalerJour(lundi, -28)
+  const seances = (await db.seances.where('date').between(debut, decalerJour(lundi, -1), true, true).toArray()).filter((s) => s.sport === 'velo')
+  const semaines = [0, 1, 2, 3].map((i) => {
+    const l = decalerJour(debut, 7 * i)
+    const sem = seances.filter((s) => s.date >= l && s.date <= decalerJour(l, 6))
+    return { sorties: sem.length, kj: sem.reduce((a, s) => a + (s.kj ?? 0), 0) }
+  })
+  // Semaine type estimée : Z2 à 62 % de la CP, 1 h par jour d'endurance, 1 h 40 de sortie longue, 45 min d'intensité
+  const nZ2 = semaineType.filter((x) => x === 'velo-z2').length
+  const nominal = (0.62 * cpW * 60 * (60 * nZ2 + 100) + 0.8 * cpW * 60 * 45) / 1000
+  return lireHistorique(semaines, nominal)
+}
+
 /** Réglage « arrivee » : le questionnaire est fait (sinon il s'affiche à l'ouverture d'un compte créé avec un code). */
 export interface EtatArrivee { fait?: string; montre?: 'reliee' | 'plus-tard' }
 
@@ -169,7 +188,7 @@ export async function enregistrerArrivee(r: ReponsesArrivee) {
   const jour = aujourdhui()
   const lire = async <T,>(id: string) => (await db.reglages.get(id))?.valeur as T | undefined
   const [profilAvant, entAvant, psAvant] = [await lire<Profil>('profil'), await lire<ReglagesEntrainement>('entrainement'), await lire<ProfilSportif>('profil-sportif')]
-  const p = preparerArrivee(r, jour, entAvant?.tests)
+  const p = preparerArrivee(r, jour, entAvant?.tests, await historiqueRecent(jour, r.cpW ?? entAvant?.cpW ?? cpProvisoire(r.poidsKg), r.semaineType))
   // Compte déjà utilisé : les données acquises restent (tests CP, bornes de FC calées, W', réglages divers, objectif
   // nutrition…) ; seuls le programme (saison calculée) et les réponses du questionnaire changent
   await enregistrer(db.reglages, { id: 'profil', valeur: { ...profilAvant, ...p.profil, objectif: profilAvant?.objectif ?? p.profil.objectif } })
@@ -187,4 +206,41 @@ export async function enregistrerArrivee(r: ReponsesArrivee) {
   await genererSemaineVelo(lundiDe(jour)).catch(() => {})
   if (new Date(`${jour}T12:00:00`).getDay() === 0) await genererSemaineVelo(decalerJour(lundiDe(jour), 7)).catch(() => {})
   return p
+}
+
+/**
+ * Saisons calculées avant le 10/11/2026 : recalculées une fois avec la prépa hivernale Methodic (cycle 1er seuil,
+ * 2e seuil tiré puis poussé, cycle VO2max), à partir de cette semaine et de ta prochaine course A. Tes tests faits,
+ * ta CP et tes réglages restent ; un test CP récent (moins de 4 semaines) évite un nouveau test les 2 premières semaines.
+ */
+export async function migrerSaisonV2() {
+  const ligne = await db.reglages.get('entrainement')
+  const e = ligne?.valeur as ReglagesEntrainement | undefined
+  const prog = e?.programme
+  if (!e || !prog || prog.modele !== 'chauvin' || prog.saisonV2) return
+  const jour = aujourdhui()
+  // Course A : niveau noté, ou (anciennes données sans niveau) la plus lointaine
+  const niveaux = niveauxCourses(prog.competitions, prog.phases)
+  const a = prog.competitions.filter((c) => niveaux.get(c.date) === 'A' && c.date > decalerJour(jour, 21)).sort((x, y) => x.date.localeCompare(y.date))[0]
+  if (!a) return
+  const ps = (await db.reglages.get('profil-sportif'))?.valeur as ProfilSportif | undefined
+  const historique = await historiqueRecent(jour, e.cpW ?? 260, prog.semaineType)
+  const jourLong = prog.semaineType.indexOf('velo-long')
+  const jourDur = prog.semaineType.indexOf('velo-dur')
+  const saison = calculerSaison({
+    debut: jour, course: a.date, debutant: niveauDuProfil(ps) === 'debutant', entraine: historique.entraine,
+    jourLong: jourLong >= 0 ? jourLong : 6, jourDur: jourDur >= 0 ? jourDur : 1, aujourdhui: jour,
+  })
+  if ((e.tests ?? []).some((t) => t.type === 'cp' && t.date <= jour && ecartJours(t.date, jour) <= 28)) {
+    const garder = (d: string) => d >= decalerJour(jour, 14)
+    saison.testsCp = saison.testsCp.filter(garder)
+    saison.testsCourts = saison.testsCourts.filter(garder)
+  }
+  // Les phases déjà passées restent (historique), la nouvelle saison commence cette semaine
+  const lundi = decalerJour(jour, -((new Date(`${jour}T12:00:00`).getDay() + 6) % 7))
+  const passees = prog.phases.filter((p) => p.debut < lundi)
+  const phases = [...passees, ...phasesAvecCoursesA(saison.phases, datesCoursesA(prog.competitions.map((c) => ({ ...c, niveau: niveaux.get(c.date) }))))]
+  await enregistrer(db.reglages, { id: 'entrainement', valeur: { ...e, programme: { ...prog, phases, testsCp: [...prog.testsCp.filter((d) => d < lundi), ...saison.testsCp], testsCourts: [...(prog.testsCourts ?? []).filter((d) => d < lundi), ...saison.testsCourts], saisonV2: true } } })
+  const { recalculerSemainesAVenir } = await import('../plan/programme')
+  await recalculerSemainesAVenir()
 }

@@ -96,6 +96,11 @@ Points décidés ou mis de côté, à reprendre au bon moment.
 - 10.4 (10/11/2026, relus) : glucides selon la discipline (XCC eau, XCO 40-60 g/h, mélange 2:1 / 1:0,8, sodium) ;
   habituer le ventre 6 semaines avant une A > 2 h 30 (60 → 90/110 g/h, +10/sem., note 0-10 après la sortie longue).
   À vérifier avec Titouan mi-avril (début pour les 3 Ballons) : produits utilisés, notes du ventre.
+- 10.5 (10/11/2026, relus) : prépa hivernale Methodic (cycle 1er seuil avec séance dédiée 4 × 10′ → 3 × 30′, 2e seuil
+  tiré puis poussé, cycle VO2max 40/20 → 4 × 4′ à la place du sweet spot, spécifique, affûtage ; cycles 3 + 1) ; lecture
+  des 4 semaines d'avant (entraîné : pas de reprise, budget de départ = médiane) ; saisons existantes recalculées une fois.
+  À regarder : la séance 1er seuil plafonne à 4 × 10′ quand le créneau de semaine est de 75 min (5 × 20′ et 3 × 30′
+  demandent 2 h) ; en parler s'il veut la placer un jour plus long.
 - **Titouan a encore « 2-3 trucs à travailler »** (9/11 au soir, pas encore dits) : les lui demander à la prochaine conversation.
 - Les deux conversations ont été regroupées le 9/11/2026 (« Corrections et améliorations appli » supprimée par Titouan).
 

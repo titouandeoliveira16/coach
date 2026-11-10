@@ -83,6 +83,10 @@ export interface ReglagesProgramme {
   competitions: Competition[]
   /** Courses déjà faites données à la main pour caler ta vitesse en course (s'ajoutent aux courses prévues puis importées) */
   coursesReference?: CourseReference[]
+  /** Budget kJ de la 1re semaine quand tu roulais déjà (médiane de tes 4 semaines d'avant) */
+  budgetDepart?: number
+  /** Saison calculée avec la prépa hivernale Methodic (10/11/2026) */
+  saisonV2?: boolean
   /** Puissance Z2 de départ (W) : ajustée ensuite automatiquement */
   z2W?: number
   /** Saison calculée depuis la course (forme Chauvin) : reprise sans intensité ; absent = saison écrite à la main */

@@ -1,11 +1,11 @@
 import { db } from '../../../core/db'
-import { aujourdhui, decalerJour, NOMS_JOURS, depuisJour } from '../../../core/dates'
+import { aujourdhui, decalerJour, depuisJour, ecartJours, NOMS_JOURS } from '../../../core/dates'
 import { enregistrer, supprimer } from '../../../core/stockage'
 import {
   ajustementZ2, BLOCS_SV1, signalSv1, signalFcSv1, plageFcSv1, sprintsDeLaPhase, SV1_DEPART_PCT, SV1_MAX_PCT, budgetDePhase, budgetSemaine, formatDe, gardeFouCourse, NOMS_FAMILLES, plafondsReprise, projeterSaison, choisirFormat, construireIntervalles, construireTest, construireZ2, coefficientPhase, estSemaineAllegee, etatProgression, palierRaccourci,
   construireCycloMontees, construireLongueCotes, construireSimulationLigne, construireSimulationXco, construireSpeciales, construireTerrain, cotesDe, minutesPourKj, NOMS_DISCIPLINES, NOMS_PHASES, deuxIntensitesPossibles, formatsPour, hausseBudget, heuresDe, jourDeuxiemeIntensite, niveauDuProfil, palierPossible, phaseDe, placer, retourDeCoupure, semainesChamboulees, type BilanSemaine, type Famille, type HistoIntensite,
   cibleSortieLongue, dureeLongueVisee, type SeanceConstruite, type TypePhase,
-  construireCourse, construireOuverture, specifiqueCols, testProcheCourse, delaiApresCourse, dureeDeCourse, epreuveDe, facteursVitesse, type CourseReference, niveauxCourses, procheCourse,
+  construireCourse, construireOuverture, construireSv1Dediee, specifiqueCols, testProcheCourse, delaiApresCourse, dureeDeCourse, epreuveDe, facteursVitesse, type CourseReference, niveauxCourses, procheCourse,
 } from '../../../metrics/programme'
 import { programmeDe } from '../reglagesEntrainement'
 import type { ProfilSportif } from '../reglages/ProfilSportif'
@@ -73,7 +73,7 @@ export async function z2Actuel() {
   const r = await lireReglages()
   const depart = r.programme.z2W ?? arrondi5(r.cpW * 0.62)
   const dernierTest = r.tests.filter((t) => t.type === 'cp').map((t) => t.date).sort().pop() ?? ''
-  const z2Ids = new Set((await db.prevues.toArray()).filter((p) => !p.realiseDifferent && ((p.velo?.famille === 'z2' && p.velo.formatId !== 'ouverture') || p.velo?.famille === 'z2-long')).map((p) => p.id))
+  const z2Ids = new Set((await db.prevues.toArray()).filter((p) => !p.realiseDifferent && ((p.velo?.famille === 'z2' && p.velo.formatId !== 'ouverture' && p.velo.formatId !== 'sv1-dedie') || p.velo?.famille === 'z2-long')).map((p) => p.id))
   const seances = (await db.seances.where('date').above(dernierTest).toArray()).filter((s) => s.prevueId && z2Ids.has(s.prevueId))
   // Chaque sortie Z2 donne un signal (+1 facile et stable, −1 trop dur) ; on ne bouge de ±5 W
   // que lorsque 2 sorties de suite vont dans le même sens (une sortie isolée est trop bruitée)
@@ -387,10 +387,19 @@ export async function genererSemaineVelo(lundi: string) {
   const longueCourse = discipline === 'route' && placement.long && !allegee
     ? typeCourse === 'en-ligne'
       ? phase.type === 'specifique' && nSemaine % 2 === 0 ? 'simulation-ligne' : undefined
-      : (phase.type === 'specifique' && nSemaine < 2) || (phase.type === 'fin-prepa' && nSemaine % 2 === 0) ? 'cyclo-montees' : undefined
+      : phase.type === 'specifique' && nSemaine < 2 ? 'cyclo-montees' : undefined
     : undefined
   // Marathon VTT : la sortie longue en côtes compte comme une séance dure (48 h avant et après sans autre intensité)
-  const cotes = discipline === 'xcm' && phase.type !== 'reprise' && !allegee
+  // Semaine de test CP : sortie longue normale (pas deux jours durs collés)
+  const cotes = discipline === 'xcm' && phase.type !== 'reprise' && !allegee && !dateTest
+  // La sortie en côtes est une séance dure : l'intensité ne la touche pas (48 h), on la déplace sur une autre endurance
+  if (cotes && placement.intensite && placement.long && Math.abs(ecartJours(placement.intensite, placement.long)) < 2 && placement.intensite !== dateTest) {
+    const loin = placement.z2.find((d) => Math.abs(ecartJours(d, placement.long!)) >= 2 && !procheCourse(d, competitions, delaiCourse))
+    if (loin) {
+      placement.z2 = [...placement.z2.filter((d) => d !== loin), placement.intensite].sort()
+      placement.intensite = loin
+    }
+  }
 
   // 2e intensité vélo (forme Chauvin) : 4 jours de vélo ou plus, sauf débutant, hors reprise et semaine allégée, et
   // seulement si la semaine n'a pas déjà de séance dure de course (2 séances dures au total par semaine)
@@ -428,7 +437,7 @@ export async function genererSemaineVelo(lundi: string) {
   const prec = await bilanPrecedent(lundi)
   const b = coefPhase !== undefined
     ? budgetDePhase(prec, nominal, coefPhase, NOMS_PHASES[phase.type])
-    : await avecGardeFou(avecCoupure(budgetSemaine(prec, nominal, Math.min(plafond, plafondHeures), allegee, raisonAllegee, hausseBudget(niveau)), coupure), lundi)
+    : await avecGardeFou(avecCoupure(budgetSemaine(prec, !prec && prog.budgetDepart ? prog.budgetDepart : nominal, Math.min(plafond, plafondHeures), allegee, raisonAllegee, hausseBudget(niveau), !prec && prog.budgetDepart ? 'Budget de départ : tes kJ des 4 semaines d’avant' : undefined), coupure), lundi)
 
   // Répartition du reste du budget en Z2 : 60 % pour la sortie longue
   const kjFaits = seances.filter((s) => s.sport === 'velo' && dansSemaine(s.date)).reduce((a, s) => a + (s.kj ?? 0), 0)
@@ -472,13 +481,17 @@ export async function genererSemaineVelo(lundi: string) {
   const intensifs = [placement.intensite, intensite2?.date].filter((d): d is string => !!d)
   const lendemains = new Set(intensifs.map((d) => decalerJour(d, 1)))
   const terrain = discipline !== 'route' ? placement.z2[0] : undefined
-  const jourSprints = placement.z2.find((d) => d !== terrain && !lendemains.has(d)) ?? placement.z2.find((d) => d !== terrain)
+  // Cycle 1er seuil : une séance dédiée au 1er seuil par semaine, sur un jour d'endurance (pas le lendemain d'une intensité)
+  const jourSv1 = phase.type === 'base' && !allegee && !sansBlocs
+    ? [...placement.z2].reverse().find((d) => d !== terrain && !lendemains.has(d)) ?? placement.z2.find((d) => d !== terrain)
+    : undefined
+  const jourSprints = placement.z2.find((d) => d !== terrain && d !== jourSv1 && !lendemains.has(d)) ?? placement.z2.find((d) => d !== terrain && d !== jourSv1)
   const rappel = niveau === 'confirme' || niveau === 'expert'
 
   let extraSv1 = 0
   if (placement.long) {
     const kjLong = reste * partLong
-    const blocs = !sansBlocs && !cotes && !longueCourse ? { w: sv1.w, ...palierSv1 } : undefined
+    const blocs = !sansBlocs && !cotes && !longueCourse && !(jourSv1 && joursVelo < 5) ? { w: sv1.w, ...palierSv1 } : undefined
     // Les blocs au 1er seuil coûtent plus de kJ par minute : ce surplus est pris sur les Z2 de semaine, pas sur la
     // durée de la sortie longue (sinon plus le palier monte, plus la sortie raccourcit et les blocs ne rentrent plus)
     // Semaine allégée, affûtage, récupération : la sortie longue peut descendre sous son minimum habituel
@@ -518,7 +531,8 @@ export async function genererSemaineVelo(lundi: string) {
   placement.z2.forEach((d) => {
     const min = borner(Math.min(45, cap.z2), Math.min(maxDuJour(d), cap.z2), minutesPourKj((reste * (1 - partLong) - extraSv1) / placement.z2.length, z2W))
     // VTT : la première Z2 de la semaine se fait sur le terrain (technique), jamais la sortie longue
-    if (d === terrain && discipline !== 'route') aCreer.push([d, construireTerrain(discipline, min, z2W)])
+    if (d === jourSv1) aCreer.push([d, construireSv1Dediee(nPalier, maxDuJour(d), sv1.w, z2W, fcSv1)])
+    else if (d === terrain && discipline !== 'route') aCreer.push([d, construireTerrain(discipline, min, z2W)])
     else if (d === jourSprints) aCreer.push([d, construireZ2(min, z2W, sprints, { longue: false, espacementSec: sprints.espacementSec })])
     else aCreer.push([d, construireZ2(min, z2W, undefined, lendemains.has(d) && rappel && !sansBlocs ? { sv1: { w: sv1.w, reps: 2, min: 10, fc: fcSv1 } } : {})])
   })
