@@ -55,7 +55,7 @@ const arrondi5 = (n: number) => Math.round(n / 5) * 5
 
 /** Séances d'intensité générées (passées et prévues) : alternance des formats et progression. */
 async function histoIntensite(): Promise<HistoIntensite[]> {
-  const autos = (await db.prevues.toArray()).filter((p) => p.origine === 'auto' && estIntensite(p) && actives(p))
+  const autos = (await db.prevues.toArray()).filter((p) => p.origine === 'auto' && estIntensite(p) && actives(p) && !p.realiseDifferent)
   // Jour orange ou rouge (sans « je maintiens ») : séance raccourcie ou supprimée, elle ne fait pas progresser
   const adaptes = new Set((await db.decisions.toArray()).filter((d) => d.couleur !== 'vert' && !d.force).map((d) => d.date))
   return autos.map((p) => ({
@@ -73,7 +73,7 @@ export async function z2Actuel() {
   const r = await lireReglages()
   const depart = r.programme.z2W ?? arrondi5(r.cpW * 0.62)
   const dernierTest = r.tests.filter((t) => t.type === 'cp').map((t) => t.date).sort().pop() ?? ''
-  const z2Ids = new Set((await db.prevues.toArray()).filter((p) => (p.velo?.famille === 'z2' && p.velo.formatId !== 'ouverture') || p.velo?.famille === 'z2-long').map((p) => p.id))
+  const z2Ids = new Set((await db.prevues.toArray()).filter((p) => !p.realiseDifferent && ((p.velo?.famille === 'z2' && p.velo.formatId !== 'ouverture') || p.velo?.famille === 'z2-long')).map((p) => p.id))
   const seances = (await db.seances.where('date').above(dernierTest).toArray()).filter((s) => s.prevueId && z2Ids.has(s.prevueId))
   // Chaque sortie Z2 donne un signal (+1 facile et stable, −1 trop dur) ; on ne bouge de ±5 W
   // que lorsque 2 sorties de suite vont dans le même sens (une sortie isolée est trop bruitée)
@@ -101,7 +101,7 @@ export async function z2Actuel() {
 export async function sv1Actuel(z2W: number) {
   const r = await lireReglages()
   const dernierTest = r.tests.filter((t) => t.type === 'cp').map((t) => t.date).sort().pop() ?? ''
-  const prevues = new Map((await db.prevues.toArray()).filter((p) => p.velo?.blocsSv1).map((p) => [p.id, p]))
+  const prevues = new Map((await db.prevues.toArray()).filter((p) => p.velo?.blocsSv1 && !p.realiseDifferent).map((p) => [p.id, p]))
   const seances = (await db.seances.toArray()).filter((s) => s.prevueId && prevues.has(s.prevueId)).sort((a, b) => a.date.localeCompare(b.date))
   const blocs = (s: Seance) => (s.controle?.lignes ?? []).filter((l) => l.libelle.startsWith('1er seuil') && l.fc).map((l) => ({ fc: l.fc!, w: l.w }))
   const signal = (s: Seance) => signalSv1(blocs(s), s.rpe)
@@ -376,7 +376,7 @@ export async function genererSemaineVelo(lundi: string) {
   const courseDure = [...prevues.filter((p) => p.sport === 'course' && p.intensite === 'haute' && dansSemaine(p.date)).map((p) => p.date),
     ...seances.filter((x) => x.sport === 'course' && dansSemaine(x.date) && domaineDe(x, c.bornes) === 'haute').map((x) => x.date)]
   if (intensite && placement.intensite && placement.intensite !== dateTest && deuxIntensitesPossibles(niveau, joursVelo)
-    && phase.type !== 'reprise' && !allegee && !courseDure.length && !longueCourse && !coursesSemaine.length) {
+    && phase.type !== 'reprise' && phase.type !== 'base' && !allegee && !courseDure.length && !longueCourse && !coursesSemaine.length) {
     const dures = [placement.intensite, ...occupations.filter((o) => o.dure).map((o) => o.date), ...(cotes && placement.long ? [placement.long] : [])]
     const jour2 = jourDeuxiemeIntensite(placement.z2.filter((d) => !procheCourse(d, competitions, delaiCourse)), dures, placement.z2.filter((d) => roles[semaine.indexOf(d)] === 'velo-dur'))
     if (jour2) {

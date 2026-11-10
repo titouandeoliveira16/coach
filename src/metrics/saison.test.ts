@@ -1,13 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { calculerSaison, dureesPhases } from './saison'
+import { calculerSaison, dureesPhases, migrerBase } from './saison'
 import { estSemaineAllegee, coefficientPhase } from './programme'
 
 describe('saison calculée depuis la course', () => {
   it('durées selon les semaines disponibles', () => {
-    const vide = { reprise: 0, entretien: 0, 'seuil-tirage': 0, 'seuil-maintien': 0, 'fin-prepa': 0, specifique: 0, affutage: 0 }
+    const vide = { reprise: 0, base: 0, entretien: 0, 'seuil-tirage': 0, 'seuil-maintien': 0, 'fin-prepa': 0, specifique: 0, affutage: 0 }
     expect(dureesPhases(12)).toEqual({ ...vide, reprise: 2, 'seuil-tirage': 1, 'seuil-maintien': 1, 'fin-prepa': 3, specifique: 3, affutage: 2 })
     expect(dureesPhases(20)).toEqual({ ...vide, reprise: 2, 'seuil-tirage': 4, 'seuil-maintien': 6, 'fin-prepa': 3, specifique: 3, affutage: 2 })
-    expect(dureesPhases(29)).toEqual({ ...vide, reprise: 8, 'seuil-tirage': 4, 'seuil-maintien': 8, entretien: 1, 'fin-prepa': 3, specifique: 3, affutage: 2 })
+    // Course loin, sans arrêt : 2 semaines de reprise puis une base (relecture du 10/11/2026)
+    expect(dureesPhases(29)).toEqual({ ...vide, reprise: 2, base: 7, 'seuil-tirage': 4, 'seuil-maintien': 8, 'fin-prepa': 3, specifique: 3, affutage: 2 })
+    expect(dureesPhases(40)).toMatchObject({ reprise: 2, base: 10, entretien: 8 })
     expect(dureesPhases(6)).toMatchObject({ reprise: 0, 'fin-prepa': 1, specifique: 3, affutage: 2 })
     expect(dureesPhases(20, true).reprise).toBe(4)
     expect(dureesPhases(2)).toMatchObject({ affutage: 2, specifique: 0 })
@@ -157,5 +159,14 @@ describe('sortie longue qui s’allonge vers la course', () => {
     expect(dureeLongueVisee(180, 90, 110)).toBe(120)
     expect(dureeLongueVisee(180, 90, 175)).toBe(180)
     expect(dureeLongueVisee(120, 150, 100)).toBe(150)
+  })
+})
+
+describe('migration vers la base', () => {
+  it('une reprise de 8 semaines devient 2 semaines de reprise puis une base', () => {
+    const avant = [{ debut: '2026-11-09', type: 'reprise' as const }, { debut: '2027-01-04', type: 'entretien' as const }]
+    expect(migrerBase(avant).map((p) => [p.debut, p.type])).toEqual([['2026-11-09', 'reprise'], ['2026-11-23', 'base'], ['2027-01-04', 'entretien']])
+    const courte = [{ debut: '2026-11-09', type: 'reprise' as const }, { debut: '2026-11-23', type: 'seuil-tirage' as const }]
+    expect(migrerBase(courte)).toBe(courte)
   })
 })

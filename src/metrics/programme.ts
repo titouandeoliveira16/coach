@@ -27,7 +27,7 @@ export const DISCIPLINES_PROPOSEES: Discipline[] = ['route', 'xco', 'xcc', 'xcm'
  * reprise → seuil-tirage (tirer le seuil) → seuil-maintien (allonger le seuil) → fin-prepa (sweet spot + VO2) →
  * specifique → affutage → recuperation. 'vo2' et 'seuil' restent pour la saison écrite à la main de Titouan.
  */
-export type TypePhase = 'reprise' | 'vo2' | 'seuil' | 'entretien' | 'seuil-tirage' | 'seuil-maintien' | 'fin-prepa' | 'specifique' | 'affutage' | 'recuperation'
+export type TypePhase = 'reprise' | 'base' | 'vo2' | 'seuil' | 'entretien' | 'seuil-tirage' | 'seuil-maintien' | 'fin-prepa' | 'specifique' | 'affutage' | 'recuperation'
 /** Rôle d'un jour dans la semaine type */
 export type Role = 'course' | 'renfo' | 'velo-dur' | 'velo-z2' | 'velo-long' | 'libre'
 
@@ -821,6 +821,7 @@ export const NOMS_PHASES: Record<TypePhase, string> = {
   vo2: 'Dominante VO2max',
   seuil: 'Dominante seuil',
   entretien: 'Entretien (VO2 / seuil)',
+  base: 'Base (endurance + rappel d’intensité)',
   'seuil-tirage': 'Tirer le seuil',
   'seuil-maintien': 'Allonger le seuil',
   'fin-prepa': 'Fin de prépa (sweet spot + VO2)',
@@ -870,6 +871,7 @@ const CYCLES: Record<TypePhase, ('vo2' | 'seuil' | 'sous-seuil')[]> = {
   vo2: ['vo2', 'vo2', 'seuil'],
   seuil: ['seuil', 'seuil', 'vo2'],
   entretien: ['vo2', 'seuil'],
+  base: ['vo2'],
   // Phases des saisons calculées : choix par semaine et par rang (choisirFormatSaison), ces cycles ne servent qu'en secours
   'seuil-tirage': ['seuil'],
   'seuil-maintien': ['seuil'],
@@ -935,6 +937,13 @@ function familleSaison(type: TypePhase, semaine: number, rang: number, disciplin
   { famille: Famille; formatId?: string; palier?: number; dominante: 'vo2' | 'seuil' | 'sous-seuil' } | undefined {
   const vtt = discipline === 'xco' || discipline === 'xcc'
   const derniere = (l: Famille[]) => [...avant].reverse().find((h) => l.includes(h.famille))?.famille
+  // Base (relecture du 10/11/2026) : surtout de l'endurance, et 1 rappel d'intensité par semaine pour entretenir la
+  // VO2max sans chercher à progresser (Hickson 1985 ; Rønnestad 2014 : 1 séance dure tous les 7-10 j pendant 8 sem
+  // fait mieux que la basse intensité seule) : 30/15 et 5 × 3' en alternance, au palier de départ (15-20' d'effort dur)
+  if (type === 'base') {
+    if (vtt) return derniere(['vo2-courts', 'vo2-longs']) === 'vo2-courts' ? { famille: 'vo2-longs', formatId: 'inoue', palier: 0, dominante: 'vo2' } : { famille: 'vo2-courts', formatId: '30-15', palier: 0, dominante: 'vo2' }
+    return derniere(['vo2-courts', 'vo2-longs']) === 'vo2-courts' ? { famille: 'vo2-longs', palier: 0, dominante: 'vo2' } : { famille: 'vo2-courts', formatId: '30-15', palier: 0, dominante: 'vo2' }
+  }
   if (type === 'seuil-tirage') {
     if (rang === 1) return { famille: vtt ? familleVtt(discipline, 'seuil', avant)! : 'seuil', dominante: 'seuil' }
     return vtt ? { famille: 'vo2-longs', formatId: 'inoue', dominante: 'vo2' } : { famille: 'seuil-plus', formatId: 'tirage-seuil', dominante: 'seuil' }
