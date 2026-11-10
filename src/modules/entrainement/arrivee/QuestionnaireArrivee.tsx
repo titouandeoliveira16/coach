@@ -6,7 +6,7 @@ import { Bouton } from '../../../core/ui/Bouton'
 import { Carte } from '../../../core/ui/Carte'
 import { ANCIENNETES, DISCIPLINES_PROPOSEES, HEURES_RECENTES, NOMS_DISCIPLINES, NOMS_PHASES, epreuveDe, niveauDuProfil, niveauxCourses, verifierSemaineType } from '../../../metrics/programme'
 import { Defileur, EditeurSemaine } from '../reglages/EditeurSemaine'
-import { champsParcours, ChampsParcours, ListeCourses, parcoursDe } from '../reglages/ListeCourses'
+import { champsParcours, ChampsParcours, EditeurCols, ListeCourses, parcoursDe } from '../reglages/ListeCourses'
 import { AIDES } from '../aides'
 import { importerIntervals, relierIntervals } from '../import/intervals'
 import { enregistrerArrivee, preparerArrivee, reponsesExistantes, SEMAINE_TYPE_DEPART, semaineDepuisJours, type EtatArrivee, type ReponsesArrivee } from './donnees'
@@ -182,8 +182,11 @@ export function QuestionnaireArrivee({ montreSeulement = false }: { montreSeulem
               )}
               <Question libelle="Distance et dénivelé" aide="Comme pour tes autres courses : l'appli en tire la durée de ta course, et ta sortie longue s'allongera de 10 min par semaine vers une durée proche (sans dépasser ton maximum).">
                 <ChampsParcours epreuve={epreuveDe(r.discipline ?? 'route', r.typeCourse)} valeur={parcoursDe(r.course)} contexte={contexteCourses}
-                  onChanger={(p) => maj({ course: { nom: r.course?.nom ?? '', date: r.course?.date ?? '', ...champsParcours(p) } })} />
+                  onChanger={(p) => maj({ course: { nom: r.course?.nom ?? '', date: r.course?.date ?? '', ...(r.course?.cols ? { cols: r.course.cols } : {}), ...champsParcours(p) } })} />
               </Question>
+              {epreuveDe(r.discipline ?? 'route', r.typeCourse) !== 'xcc' && (
+                <EditeurCols cols={r.course?.cols ?? []} onChanger={(cols) => maj({ course: { ...r.course, nom: r.course?.nom ?? '', date: r.course?.date ?? '', cols } })} />
+              )}
             </div>
           </Carte>
           <Carte titre="Autres courses (facultatif)">

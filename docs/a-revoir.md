@@ -85,6 +85,13 @@ Points décidés ou mis de côté, à reprendre au bon moment.
   calculé avec le même calcul (dichotomie). À vérifier sur sa 1re course de montagne. Vitesses = choix d'entraîneur (aucune donnée
   amateur publiée) : à recaler sur ses vraies courses. Études Quebrantahuesos 2026 / Faulkner 2025 pas lues (sites bloqués) ;
   openers la veille non prouvés (essais à 24 h seulement en sports collectifs).
+- 10.0 (10/11/2026, relus) : base au lieu d'une longue reprise (reprise 2 sem., base 4-10 sem. avec 1 rappel VO2/sem.,
+  saisons existantes migrées) ; réalisé différent du prévu (autre intensité ou durée < 60 % / > 160 %, semaine recalculée
+  si plus dur, neutre pour la progression) ; courbe des kJ dans Saison ; nutrition en 2 modules (repas du jour / à l'effort)
+  + noter un des 7 derniers jours ; courses A multiples (récup 1 sem., bloc selon l'écart, ≥ 3 sem., 4 A max) ; cols des
+  courses → montées de la prépa (N ≤ 3, T ≤ 40') et watts cibles par col (k0 × m × f, choix d'entraîneur).
+  **À faire** : plan pour habituer l'estomac (nutrition à l'effort, à faire relire) ; point 3 (semaines à 3 séances :
+  capture demandée à Titouan) ; vérifier les watts cibles des cols sur sa 1re course de montagne.
 - **Titouan a encore « 2-3 trucs à travailler »** (9/11 au soir, pas encore dits) : les lui demander à la prochaine conversation.
 - Les deux conversations ont été regroupées le 9/11/2026 (« Corrections et améliorations appli » supprimée par Titouan).
 

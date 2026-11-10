@@ -5,7 +5,7 @@ import {
   ajustementZ2, BLOCS_SV1, signalSv1, signalFcSv1, plageFcSv1, sprintsDeLaPhase, SV1_DEPART_PCT, SV1_MAX_PCT, budgetDePhase, budgetSemaine, formatDe, gardeFouCourse, NOMS_FAMILLES, plafondsReprise, projeterSaison, choisirFormat, construireIntervalles, construireTest, construireZ2, coefficientPhase, estSemaineAllegee, etatProgression, palierRaccourci,
   construireCycloMontees, construireLongueCotes, construireSimulationLigne, construireSimulationXco, construireSpeciales, construireTerrain, cotesDe, minutesPourKj, NOMS_DISCIPLINES, NOMS_PHASES, deuxIntensitesPossibles, formatsPour, hausseBudget, heuresDe, jourDeuxiemeIntensite, niveauDuProfil, palierPossible, phaseDe, placer, retourDeCoupure, semainesChamboulees, type BilanSemaine, type Famille, type HistoIntensite,
   cibleSortieLongue, dureeLongueVisee, type SeanceConstruite, type TypePhase,
-  construireCourse, construireOuverture, delaiApresCourse, dureeDeCourse, epreuveDe, facteursVitesse, type CourseReference, niveauxCourses, procheCourse,
+  construireCourse, construireOuverture, specifiqueCols, delaiApresCourse, dureeDeCourse, epreuveDe, facteursVitesse, type CourseReference, niveauxCourses, procheCourse,
 } from '../../../metrics/programme'
 import { programmeDe } from '../reglagesEntrainement'
 import type { ProfilSportif } from '../reglages/ProfilSportif'
@@ -477,7 +477,14 @@ export async function genererSemaineVelo(lundi: string) {
     aCreer.push([placement.long, longueCourse === 'simulation-ligne'
       ? construireSimulationLigne(r.cpW, z2W, capLong)
       : longueCourse === 'cyclo-montees'
-        ? construireCycloMontees(min, z2W, r.cpW, min >= 240 ? 3 : 2, phase.type === 'specifique' && nSemaine === 1 ? 25 : 20)
+        ? (() => {
+          // Cols de ta prochaine course A : nombre et durée des montées calés dessus (sinon 2-3 montées de 20-25')
+          const aVenir = prog.competitions.filter((x) => x.date >= lundi && niveaux.get(x.date) === 'A').sort((x, y) => x.date.localeCompare(y.date))[0]
+          const spec = specifiqueCols(aVenir?.cols, r.cpW, poidsDesTests(r))
+          if (!spec) return construireCycloMontees(min, z2W, r.cpW, min >= 240 ? 3 : 2, phase.type === 'specifique' && nSemaine === 1 ? 25 : 20)
+          const minutes = phase.type === 'specifique' ? spec.minutes : Math.min(spec.minutes, Math.max(20, Math.min(30, 20 + 5 * nSemaine)))
+          return construireCycloMontees(min, z2W, r.cpW, spec.n, minutes)
+        })()
         : cotes
       ? construireLongueCotes(min, z2W, r.cpW, cotesDe(nLongs, courseProche))
       : construireZ2(min, z2W, jourSprints || blocs ? undefined : sprints, { longue: true, sv1: blocs, espacementSec: sprints.espacementSec })])
