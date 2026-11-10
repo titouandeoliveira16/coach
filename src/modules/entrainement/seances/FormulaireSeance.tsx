@@ -175,7 +175,7 @@ export function FormulaireSeance() {
             <p className="text-sm text-texte-3">
               {s.rpe !== undefined ? LIBELLES_RPE[Math.floor(s.rpe)] : 'Fais glisser pour noter la difficulté globale'}
               {s.rpe !== undefined && s.rpe < 3 && <span className="ml-2 font-semibold text-nutrition">kJ faciles</span>}
-              {s.rpe !== undefined && s.rpe >= 7.5 && <span className="ml-2 font-semibold text-[#f87171]">stress</span>}
+              {s.rpe !== undefined && s.rpe >= 7.5 && <span className="ml-2 font-semibold text-mauvais">stress</span>}
             </p>
           </div>
           <ChoixNote libelle="Sensations" bornes={['Mauvaises', 'Excellentes']} valeur={s.sensations} onChoisir={(sensations) => changer({ sensations })} />
@@ -200,7 +200,7 @@ export function FormulaireSeance() {
 
         <Bouton onClick={valider} className="py-4 text-lg">Enregistrer</Bouton>
         {edition && (
-          <button type="button" className="w-full py-3 text-[#f87171]"
+          <button type="button" className="w-full py-3 text-mauvais"
             onClick={async () => { if (confirm('Supprimer cette séance ?')) { await supprimerSeance(s.id); navigate(-1) } }}>
             Supprimer la séance
           </button>

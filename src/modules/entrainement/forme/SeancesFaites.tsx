@@ -25,7 +25,7 @@ export function SeancesFaites({ jour }: { jour: string }) {
   )
 }
 
-const COULEURS = { vert: '#4ade80', orange: '#fb923c', rouge: '#f87171', gris: 'var(--color-texte-3)' }
+const COULEURS = { vert: 'var(--color-bon)', orange: 'var(--color-attention)', rouge: 'var(--color-mauvais)', gris: 'var(--color-texte-3)' }
 const PASTILLES = { vert: '✅', orange: '🟠', rouge: '🔴', gris: '❤️' }
 
 function SeanceFaite({ s }: { s: Seance }) {
@@ -102,7 +102,7 @@ export function Blocs({ b }: { b: NonNullable<Seance['blocs']> }) {
       {b.w.map((w, i) => (
         <span key={i}>
           {i > 0 && ' · '}
-          <b style={{ color: blocTenu(w, b) ? '#4ade80' : '#fb923c' }}>{w}</b>
+          <b style={{ color: blocTenu(w, b) ? 'var(--color-bon)' : 'var(--color-attention)' }}>{w}</b>
         </span>
       ))}{' '}
       W <span className="text-texte-3">({b.minW && b.maxW ? `plage ${b.minW}-${b.maxW}` : `cible ${b.cibleW}`})</span>

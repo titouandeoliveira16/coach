@@ -128,13 +128,13 @@ export function SectionProfilSportif() {
         </Ligne>
       )}
       <Ligne {...props('objectifs')} libelle="Mes courses" valeur={objectifs.map((c) => `${niveaux.get(c.date) ?? ''} ${c.nom}`).join(', ')}>
-        <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-texte-3">Ta course principale</p>
+        <p className="mb-1.5 text-[13px] font-semibold text-texte-2">Ta course principale</p>
         {principale
           ? <CoursePrincipale key={principale.date} course={principale} contexte={contexteCourses} onChanger={(a) => changerCourses(prog.competitions.map((c) => (c === principale ? a : c)))} />
           : <p className="text-sm text-texte-2">Aucune : remplis le questionnaire d'arrivée pour construire ta saison.</p>}
-        <p className="mt-4 mb-1.5 text-xs font-semibold uppercase tracking-wider text-texte-3">Tes autres courses</p>
+        <p className="mt-4 mb-1.5 text-[13px] font-semibold text-texte-2">Tes autres courses</p>
         <ListeCourses courses={prog.competitions} effectifs={niveaux} contexte={contexteCourses} onChanger={changerCourses} principale={principale?.date} />
-        <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-texte-3">Ta vitesse en course</p>
+        <p className="mt-4 text-[13px] font-semibold text-texte-2">Ta vitesse en course</p>
         <CalageVitesse refs={prog.coursesReference ?? []} auto={vitesse?.auto ?? 0} facteurs={vitesse?.facteurs ?? {}} onChanger={(coursesReference) => changerProg({ coursesReference })} />
         <p className="mt-1.5 text-xs text-texte-3">{AIDES.niveauxCourses}</p>
       </Ligne>

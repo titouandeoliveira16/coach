@@ -28,7 +28,7 @@ export function SectionVelo() {
   return (
     <section className={`rounded-2xl border bg-surface p-3.5 ${cpOuvert ? 'border-accent' : 'border-bordure'}`}>
       <div className="flex items-baseline justify-between gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wider text-texte-3">Vélo</span>
+        <span className="text-[13px] font-semibold text-texte-2">Vélo</span>
         <button type="button" onClick={() => setCpOuvert(!cpOuvert)} className="text-sm">
           <span className="text-texte-2">CP</span> <b>{reglages.cpW ?? '—'} W</b>{wkg && <span className="text-texte-3"> · {formatNombre(wkg, 2)} W/kg</span>}
           <span className="font-semibold text-accent"> · {cpOuvert ? 'réduire ▴' : 'modifier'}</span>

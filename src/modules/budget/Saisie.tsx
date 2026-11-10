@@ -127,13 +127,13 @@ export function Saisie({ initial, onFermer }: { initial?: Partial<Mouvement>; on
           </>
         ) : (
           <div className="mt-3 flex items-end gap-2">
-            <label className="min-w-0 flex-1 text-xs font-semibold uppercase tracking-wider text-texte-3">De
+            <label className="min-w-0 flex-1 text-[13px] font-semibold text-texte-2">De
               <select value={de} onChange={(e) => setCompteId(e.target.value)} className={`${champ} mt-1 text-base font-normal normal-case tracking-normal text-texte`}>
                 {sources.map((c) => <option key={c.id} value={c.id}>{c.nom}</option>)}
               </select>
             </label>
             <span className="pb-3 text-texte-3">→</span>
-            <label className="min-w-0 flex-1 text-xs font-semibold uppercase tracking-wider text-texte-3">Vers
+            <label className="min-w-0 flex-1 text-[13px] font-semibold text-texte-2">Vers
               <select value={vers} onChange={(e) => setVersCompteId(e.target.value)} className={`${champ} mt-1 text-base font-normal normal-case tracking-normal text-texte`}>
                 {destinations.map((c) => <option key={c.id} value={c.id}>{c.nom}</option>)}
               </select>

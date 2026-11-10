@@ -151,7 +151,7 @@ function FicheCategorie({ initiale, toutes, nouvelle, onFermer }: {
           <>
             {c.genre === 'depense' && (
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-texte-3">Sous-catégories (facultatif)</p>
+                <p className="text-[13px] font-semibold text-texte-2">Sous-catégories (facultatif)</p>
                 {sous.map((s) => (
                   <div key={s.id} className="flex items-center justify-between py-1.5">
                     <span>{s.nom}</span>

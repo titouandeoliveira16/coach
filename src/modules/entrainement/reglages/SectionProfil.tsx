@@ -30,7 +30,7 @@ export function SectionProfil() {
       {/* Demandée une seule fois (besoins du jour) : plus de champ une fois renseignée */}
       {!profil.naissance && (
         <label className="flex items-center justify-between py-1.5">
-          <span className="text-[#fb923c]">Date de naissance</span>
+          <span className="text-attention">Date de naissance</span>
           <input type="date" onChange={(e) => e.target.value && modifierProfil({ naissance: e.target.value })}
             className="rounded-lg border border-bordure bg-surface-2 px-2 py-2" />
         </label>

@@ -1,3 +1,4 @@
+import { Hourglass } from 'lucide-react'
 import { useEffect } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { aujourdhui } from '../../core/dates'
@@ -28,9 +29,10 @@ export function EcranRevision() {
   return (
     <>
       <EnTete titre="Révision CAPEPS">
-        <p className="mt-1 text-sm text-texte-2">
-          {j > 1 ? <>⏳ <b className="text-accent">J-{j}</b> avant l'écrit 1 · {new Date(`${p.concours}T12:00:00`).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</>
-            : j === 1 ? '⏳ Demain : écrit 1. Repos, tu es prêt.'
+        <p className="mt-1 flex items-center gap-1.5 text-sm text-texte-2">
+          <Hourglass className="h-4 w-4 shrink-0 text-accent" strokeWidth={2} />
+          {j > 1 ? <><b className="text-accent">J-{j}</b> avant l'écrit 1 · {new Date(`${p.concours}T12:00:00`).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</>
+            : j === 1 ? 'Demain : écrit 1. Repos, tu es prêt.'
             : j >= -1 ? 'Jour J : tu as tout ce qu’il faut.' : 'Concours passé.'}
         </p>
         <Onglets onglets={ONGLETS} />

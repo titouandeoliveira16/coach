@@ -1,10 +1,10 @@
 import { NavLink, useLocation } from 'react-router-dom'
-import { IconeAccueil, IconeAide, IconeReglages } from '../core/ui/icones'
+import { IconeAccueil, IconeReglages } from '../core/ui/icones'
 import type { ModuleApp } from './modules'
 
 /**
  * Barre de navigation en bas de l'écran (accessible au pouce), propre au module ouvert :
- * Accueil (changer de module), le module, son mode d'emploi et ses réglages.
+ * Accueil (changer de module), le module et ses réglages (le mode d'emploi est en haut des réglages).
  */
 export function BarreNavigation({ module: m }: { module: ModuleApp }) {
   const { pathname } = useLocation()
@@ -13,8 +13,7 @@ export function BarreNavigation({ module: m }: { module: ModuleApp }) {
   const entrees = [
     { id: 'accueil', nom: 'Accueil', chemin: '/', Icone: IconeAccueil, actif: false },
     { id: m.id, nom: m.nom, chemin: m.chemin, Icone: m.Icone, actif: pathname !== aide && pathname !== reglages },
-    ...(m.ModeEmploi ? [{ id: 'aide', nom: "Mode d'emploi", chemin: aide, Icone: IconeAide, actif: pathname === aide }] : []),
-    ...(m.SectionReglages ? [{ id: 'reglages', nom: 'Réglages', chemin: reglages, Icone: IconeReglages, actif: pathname === reglages }] : []),
+    ...(m.SectionReglages ? [{ id: 'reglages', nom: 'Réglages', chemin: reglages, Icone: IconeReglages, actif: pathname === reglages || pathname === aide }] : []),
   ]
 
   return (
@@ -24,7 +23,7 @@ export function BarreNavigation({ module: m }: { module: ModuleApp }) {
           <li key={id} className="flex-1">
             <NavLink
               to={chemin}
-              className="presse flex flex-col items-center gap-1 pt-2.5 pb-1 text-[10.5px] font-medium"
+              className="presse flex flex-col items-center gap-1 pt-2.5 pb-1 text-[11px] font-medium"
               style={{ color: actif ? m.couleur : 'var(--color-texte-3)' }}
             >
               <Icone className="h-6 w-6" />

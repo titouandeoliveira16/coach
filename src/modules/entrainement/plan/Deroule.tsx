@@ -33,7 +33,7 @@ export function Profil({ etapes, cpW, extensible = false }: { etapes: Etape[]; c
       </svg>
       {/* Légende des zones présentes (la couleur n'est jamais seule) */}
       {cpW && (
-        <p className="mt-1 flex flex-wrap gap-x-2.5 gap-y-0.5 text-[10px] text-texte-3">
+        <p className="mt-1 flex flex-wrap gap-x-2.5 gap-y-0.5 text-[11px] text-texte-3">
           {[...new Set(blocs.map((e) => (e.w ? couleur(e, cpW) : COULEUR_A_FOND)))].map((c) => (
             <span key={c} className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm" style={{ background: c }} />{c === COULEUR_A_FOND ? 'à fond' : `Z${COULEURS_ZONES.indexOf(c as (typeof COULEURS_ZONES)[number]) + 1}`}</span>
           ))}

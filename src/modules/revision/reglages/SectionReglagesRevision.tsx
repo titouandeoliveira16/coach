@@ -53,7 +53,7 @@ function Dates({ p, modifier }: Props) {
       <LigneDate libelle="Dernière ligne droite" valeur={p.derniereLigne} onChanger={(v) => modifier({ derniereLigne: v })} />
       <LigneDate libelle="Changement de stage" valeur={p.changementStage} onChanger={(v) => modifier({ changementStage: v })} />
       <LigneDate libelle="Envoi du mémoire au tuteur" valeur={p.memoireEnvoi} onChanger={(v) => modifier({ memoireEnvoi: v })} />
-      <p className="pt-2 text-xs font-semibold uppercase tracking-wider text-texte-3">Vacances</p>
+      <p className="pt-2 text-[13px] font-semibold text-texte-2">Vacances</p>
       {p.vacances.map((v, i) => (
         <div key={i} className="flex items-center gap-1.5 py-1">
           <input value={v.nom} onChange={(e) => modifier({ vacances: p.vacances.map((x, k) => (k === i ? { ...x, nom: e.target.value } : x)) })} className={`${champ} w-20 min-w-0`} />
@@ -63,7 +63,7 @@ function Dates({ p, modifier }: Props) {
         </div>
       ))}
       <button type="button" onClick={() => modifier({ vacances: [...p.vacances, { nom: 'Hiver', debut: '2027-02-06', fin: '2027-02-21' }] })} className="text-sm font-semibold text-accent">+ Ajouter des vacances</button>
-      <p className="pt-2 text-xs font-semibold uppercase tracking-wider text-texte-3">Jours de repos</p>
+      <p className="pt-2 text-[13px] font-semibold text-texte-2">Jours de repos</p>
       <p className="text-sm text-texte-2">{p.repos.map((r) => depuisJour(r).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })).join(' · ')}</p>
       <button type="button" onClick={() => modifier(PARAMETRES_DEFAUT)} className="mt-2 text-xs text-texte-3 underline">Revenir aux dates de départ</button>
     </div>

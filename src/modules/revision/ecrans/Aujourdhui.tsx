@@ -6,7 +6,7 @@ import { Bouton } from '../../../core/ui/Bouton'
 import { Carte } from '../../../core/ui/Carte'
 import { annulerRappel, enregistrerMemoire, finirNotion, modifierNotion, noterRappel, useParametres, useRevision } from '../donnees'
 import { Minuteur, useMinuteur } from '../Minuteur'
-import { NOMS_PERIODES, capacite, creneauxDu, dureeRappel, joursAvant, periodeDu, placerRappels, projection, type Creneau } from '../programme'
+import { NOMS_PERIODES, capacite, creneauxDu, dureeRappel, periodeDu, placerRappels, projection, type Creneau } from '../programme'
 import type { Rappel, Resultat } from '../types'
 import { BoutonsResultat, LIBELLES_CRENEAUX, libelleRappel } from '../ui'
 
@@ -40,7 +40,6 @@ export function Aujourdhui() {
   const maintenant = creneaux.find((c) => c.debut <= h && h < c.fin)
   const ensuite = creneaux.filter((c) => c.debut > h)
   const nom = (id: string) => d.notions.find((n) => n.id === id)?.nom ?? '?'
-  const j = joursAvant(jour, p)
   const memoire = creneaux.find((c) => c.type === 'memoire')
   const seanceMemoire = d.memoire.find((m) => m.id === jour)
   const per = periodeDu(jour, p)
@@ -50,19 +49,6 @@ export function Aujourdhui() {
 
   return (
     <div className="space-y-3 pb-4">
-      {/* Compte à rebours */}
-      <Carte>
-        <div className="flex items-end justify-between">
-          <div>
-            <p className="text-6xl font-bold tabular-nums text-accent">{Math.max(j, 0)}</p>
-            <p className="text-texte-2">jour{j > 1 ? 's' : ''} avant l'écrit 1</p>
-          </div>
-          <p className="text-right text-sm text-texte-3">
-            Écrits les 2 et 3 mars 2027<br />
-            {j > 7 && `${Math.floor(j / 7)} semaines et ${j % 7} j`}
-          </p>
-        </div>
-      </Carte>
 
       <p className="text-lg capitalize text-texte-2">{dateLongue(jour)} · <span className="text-texte-3">{NOMS_PERIODES[per]}</span></p>
 

@@ -55,7 +55,7 @@ export function ModeEmploiBudget() {
         </Rubrique>
         <Rubrique titre="🎯 Plafonds et jauges">
           <p>Dans « Mois », « Modifier les plafonds » : un plafond par catégorie. Change-les quand tu veux : les mois passés ne bougent pas, et le mois suivant reprend les mêmes.</p>
-          <p>Jauge <span style={{ color: '#4ade80' }}>verte</span> sous 75 %, <span style={{ color: '#fb923c' }}>orange</span> jusqu'à 100 %, <span style={{ color: '#f87171' }}>rouge</span> au-delà. Un message t'avertit quand une catégorie atteint 90 % puis 100 %.</p>
+          <p>Jauge <span style={{ color: 'var(--color-bon)' }}>verte</span> sous 75 %, <span style={{ color: 'var(--color-attention)' }}>orange</span> jusqu'à 100 %, <span style={{ color: 'var(--color-mauvais)' }}>rouge</span> au-delà. Un message t'avertit quand une catégorie atteint 90 % puis 100 %.</p>
           <p>Chaque catégorie est un <B>besoin</B> ou un <B>loisir</B> : la barre « Besoins · loisirs · épargne » et le bilan te situent par rapport au repère 50/30/20 (50 % besoins, 30 % loisirs, 20 % épargne).</p>
           <p><B>Reste à vivre</B> = l'argent que tu as vraiment (compte courant + espèces), moins les <B>charges fixes</B> et abonnements pas encore payés ce mois-ci, plus les revenus réguliers attendus avant le 25. « Voir le détail » te montre chaque ligne : une charge déjà payée mais pas saisie y apparaît comme « à venir ».</p>
         </Rubrique>

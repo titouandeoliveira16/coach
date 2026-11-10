@@ -55,7 +55,7 @@ function Controle({ c, d, plusieurs, onFini }: { c: Compte; d: Donnees; plusieur
       ) : (
         <div className="mt-2 space-y-2 text-sm">
           <p>
-            Écart de <b style={{ color: '#fb923c' }}>{formatEuros(ecart, { signe: true })}</b> : l'appli affiche {formatEuros(appli)}.
+            Écart de <b style={{ color: 'var(--color-attention)' }}>{formatEuros(ecart, { signe: true })}</b> : l'appli affiche {formatEuros(appli)}.
             {ecart < 0 ? ' Ta banque a moins : une dépense oubliée ?' : ' Ta banque a plus : un revenu oublié ou un remboursement ?'}
             {' '}Pense aussi aux paiements encore « en cours » à la banque.
           </p>

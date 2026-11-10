@@ -26,7 +26,7 @@ function Connecte() {
         <span className="text-texte-2">Connecté</span>
         <span className="font-semibold">{session?.user.email}</span>
       </div>
-      <p className={`text-sm ${statut === 'erreur' ? 'text-[#f87171]' : statut === 'ok' ? 'text-nutrition' : 'text-texte-2'}`}>
+      <p className={`text-sm ${statut === 'erreur' ? 'text-mauvais' : statut === 'ok' ? 'text-nutrition' : 'text-texte-2'}`}>
         {libelles[statut]}
       </p>
       <Bouton variante="secondaire" disabled={statut === 'en-cours'} onClick={() => synchroniser()}>

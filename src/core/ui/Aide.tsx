@@ -16,7 +16,7 @@ export function Aide({ texte, titre }: { texte: string; titre?: string }) {
           e.stopPropagation()
           setOuvert(true)
         }}
-        className="ml-1 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-bordure text-[11px] font-bold text-texte-3 align-middle"
+        className="relative ml-1.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-texte-3/40 text-[11px] font-bold text-texte-2 align-middle before:absolute before:-inset-3 before:content-['']"
       >
         ?
       </button>

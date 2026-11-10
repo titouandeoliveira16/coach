@@ -67,10 +67,10 @@ export function NutritionSeance({ p }: { p: SeancePrevue }) {
           {p.statut === 'faite' && (
             <>
               <p className="mt-1.5 text-xs text-texte-3">Ton ventre pendant la sortie : 0 = parfait, 10 = très mal (nausée, ballonnements, crampes, toilettes)</p>
-              <div className="mt-1 grid grid-cols-11 gap-0.5">
+              <div className="mt-1 grid grid-cols-11 gap-1">
                 {Array.from({ length: 11 }, (_, n) => (
                   <button key={n} type="button" onClick={() => modifierNotes({ [p.date]: n })}
-                    className={`presse rounded-md py-1.5 text-xs font-semibold ${note === n ? 'bg-accent text-fond' : 'bg-surface text-texte-2'}`}>{n}</button>
+                    className={`presse min-h-11 rounded-lg text-sm font-semibold ${note === n ? 'bg-accent text-fond' : 'bg-surface text-texte-2'}`}>{n}</button>
                 ))}
               </div>
             </>

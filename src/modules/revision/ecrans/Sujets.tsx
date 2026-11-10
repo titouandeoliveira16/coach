@@ -115,7 +115,7 @@ function FicheSujet({ initial, d, onFermer }: { initial: Partial<Sujet>; d: Donn
           await enregistrerSujet({ ...s, ...(n !== undefined ? { note: n } : {}), ...(dm !== undefined ? { dureeMin: dm } : {}) })
           onFermer()
         }}>Enregistrer</Bouton>
-        {existe && <button type="button" onClick={async () => { await supprimerSujet(s.id); onFermer() }} className="w-full py-2 text-sm text-[#f87171]">Supprimer</button>}
+        {existe && <button type="button" onClick={async () => { await supprimerSujet(s.id); onFermer() }} className="w-full py-2 text-sm text-mauvais">Supprimer</button>}
         <p className="text-xs text-texte-3">{NOMS_THEMES.T1.split(' · ')[0]}–T3 pour l'écrit 1, théorie et blocs pour l'écrit 2 : varie les thèmes d'un sujet à l'autre.</p>
       </div>
     </Feuille>

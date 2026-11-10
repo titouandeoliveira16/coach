@@ -18,8 +18,8 @@ const jm = (d: string) => depuisJour(d).toLocaleDateString('fr-FR', { day: 'nume
 const BADGES: Record<SemaineSaison['type'], { texte: string; classe: string } | undefined> = {
   normale: undefined,
   allegee: { texte: 'allégée', classe: 'bg-accent/20 text-accent' },
-  competition: { texte: 'course', classe: 'bg-[#f87171]/20 text-[#f87171]' },
-  test: { texte: 'test', classe: 'bg-[#4ade80]/20 text-[#4ade80]' },
+  competition: { texte: 'course', classe: 'bg-mauvais/20 text-mauvais' },
+  test: { texte: 'test', classe: 'bg-bon/20 text-bon' },
 }
 
 /** Une semaine de la saison : date, séance d'intensité, budget, badge. */
@@ -60,7 +60,7 @@ function CourbeKj({ semaines, niveaux, tests }: { semaines: SemaineSaison[]; niv
         {graduations.map((v) => (
           <g key={v}>
             <line x1={G} x2={W - D} y1={y(v)} y2={y(v)} stroke="var(--color-bordure)" strokeWidth="1" />
-            <text x={G - 4} y={y(v) + 3} textAnchor="end" fontSize="9" fill="var(--color-texte-3)">{v / 1000}k</text>
+            <text x={G - 4} y={y(v) + 3} textAnchor="end" fontSize="9" fill="var(--color-texte-3)">{(v).toLocaleString('fr-FR')}</text>
           </g>
         ))}
         {semaines.map((s, i) => (
@@ -127,7 +127,7 @@ export function Saison() {
   return (
     <div className="space-y-3">
       <Carte>
-        <p className="text-xs uppercase tracking-wider text-texte-3">Où j'en suis</p>
+        <p className="text-[13px] font-semibold text-texte-2">Où j'en suis</p>
         {s.demarrage ? (
           <>
             <p className="mt-1 text-xl font-bold">Semaine de reprise</p>
@@ -135,7 +135,7 @@ export function Saison() {
           </>
         ) : (
           <>
-            <p className="titre-ecran mt-1 flex items-center gap-2 text-xl"><span className="h-3 w-3 shrink-0 rounded-full" style={{ background: COULEURS[actuelle.phase] }} />{NOMS_PHASES[actuelle.phase]}</p>
+            <p className="mt-1 flex items-center gap-2 text-xl font-bold"><span className="h-3 w-3 shrink-0 rounded-full" style={{ background: COULEURS[actuelle.phase] }} />{NOMS_PHASES[actuelle.phase]}</p>
             <p className="text-texte-2">
               Semaine {actuelle.numero}{actuelle.total ? ` sur ${actuelle.total}` : ''}
               {prochaine && ` · ${NOMS_PHASES[prochaine.type]} dans ${Math.ceil(ecartJours(aujourdhui(), prochaine.debut) / 7)} sem.`}
@@ -157,6 +157,14 @@ export function Saison() {
           <span className="absolute -translate-x-1/2" style={{ left: `${pos}%` }}>▲</span>
           {courses.map((c) => <span key={c.date} className="absolute -translate-x-1/2" style={{ left: `${position(c.date)}%` }}><Flag className="h-3.5 w-3.5 text-accent" strokeWidth={2} /></span>)}
           {tests.map((d) => <span key={d} className="absolute top-1 h-2 w-2 -translate-x-1/2 rounded-full border-[1.5px] border-texte-2" style={{ left: `${position(d)}%` }} />)}
+        </div>
+        {/* Légende des couleurs (mêmes couleurs dans la courbe de charge) */}
+        <div className="mt-1 mb-1.5 flex flex-wrap gap-x-3 gap-y-1">
+          {[...new Set(s.phases.map((p) => p.type))].map((t) => (
+            <span key={t} className={`flex items-center gap-1.5 text-xs ${t === actuelle.phase ? 'font-semibold text-texte' : 'text-texte-2'}`}>
+              <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: COULEURS[t] }} />{NOMS_PHASES[t]}
+            </span>
+          ))}
         </div>
         {(courses.length > 0 || tests.length > 0) && (
           <p className="text-xs text-texte-3">

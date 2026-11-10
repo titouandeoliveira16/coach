@@ -147,7 +147,7 @@ function FicheCompte({ c, d, onFermer }: { c: Compte; d: Donnees; onFermer: () =
 
       {avecReleves && (
         <div className="mt-4">
-          <p className="text-xs font-semibold uppercase tracking-wider text-texte-3">Nouveau relevé</p>
+          <p className="text-[13px] font-semibold text-texte-2">Nouveau relevé</p>
           <p className="text-xs text-texte-3">{invest ? 'Regarde la valeur sur ton appli bancaire et note-la ici.' : 'Pas besoin chaque mois : tes virements suffisent. Utile une fois par an, quand les intérêts arrivent.'}</p>
           <div className="mt-1 flex gap-2">
             <input type="date" value={releveDate} max={jour} min={c.dateDepart} onChange={(e) => e.target.value && setReleveDate(e.target.value)} className={`${champ} w-auto`} />

@@ -70,13 +70,13 @@ export function Mouvements() {
 
       <div className="flex justify-between rounded-xl bg-surface px-4 py-2.5 text-sm">
         <span className="text-texte-2">Dépenses <b className="text-texte">{formatEuros(total('depense'))}</b></span>
-        <span className="text-texte-2">Revenus <b className="text-[#4ade80]">{formatEuros(total('revenu'))}</b></span>
+        <span className="text-texte-2">Revenus <b className="text-bon">{formatEuros(total('revenu'))}</b></span>
       </div>
 
       {liste.length === 0 && <p className="py-8 text-center text-texte-3">Aucun mouvement.</p>}
       {[...parJour.entries()].map(([jour, ms]) => (
         <section key={jour}>
-          <h3 className="mt-2 text-xs font-semibold uppercase tracking-wider text-texte-3">
+          <h3 className="mt-2 text-[13px] font-semibold text-texte-2">
             {new Date(`${jour}T12:00:00`).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
           </h3>
           {ms.map((m) => <LigneMouvement key={m.id} m={m} categories={d.categories} comptes={d.comptes} onToucher={() => setDetail(m)} />)}

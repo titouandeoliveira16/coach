@@ -30,9 +30,9 @@ export function DetailMouvement({ m, onFermer }: { m: Mouvement; onFermer: () =>
           ouvrir({ ...reste, date: aujourdhui() })
         }}>Dupliquer (nouveau montant)</Bouton>
         {confirmer ? (
-          <Bouton className="!bg-[#f87171]" onClick={async () => { await supprimerMouvement(m.id); onFermer() }}>Confirmer la suppression</Bouton>
+          <Bouton className="!bg-mauvais" onClick={async () => { await supprimerMouvement(m.id); onFermer() }}>Confirmer la suppression</Bouton>
         ) : (
-          <button type="button" onClick={() => setConfirmer(true)} className="w-full py-2 text-sm text-[#f87171]">Supprimer</button>
+          <button type="button" onClick={() => setConfirmer(true)} className="w-full py-2 text-sm text-mauvais">Supprimer</button>
         )}
       </div>
     </Feuille>

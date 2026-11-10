@@ -3,7 +3,7 @@ import { decalerMois, nomMois, type CouleurJauge } from './calculs'
 import type { Categorie, Compte, Mouvement } from './types'
 
 /** Couleurs d'état (jauges, alertes) : les mêmes que le feu du jour. */
-export const ETAT: Record<CouleurJauge, string> = { vert: '#4ade80', orange: '#fb923c', rouge: '#f87171' }
+export const ETAT: Record<CouleurJauge, string> = { vert: 'var(--color-bon)', orange: 'var(--color-attention)', rouge: 'var(--color-mauvais)' }
 
 /** « ‹ octobre 2026 › » */
 export function NavMois({ mois, onChanger, max }: { mois: string; onChanger: (m: string) => void; max?: string }) {
