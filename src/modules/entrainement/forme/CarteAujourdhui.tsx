@@ -23,7 +23,6 @@ import { SeancesFaites } from './SeancesFaites'
 import type { Raison, Seance } from '../types'
 import { nouvelId } from '../seances/donnees'
 
-const TITRE = { vert: 'Feu vert', orange: 'Prudence', rouge: 'Récupère' }
 const COULEUR = { vert: '#4ade80', orange: '#fb923c', rouge: '#f87171' }
 
 /** Choix bien visible entre la version conseillée par le feu et la séance prévue. */
@@ -130,7 +129,8 @@ export function CarteAujourdhui({ onModifierMatin }: {
   const resumes: Record<(typeof cases)[number]['cle'], string | undefined> = {
     recuperation: mesure?.vfcMs !== undefined && !mesure.sansMontre ? `${mesure.vfcMs} ms` : undefined,
     pouls: mesure?.fcRepos !== undefined && !mesure.sansMontre ? `${mesure.fcRepos} bpm` : undefined,
-    sommeil: mesure?.sommeilH !== undefined && !mesure.sansMontre ? enHeures(mesure.sommeilH) : undefined,
+    // Heures de la nuit : déjà dans la tuile Nuit en haut
+    sommeil: undefined,
     ressenti: ressenti !== undefined ? `${formatNombre(ressenti, 1)} / 5` : undefined,
   }
   const chiffres: Record<(typeof cases)[number]['cle'], string | undefined> = {
@@ -150,11 +150,8 @@ export function CarteAujourdhui({ onModifierMatin }: {
       {/* Ta forme : le feu et ses 4 indicateurs, détail à ouvrir */}
       <Carte className={`flex shrink-0 flex-col gap-2.5 p-3! ${formeOuverte ? 'border-accent!' : ''}`}>
         <button type="button" onClick={basculerForme} className="flex items-center justify-between text-left">
-          <span className="text-xs font-semibold uppercase tracking-wider text-texte-3">Ta forme</span>
-          <span className="flex items-center gap-1.5 font-bold" style={{ color: COULEUR[signal.couleur] }}>
-            <span className="h-2.5 w-2.5 rounded-full" style={{ background: COULEUR[signal.couleur] }} />{TITRE[signal.couleur]}
-            <span className={`text-sm ${formeOuverte ? 'text-accent' : 'font-normal text-texte-3'}`}>{formeOuverte ? 'Réduire ▴' : '▾'}</span>
-          </span>
+          <span className="etiquette">Ta forme</span>
+          <span className={`text-sm ${formeOuverte ? 'font-semibold text-accent' : 'text-texte-3'}`}>{formeOuverte ? 'Réduire ▴' : 'Détail ▾'}</span>
         </button>
         <div className="grid grid-cols-4 gap-1.5 text-center">
           {cases.map(({ cle, d }) => (

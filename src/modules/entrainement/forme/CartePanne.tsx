@@ -51,7 +51,7 @@ export function CartePanne({ compact = false }: { compact?: boolean } = {}) {
           Imprévu
         </button>
       ) : (
-        <button type="button" onClick={() => setOuverte(true)} className="w-full rounded-2xl border border-bordure bg-surface px-4 py-3 text-left text-sm text-texte-2">
+        <button type="button" onClick={() => setOuverte(true)} className="w-full rounded-[14px] bg-surface px-4 py-3 text-left text-sm text-texte-2">
           Un imprévu ? Vélo en panne…
         </button>
       )}

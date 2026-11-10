@@ -205,10 +205,10 @@ function LigneFtp({ cpW, poidsKg, estimee }: { cpW?: number; poidsKg?: number; e
   if (!cpW) return null
   const ftp = Math.round(cpW * FTP_SUR_CP)
   return (
-    <p className="rounded-2xl border border-bordure bg-surface px-4 py-3 text-sm text-texte-2">
-      FTP estimée : <b className="text-texte">≈ {ftp} W</b>{poidsKg ? <> · <b className="text-texte">{formatNombre(ftp / poidsKg, 2)} W/kg</b></> : null}
-      <span className="block text-xs text-texte-3">À partir de ta CP {estimee ? 'estimée' : ''} de {Math.round(cpW)} W{poidsKg ? ` (${formatNombre(cpW / poidsKg, 2)} W/kg)` : ''} · sur Zwift, mets ta FTP égale à ta CP.</span>
+    <p className="entree rounded-[14px] bg-surface px-4 py-3 text-sm text-texte-2">
+      FTP estimée : <b className="chiffre text-texte">≈ {ftp} W</b>{poidsKg ? <> · <b className="chiffre text-texte">{formatNombre(ftp / poidsKg, 2)} W/kg</b></> : null}
       <Aide titre="FTP et CP" texte={AIDES.ftp} />
+      <span className="block text-xs text-texte-3">À partir de ta CP {estimee ? 'estimée' : ''} de {Math.round(cpW)} W{poidsKg ? ` (${formatNombre(cpW / poidsKg, 2)} W/kg)` : ''} · sur Zwift, mets ta FTP égale à ta CP.</span>
     </p>
   )
 }

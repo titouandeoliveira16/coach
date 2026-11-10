@@ -1,6 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { TuilesMatin } from '../forme/TuilesMatin'
-import { SemaineMini } from '../forme/SemaineMini'
 import { useEffect, useRef, useState } from 'react'
 import { aujourdhui } from '../../../core/dates'
 import { CarteBilan, lundiDuBilan } from '../plan/CarteBilan'
@@ -89,7 +88,6 @@ export function Aujourdhui() {
       ) : (
         <SaisieMatin key={duJour?.modifieLe} existante={duJour} onTermine={() => setEdition(false)} />
       )}
-      {complet && !edition && <SemaineMini />}
       {nutrition && <CarteNutrition ouverte={nutriOuverte} onBasculer={setNutriOuverte} />}
       {/* En bas : pesée et imprévu sur une ligne */}
       <div className="flex shrink-0 gap-2">

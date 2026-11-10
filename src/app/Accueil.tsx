@@ -50,7 +50,7 @@ export function Accueil() {
             </span>
             <span className="min-w-0 flex-1">
               <span className="titre-ecran block text-lg">{nom}</span>
-              <span className="block truncate text-sm text-texte-2">{id === 'entrainement' ? resume?.seance : SOUS_TITRES[id] ?? ''}</span>
+              <span className="block text-sm leading-snug text-texte-2">{id === 'entrainement' ? resume?.seance : SOUS_TITRES[id] ?? ''}</span>
             </span>
             <ChevronRight className="h-5 w-5 shrink-0 text-texte-3" strokeWidth={1.8} />
           </Link>

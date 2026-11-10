@@ -38,7 +38,7 @@ export function SectionReglagesEntrainement() {
       <SectionProfilSportif />
       <SectionVelo />
       <SectionIntervals />
-      <div className="grid grid-cols-3 gap-2">
+      <div className="flex flex-col gap-2">
         <Tuile titre="Google Agenda" ouvert={agenda} onClick={() => setAgenda(!agenda)} />
         <Tuile titre="Catalogue scientifique" ouvert={catalogue} onClick={() => setCatalogue(!catalogue)} />
         <Tuile titre="Avancé : zones et calculs" ouvert={avance} onClick={() => setAvance(!avance)} />

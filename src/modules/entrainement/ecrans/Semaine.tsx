@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { db } from '../../../core/db'
 import { enregistrer } from '../../../core/stockage'
 import { CiblesCols } from '../reglages/ListeCourses'
+import { BarresSemaine } from '../forme/BarresSemaine'
 import { aujourdhui, decalerJour, depuisJour } from '../../../core/dates'
 import { Aide } from '../../../core/ui/Aide'
 import { Bouton } from '../../../core/ui/Bouton'
@@ -195,6 +196,7 @@ function CarteVelo({ lundi, deps, onMessage, onPrecedente, onSuivante }: { lundi
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-surface-2">
             <div className="h-full rounded-full bg-accent" style={{ width: `${Math.min(100, kj.kjPrevus ? (kj.kjRealises / kj.kjPrevus) * 100 : 0)}%` }} />
           </div>
+          <BarresSemaine lundi={lundi} />
           {meta && <p className="mt-1.5 text-xs text-texte-3">{meta.phase}{meta.allegee ? ' · semaine allégée' : ''} · {meta.raison}<Aide titre="Budget kJ" texte={AIDES.budgetAuto} /></p>}
         </>
       ) : (

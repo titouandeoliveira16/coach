@@ -24,7 +24,7 @@ export function Repliable({ titre, resume, children, ouvert: ouvertParent, onBas
       <button type="button" onClick={basculer} aria-expanded={ouvert} className="presse flex w-full items-center gap-3 px-3.5 py-3 text-left">
         <span className="min-w-0 flex-1">
           <span className="etiquette block">{titre}</span>
-          {!ouvert && resume && <span className="mt-0.5 block truncate text-sm text-texte-2">{resume}</span>}
+          {!ouvert && resume && <span className="mt-0.5 block text-sm leading-snug text-texte-2">{resume}</span>}
         </span>
         <span className="shrink-0 text-sm font-semibold text-accent">{ouvert ? 'Réduire ▴' : `${libelle} ›`}</span>
       </button>
@@ -37,9 +37,9 @@ export function Repliable({ titre, resume, children, ouvert: ouvertParent, onBas
 export function Tuile({ titre, ouvert, onClick, fleche = '▾' }: { titre: string; ouvert?: boolean; onClick: () => void; fleche?: string }) {
   return (
     <button type="button" onClick={onClick} aria-expanded={ouvert}
-      className={`presse flex min-h-[72px] flex-col justify-between rounded-[14px] border bg-surface p-3 text-left ${ouvert ? 'border-accent' : 'border-transparent'}`}>
+      className={`presse flex items-center justify-between gap-2 rounded-[14px] border bg-surface px-3.5 py-3.5 text-left ${ouvert ? 'border-accent' : 'border-transparent'}`}>
       <span className="text-sm font-semibold leading-tight">{titre}</span>
-      <span className={`text-xs ${ouvert ? 'text-accent' : 'text-texte-3'}`}>{ouvert ? '▴' : fleche}</span>
+      <span className={`text-sm ${ouvert ? 'text-accent' : 'text-texte-3'}`}>{ouvert ? '▴' : fleche}</span>
     </button>
   )
 }

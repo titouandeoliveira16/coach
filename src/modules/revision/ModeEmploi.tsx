@@ -3,7 +3,7 @@ import { EnTete } from '../../core/ui/EnTete'
 
 function Rubrique({ titre, children, ouverte = false }: { titre: string; children: ReactNode; ouverte?: boolean }) {
   return (
-    <details open={ouverte} className="group rounded-2xl border border-bordure bg-surface">
+    <details open={ouverte} className="group rounded-[14px] bg-surface">
       <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3.5 font-semibold">
         {titre}
         <span className="text-texte-3 transition group-open:rotate-90">›</span>
