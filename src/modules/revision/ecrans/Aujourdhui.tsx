@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { CircleCheck, CircleDot, RotateCcw } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { aujourdhui, depuisJour } from '../../../core/dates'
 import { Aide } from '../../../core/ui/Aide'
@@ -103,7 +104,7 @@ export function Aujourdhui() {
           ))}
           {faitsAujourdhui.map((r) => (
             <li key={r.id} className="flex items-center justify-between py-2 text-texte-3">
-              <span>{r.resultat === 'su' ? '✅' : r.resultat === 'hesitant' ? '🟠' : '🔁'} {nom(r.notionId)} <span className="text-xs">{libelleRappel(r)}</span></span>
+              <span className="flex items-center gap-2">{r.resultat === 'su' ? <CircleCheck className="h-4 w-4 text-bon" strokeWidth={2} /> : r.resultat === 'hesitant' ? <CircleDot className="h-4 w-4 text-attention" strokeWidth={2} /> : <RotateCcw className="h-4 w-4 text-texte-3" strokeWidth={2} />} {nom(r.notionId)} <span className="text-xs">{libelleRappel(r)}</span></span>
               <button type="button" onClick={() => annulerRappel(r)} className="text-xs underline">annuler</button>
             </li>
           ))}

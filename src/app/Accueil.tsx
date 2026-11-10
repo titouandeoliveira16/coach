@@ -9,6 +9,9 @@ import { useReglage } from '../core/reglages'
 import type { ReglageCompte } from '../core/inscription'
 import { useParametres } from '../modules/revision/donnees'
 import { joursAvant } from '../modules/revision/programme'
+import { useBudget } from '../modules/budget/donnees'
+import { resteAVivre } from '../modules/budget/calculs'
+import { formatEuros } from '../core/format'
 
 const SOUS_TITRES: Record<string, string> = { revision: 'Tes rappels et ta notion du jour', budget: 'Ton mois et ton reste à vivre' }
 
@@ -24,6 +27,9 @@ export function Accueil() {
   // Compte créé avec un code : l'Entraînement seulement (Budget et CAPEPS sont propres à Titouan)
   const [compte] = useReglage<ReglageCompte>('compte', {})
   const [paramRevision] = useParametres()
+  const budget = useBudget()
+  // Budget : le reste à vivre du jour (une fois les comptes de départ saisis)
+  const resumeBudget = budget?.comptes.length ? `Reste à vivre : ${formatEuros(resteAVivre(budget, jour).reste)}` : undefined
   const resume = useLiveQuery(async () => {
     const rappels = (await db.revisions.toArray()).filter((r) => !r.fait && !r.annule && r.prevu <= jour).length
     const seance = (await db.prevues.where('date').equals(jour).toArray()).find((p) => p.sport === 'velo' && p.statut !== 'non-faite')
@@ -48,7 +54,7 @@ export function Accueil() {
             </span>
             <span className="min-w-0 flex-1">
               <span className="block text-lg font-bold">{nom}</span>
-              <span className="block text-sm leading-snug text-texte-2">{id === 'entrainement' ? resume?.seance : id === 'revision' && resume ? resumeRevision(joursAvant(jour, paramRevision), resume.rappels) : SOUS_TITRES[id] ?? ''}</span>
+              <span className="block text-sm leading-snug text-texte-2">{id === 'entrainement' ? resume?.seance : id === 'revision' && resume ? resumeRevision(joursAvant(jour, paramRevision), resume.rappels) : id === 'budget' && resumeBudget ? resumeBudget : SOUS_TITRES[id] ?? ''}</span>
             </span>
             <ChevronRight className="h-5 w-5 shrink-0 text-texte-3" strokeWidth={1.8} />
           </Link>

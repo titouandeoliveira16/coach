@@ -1,9 +1,14 @@
 import { Aide } from '../../../core/ui/Aide'
+import { ArrowDown, ArrowUp, CircleCheck } from 'lucide-react'
 import { bilanControle, type Controle } from '../../../metrics/controle'
 import { AIDES } from '../aides'
 import type { Seance } from '../types'
 
-const SYMBOLE = { ok: '✅', bas: '⬇️', haut: '⬆️' } as const
+const SYMBOLE = {
+  ok: <CircleCheck className="inline h-4 w-4 align-[-3px] text-bon" strokeWidth={2} />,
+  bas: <ArrowDown className="inline h-4 w-4 align-[-3px] text-attention" strokeWidth={2} />,
+  haut: <ArrowUp className="inline h-4 w-4 align-[-3px] text-attention" strokeWidth={2} />,
+}
 
 /** Chaque bloc de la séance contre sa plage, avec sa FC (le ressenti se note une fois pour toute la séance). */
 export function ControleSeance({ s, famille }: { s: Seance & { controle: Controle }; famille: string }) {

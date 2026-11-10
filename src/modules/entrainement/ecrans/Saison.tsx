@@ -64,9 +64,8 @@ function CourbeKj({ semaines, niveaux, tests }: { semaines: SemaineSaison[]; niv
           </g>
         ))}
         {semaines.map((s, i) => (
-          <rect key={s.lundi} x={x(i) - larg / 2} y={Hh} width={larg} height={H - B - Hh} fill={COULEURS[s.phase]} opacity="0.24" />
+          <rect key={s.lundi} x={x(i) - larg / 2} y={Hh} width={larg} height={H - B - Hh} fill={COULEURS[s.phase]} opacity="0.3" />
         ))}
-        <polygon points={`${x(0)},${y(0)} ${points} ${x(semaines.length - 1)},${y(0)}`} fill="var(--color-accent)" opacity="0.16" />
         <polyline points={points} fill="none" stroke="var(--color-accent)" strokeWidth="2" strokeLinejoin="round" />
         <line x1={x(0)} x2={x(0)} y1={Hh} y2={H - B} stroke="var(--color-texte-2)" strokeDasharray="3 3" />
         <text x={x(0) + 3} y={Hh - 3} fontSize="9" fill="var(--color-texte-3)">aujourd’hui</text>
@@ -136,9 +135,9 @@ export function Saison() {
         ) : (
           <>
             <p className="mt-1 flex items-center gap-2 text-xl font-bold"><span className="h-3 w-3 shrink-0 rounded-full" style={{ background: COULEURS[actuelle.phase] }} />{NOMS_PHASES[actuelle.phase]}</p>
-            <p className="text-texte-2">
+            <p className="text-[15px] text-texte-2">
               Semaine {actuelle.numero}{actuelle.total ? ` sur ${actuelle.total}` : ''}
-              {prochaine && ` · ${NOMS_PHASES[prochaine.type]} dans ${Math.ceil(ecartJours(aujourdhui(), prochaine.debut) / 7)} sem.`}
+              {prochaine && ` · puis ${NOMS_PHASES[prochaine.type].replace(/^Dominante /, '')} dans ${Math.ceil(ecartJours(aujourdhui(), prochaine.debut) / 7)} sem.`}
               <Aide titre="Les phases" texte={AIDES.phases} />
             </p>
           </>

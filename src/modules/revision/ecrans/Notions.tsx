@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { BookOpen, Circle, CircleCheck } from 'lucide-react'
 import { aujourdhui, depuisJour } from '../../../core/dates'
 import { Bouton } from '../../../core/ui/Bouton'
 import { Carte } from '../../../core/ui/Carte'
@@ -36,7 +37,7 @@ export function Notions() {
             <Carte key={t} titre={NOMS_THEMES[t]}>
               {d.notions.filter((n) => n.epreuve === g.epreuve && n.theme === t).map((n) => (
                 <button key={n.id} type="button" onClick={() => setOuverte(n.id)} className="flex w-full items-center gap-3 py-1.5 text-left active:opacity-60">
-                  <span className="w-5 text-center">{n.statut === 'finie' ? '✅' : n.statut === 'en-cours' ? '📖' : '○'}</span>
+                  <span className="flex w-5 justify-center">{n.statut === 'finie' ? <CircleCheck className="h-[18px] w-[18px] text-bon" strokeWidth={2} /> : n.statut === 'en-cours' ? <BookOpen className="h-[18px] w-[18px] text-accent" strokeWidth={2} /> : <Circle className="h-[18px] w-[18px] text-texte-3" strokeWidth={1.8} />}</span>
                   <span className={`min-w-0 flex-1 truncate ${n.statut === 'a-faire' ? 'text-texte-2' : ''}`}>{n.nom}</span>
                   {n.j0 && <span className="text-xs text-texte-3">{jjmm(n.j0)}</span>}
                   {n.niveau && n.statut === 'finie' && <span className="h-2.5 w-2.5 rounded-full" style={{ background: COULEURS_NIVEAU[n.niveau] }} />}

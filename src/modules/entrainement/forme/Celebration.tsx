@@ -1,4 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
+import { CircleCheck } from 'lucide-react'
 import { Carte } from '../../../core/ui/Carte'
 import { celebrationDuJour, marquerVue, victoiresRecentes } from './victoires'
 
@@ -15,7 +16,7 @@ export function BravoSeance() {
           style={{ left: `${8 + i * 5}%`, background: COULEURS[i % 4], animationDelay: `${(i % 6) * 0.08}s` }} />
       ))}
       <div className="apparition w-full max-w-sm rounded-2xl border border-accent bg-surface p-6 text-center" onClick={(e) => e.stopPropagation()}>
-        <div className="text-5xl">✅</div>
+        <CircleCheck className="mx-auto h-14 w-14 text-bon" strokeWidth={1.8} />
         <p className="mt-2 text-2xl font-extrabold">Séance tenue !</p>
         <p className="mt-1 text-sm text-texte-2">{v.texte}</p>
         {v.palier !== undefined && (
