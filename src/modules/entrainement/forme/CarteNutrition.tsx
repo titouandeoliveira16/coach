@@ -86,8 +86,11 @@ export function CarteNutrition({ ouverte: ouverteParent, onBasculer }: {
       </button>
       {!ouverte && !hierAFaire && (
         <button type="button" onClick={() => setOuverte(true)} className="grid min-h-10 grid-cols-3 gap-1.5 text-center text-[13px] text-texte-2">
-          {([['G', b.glucides, m?.glucides], ['P', b.proteines, m?.proteines], ['L', b.lipides, m?.lipides]] as const).map(([n, besoin, v]) => (
-            <span key={n} className="flex items-center justify-center rounded-xl bg-surface-2">{n} {v !== undefined ? `${formatNombre(v)} / ` : ''}{formatNombre(besoin)} g</span>
+          {([['Glucides', b.glucides, m?.glucides], ['Protéines', b.proteines, m?.proteines], ['Lipides', b.lipides, m?.lipides]] as const).map(([n, besoin, v]) => (
+            <span key={n} className="flex flex-col items-center justify-center rounded-xl bg-surface-2 py-1.5 leading-tight">
+              <span className="text-[11px] text-texte-3">{n}</span>
+              <span className="font-semibold text-texte">{v !== undefined ? `${formatNombre(v)} / ` : ''}{formatNombre(besoin)} g</span>
+            </span>
           ))}
         </button>
       )}
