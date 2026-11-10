@@ -1,4 +1,5 @@
 import { db } from '../../../core/db'
+import { lundiDe } from '../seances/donnees'
 import { aujourdhui, decalerJour } from '../../../core/dates'
 import type { Profil } from '../../../core/profil'
 import { enregistrer } from '../../../core/stockage'
@@ -225,6 +226,12 @@ export async function importerIntervals(surProgression?: (n: number) => void) {
   await nettoyerPeseesEffacees()
   await ecrireEtat({ ...(await lireEtat()), relie: true, depuis: decalerJour(aujourdhui(), -MARGE_JOURS), dernierImport: new Date().toISOString() })
   await completerCourbe().catch(() => {})
+  // Nouvelle séance remontée : la fin de la semaine se recalcule (ce qui est fait reste, le reste suit ton budget)
+  if (n > 0) {
+    const { genererSemaineVelo, lireMeta } = await import('../plan/programme')
+    const lundi = lundiDe(aujourdhui())
+    if (await lireMeta(lundi)) await genererSemaineVelo(lundi).catch(() => {})
+  }
   return { seances: n, mesures, viaStrava }
 }
 
