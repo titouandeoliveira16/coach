@@ -1747,3 +1747,11 @@ export function ciblesCols(o: { cols: Col[]; distanceKm?: number; dureeMin: numb
     return { index: i, col: c, watts: Math.round(w / 5) * 5, minutes: Math.round(dureeCol(c, w, poids)), kjKgAvant: Math.round(kjKg), dernier: rang === tries.length - 1 }
   })
 }
+
+/**
+ * Test CP trop proche d'une course (relecture du 10/11/2026, repères d'entraîneur : aucune étude ne mesure un test
+ * 48 h après une course) : pas dans les 2 jours avant, ni dans les 3 jours après (5 après une course de plus de 3 h).
+ */
+export function testProcheCourse(d: string, courses: { date: string; dureeMin: number }[]) {
+  return courses.some((c) => (d >= decaler(c.date, -2) && d < c.date) || (d >= c.date && d <= decaler(c.date, c.dureeMin > 180 ? 5 : 3)))
+}
