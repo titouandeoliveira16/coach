@@ -20,12 +20,20 @@ export interface ProfilSportif extends ReponsesNiveau {
   materiel: string[]
   pointsSensibles?: string
   muscu?: string
-  /** Module nutrition (besoins du jour, repas du soir, bilan du dimanche, repères des séances) : absent = activé */
+  /** Repas du jour (besoins du jour, repas du soir, bilan du dimanche) : absent = activé */
   nutrition?: boolean
+  /** Nutrition à l'effort (glucides par heure sur les sorties longues et les courses) : absent = activée */
+  nutritionEffort?: boolean
 }
 const DEFAUT: ProfilSportif = { sports: [], materiel: [] }
 
-/** Module nutrition activé ? (Réglages → Mon profil sportif → Module nutrition) */
+/** Nutrition à l'effort activée ? (repères de glucides des séances) */
+export function useNutritionEffort() {
+  const [ps] = useReglage<ProfilSportif>('profil-sportif', DEFAUT)
+  return ps.nutritionEffort !== false
+}
+
+/** Module repas du jour activé ? (Réglages → Mon profil sportif → Repas du jour) */
 export function useNutritionActive() {
   const [ps] = useReglage<ProfilSportif>('profil-sportif', DEFAUT)
   return ps.nutrition !== false
@@ -157,9 +165,13 @@ export function SectionProfilSportif() {
           className="w-full rounded-lg border border-bordure bg-surface-2 px-3 py-2 text-sm" />
         {/genou/i.test(ps.pointsSensibles ?? '') && <p className="mt-1.5 text-xs text-texte-3">{AIDES.profilGenoux}</p>}
       </Ligne>
-      <Ligne {...props('nutrition')} libelle="Module nutrition" valeur={ps.nutrition === false ? 'Désactivé' : 'Activé'}>
+      <Ligne {...props('nutrition')} libelle="Repas du jour" valeur={ps.nutrition === false ? 'Désactivé' : 'Activé'}>
         {choixUnique(['Activé', 'Désactivé'], ps.nutrition === false ? 'Désactivé' : 'Activé', (v) => modifierPs({ nutrition: v === 'Activé' }))}
-        <p className="mt-1.5 text-xs text-texte-3">Activé : tes besoins du jour, le repas du soir, le bilan nutrition du dimanche et les repères de nutrition des séances.</p>
+        <p className="mt-1.5 text-xs text-texte-3">Activé : tes besoins du jour selon ta séance, ce que tu as mangé et l'écart, et le bilan nutrition du dimanche.</p>
+      </Ligne>
+      <Ligne {...props('nutritionEffort')} libelle="Nutrition à l'effort" valeur={ps.nutritionEffort === false ? 'Désactivée' : 'Activée'}>
+        {choixUnique(['Activée', 'Désactivée'], ps.nutritionEffort === false ? 'Désactivée' : 'Activée', (v) => modifierPs({ nutritionEffort: v === 'Activée' }))}
+        <p className="mt-1.5 text-xs text-texte-3">Activée : les glucides par heure à prendre sur tes sorties longues et tes courses. Plus tard : un plan pour habituer ton estomac.</p>
       </Ligne>
       <Ligne {...props('muscu')} libelle="Musculation" valeur={ps.muscu ?? ''}>
         {choixUnique(MUSCU, ps.muscu, (muscu) => modifierPs({ muscu }))}

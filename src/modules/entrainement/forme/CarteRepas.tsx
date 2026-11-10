@@ -93,7 +93,7 @@ export function Formulaire({ jour, titre, existante, onFini }: { jour: string; t
       <button type="button" className="mt-1 w-full py-2 text-sm text-texte-3" onClick={async () => {
         await enregistrerRepas({ date: jour, nonRenseigne: true })
         onFini()
-      }}>Pas renseigné {jour === aujourdhui() ? "aujourd'hui" : jour === decalerJour(aujourdhui(), -1) ? 'hier' : 'avant-hier'}</button>
+      }}>Pas renseigné {jour === aujourdhui() ? "aujourd'hui" : jour === decalerJour(aujourdhui(), -1) ? 'hier' : jour === decalerJour(aujourdhui(), -2) ? 'avant-hier' : 'ce jour-là'}</button>
     </Carte>
   )
 }

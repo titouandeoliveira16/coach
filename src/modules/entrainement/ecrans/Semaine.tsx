@@ -14,7 +14,7 @@ import { Puces } from '../../../core/ui/Puces'
 import { AIDES } from '../aides'
 import { CarteBilan, lundiDuBilan } from '../plan/CarteBilan'
 import { CarteBilanNutrition } from '../forme/CarteBilanNutrition'
-import { useNutritionActive } from '../reglages/ProfilSportif'
+import { useNutritionEffort } from '../reglages/ProfilSportif'
 import { BoutonsEnvoi } from '../plan/BoutonsEnvoi'
 import { Deroule } from '../plan/Deroule'
 import { FicheSeance } from '../plan/FicheSeance'
@@ -239,7 +239,7 @@ function DetailSeance({ p, jours, prevues, onFermer, onMessage }: {
 }) {
   const navigate = useNavigate()
   const [mode, setMode] = useState<'actions' | 'annuler' | 'confirmer' | 'modifier' | 'jour'>('actions')
-  const nutrition = useNutritionActive()
+  const nutrition = useNutritionEffort()
   const [raison, setRaison] = useState<Raison>()
   const [supprimerOk, setSupprimerOk] = useState(false)
   const possibles = useLiveQuery(() => (mode === 'annuler' ? joursPourDeplacer(p) : Promise.resolve([])), [mode, p.id, p.date])

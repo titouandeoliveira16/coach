@@ -13,7 +13,7 @@ import { Formulaire } from './CarteRepas'
 import { jourARemplir } from './repas'
 
 /** « du jour », « d'hier », « d'avant-hier » */
-const nomJour = (d: string, jour = aujourdhui()) => (d === jour ? 'du jour' : d === decalerJour(jour, -1) ? "d'hier" : "d'avant-hier")
+const nomJour = (d: string, jour = aujourdhui()) => (d === jour ? 'du jour' : d === decalerJour(jour, -1) ? "d'hier" : d === decalerJour(jour, -2) ? "d'avant-hier" : `du ${jourCourt(d)}`)
 
 /**
  * Nutrition du jour, en une carte : besoin estimé, ce que tu as mangé (noté le soir) et l'écart, ligne par ligne.
@@ -36,6 +36,13 @@ export function CarteNutrition({ ouverte: ouverteParent, onBasculer }: {
   const cible = useLiveQuery(() => jourARemplir())
   const nutrition = useLiveQuery(lireReglagesNutrition)
   const [saisie, setSaisie] = useState<string>()
+  const [autreJour, setAutreJour] = useState(false)
+  // Assiette du jour choisi (n'importe lequel des 7 derniers jours)
+  const assietteChoisie = useLiveQuery(async () => (saisie ? (await db.repas.get(saisie)) ?? null : null), [saisie])
+  const sept = useLiveQuery(async () => {
+    const jours = Array.from({ length: 5 }, (_, i) => decalerJour(jour, -(i + 3)))
+    return Promise.all(jours.map(async (d) => [d, (await db.repas.get(d)) ?? null] as const))
+  }, [jour])
   const [detail, setDetail] = useState(false)
   const [ouverteLocale, setOuverteLocale] = useState(false)
   const ouverte = ouverteParent ?? ouverteLocale
@@ -47,8 +54,9 @@ export function CarteNutrition({ ouverte: ouverteParent, onBasculer }: {
   if (saisie) {
     const j = saisie
     return (
+      assietteChoisie === undefined ? null :
       <Formulaire key={j} jour={j} titre={`🍽️ Ton assiette ${nomJour(j, jour)}`}
-        existante={(j === jour ? mange : j === hier ? assietteHier : assietteAvantHier) ?? undefined} onFini={() => setSaisie(undefined)} />
+        existante={assietteChoisie ?? undefined} onFini={() => setSaisie(undefined)} />
     )
   }
 
@@ -156,6 +164,19 @@ export function CarteNutrition({ ouverte: ouverteParent, onBasculer }: {
           </button>
         ))}
       </div>
+      {/* Rattraper un jour plus ancien (jusqu'à 7 jours) : un jour sans rien n'est pas compté */}
+      <button type="button" onClick={() => setAutreJour(!autreJour)} className="mt-2 text-sm font-semibold text-accent">{autreJour ? '× Fermer' : '+ Noter un autre jour'}</button>
+      {autreJour && sept && (
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          {sept.map(([d, a]) => (
+            <button key={d} type="button" onClick={() => { setSaisie(d); setAutreJour(false) }}
+              className={`rounded-full border px-3 py-1.5 text-[13px] ${a && !a.nonRenseigne ? 'border-bordure text-texte-3' : 'border-accent text-accent'}`}>
+              {jourCourt(d)}{a && !a.nonRenseigne ? ' ✓' : ''}
+            </button>
+          ))}
+          <p className="w-full text-xs text-texte-3">Les jours sans rien noté ne comptent pas dans ton maintien mesuré.</p>
+        </div>
+      )}
 
       {detail && (
         <div className="mt-3 space-y-1 text-sm text-texte-2">

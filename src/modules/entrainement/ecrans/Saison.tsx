@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { aujourdhui, depuisJour, ecartJours } from '../../../core/dates'
+import { useState } from 'react'
+import { aujourdhui, decalerJour, depuisJour, ecartJours } from '../../../core/dates'
 import { formatNombre } from '../../../core/format'
 import { Aide } from '../../../core/ui/Aide'
 import { Carte } from '../../../core/ui/Carte'
@@ -35,6 +36,65 @@ function LigneSemaine({ x, actuelle }: { x: SemaineSaison; actuelle?: boolean })
   )
 }
 
+/**
+ * Courbe du budget kJ prévu, semaine par semaine, jusqu'à la course (une seule série : le titre la nomme). Phases en
+ * bandes de couleur, tests 🧪 et courses (pastille A / B / C) en repères. Toucher une semaine affiche son détail.
+ */
+function CourbeKj({ semaines, niveaux, tests }: { semaines: SemaineSaison[]; niveaux: Map<string, string>; tests: string[] }) {
+  const [choisie, setChoisie] = useState<number>()
+  if (semaines.length < 2) return null
+  const W = 340, H = 170, G = 30, D = 6, Hh = 14, B = 24
+  const max = Math.max(...semaines.map((x) => x.budget)) * 1.1
+  const x = (i: number) => G + (i * (W - G - D)) / (semaines.length - 1)
+  const y = (v: number) => H - B - (v / max) * (H - B - Hh)
+  const pas = max > 4000 ? 2000 : 1000
+  const graduations = Array.from({ length: Math.floor(max / pas) }, (_, i) => (i + 1) * pas)
+  const points = semaines.map((s, i) => `${x(i).toFixed(1)},${y(s.budget).toFixed(1)}`).join(' ')
+  const larg = (W - G - D) / (semaines.length - 1)
+  const dansSemaine = (d: string, l: string) => d >= l && d <= decalerJour(l, 6)
+  const c = choisie !== undefined ? semaines[choisie] : undefined
+  return (
+    <div>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Budget kJ prévu par semaine jusqu'à ta course">
+        {graduations.map((v) => (
+          <g key={v}>
+            <line x1={G} x2={W - D} y1={y(v)} y2={y(v)} stroke="var(--color-bordure)" strokeWidth="1" />
+            <text x={G - 4} y={y(v) + 3} textAnchor="end" fontSize="9" fill="var(--color-texte-3)">{v / 1000}k</text>
+          </g>
+        ))}
+        {semaines.map((s, i) => (
+          <rect key={s.lundi} x={x(i) - larg / 2} y={Hh} width={larg} height={H - B - Hh} fill={COULEURS[s.phase]} opacity="0.14" />
+        ))}
+        <polygon points={`${x(0)},${y(0)} ${points} ${x(semaines.length - 1)},${y(0)}`} fill="var(--color-accent)" opacity="0.16" />
+        <polyline points={points} fill="none" stroke="var(--color-accent)" strokeWidth="2" strokeLinejoin="round" />
+        <line x1={x(0)} x2={x(0)} y1={Hh} y2={H - B} stroke="var(--color-texte-2)" strokeDasharray="3 3" />
+        <text x={x(0) + 3} y={Hh - 3} fontSize="9" fill="var(--color-texte-3)">aujourd’hui</text>
+        {semaines.map((s, i) => {
+          const course = [...niveaux.keys()].find((d) => dansSemaine(d, s.lundi))
+          const test = tests.find((d) => dansSemaine(d, s.lundi))
+          return (
+            <g key={s.lundi}>
+              {course && (
+                <g>
+                  <rect x={x(i) - 7} y={H - B + 4} width="14" height="14" rx="3" fill={niveaux.get(course) === 'A' ? 'var(--color-accent)' : niveaux.get(course) === 'B' ? '#facc15' : '#60a5fa'} />
+                  <text x={x(i)} y={H - B + 14.5} textAnchor="middle" fontSize="10" fontWeight="800" fill="var(--color-fond)">{niveaux.get(course)}</text>
+                </g>
+              )}
+              {!course && test && <text x={x(i)} y={H - B + 15} textAnchor="middle" fontSize="10">🧪</text>}
+              {choisie === i && <circle cx={x(i)} cy={y(s.budget)} r="4" fill="var(--color-accent)" stroke="var(--color-surface)" strokeWidth="2" />}
+              <rect x={x(i) - larg / 2} y={0} width={larg} height={H} fill="transparent" onClick={() => setChoisie(choisie === i ? undefined : i)} />
+            </g>
+          )
+        })}
+      </svg>
+      <p className="min-h-5 text-xs text-texte-2">
+        {c ? <>Sem. du {jm(c.lundi)} · {NOMS_PHASES[c.phase]} · <b className="text-texte">≈ {c.budget.toLocaleString('fr-FR')} kJ</b>{c.competition ? ` · 🏁 ${c.competition}` : ''}{c.type === 'allegee' ? ' · allégée' : ''}</> : 'Touche une semaine pour voir son budget.'}
+      </p>
+      <p className="text-xs text-texte-3">Les creux : semaines allégées (1 sur 4), course B, affûtage. La courbe suit tes jours de vélo et tes durées : change-les dans Réglages, elle bouge.</p>
+    </div>
+  )
+}
+
 /** Saison : où j'en suis (frise avec courses et tests), les 3 prochaines semaines, puis les phases repliées (validé le 7/11/2026). */
 export function Saison() {
   const s = useLiveQuery(saison)
@@ -51,6 +111,9 @@ export function Saison() {
   const courses = prog.competitions.filter((c) => dansFrise(c.date) && c.date >= aujourdhui())
   const niveaux = niveauxCourses(prog.competitions, prog.phases)
   const tests = prog.testsCp.filter((d) => dansFrise(d) && d >= aujourdhui())
+  // La courbe va jusqu'à la semaine après la dernière course A
+  const courseA = [...niveaux].filter(([d, n]) => n === 'A' && d >= aujourdhui()).map(([d]) => decalerJour(d, 7)).sort().pop()
+  const niveauxFuturs = new Map([...niveaux].filter(([d]) => d >= aujourdhui()))
 
   // Semaines regroupées par phase
   const groupes: { phase: TypePhase; semaines: SemaineSaison[] }[] = []
@@ -101,6 +164,10 @@ export function Saison() {
             {tests.length > 0 && `🧪 tests CP ${tests.slice(0, 3).map(jm).join(', ')}`}
           </p>
         )}
+      </Carte>
+
+      <Carte titre="Ta charge prévue (kJ par semaine)">
+        <CourbeKj semaines={s.semaines.filter((x) => x.lundi <= (courseA ?? s.fin))} niveaux={niveauxFuturs} tests={tests} />
       </Carte>
 
       <Carte titre="Cette semaine et les 2 suivantes">

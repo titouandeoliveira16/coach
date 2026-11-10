@@ -608,7 +608,8 @@ export async function saison() {
   const lundi = lundiDe(aujourdhui()) < phases[0].debut ? phases[0].debut : lundiDe(aujourdhui())
   const { w: z2W } = await z2Actuel()
   const kjIntensite = construireIntervalles(formatDe('30-15')!, 0, r.cpW, 0).kj
-  const nZ2 = prog.semaineType.filter((x) => x === 'velo-z2').length
+  // Un 2e jour « dur » compte comme une Z2 dans le plafond (la courbe suit tes jours de vélo)
+  const nZ2 = prog.semaineType.filter((x) => x === 'velo-z2').length + Math.max(0, prog.semaineType.filter((x) => x === 'velo-dur').length - 1)
   const capDe = (l: string) => {
     const { phase, semaine } = phaseDe(l, prog.phases)
     return plafondsReprise(phase.type === 'reprise' ? semaine : undefined, prog.maxSemaineMin, prog.maxLongMin)

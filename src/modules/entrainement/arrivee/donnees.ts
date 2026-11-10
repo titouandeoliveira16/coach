@@ -29,6 +29,8 @@ export interface ReponsesArrivee {
   muscu?: string
   /** Suivi de la nutrition (besoins du jour, repas du soir), en option comme la muscu */
   nutrition: boolean
+  /** Nutrition à l'effort (glucides par heure sur les sorties longues et les courses) ; absent = oui */
+  nutritionEffort?: boolean
   semaineType: Role[]
   maxSemaineMin: number
   minLongMin: number
@@ -79,7 +81,7 @@ export function preparerArrivee(r: ReponsesArrivee, jour: string, testsFaits: Re
     sports: [r.discipline === 'route' ? 'Vélo route' : 'VTT', ...(r.muscu && !/^Pas/.test(r.muscu) ? ['Musculation'] : [])],
     materiel: ['Capteur de puissance'],
     anciennete: r.anciennete, heuresRecentes: r.heuresRecentes, intervalles: r.intervalles,
-    heuresSemaine: r.heuresSemaine, pointsSensibles: r.pointsSensibles || undefined, muscu: r.muscu, nutrition: r.nutrition,
+    heuresSemaine: r.heuresSemaine, pointsSensibles: r.pointsSensibles || undefined, muscu: r.muscu, nutrition: r.nutrition, nutritionEffort: r.nutritionEffort !== false,
   }
   const principale: Competition = {
     date: r.course.date, nom: r.course.nom.trim() || 'Course principale', niveau: 'A', epreuve: epreuveDe(r.discipline, r.typeCourse),
@@ -135,7 +137,7 @@ export async function reponsesExistantes() {
     ...(prog?.discipline ? { discipline: prog.discipline } : {}),
     ...(sportif ? {
       anciennete: sportif.anciennete, heuresRecentes: sportif.heuresRecentes, intervalles: sportif.intervalles, heuresSemaine: sportif.heuresSemaine,
-      pointsSensibles: sportif.pointsSensibles, muscu: sportif.muscu, nutrition: sportif.nutrition !== false,
+      pointsSensibles: sportif.pointsSensibles, muscu: sportif.muscu, nutrition: sportif.nutrition !== false, nutritionEffort: sportif.nutritionEffort !== false,
     } : {}),
     ...(prog ? {
       semaineType: prog.semaineType.map((x) => (x === 'course' ? 'libre' : x)),

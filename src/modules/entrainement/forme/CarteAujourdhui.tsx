@@ -16,7 +16,7 @@ import { BoutonsEnvoi } from '../plan/BoutonsEnvoi'
 import { Deroule, Profil } from '../plan/Deroule'
 import { NutritionSeance } from '../plan/NutritionSeance'
 import { useReglagesEntrainement } from '../reglagesEntrainement'
-import { useNutritionActive } from '../reglages/ProfilSportif'
+import { useNutritionEffort } from '../reglages/ProfilSportif'
 import { iconeSport } from '../sports'
 import { basculerSansMontre, QUESTIONS, scoreRessenti } from './donnees'
 import { SeancesFaites } from './SeancesFaites'
@@ -78,7 +78,8 @@ export function CarteAujourdhui({ onModifierMatin, autreOuvert = false }: {
   // Jour de repos : on montre la séance de demain
   const demain = useLiveQuery(async () => (await db.prevues.where('date').equals(decalerJour(jour, 1)).toArray()).filter((p) => p.statut === 'prevue'), [jour])
   const [r] = useReglagesEntrainement()
-  const nutrition = useNutritionActive()
+  // Repères de glucides de la séance : nutrition à l'effort
+  const nutrition = useNutritionEffort()
   const cpW = r.cpW ?? CP_DEFAUT
   const a = useLiveQuery(() => analyser(jour), [jour])
   const prevues = useLiveQuery(() => db.prevues.where('date').equals(jour).toArray(), [jour])
