@@ -59,7 +59,41 @@ body {
 
 /* Marges de sécurité (encoche, barre d'accueil de l'iPhone) */
 .pt-sur {
-  padding-top: max(env(safe-area-inset-top), 12px);
+  /* Un peu plus bas que la barre d'état : sur iPhone, le haut de l'écran est flouté */
+  padding-top: calc(max(env(safe-area-inset-top), 12px) + 10px);
+}
+
+/* Lueur du haut de l'écran (couleur dans --lueur, posée par la coquille) : la même dans l'en-tête et derrière la page */
+.lueur,
+.entete-lueur {
+  background: linear-gradient(var(--lueur, transparent), transparent 380px) top / 100% 380px no-repeat, var(--color-fond);
+}
+.lueur {
+  background: linear-gradient(var(--lueur, transparent), transparent);
+}
+
+/* Passage d'un onglet à l'autre : fondu enchaîné avec un léger glissement (View Transitions, iPhone iOS 18+) */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.28s;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+::view-transition-old(root) { animation-name: sortie-avant; }
+::view-transition-new(root) { animation-name: entree-avant; }
+:root[data-sens='arriere']::view-transition-old(root) { animation-name: sortie-arriere; }
+:root[data-sens='arriere']::view-transition-new(root) { animation-name: entree-arriere; }
+@keyframes sortie-avant { to { opacity: 0; transform: translateX(-28px); } }
+@keyframes entree-avant { from { opacity: 0; transform: translateX(28px); } }
+@keyframes sortie-arriere { to { opacity: 0; transform: translateX(28px); } }
+@keyframes entree-arriere { from { opacity: 0; transform: translateX(-28px); } }
+/* L'en-tête, les onglets (leur bulle glisse seule) et la barre du bas ne bougent pas */
+.vt-entete { view-transition-name: entete; }
+.vt-onglets { view-transition-name: onglets; }
+.vt-barre { view-transition-name: barre; }
+::view-transition-old(entete), ::view-transition-old(onglets), ::view-transition-old(barre) { display: none; }
+::view-transition-new(entete), ::view-transition-new(onglets), ::view-transition-new(barre) { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
 }
 .pb-sur {
   padding-bottom: max(env(safe-area-inset-bottom), 8px);
