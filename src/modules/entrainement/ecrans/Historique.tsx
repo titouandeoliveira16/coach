@@ -1,3 +1,4 @@
+import { IconeSport } from '../IconeSport'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -8,7 +9,7 @@ import { Carte } from '../../../core/ui/Carte'
 import { Puces } from '../../../core/ui/Puces'
 import { allureSecKm } from '../../../metrics/course'
 import { lundiDe } from '../seances/donnees'
-import { iconeSport, NOMS_SPORTS } from '../sports'
+import { NOMS_SPORTS } from '../sports'
 import type { Seance } from '../types'
 
 const FILTRES = ['Tous', 'Vélo', 'Course', 'Autres'] as const
@@ -79,7 +80,7 @@ function CarteSeance({ s }: { s: Seance }) {
   ].filter(Boolean)
   return (
     <Link to={`/entrainement/seance/${s.id}`} className="flex items-center gap-3 rounded-2xl border border-bordure bg-surface p-3 active:bg-surface-2">
-      <span className="text-2xl">{iconeSport(s.sport, s.homeTrainer)}</span>
+      <IconeSport sport={s.sport} homeTrainer={s.homeTrainer} className="h-6 w-6 text-texte-2" />
       <span className="min-w-0 flex-1">
         <span className="block truncate font-semibold">
           {s.titre ?? s.type ?? NOMS_SPORTS[s.sport]}

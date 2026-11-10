@@ -3,7 +3,7 @@ import { depuisJour } from '../../../core/dates'
 import { Bouton } from '../../../core/ui/Bouton'
 import { ChampNombre } from '../../../core/ui/ChampNombre'
 import { Puces } from '../../../core/ui/Puces'
-import { iconeSport, NOMS_SPORTS } from '../sports'
+import { NOMS_SPORTS } from '../sports'
 import { TYPES_SEANCE, type Intensite, type SeancePrevue, type Sport } from '../types'
 import { enregistrerPrevue } from './donnees'
 
@@ -23,7 +23,7 @@ export function FormulairePrevue({ initiale, jours, onTermine }: { initiale: Sea
 
   return (
     <div className="space-y-3">
-      <Puces options={SPORTS_PREVUS} valeur={p.sport} effacable={false} libelle={(s) => `${iconeSport(s)} ${NOMS_SPORTS[s]}`} onChoisir={(s) => s && choisirSport(s)} />
+      <Puces options={SPORTS_PREVUS} valeur={p.sport} effacable={false} libelle={(s) => NOMS_SPORTS[s]} onChoisir={(s) => s && choisirSport(s)} />
       <select value={p.date} onChange={(e) => changer({ date: e.target.value })} className="w-full rounded-xl border border-bordure bg-surface-2 px-4 py-3 capitalize">
         {jours.map((d) => <option key={d} value={d}>{depuisJour(d).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric' })}</option>)}
       </select>

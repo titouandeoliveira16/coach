@@ -4,10 +4,10 @@ const JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dim
 /** Ordre des flèches et couleur de chaque choix (dur orange, long bleu, Z2 vert, renfo violet). */
 const ROLES: { role: Role; nom: string; couleur: string }[] = [
   { role: 'libre', nom: 'repos', couleur: 'text-texte-3' },
-  { role: 'velo-z2', nom: 'Z2', couleur: 'text-emerald-400' },
-  { role: 'velo-dur', nom: 'dur', couleur: 'text-accent' },
-  { role: 'velo-long', nom: 'long', couleur: 'text-sky-400' },
-  { role: 'renfo', nom: 'renfo', couleur: 'text-purple-400' },
+  { role: 'velo-z2', nom: 'endurance', couleur: 'text-z2' },
+  { role: 'velo-dur', nom: 'intensité', couleur: 'text-accent' },
+  { role: 'velo-long', nom: 'sortie longue', couleur: 'text-z3' },
+  { role: 'renfo', nom: 'renfo', couleur: 'text-sommeil' },
 ]
 const fleche = 'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-2 text-xl text-texte disabled:opacity-30'
 
@@ -20,7 +20,7 @@ export function Defileur<T>({ options, valeur, onChoisir, couleur, etiquette }: 
   return (
     <span className="flex items-center gap-2">
       <button type="button" className={fleche} aria-label={`${etiquette ?? 'Choix'} : précédent`} onClick={() => aller(-1)}>‹</button>
-      <span className={`min-w-24 text-center font-semibold ${couleur ?? ''}`}>{i < 0 ? '—' : options[i][0]}</span>
+      <span className={`min-w-28 text-center chiffre ${couleur ?? ''}`}>{i < 0 ? '—' : options[i][0]}</span>
       <button type="button" className={fleche} aria-label={`${etiquette ?? 'Choix'} : suivant`} onClick={() => aller(1)}>›</button>
     </span>
   )
@@ -42,7 +42,7 @@ export function EditeurSemaine({ semaine, onChanger, debutant }: { semaine: Role
         )
       })}
       <p className={`mt-2 text-sm font-semibold ${verif.ok ? 'text-emerald-400' : 'text-accent'}`}>{verif.message}</p>
-      <p className="mt-1 text-xs text-texte-3">dur = intensité · long = sortie longue · Z2 = endurance · repos = repos ou autre sport</p>
+      <p className="mt-1 text-xs text-texte-3">intensité = séance dure · endurance = Z2 · repos = repos ou autre sport</p>
     </div>
   )
 }

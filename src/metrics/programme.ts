@@ -1293,18 +1293,18 @@ export function verifierSemaineType(roles: Role[], debutant = false): { ok: bool
   const n = (r: Role) => roles.filter((x) => x === r).length
   const velo = roles.filter((x) => x.startsWith('velo')).length
   const durs = n('velo-dur')
-  if (!n('velo-long')) return { ok: false, message: 'Il manque ta sortie longue : mets « long » sur un jour (souvent le dimanche).' }
-  if (n('velo-long') > 1) return { ok: false, message: 'Une seule sortie longue par semaine : remets l’autre jour en Z2.' }
-  if (!durs) return { ok: false, message: 'Il manque ton jour dur (la séance d’intensité).' }
-  if (durs > 2) return { ok: false, message: '2 jours durs au plus : remets les autres en Z2.' }
+  if (!n('velo-long')) return { ok: false, message: 'Il manque ta sortie longue : mets « sortie longue » sur un jour (souvent le dimanche).' }
+  if (n('velo-long') > 1) return { ok: false, message: 'Une seule sortie longue par semaine : remets l’autre jour en endurance.' }
+  if (!durs) return { ok: false, message: 'Il manque ton jour d’intensité.' }
+  if (durs > 2) return { ok: false, message: '2 jours d’intensité au plus : remets les autres en endurance.' }
   if (velo < 3) return { ok: false, message: 'Il faut au moins 3 jours de vélo.' }
-  const resume = `✓ ${velo} jours de vélo · ${durs} séance${durs > 1 ? 's' : ''} dure${durs > 1 ? 's' : ''} · 1 sortie longue`
+  const resume = `✓ ${velo} jours de vélo · ${durs} séance${durs > 1 ? 's' : ''} d’intensité · 1 sortie longue`
   if (durs === 2) {
     const i = roles.indexOf('velo-dur'), j = roles.lastIndexOf('velo-dur')
-    if (j - i < 2 || i + 7 - j < 2) return { ok: true, message: `${resume}. Tes 2 jours durs se suivent : laisse au moins un jour entre eux, sinon l'appli déplace le 2e.` }
-    if (debutant || velo < 4) return { ok: true, message: `${resume}. ${debutant ? 'En débutant' : 'Avec 3 jours de vélo'}, une seule séance dure : le 2e jour dur sera une Z2.` }
+    if (j - i < 2 || i + 7 - j < 2) return { ok: true, message: `${resume}. Tes 2 jours d’intensité se suivent : laisse au moins un jour entre eux, sinon l'appli déplace le 2e.` }
+    if (debutant || velo < 4) return { ok: true, message: `${resume}. ${debutant ? 'En débutant' : 'Avec 3 jours de vélo'}, une seule séance d’intensité : le 2e jour sera en endurance.` }
   }
-  if (durs === 1 && velo >= 4 && !debutant) return { ok: true, message: `${resume}. La 2e séance dure se place toute seule sur une Z2 (ou choisis-la en mettant un 2e jour « dur »).` }
+  if (durs === 1 && velo >= 4 && !debutant) return { ok: true, message: `${resume}. La 2e séance d’intensité se place toute seule sur un jour d’endurance (ou choisis-la en mettant un 2e jour « intensité »).` }
   return { ok: true, message: resume }
 }
 
