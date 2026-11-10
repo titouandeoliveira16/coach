@@ -60,7 +60,7 @@ body {
 /* Marges de sécurité (encoche, barre d'accueil de l'iPhone) */
 .pt-sur {
   /* Un peu plus bas que la barre d'état : sur iPhone, le haut de l'écran est flouté */
-  padding-top: calc(max(env(safe-area-inset-top), 12px) + 10px);
+  padding-top: calc(max(env(safe-area-inset-top), 12px) + 26px);
 }
 
 /* Lueur du haut de l'écran (couleur dans --lueur, posée par la coquille) : la même dans l'en-tête et derrière la page */
@@ -73,19 +73,19 @@ body {
 }
 
 /* Passage d'un onglet à l'autre : fondu enchaîné avec un léger glissement (View Transitions, iPhone iOS 18+) */
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation-duration: 0.28s;
-  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+::view-transition-old(root) {
+  /* L'ancienne page s'efface vite pendant que la nouvelle arrive en douceur */
+  animation: 0.2s cubic-bezier(0.4, 0, 1, 1) both sortie-avant;
 }
-::view-transition-old(root) { animation-name: sortie-avant; }
-::view-transition-new(root) { animation-name: entree-avant; }
+::view-transition-new(root) {
+  animation: 0.42s cubic-bezier(0.16, 1, 0.3, 1) 0.04s both entree-avant;
+}
 :root[data-sens='arriere']::view-transition-old(root) { animation-name: sortie-arriere; }
 :root[data-sens='arriere']::view-transition-new(root) { animation-name: entree-arriere; }
-@keyframes sortie-avant { to { opacity: 0; transform: translateX(-28px); } }
-@keyframes entree-avant { from { opacity: 0; transform: translateX(28px); } }
-@keyframes sortie-arriere { to { opacity: 0; transform: translateX(28px); } }
-@keyframes entree-arriere { from { opacity: 0; transform: translateX(-28px); } }
+@keyframes sortie-avant { to { opacity: 0; transform: translateX(-18px) scale(0.99); } }
+@keyframes entree-avant { from { opacity: 0; transform: translateX(36px); } }
+@keyframes sortie-arriere { to { opacity: 0; transform: translateX(18px) scale(0.99); } }
+@keyframes entree-arriere { from { opacity: 0; transform: translateX(-36px); } }
 /* L'en-tête, les onglets (leur bulle glisse seule) et la barre du bas ne bougent pas */
 .vt-entete { view-transition-name: entete; }
 .vt-onglets { view-transition-name: onglets; }
