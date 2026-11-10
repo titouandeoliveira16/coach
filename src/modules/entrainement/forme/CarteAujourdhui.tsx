@@ -155,7 +155,7 @@ export function CarteAujourdhui({ onModifierMatin }: {
               <span className="text-[11px] opacity-85">{NOMS_CASES[cle]}</span>
               <span className="text-sm font-semibold leading-tight">{d?.court ?? '—'}</span>
               {resumes[cle] && <span className="text-[11px] leading-tight opacity-85">{resumes[cle]}</span>}
-              {cle === 'sommeil' && moyenneNuits && <span className="text-[10px] leading-tight opacity-70">7 j : {moyenneNuits}</span>}
+              {cle === 'sommeil' && moyenneNuits && <span className="text-[11px] leading-tight text-texte-2">7 j : {moyenneNuits}</span>}
             </button>
           ))}
         </div>
