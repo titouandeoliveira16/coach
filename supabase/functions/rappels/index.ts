@@ -11,7 +11,7 @@
 // Rappels : chaque matin (sauf si « Ton matin » est déjà rempli), pesée les jours choisis (sauf si déjà faite),
 // saisie du budget le soir si activée dans l'appli (sauf si déjà faite ; le 1er du mois : annonce du bilan),
 // et le 5 du mois à 9 h : relevés du mois (compte courant et placements), une fois les revenus de début de mois arrivés.
-// Séance remontée : dès qu'une nouvelle activité arrive sur Intervals.icu (montre, Zwift, Strava), une notification
+// Nouvelle sortie : dès qu'une nouvelle activité arrive sur Intervals.icu (montre, Zwift, Strava), une notification
 // (comme Strava) ; la clé Intervals est lue chiffrée, avec la même clé de chiffrement que la fonction « intervals ».
 // Aucun secret à ajouter : les clés VAPID sont créées et gardées par la fonction elle-même.
 
@@ -161,7 +161,7 @@ async function seancesRemontees(userId: string, date: string) {
   const depuis = new Date(Date.parse(`${date}T12:00:00Z`) - 2 * 86_400_000).toISOString().slice(0, 10)
   const r = await fetch(`https://intervals.icu/api/v1/athlete/${c.athlete_id}/activities?oldest=${depuis}&newest=${date}`, { headers: { Authorization: `Basic ${btoa(`API_KEY:${cle}`)}` } })
   if (!r.ok) return []
-  const activites = ((await r.json()) as { id: string; name?: string; type?: string; moving_time?: number; icu_joules?: number }[]).filter((a) => a.id)
+  const activites = ((await r.json()) as { id: string; name?: string; type?: string; moving_time?: number; distance?: number; icu_joules?: number }[]).filter((a) => a.id)
   const etat = (await ligne(userId, 'reglages', 'notif-seances'))?.valeur as { vus?: string[] } | undefined
   const vus = new Set(etat?.vus ?? [])
   const nouvelles = etat ? activites.filter((a) => !vus.has(String(a.id))) : []
@@ -170,8 +170,8 @@ async function seancesRemontees(userId: string, date: string) {
     await admin.from('donnees').upsert({ user_id: userId, table_nom: 'reglages', cle: 'notif-seances', valeur: { id: 'notif-seances', valeur: { vus: tous } }, supprime: false, modifie_le: new Date().toISOString() }, { onConflict: 'user_id,table_nom,cle' })
   }
   return nouvelles.map((a) => ({
-    titre: '🚴 Séance remontée',
-    texte: `${a.name ?? 'Ta séance'} · ${dureeTexte(a.moving_time ?? 0)}${a.icu_joules ? ` · ${Math.round(a.icu_joules / 1000)} kJ` : ''}. Ouvre l'appli : ta semaine se recalcule.`,
+    titre: '🚴 Nouvelle sortie',
+    texte: [dureeTexte(a.moving_time ?? 0), a.distance ? `${(a.distance / 1000).toFixed(1).replace('.', ',')} km` : '', a.icu_joules ? `${Math.round(a.icu_joules / 1000)} kJ` : ''].filter(Boolean).join(' · '),
     tag: `seance-${a.id}`, url: './#/entrainement/semaine',
   }))
 }
