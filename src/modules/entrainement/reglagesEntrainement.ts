@@ -1,3 +1,4 @@
+import { migrerBase } from '../../metrics/saison'
 import { useReglage } from '../../core/reglages'
 import type { ReglagesEntrainement, ReglagesProgramme } from './types'
 
@@ -28,6 +29,8 @@ export const PROGRAMME_DEFAUT: ReglagesProgramme = {
  */
 export function programmeDe(p?: Partial<ReglagesProgramme>): ReglagesProgramme {
   const prog = { ...PROGRAMME_DEFAUT, ...p }
+  // Saison calculée avant le 10/11/2026 : longue reprise → 2 semaines de reprise puis une base
+  if (prog.modele === 'chauvin') prog.phases = migrerBase(prog.phases)
   if (p && p.testsCourts === undefined) {
     const autres = (p.testsCp ?? []).filter((d) => d !== '2026-10-30')
     prog.testsCp = [...new Set([...PROGRAMME_DEFAUT.testsCp, ...autres])].sort()

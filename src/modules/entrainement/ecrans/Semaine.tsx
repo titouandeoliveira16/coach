@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { db } from '../../../core/db'
+import { enregistrer } from '../../../core/stockage'
 import { aujourdhui, decalerJour, depuisJour } from '../../../core/dates'
 import { Aide } from '../../../core/ui/Aide'
 import { Bouton } from '../../../core/ui/Bouton'
@@ -31,6 +32,7 @@ import { RAISONS, type Raison, type Seance, type SeancePrevue } from '../types'
 const VERT = '#4ade80'
 const ORANGE = '#fb923c'
 const ROUGE = '#f87171'
+const JAUNE = '#facc15'
 
 /**
  * Couleur d'une séance prévue :
@@ -40,6 +42,7 @@ const ROUGE = '#f87171'
  *  - neutre : à venir. L'orange n'apparaît que le lendemain : une séance du soir met du temps à remonter.
  */
 function etatVisuel(p: SeancePrevue, jour: string): { libelle: string; couleur?: string } {
+  if (p.statut === 'faite' && p.realiseDifferent) return { libelle: '✓ différent', couleur: JAUNE }
   if (p.statut === 'faite') return estIntensite(p) && !p.resultat ? { libelle: 'Tenue ?', couleur: ORANGE } : { libelle: 'Faite ✓', couleur: VERT }
   if (p.statut === 'non-faite' || p.statut === 'abandonnee') return { libelle: `Pas faite${p.raison ? ` · ${p.raison}` : ''}`, couleur: ROUGE }
   if (p.statut === 'reportee') return { libelle: 'À reporter', couleur: ORANGE }
@@ -110,7 +113,10 @@ export function Semaine() {
                     className={`flex w-full items-center gap-2.5 rounded-xl border-l-[3px] px-3 py-2.5 text-left ${aujourdhuiPrevue ? 'bg-accent/10' : 'bg-surface'}`}
                     style={{ borderLeftColor: couleur }}>
                     <span className="w-9 shrink-0 text-[13px] text-texte-3">{k === 0 ? court(d) : ''}</span>
-                    <span className={`min-w-0 flex-1 truncate text-sm ${e.couleur === ROUGE ? 'line-through opacity-60' : ''}`}>{iconeSport(p.sport)} {p.titre}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className={`block truncate text-sm ${e.couleur === ROUGE ? 'line-through opacity-60' : ''}`}>{iconeSport(p.sport)} {p.realiseDifferent ? p.titreRealise ?? 'Séance faite' : p.titre}</span>
+                      {p.realiseDifferent && <span className="block truncate text-xs text-texte-3"><s>Prévu : {p.titre}</s></span>}
+                    </span>
                     <span className="shrink-0 text-xs font-semibold" style={{ color: e.couleur ?? (aujourdhuiPrevue ? 'var(--color-accent)' : undefined) }}>
                       {e.libelle || (aujourdhuiPrevue ? 'aujourd’hui' : <span className="font-normal text-texte-3">{p.dureeMin} min</span>)}
                     </span>
@@ -248,7 +254,19 @@ function DetailSeance({ p, jours, prevues, onFermer, onMessage }: {
 
   return (
     <Feuille titre={p.titre} onFermer={onFermer}>
-      <p className="text-sm text-texte-2">{p.dureeMin} min{p.kjPrevu ? ` · ${p.kjPrevu} kJ` : ''}</p>
+      {p.realiseDifferent && (
+        <div className="mb-3 rounded-xl border border-[#facc15]/40 bg-[#facc15]/10 p-3 text-sm">
+          <p className="text-xs uppercase tracking-wider text-texte-3">Réalisé</p>
+          <p>{iconeSport(p.sport)} {p.titreRealise ?? 'Séance faite'}</p>
+          <p className="mt-1.5 text-xs text-texte-2">Réalisé différent du prévu : ni réussie ni ratée pour ta progression. Tes kJ comptent ; si c'était plus dur, le reste de ta semaine a été recalculé.<Aide titre="Réalisé différent" texte={AIDES.realiseDifferent} /></p>
+          <button type="button" className="mt-2 w-full rounded-lg bg-surface-2 py-2 text-xs font-semibold" onClick={async () => { await enregistrer(db.prevues, { ...p, realiseDifferent: false }); onFermer() }}>C'était bien la séance prévue</button>
+          <p className="mt-2 text-xs uppercase tracking-wider text-texte-3">Prévu</p>
+        </div>
+      )}
+      {p.statut === 'faite' && !p.realiseDifferent && p.sport === 'velo' && (
+        <button type="button" className="mb-2 text-xs font-semibold text-texte-3 underline" onClick={async () => { await enregistrer(db.prevues, { ...p, realiseDifferent: true, titreRealise: p.titreRealise ?? 'Autre séance' }); onFermer() }}>J'ai fait autre chose que prévu</button>
+      )}
+      <p className={`text-sm text-texte-2 ${p.realiseDifferent ? 'line-through' : ''}`}>{p.dureeMin} min{p.kjPrevu ? ` · ${p.kjPrevu} kJ` : ''}</p>
       {p.detail && <p className="mt-2 text-sm">{p.detail}</p>}
       {p.velo?.etapes && <Deroule etapes={p.velo.etapes} />}
       {p.velo?.etapes && p.statut === 'prevue' && p.date >= aujourdhui() && <BoutonsEnvoi p={p} etapes={p.velo.etapes} />}

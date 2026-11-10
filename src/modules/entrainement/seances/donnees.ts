@@ -6,7 +6,7 @@ import { srpe, trimpDepuisMoyenne } from '../../../metrics/charge'
 import { rtss, vitesseKmh } from '../../../metrics/course'
 import { domaineDepuisFc, type BornesZones } from '../../../metrics/fc'
 import { kjDepuisMoyenne, tss } from '../../../metrics/puissance'
-import type { Intensite, ReglagesEntrainement, Seance, TypeSeance } from '../types'
+import type { Intensite, ReglagesEntrainement, Seance, SeancePrevue, TypeSeance } from '../types'
 
 /** Tout ce qu'il faut pour calculer les métriques d'une séance. */
 export interface Contexte {
@@ -179,12 +179,25 @@ export async function nettoyerDoublons() {
 }
 
 /**
+ * Réalisé différent du prévu : autre intensité (une Z2 faite en séance dure, ou l'inverse), ou durée très différente
+ * (moins de 60 % ou plus de 160 % du prévu). Choix d'entraîneur. Les séances saisies à la main depuis la séance prévue
+ * (même titre) sont réputées conformes.
+ */
+export function estRealiseDifferent(p: Pick<SeancePrevue, 'intensite' | 'dureeMin' | 'sport'>, s: Seance, domaine: Intensite) {
+  if (p.sport !== 'velo' || s.source === 'manuel') return false
+  const rapport = s.dureeSec / 60 / Math.max(1, p.dureeMin)
+  if (rapport < 0.6 || rapport > 1.6) return true
+  return (p.intensite === 'basse' && domaine === 'haute') || (p.intensite === 'haute' && domaine === 'basse')
+}
+
+/**
  * Enregistre une séance : calcule ses métriques, la rattache à la séance prévue
  * du même jour et du même sport (marquée « faite »).
  */
 export async function enregistrerSeance(s: Seance) {
   const c = await chargerContexte()
   const complete = completerMetriques(s, c)
+  let differente = false
   if (!complete.prevueId) {
     // Séance prévue le même jour, sinon la plus proche (2 jours au plus, même semaine) : séance décalée
     const lundi = lundiDe(s.date)
@@ -197,8 +210,10 @@ export async function enregistrerSeance(s: Seance) {
       if (prevue.date !== s.date) await enregistrer(db.prevues, { ...prevue, date: s.date })
       complete.prevueId = prevue.id
       if (prevue.velo?.famille?.startsWith('vtt')) complete.terrainVtt = true
-      // Séance importée (montre, Intervals) : elle prend le nom de la séance prévue (ex. « Seuil 30 »)
-      if (s.source !== 'manuel') {
+      // Séance importée (montre, Intervals) : elle prend le nom de la séance prévue (ex. « Seuil 30 »), sauf si tu as
+      // fait autre chose
+      differente = estRealiseDifferent(prevue, complete, domaineDe(complete, c.bornes))
+      if (s.source !== 'manuel' && !differente) {
         complete.titre = prevue.titre
         complete.type = complete.type ?? prevue.type
       }
@@ -207,7 +222,15 @@ export async function enregistrerSeance(s: Seance) {
   await enregistrer(db.seances, complete)
   if (complete.prevueId) {
     const p = await db.prevues.get(complete.prevueId)
-    if (p && p.statut !== 'faite') await enregistrer(db.prevues, { ...p, statut: 'faite' })
+    if (p && (p.statut !== 'faite' || differente)) {
+      await enregistrer(db.prevues, { ...p, statut: 'faite', ...(differente ? { realiseDifferent: true, titreRealise: complete.titre ?? complete.type } : {}) })
+      // Plus dur que prévu : le reste de la semaine se recalcule (48 h sans autre séance dure, pas de 2e intensité)
+      if (differente && p.intensite !== 'haute' && domaineDe(complete, c.bornes) === 'haute') {
+        const { genererSemaineVelo, lireMeta } = await import('../plan/programme')
+        const lundi = lundiDe(complete.date)
+        if (await lireMeta(lundi)) await genererSemaineVelo(lundi).catch(() => {})
+      }
+    }
   }
   return complete
 }

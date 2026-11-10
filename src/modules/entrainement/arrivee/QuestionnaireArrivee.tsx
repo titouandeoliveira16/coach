@@ -16,7 +16,7 @@ const MUSCU = ['Pas pour l’instant', '1 séance par semaine', '2 séances par 
 const ARRETS: [string, number][] = [['Non', 0], ['2 à 3 semaines', 2], ['1 mois ou plus', 4]]
 const LONGUES: [string, number, number][] = [['1 h à 1 h 30', 60, 90], ['1 h 30 à 2 h', 90, 120], ['2 h à 3 h', 120, 180], ['2 h 30 à 4 h', 150, 240]]
 const COULEURS_PHASES: Record<string, string> = {
-  reprise: '#60a5fa', entretien: '#34d399', vo2: '#4ade80', seuil: '#facc15', 'seuil-tirage': '#4ade80', 'seuil-maintien': '#facc15', 'fin-prepa': '#c084fc', specifique: '#fb923c', affutage: '#f87171',
+  reprise: '#60a5fa', base: '#2dd4bf', entretien: '#34d399', vo2: '#4ade80', seuil: '#facc15', 'seuil-tirage': '#4ade80', 'seuil-maintien': '#facc15', 'fin-prepa': '#c084fc', specifique: '#fb923c', affutage: '#f87171',
 }
 const champ = 'block h-12 w-full min-w-0 rounded-xl border border-bordure bg-surface-2 px-3 text-base outline-none focus:border-accent'
 const puce = (actif: boolean) => `rounded-full border px-3 py-1.5 text-sm ${actif ? 'border-accent bg-accent text-fond font-semibold' : 'border-bordure text-texte-2'}`
@@ -39,7 +39,7 @@ function Question({ libelle, aide, children }: { libelle: string; aide?: string;
 }
 /** « 2/11 » */
 const jm = (d: string) => `${Number(d.slice(8, 10))}/${d.slice(5, 7)}`
-const COURTS: Record<string, string> = { reprise: 'Base', entretien: 'Entretien', vo2: 'VO2', seuil: 'Seuil', 'seuil-tirage': 'Seuil +', 'seuil-maintien': 'Seuil', 'fin-prepa': 'SS + VO2', specifique: 'Course', affutage: 'Aff.' }
+const COURTS: Record<string, string> = { reprise: 'Reprise', base: 'Base', entretien: 'Entretien', vo2: 'VO2', seuil: 'Seuil', 'seuil-tirage': 'Seuil +', 'seuil-maintien': 'Seuil', 'fin-prepa': 'SS + VO2', specifique: 'Course', affutage: 'Aff.' }
 const nombre = (t: string) => (t.trim() === '' ? undefined : Number(t.replace(',', '.')) || undefined)
 
 /** Questionnaire d'arrivée d'un compte créé avec un code : 4 étapes, la saison calculée, puis la montre (Intervals.icu). */
