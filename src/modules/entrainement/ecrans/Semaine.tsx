@@ -1,3 +1,4 @@
+import { IconeSport } from '../IconeSport'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -27,7 +28,6 @@ import { annulerPrevue, changerDeJour, chargesSemaine, joursDe, joursPourDeplace
 import { alertesCumul, estIntensite, genererSemaineVelo, lireMeta, noterResultat } from '../plan/programme'
 import { programmeDe, useReglagesEntrainement } from '../reglagesEntrainement'
 import { lundiDe, nouvelId } from '../seances/donnees'
-import { iconeSport } from '../sports'
 import { RAISONS, type Raison, type Seance, type SeancePrevue } from '../types'
 
 const VERT = '#4ade80'
@@ -115,7 +115,7 @@ export function Semaine() {
                     style={{ borderLeftColor: couleur }}>
                     <span className="w-9 shrink-0 text-[13px] text-texte-3">{k === 0 ? court(d) : ''}</span>
                     <span className="min-w-0 flex-1">
-                      <span className={`block truncate text-sm ${e.couleur === ROUGE ? 'line-through opacity-60' : ''}`}>{iconeSport(p.sport)} {p.realiseDifferent ? p.titreRealise ?? 'Séance faite' : p.titre}</span>
+                      <span className={`block truncate text-sm ${e.couleur === ROUGE ? 'line-through opacity-60' : ''}`}><IconeSport sport={p.sport} />{p.realiseDifferent ? p.titreRealise ?? 'Séance faite' : p.titre}</span>
                       {p.realiseDifferent && <span className="block truncate text-xs text-texte-3"><s>Prévu : {p.titre}</s></span>}
                     </span>
                     <span className="shrink-0 text-xs font-semibold" style={{ color: e.couleur ?? (aujourdhuiPrevue ? 'var(--color-accent)' : undefined) }}>
@@ -127,7 +127,7 @@ export function Semaine() {
               {horsPlan.map((x, k) => (
                 <div key={x.id} className="flex items-center gap-2.5 rounded-xl border-l-[3px] bg-surface px-3 py-2.5" style={{ borderLeftColor: VERT }}>
                   <span className="w-9 shrink-0 text-[13px] text-texte-3">{k === 0 && !duJour.length ? court(d) : ''}</span>
-                  <span className="min-w-0 flex-1 truncate text-sm">{iconeSport(x.sport, x.homeTrainer)} {x.titre ?? x.type ?? 'Séance'}</span>
+                  <span className="min-w-0 flex-1 truncate text-sm"><IconeSport sport={x.sport} homeTrainer={x.homeTrainer} />{x.titre ?? x.type ?? 'Séance'}</span>
                   <span className="shrink-0 text-xs text-texte-3">hors plan ✓</span>
                 </div>
               ))}
@@ -258,7 +258,7 @@ function DetailSeance({ p, jours, prevues, onFermer, onMessage }: {
       {p.realiseDifferent && (
         <div className="mb-3 rounded-xl border border-[#facc15]/40 bg-[#facc15]/10 p-3 text-sm">
           <p className="text-xs uppercase tracking-wider text-texte-3">Réalisé</p>
-          <p>{iconeSport(p.sport)} {p.titreRealise ?? 'Séance faite'}</p>
+          <p><IconeSport sport={p.sport} />{p.titreRealise ?? 'Séance faite'}</p>
           <p className="mt-1.5 text-xs text-texte-2">Réalisé différent du prévu : ni réussie ni ratée pour ta progression. Tes kJ comptent ; si c'était plus dur, le reste de ta semaine a été recalculé.<Aide titre="Réalisé différent" texte={AIDES.realiseDifferent} /></p>
           <button type="button" className="mt-2 w-full rounded-lg bg-surface-2 py-2 text-xs font-semibold" onClick={async () => { await enregistrer(db.prevues, { ...p, realiseDifferent: false }); onFermer() }}>C'était bien la séance prévue</button>
           <p className="mt-2 text-xs uppercase tracking-wider text-texte-3">Prévu</p>
@@ -326,7 +326,7 @@ function DetailSeance({ p, jours, prevues, onFermer, onMessage }: {
             if (la.length && d !== p.date) {
               return (
                 <div key={d} className="rounded-xl border border-bordure px-3 py-2.5 text-sm">
-                  <div className="flex items-center justify-between">{jour}<span className="text-texte-2">{la.map((x) => `${iconeSport(x.sport)} ${x.titre}`).join(', ')}</span></div>
+                  <div className="flex items-center justify-between">{jour}<span className="text-texte-2">{la.map((x) => x.titre).join(', ')}</span></div>
                   <div className="mt-2 grid grid-cols-2 gap-2">
                     <button type="button" className="rounded-lg border border-bordure py-1.5 font-semibold" onClick={async () => { onMessage(await changerDeJour(p, d)); onFermer() }}>↔ Échanger</button>
                     <button type="button" className="rounded-lg border border-bordure py-1.5 font-semibold" onClick={async () => { onMessage(await changerDeJour(p, d, true)); onFermer() }}>＋ Les deux ce jour</button>

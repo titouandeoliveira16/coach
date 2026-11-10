@@ -1,3 +1,4 @@
+import { IconeSport } from '../IconeSport'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { ControleSeance } from './ControleSeance'
 import { useState } from 'react'
@@ -11,7 +12,6 @@ import { chargerContexte, domaineDe } from '../seances/donnees'
 import { LIBELLES_RPE } from '../seances/FormulaireSeance'
 import { Aide } from '../../../core/ui/Aide'
 import { AIDES } from '../aides'
-import { iconeSport } from '../sports'
 import type { Seance } from '../types'
 
 /** Séances faites aujourd'hui : résumé, RPE en un toucher, watts des blocs. */
@@ -44,7 +44,7 @@ function SeanceFaite({ s }: { s: Seance }) {
   const resume = [`${min} min`, s.distanceKm && `${formatNombre(s.distanceKm, 1)} km`, s.kj && `${s.kj} kJ`, s.parties && s.parties > 1 && `${s.parties} parties`].filter(Boolean).join(' · ')
   return (
     <div>
-      <p className="font-semibold">✅ Faite · {iconeSport(s.sport)} {s.titre ?? 'Séance'}</p>
+      <p className="font-semibold">Faite · <IconeSport sport={s.sport} />{s.titre ?? 'Séance'}</p>
       <p className="text-sm text-texte-2">{resume}</p>
       {s.controle ? <ControleSeance s={{ ...s, controle: s.controle }} famille={info?.famille ?? ''} /> : s.blocs && <Blocs b={s.blocs} />}
       {verdict && <p className="mt-1 text-sm" style={{ color: COULEURS[verdict.couleur] }}>{PASTILLES[verdict.couleur]} {verdict.texte}<Aide titre="Contrôle FC" texte={AIDES.controleFc} /></p>}

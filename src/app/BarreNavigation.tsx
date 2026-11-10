@@ -24,10 +24,10 @@ export function BarreNavigation({ module: m }: { module: ModuleApp }) {
           <li key={id} className="flex-1">
             <NavLink
               to={chemin}
-              className="flex flex-col items-center gap-1 pt-2 pb-1 text-[11px] font-medium"
+              className="presse flex flex-col items-center gap-1 pt-2.5 pb-1 text-[10.5px] font-medium"
               style={{ color: actif ? m.couleur : 'var(--color-texte-3)' }}
             >
-              <Icone className="h-7 w-7" />
+              <Icone className="h-6 w-6" />
               {nom}
             </NavLink>
           </li>

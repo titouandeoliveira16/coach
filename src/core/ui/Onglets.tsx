@@ -9,14 +9,14 @@ export interface Onglet {
 /** Sélecteur d'onglets en haut d'un module (style « segmenté » iOS). */
 export function Onglets({ onglets }: { onglets: Onglet[] }) {
   return (
-    <nav className="mt-3 flex rounded-xl bg-surface-2 p-1">
+    <nav className="mt-3 flex rounded-full bg-surface-2 p-1">
       {onglets.map((o) => (
         <NavLink
           key={o.vers}
           to={o.vers}
           end
           className={({ isActive }) =>
-            `flex-1 rounded-lg py-2 text-center text-sm font-semibold transition-colors ${
+            `presse flex-1 rounded-full py-2 text-center text-sm font-semibold transition-colors ${
               isActive ? 'bg-accent text-fond' : 'text-texte-2'
             }`
           }

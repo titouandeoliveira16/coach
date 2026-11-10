@@ -1,3 +1,4 @@
+import { IconeSport } from '../IconeSport'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
@@ -15,7 +16,7 @@ import { srpe } from '../../../metrics/charge'
 import { allureSecKm, pctVma, vitesseKmh } from '../../../metrics/course'
 import { AIDES } from '../aides'
 import { importerFit } from '../import/fit'
-import { iconeSport, NOMS_SPORTS, SPORTS } from '../sports'
+import { NOMS_SPORTS, SPORTS } from '../sports'
 import { TYPES_SEANCE, type Seance, type Sport } from '../types'
 import { chargerContexte, completerMetriques, derniereSeance, enregistrerSeance, nouvelId, supprimerSeance, trouverDoublon } from './donnees'
 
@@ -95,7 +96,7 @@ export function FormulaireSeance() {
           {SPORTS.map((sp) => (
             <button key={sp} type="button" onClick={() => changer({ sport: sp })}
               className={`rounded-2xl border py-2.5 text-sm font-bold ${s.sport === sp ? 'border-accent bg-accent text-fond' : 'border-bordure bg-surface text-texte-2'}`}>
-              <span className="block text-2xl">{iconeSport(sp)}</span>{NOMS_SPORTS[sp]}
+              <IconeSport sport={sp} className="mx-auto mb-1 block h-6 w-6" />{NOMS_SPORTS[sp]}
             </button>
           ))}
         </div>

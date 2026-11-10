@@ -1,3 +1,4 @@
+import { IconeSport } from '../IconeSport'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -17,7 +18,6 @@ import { Deroule, Profil } from '../plan/Deroule'
 import { NutritionSeance } from '../plan/NutritionSeance'
 import { useReglagesEntrainement } from '../reglagesEntrainement'
 import { useNutritionEffort } from '../reglages/ProfilSportif'
-import { iconeSport } from '../sports'
 import { basculerSansMontre, QUESTIONS, scoreRessenti } from './donnees'
 import { SeancesFaites } from './SeancesFaites'
 import type { Raison, Seance } from '../types'
@@ -326,7 +326,7 @@ export function CarteAujourdhui({ onModifierMatin, autreOuvert = false }: {
                 <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-texte-3">Demain</p>
                 {demain.map((d) => (
                   <div key={d.id} className="mt-1.5 rounded-xl bg-surface-2 p-3">
-                    <p className="flex justify-between gap-2 font-semibold"><span>{iconeSport(d.sport)} {d.titre}</span><span className="font-normal text-texte-2">{d.dureeMin} min</span></p>
+                    <p className="flex justify-between gap-2 font-semibold"><span><IconeSport sport={d.sport} />{d.titre}</span><span className="font-normal text-texte-2">{d.dureeMin} min</span></p>
                     {d.velo?.etapes && <Profil etapes={d.velo.etapes} cpW={cpW} />}
                     {d.intensite !== 'basse' && <p className="mt-1 text-[13px] text-texte-2">Séance dure : recharge en glucides ce soir.</p>}
                   </div>

@@ -40,7 +40,7 @@ describe('semaine type choisie par l’athlète', () => {
     expect(verifierSemaineType(['libre', 'velo-dur', 'velo-z2', 'renfo', 'velo-z2', 'libre', 'velo-z2']))
       .toMatchObject({ ok: false, message: expect.stringMatching(/sortie longue/) })
     expect(verifierSemaineType(['libre', 'velo-dur', 'velo-z2', 'renfo', 'velo-dur', 'libre', 'velo-long']))
-      .toEqual({ ok: true, message: '✓ 4 jours de vélo · 2 séances dures · 1 sortie longue' })
+      .toEqual({ ok: true, message: '✓ 4 jours de vélo · 2 séances d’intensité · 1 sortie longue' })
     expect(verifierSemaineType(['velo-dur', 'velo-dur', 'velo-dur', 'libre', 'velo-z2', 'libre', 'velo-long']).ok).toBe(false)
     expect(verifierSemaineType(['libre', 'velo-dur', 'velo-dur', 'libre', 'velo-z2', 'libre', 'velo-long']).message).toMatch(/se suivent/)
     expect(verifierSemaineType(['libre', 'velo-dur', 'velo-z2', 'libre', 'velo-dur', 'libre', 'velo-long'], true).message).toMatch(/débutant/)

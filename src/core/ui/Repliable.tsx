@@ -20,10 +20,10 @@ export function Repliable({ titre, resume, children, ouvert: ouvertParent, onBas
   const ouvert = ouvertParent ?? ouvertLocal
   const basculer = () => (onBasculer ? onBasculer(!ouvert) : setOuvertLocal(!ouvert))
   return (
-    <section className={`rounded-2xl border bg-surface ${ouvert ? 'border-accent' : 'border-bordure'} ${className}`}>
-      <button type="button" onClick={basculer} aria-expanded={ouvert} className="flex w-full items-center gap-3 px-3.5 py-3 text-left">
+    <section className={`entree rounded-[14px] border bg-surface ${ouvert ? 'border-accent' : 'border-transparent'} ${className}`}>
+      <button type="button" onClick={basculer} aria-expanded={ouvert} className="presse flex w-full items-center gap-3 px-3.5 py-3 text-left">
         <span className="min-w-0 flex-1">
-          <span className="block text-xs font-semibold uppercase tracking-wider text-texte-3">{titre}</span>
+          <span className="etiquette block">{titre}</span>
           {!ouvert && resume && <span className="mt-0.5 block truncate text-sm text-texte-2">{resume}</span>}
         </span>
         <span className="shrink-0 text-sm font-semibold text-accent">{ouvert ? 'Réduire ▴' : `${libelle} ›`}</span>
@@ -37,7 +37,7 @@ export function Repliable({ titre, resume, children, ouvert: ouvertParent, onBas
 export function Tuile({ titre, ouvert, onClick, fleche = '▾' }: { titre: string; ouvert?: boolean; onClick: () => void; fleche?: string }) {
   return (
     <button type="button" onClick={onClick} aria-expanded={ouvert}
-      className={`flex min-h-[72px] flex-col justify-between rounded-2xl border bg-surface p-3 text-left ${ouvert ? 'border-accent' : 'border-bordure'}`}>
+      className={`presse flex min-h-[72px] flex-col justify-between rounded-[14px] border bg-surface p-3 text-left ${ouvert ? 'border-accent' : 'border-transparent'}`}>
       <span className="text-sm font-semibold leading-tight">{titre}</span>
       <span className={`text-xs ${ouvert ? 'text-accent' : 'text-texte-3'}`}>{ouvert ? '▴' : fleche}</span>
     </button>
