@@ -89,7 +89,7 @@ function CaseCeinture({ s }: { s: Seance }) {
   return (
     <button type="button" onClick={() => enregistrer(db.seances, { ...s, sansCeinture: sans ? undefined : true })} aria-pressed={sans}
       className={`mt-2 w-full rounded-xl border px-3 py-2 text-left text-sm ${sans ? 'border-accent bg-accent/15 font-semibold text-texte' : 'border-bordure text-texte-2'}`}>
-      {sans ? '⌚ Sans ceinture cardio : FC au poignet, pas jugée · annuler' : '⌚ J’avais pas ma ceinture cardio'}
+      {sans ? 'Sans ceinture cardio : FC au poignet, pas jugée · annuler' : 'J’avais pas ma ceinture cardio'}
     </button>
   )
 }

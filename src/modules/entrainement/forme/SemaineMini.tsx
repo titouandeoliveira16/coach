@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useNavigate } from 'react-router-dom'
 import { aujourdhui, decalerJour } from '../../../core/dates'
 import { db } from '../../../core/db'
-import { lireMeta } from '../plan/programme'
+import { chargesSemaine } from '../plan/donnees'
 import { lundiDe } from '../seances/donnees'
 
 /** Ta semaine en 7 barres (kJ prévus par jour ; en orange ce qui est fait), qui montent à l'ouverture (maquette V1). */
@@ -13,13 +13,13 @@ export function SemaineMini() {
   const d = useLiveQuery(async () => {
     const prevues = (await db.prevues.where('date').between(lundi, decalerJour(lundi, 6), true, true).toArray()).filter((p) => p.sport === 'velo')
     const seances = (await db.seances.where('date').between(lundi, decalerJour(lundi, 6), true, true).toArray()).filter((s) => s.sport === 'velo')
-    const meta = await lireMeta(lundi)
+    const kj = await chargesSemaine(lundi)
     const jours = Array.from({ length: 7 }, (_, i) => decalerJour(lundi, i)).map((dj) => {
       const fait = seances.filter((s) => s.date === dj).reduce((a, s) => a + (s.kj ?? 0), 0)
       const prevu = prevues.filter((p) => p.date === dj && p.statut !== 'non-faite' && p.statut !== 'abandonnee').reduce((a, p) => a + (p.kjPrevu ?? 0), 0)
       return { dj, fait, prevu }
     })
-    return { jours, budget: meta?.budget, total: seances.reduce((a, s) => a + (s.kj ?? 0), 0) }
+    return { jours, budget: Math.round(kj.kjPrevus), total: Math.round(kj.kjRealises) }
   }, [lundi])
   if (!d || !d.jours.some((x) => x.prevu || x.fait)) return null
   const max = Math.max(...d.jours.map((x) => Math.max(x.prevu, x.fait)), 1)

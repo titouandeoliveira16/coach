@@ -55,7 +55,7 @@ export function TuilesMatin() {
       <Tuile Icone={Moon} couleurIcone="var(--color-sommeil)" libelle="Nuit" valeur={nuit ? `${Math.floor(nuit)}:${String(Math.round((nuit % 1) * 60)).padStart(2, '0')}` : '—'}>
         <MiniCourbe valeurs={nuits} couleur="var(--color-sommeil)" />
       </Tuile>
-      <Tuile Icone={Scale} couleurIcone="var(--color-texte-3)" libelle="Poids" valeur={poids ? formatNombre(poids.poidsKg, 1) : '—'}>
+      <Tuile Icone={Scale} couleurIcone="var(--color-texte-3)" libelle="Poids" valeur={poids ? `${formatNombre(poids.poidsKg, 1)} kg` : '—'}>
         {poids && poids.date === jour ? <MiniCourbe valeurs={d.pesees.map((p) => p.poidsKg)} couleur="var(--color-texte-2)" /> : <p className="mt-2 text-[10.5px] text-accent">à peser</p>}
       </Tuile>
     </div>

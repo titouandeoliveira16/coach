@@ -40,7 +40,7 @@ export function BoutonsEnvoi({ p, etapes }: { p: SeancePrevue; etapes: Etape[] }
         </>
       ) : (
         <div className="flex gap-2">
-          <button type="button" disabled={occupe} className={bouton} onClick={() => agir(() => envoyerSeance(p, etapes, 'garmin'), 'Envoyée ✓ Elle arrive sur ta montre après la synchro Garmin Connect.')}>⌚ Envoyer à Garmin</button>
+          <button type="button" disabled={occupe} className={bouton} onClick={() => agir(() => envoyerSeance(p, etapes, 'garmin'), 'Envoyée ✓ Elle arrive sur ta montre après la synchro Garmin Connect.')}>Envoyer à Garmin</button>
           <button type="button" disabled={occupe} className={bouton} onClick={() => agir(() => envoyerSeance(p, etapes, 'zwift'), 'Envoyée ✓ Zwift → Workouts → Custom → Intervals.icu.')}>Envoyer à Zwift</button>
         </div>
       )}

@@ -1,3 +1,4 @@
+import { Flag } from 'lucide-react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { aujourdhui, decalerJour, depuisJour, ecartJours } from '../../../core/dates'
@@ -38,7 +39,7 @@ function LigneSemaine({ x, actuelle }: { x: SemaineSaison; actuelle?: boolean })
 
 /**
  * Courbe du budget kJ prévu, semaine par semaine, jusqu'à la course (une seule série : le titre la nomme). Phases en
- * bandes de couleur, tests 🧪 et courses (pastille A / B / C) en repères. Toucher une semaine affiche son détail.
+ * bandes de couleur, tests (○) et courses (pastille A / B / C) en repères. Toucher une semaine affiche son détail.
  */
 function CourbeKj({ semaines, niveaux, tests }: { semaines: SemaineSaison[]; niveaux: Map<string, string>; tests: string[] }) {
   const [choisie, setChoisie] = useState<number>()
@@ -63,7 +64,7 @@ function CourbeKj({ semaines, niveaux, tests }: { semaines: SemaineSaison[]; niv
           </g>
         ))}
         {semaines.map((s, i) => (
-          <rect key={s.lundi} x={x(i) - larg / 2} y={Hh} width={larg} height={H - B - Hh} fill={COULEURS[s.phase]} opacity="0.14" />
+          <rect key={s.lundi} x={x(i) - larg / 2} y={Hh} width={larg} height={H - B - Hh} fill={COULEURS[s.phase]} opacity="0.24" />
         ))}
         <polygon points={`${x(0)},${y(0)} ${points} ${x(semaines.length - 1)},${y(0)}`} fill="var(--color-accent)" opacity="0.16" />
         <polyline points={points} fill="none" stroke="var(--color-accent)" strokeWidth="2" strokeLinejoin="round" />
@@ -80,7 +81,7 @@ function CourbeKj({ semaines, niveaux, tests }: { semaines: SemaineSaison[]; niv
                   <text x={x(i)} y={H - B + 14.5} textAnchor="middle" fontSize="10" fontWeight="800" fill="var(--color-fond)">{niveaux.get(course)}</text>
                 </g>
               )}
-              {!course && test && <text x={x(i)} y={H - B + 15} textAnchor="middle" fontSize="10">🧪</text>}
+              {!course && test && <circle cx={x(i)} cy={H - B + 10} r="3.5" fill="none" stroke="var(--color-texte-2)" strokeWidth="1.5" />}
               {choisie === i && <circle cx={x(i)} cy={y(s.budget)} r="4" fill="var(--color-accent)" stroke="var(--color-surface)" strokeWidth="2" />}
               <rect x={x(i) - larg / 2} y={0} width={larg} height={H} fill="transparent" onClick={() => setChoisie(choisie === i ? undefined : i)} />
             </g>
@@ -88,7 +89,7 @@ function CourbeKj({ semaines, niveaux, tests }: { semaines: SemaineSaison[]; niv
         })}
       </svg>
       <p className="min-h-5 text-xs text-texte-2">
-        {c ? <>Sem. du {jm(c.lundi)} · {NOMS_PHASES[c.phase]} · <b className="text-texte">≈ {c.budget.toLocaleString('fr-FR')} kJ</b>{c.competition ? ` · 🏁 ${c.competition}` : ''}{c.type === 'allegee' ? ' · allégée' : ''}</> : 'Touche une semaine pour voir son budget.'}
+        {c ? <>Sem. du {jm(c.lundi)} · {NOMS_PHASES[c.phase]} · <b className="text-texte">≈ {c.budget.toLocaleString('fr-FR')} kJ</b>{c.competition ? ` · course : ${c.competition}` : ''}{c.type === 'allegee' ? ' · allégée' : ''}</> : 'Touche une semaine pour voir son budget.'}
       </p>
       <p className="text-xs text-texte-3">Les creux : semaines allégées (1 sur 4), course B, affûtage. La courbe suit tes jours de vélo et tes durées : change-les dans Réglages, elle bouge.</p>
     </div>
@@ -134,7 +135,7 @@ export function Saison() {
           </>
         ) : (
           <>
-            <p className="mt-1 text-xl font-bold" style={{ color: COULEURS[actuelle.phase] }}>{NOMS_PHASES[actuelle.phase]}</p>
+            <p className="titre-ecran mt-1 flex items-center gap-2 text-xl"><span className="h-3 w-3 shrink-0 rounded-full" style={{ background: COULEURS[actuelle.phase] }} />{NOMS_PHASES[actuelle.phase]}</p>
             <p className="text-texte-2">
               Semaine {actuelle.numero}{actuelle.total ? ` sur ${actuelle.total}` : ''}
               {prochaine && ` · ${NOMS_PHASES[prochaine.type]} dans ${Math.ceil(ecartJours(aujourdhui(), prochaine.debut) / 7)} sem.`}
@@ -143,7 +144,7 @@ export function Saison() {
           </>
         )}
 
-        {/* Frise de la saison, avec toi (▲), tes courses (🏁) et tes tests (🧪) */}
+        {/* Frise de la saison, avec toi (▲), tes courses (drapeau) et tes tests (○) */}
         <div className="relative mt-4 h-3 overflow-hidden rounded-full">
           <div className="flex h-full">
             {s.phases.map((p, i) => {
@@ -154,14 +155,14 @@ export function Saison() {
         </div>
         <div className="relative h-5 text-xs">
           <span className="absolute -translate-x-1/2" style={{ left: `${pos}%` }}>▲</span>
-          {courses.map((c) => <span key={c.date} className="absolute -translate-x-1/2" style={{ left: `${position(c.date)}%` }}>🏁</span>)}
-          {tests.map((d) => <span key={d} className="absolute -translate-x-1/2 text-[10px]" style={{ left: `${position(d)}%` }}>🧪</span>)}
+          {courses.map((c) => <span key={c.date} className="absolute -translate-x-1/2" style={{ left: `${position(c.date)}%` }}><Flag className="h-3.5 w-3.5 text-accent" strokeWidth={2} /></span>)}
+          {tests.map((d) => <span key={d} className="absolute top-1 h-2 w-2 -translate-x-1/2 rounded-full border-[1.5px] border-texte-2" style={{ left: `${position(d)}%` }} />)}
         </div>
         {(courses.length > 0 || tests.length > 0) && (
           <p className="text-xs text-texte-3">
-            {courses.map((c) => `🏁 ${c.nom} (${niveaux.get(c.date) ?? 'B'}) le ${jm(c.date)}`).join(' · ')}
+            {courses.map((c) => `${c.nom} (${niveaux.get(c.date) ?? 'B'}) le ${jm(c.date)}`).join(' · ')}
             {courses.length > 0 && tests.length > 0 ? ' · ' : ''}
-            {tests.length > 0 && `🧪 tests CP ${tests.slice(0, 3).map(jm).join(', ')}`}
+            {tests.length > 0 && `tests CP (○) ${tests.slice(0, 3).map(jm).join(', ')}`}
           </p>
         )}
       </Carte>
