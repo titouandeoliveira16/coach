@@ -47,16 +47,22 @@ export function Progres() {
     <div className="space-y-3">
       {/* Ce qui montre que tu progresses (allégé le 6/11/2026 : vélo 28 j, forme / fatigue et semaine en barres retirés) */}
       <div className="grid grid-cols-2 gap-2">
+        {!dernierTest && (
+          <Tuile libelle="Prochain test" valeur={prochain ? depuisJour(prochain).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '–'}
+          sous={prochain ? (t.testsCourts.includes(prochain) ? "court 3′ + 12′" : 'complet 12-7-3') : 'aucun prévu'} />
+        )}
         <Tuile libelle="CP" aide={AIDES.wkg} valeur={dernierTest?.wkg ? formatNombre(dernierTest.wkg, 2) : dernierTest ? `${dernierTest.w}` : '–'}
-          sous={dernierTest ? (dernierTest.wkg ? `W/kg · ${dernierTest.w} W` : 'W') : 'W/kg'}
+          sous={dernierTest ? (dernierTest.wkg ? `W/kg · ${dernierTest.w} W` : 'W') : 'après ton 1er test'}
           evolution={dernierTest?.wkg && avantDernier?.wkg ? `${dernierTest.wkg >= avantDernier.wkg ? '+' : ''}${formatNombre(dernierTest.wkg - avantDernier.wkg, 2)}` : undefined}
           hausse={dernierTest?.wkg && avantDernier?.wkg ? dernierTest.wkg >= avantDernier.wkg : undefined} />
         <Tuile libelle="Vélo 90 jours" aide={AIDES.kj90} valeur={formatNombre(t.kj90)} sous={`kJ · ${formatNombre(t.kj90Avant)} avant`}
           evolution={signe(pct(t.kj90, t.kj90Avant))} hausse={t.kj90Avant ? t.kj90 >= t.kj90Avant : undefined} />
         <Tuile libelle="Efficacité aérobie" aide={AIDES.efficacite} valeur={t.effRecente ? formatNombre(t.effRecente, 2) : '–'} sous="W par bpm · sorties faciles"
           evolution={signe(pct(t.effRecente, t.effAvant))} hausse={t.effAvant ? t.effRecente! >= t.effAvant : undefined} />
-        <Tuile libelle="Prochain test" valeur={prochain ? depuisJour(prochain).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '–'}
+        {dernierTest && (
+          <Tuile libelle="Prochain test" valeur={prochain ? depuisJour(prochain).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '–'}
           sous={prochain ? (t.testsCourts.includes(prochain) ? "court 3′ + 12′" : 'complet 12-7-3') : 'aucun prévu'} />
+        )}
       </div>
 
       <Carte titre="Évolution de mes tests">
@@ -92,7 +98,7 @@ export function Progres() {
           <ul className="space-y-2 text-sm">
             {familles.map((f) => (
               <li key={f.famille} className="flex items-center justify-between gap-2">
-                <span>{NOMS_FAMILLES[f.famille]}{f.bonus !== 0 && <span className={`text-xs ${f.bonus > 0 ? 'text-nutrition' : 'text-[#f87171]'}`}> · {f.bonus > 0 ? '+' : ''}{formatNombre(f.bonus * 100, 1)} % W</span>}</span>
+                <span>{NOMS_FAMILLES[f.famille]}{f.bonus !== 0 && <span className={`text-xs ${f.bonus > 0 ? 'text-nutrition' : 'text-mauvais'}`}> · {f.bonus > 0 ? '+' : ''}{formatNombre(f.bonus * 100, 1)} % W</span>}</span>
                 <span className="flex gap-1" aria-label={`palier ${f.palier} sur 4`}>
                   {[1, 2, 3, 4].map((n) => <span key={n} className={`h-2 w-6 rounded-full ${n <= f.palier ? 'bg-accent' : 'bg-bordure'}`} />)}
                 </span>
@@ -178,7 +184,7 @@ function Ecart({ libelle, a, b, decimales = 0, inverse = false }: { libelle: str
   return (
     <div className="rounded-xl bg-surface-2 py-2">
       <p className="text-xs text-texte-3">{libelle}</p>
-      <p className={`text-lg font-bold tabular-nums ${d === undefined ? '' : bien ? 'text-nutrition' : 'text-[#f87171]'}`}>
+      <p className={`text-lg font-bold tabular-nums ${d === undefined ? '' : bien ? 'text-nutrition' : 'text-mauvais'}`}>
         {d === undefined ? '–' : `${d >= 0 ? '+' : ''}${formatNombre(d, decimales)}`}
       </p>
       {a !== undefined && b !== undefined && a !== 0 && <p className="text-[11px] text-texte-3">{signe(((b - a) / a) * 100)}</p>}
@@ -190,11 +196,11 @@ const signe = (n?: number) => (n === undefined ? undefined : `${n >= 0 ? '+' : '
 
 function Tuile({ libelle, valeur, aide, sous, evolution, hausse }: { libelle: string; valeur: string; aide?: string; sous?: string; evolution?: string; hausse?: boolean }) {
   return (
-    <div className="rounded-xl border border-bordure bg-surface p-2.5 text-center">
-      <p className="text-xs text-texte-3">{libelle}{aide && <Aide titre={libelle} texte={aide} />}</p>
-      <p className="text-xl font-bold tabular-nums">{valeur}</p>
-      {evolution && <p className={`text-xs font-semibold ${hausse ? 'text-nutrition' : 'text-[#f87171]'}`}>{hausse ? '▲' : '▼'} {evolution}</p>}
-      {sous && <p className="text-[11px] text-texte-3">{sous}</p>}
+    <div className="entree rounded-[14px] bg-surface p-3">
+      <p className="flex items-center text-[13px] font-semibold text-texte-2">{libelle}{aide && <Aide titre={libelle} texte={aide} />}</p>
+      <p className="chiffre mt-0.5 text-2xl">{valeur}</p>
+      {evolution && <p className={`text-xs font-semibold ${hausse ? 'text-bon' : 'text-mauvais'}`}>{hausse ? '▲' : '▼'} {evolution}</p>}
+      {sous && <p className="text-xs text-texte-3">{sous}</p>}
     </div>
   )
 }
@@ -222,7 +228,7 @@ function PetitesVictoires({ t, nu = false }: { t: Donnees; nu?: boolean }) {
   const ecart = (b: number, a: number, unite: string, inverse = false) => {
     const d = b - a
     const bien = inverse ? d < 0 : d > 0
-    return <b className={d === 0 ? 'text-texte' : bien ? 'text-nutrition' : 'text-[#f87171]'}>{d > 0 ? '+' : ''}{formatNombre(d, unite === '%' ? 1 : 0)} {unite}</b>
+    return <b className={d === 0 ? 'text-texte' : bien ? 'text-nutrition' : 'text-mauvais'}>{d > 0 ? '+' : ''}{formatNombre(d, unite === '%' ? 1 : 0)} {unite}</b>
   }
   const contenu = (
     <>

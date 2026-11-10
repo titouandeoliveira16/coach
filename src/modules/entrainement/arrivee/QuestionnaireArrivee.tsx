@@ -197,7 +197,7 @@ export function QuestionnaireArrivee({ montreSeulement = false }: { montreSeulem
           </Carte>
           {apercu && (
             <Carte titre="Ta saison, calculée pour toi" className="border-accent!">
-              <div className="flex h-7 overflow-hidden rounded-lg text-[10px] font-bold text-fond">
+              <div className="flex h-7 overflow-hidden rounded-lg text-[11px] font-bold text-fond">
                 {apercu.saison.phases.filter((p) => p.type !== 'recuperation' && p.type !== 'entretien' || p.debut < r.course!.date).map((p, i, l) => {
                   const fin = l[i + 1]?.debut ?? r.course!.date
                   const n = Math.max(1, Math.round((Date.parse(fin) - Date.parse(p.debut)) / (7 * 86_400_000)))
@@ -219,7 +219,7 @@ export function QuestionnaireArrivee({ montreSeulement = false }: { montreSeulem
 
       {etape === 4 && <Montre />}
 
-      {message && <p className="text-sm text-[#f87171]">{message}</p>}
+      {message && <p className="text-sm text-mauvais">{message}</p>}
       {etape < 4 && (
         <div className="mt-auto flex gap-2 pt-2">
           {etape > 0 && <Bouton variante="secondaire" className="flex-1" onClick={() => setEtape(etape - 1)}>Retour</Bouton>}
@@ -300,7 +300,7 @@ function Montre() {
           )}
         </Carte>
       ))}
-      {message && <p className="text-sm text-[#f87171]">{message}</p>}
+      {message && <p className="text-sm text-mauvais">{message}</p>}
       <button type="button" className="py-2 text-sm text-texte-3" onClick={() => finir('plus-tard')}>Plus tard (Entraînement → Réglages → Intervals.icu)</button>
     </>
   )

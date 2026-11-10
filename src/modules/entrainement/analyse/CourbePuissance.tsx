@@ -41,8 +41,8 @@ export function CourbePuissance() {
 
   return (
     <Carte titre="Courbe de puissance">
-      <GraphiqueLignes etiquettes={NOMS} format={(n) => `${Math.round(n)}`} series={[
-        { nom: 'Record', couleur: SERIES[1], valeurs: record.map((e) => e?.w) },
+      <GraphiqueLignes etiquettes={NOMS} reperes={[0, 2, 6, 8, 10, 12, 13]} format={(n) => `${Math.round(n)}`} series={[
+        { nom: 'Record', couleur: SERIES[1], valeurs: record.map((e) => e?.w), fond: true },
         { nom: '6 dernières semaines', couleur: SERIES[0], valeurs: recent.map((e) => e?.w), pointille: true },
       ]} />
       <div className="mt-3 grid grid-cols-3 gap-2 text-center">
@@ -50,8 +50,8 @@ export function CourbePuissance() {
           const i = DUREES_COURBE.indexOf(d as (typeof DUREES_COURBE)[number])
           return (
             <div key={d} className="rounded-xl bg-surface-2 py-2">
-              <p className="text-xs text-texte-3">{NOMS[i]}</p>
-              <p className="text-lg font-bold tabular-nums">{record[i] ? `${formatNombre(record[i]!.w)} W` : '–'}</p>
+              <p className="text-xs text-texte-2">{NOMS[i]}</p>
+              <p className="chiffre text-lg">{record[i] ? `${formatNombre(record[i]!.w)} W` : '–'}</p>
               <p className="text-[11px] text-texte-3">{record[i] ? date(record[i]!.date) : ' '}</p>
               <p className="text-[11px] text-texte-3">{recent[i] ? `6 sem. : ${formatNombre(recent[i]!.w)}` : '6 sem. : –'}</p>
             </div>

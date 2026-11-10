@@ -13,7 +13,7 @@ fonctions, tous les réglages et toutes les aides restent.
 | Ligne, bordure | `--color-bordure` | `#1f1f21` |
 | Texte principal | `--color-texte` | `#ffffff` |
 | Texte secondaire | `--color-texte-2` | `#a1a1a6` |
-| Texte discret | `--color-texte-3` | `#6e6e73` |
+| Texte discret | `--color-texte-3` | `#8a8a90` (contraste ≥ 4,5 sur les cartes) |
 | Accent Entraînement (orange) | `--color-entrainement` | `#ff6a13` |
 | Orange doux (fond de pastille) | `--color-accent-doux` | `#2a1206` |
 | Orange clair (texte sur fond doux) | `--color-accent-clair` | `#ff9a5c` |
@@ -23,7 +23,7 @@ Couleurs qui codent une information, **toujours avec un mot ou un nom à côté*
 | Information | Hex |
 |---|---|
 | Zones Z1 · Z2 · Z3 · Z4 · Z5 · Z6 | `#7c7b74` · `#3b9eff` · `#46a758` · `#ffc53d` · `#f76b15` · `#e5484d` |
-| Feu vert · orange · rouge | `#30d158` · `#ffd60a` · `#ff453a` |
+| Feu vert · orange · rouge | `#30d158` · `#ff9f0a` · `#ff453a` (tokens `bon` · `attention` · `mauvais`, jamais de couleur écrite en dur) |
 | Sommeil | `#9b87f5` |
 | Nutrition | `#2ec5d3` |
 | Course A · B · C | orange accent · `#ffc53d` · `#3b9eff` |
@@ -35,13 +35,15 @@ Les autres modules gardent leur accent (Révision `#60a5fa`, Budget `#facc15`), 
 
 Une seule famille, **Archivo** (variable, hébergée dans l'appli : `@fontsource-variable/archivo`, axes graisse et largeur).
 - Titres d'écran : 800, largeur 125 %, MAJUSCULES, 30 px.
-- Petits titres de carte (étiquettes) : 600, largeur 125 %, majuscules, 11 px, espacement 0,12 em, texte discret.
+- Petits titres de carte (étiquettes) : 600, casse normale, 13 px, texte secondaire (10/11/2026 : moins de majuscules).
+- Capitales larges réservées au titre de l'écran et aux gros chiffres ; boutons en casse normale, gras.
+- Échelle de tailles : 11 · 13 · 15 · 18 · 22 · 28 px.
 - Gros chiffres : 800, largeur 112 %, chiffres tabulaires.
 - Texte : 400 / 600, largeur 100 %, 14-15 px.
 
 ## Formes et espacements
 
-- Arrondis : cartes 14 px, champs et petites tuiles 10 px, boutons principaux et pastilles en pilule (999 px).
+- Arrondis : cartes 14 px, champs et petites tuiles 10 px, boutons principaux 14 px, pastilles (onglets, choix) en pilule (999 px).
 - Cartes sans bordure (fond `surface` sur fond noir).
 - Espacements : 4 · 8 · 12 · 16 · 24 px ; marges d'écran 18 px.
 

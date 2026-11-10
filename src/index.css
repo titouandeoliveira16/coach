@@ -13,7 +13,7 @@
   --color-bordure: #1f1f21;
   --color-texte: #ffffff;       /* texte principal */
   --color-texte-2: #a1a1a6;     /* texte secondaire */
-  --color-texte-3: #6e6e73;     /* texte discret */
+  --color-texte-3: #8a8a90;     /* texte discret (contraste ≥ 4,5 sur les cartes) */
   --color-accent-doux: #2a1206; /* fond de pastille orange */
   --color-accent-clair: #ff9a5c;
   /* Informations (toujours avec un mot à côté) */
@@ -24,7 +24,7 @@
   --color-z5: #f76b15;
   --color-z6: #e5484d;
   --color-bon: #30d158;
-  --color-attention: #ffd60a;
+  --color-attention: #ff9f0a;
   --color-mauvais: #ff453a;
   --color-sommeil: #9b87f5;
   --color-nutri: #2ec5d3;
@@ -95,12 +95,9 @@ input[type='date']::-webkit-date-and-time-value {
   line-height: 1.05;
 }
 .etiquette {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
-  font-stretch: 125%;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--color-texte-3);
+  color: var(--color-texte-2);
 }
 .chiffre {
   font-weight: 800;

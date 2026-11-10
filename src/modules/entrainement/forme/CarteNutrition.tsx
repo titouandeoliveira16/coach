@@ -68,7 +68,7 @@ export function CarteNutrition({ ouverte: ouverteParent, onBasculer }: {
     ['Lipides', b.lipides, m?.lipides, ' g'],
   ]
   /** Écart : en vert ou neutre dans ±10 %, en orange au-delà. */
-  const couleurEcart = (besoin: number, v: number) => (Math.abs(v - besoin) <= besoin * 0.1 ? 'text-texte-2' : 'text-[#fb923c]')
+  const couleurEcart = (besoin: number, v: number) => (Math.abs(v - besoin) <= besoin * 0.1 ? 'text-texte-2' : 'text-attention')
 
   // Excès d'hier (ou d'aujourd'hui une fois noté) à étaler sur les jours faciles
   const exces = [[jour, m?.kcal, b.kcal], [hier, assietteHier && !assietteHier.nonRenseigne ? assietteHier.kcal : undefined, besoinsHier?.kcal]] as const
@@ -78,7 +78,7 @@ export function CarteNutrition({ ouverte: ouverteParent, onBasculer }: {
   return (
     <Carte className={`flex shrink-0 flex-col gap-2 p-3! ${ouverte ? 'border-accent!' : ''}`}>
       <button type="button" onClick={() => setOuverte(!ouverte)} className="flex items-center justify-between text-left">
-        <span className="text-xs font-semibold uppercase tracking-wider text-texte-3">Nutrition du jour</span>
+        <span className="text-[13px] font-semibold text-texte-2">Nutrition du jour</span>
         <span className="text-sm">
           {m?.kcal !== undefined ? <b>{formatNombre(m.kcal)}</b> : <span className="text-texte-3">—</span>}
           <span className="text-texte-2"> / {formatNombre(b.kcal)} kcal</span> <span className={ouverte ? 'font-semibold text-accent' : 'text-texte-3'}>{ouverte ? 'Réduire ▴' : '▾'}</span>
@@ -125,7 +125,7 @@ export function CarteNutrition({ ouverte: ouverteParent, onBasculer }: {
       {b.tendance !== undefined && (() => {
         const tropVite = b.tendance < -0.01 * b.kg
         return (
-          <p className={`mt-1 text-sm ${tropVite ? 'text-[#fb923c]' : 'text-texte-2'}`}>
+          <p className={`mt-1 text-sm ${tropVite ? 'text-attention' : 'text-texte-2'}`}>
             Poids : <b>{b.tendance > 0 ? '+' : ''}{formatNombre(b.tendance, 1)} kg/sem.</b>
             {b.objectif === 'perte' && ` (visé ≈ ${formatNombre(-0.005 * b.kg, 1)})`}
             {tropVite && ' · trop rapide : mange un peu plus pour garder tes muscles et tes performances'}

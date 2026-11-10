@@ -23,7 +23,7 @@ import { SeancesFaites } from './SeancesFaites'
 import type { Raison, Seance } from '../types'
 import { nouvelId } from '../seances/donnees'
 
-const COULEUR = { vert: '#4ade80', orange: '#fb923c', rouge: '#f87171' }
+const COULEUR = { vert: 'var(--color-bon)', orange: 'var(--color-attention)', rouge: 'var(--color-mauvais)' }
 
 /** Choix bien visible entre la version conseillée par le feu et la séance prévue. */
 function ChoixSeance({ maintenue, conseil, prevu, couleur, onChoisir }: {
@@ -38,7 +38,7 @@ function ChoixSeance({ maintenue, conseil, prevu, couleur, onChoisir }: {
         {conseil}<span className="block text-[11px] font-normal leading-tight">conseillé</span>
       </button>
       <button type="button" role="radio" aria-checked={maintenue} className={bouton(maintenue)}
-        style={maintenue ? { background: '#4ade80', borderColor: '#4ade80' } : undefined} onClick={() => onChoisir(true)}>
+        style={maintenue ? { background: 'var(--color-bon)', borderColor: 'var(--color-bon)' } : undefined} onClick={() => onChoisir(true)}>
         {prevu}<span className="block text-[11px] font-normal leading-tight">je me sens bien</span>
       </button>
     </div>
@@ -134,11 +134,10 @@ export function CarteAujourdhui({ onModifierMatin }: {
     sommeil: moyenneNuits ? `7 j : ${moyenneNuits}` : undefined,
     ressenti: ressenti !== undefined ? `${formatNombre(ressenti, 1)} / 5` : undefined,
   }
-  const couleurEtat = (e?: 'ok' | 'alerte' | 'info') => (e === 'alerte' ? COULEUR[signal.couleur === 'vert' ? 'orange' : signal.couleur] : e === 'ok' ? COULEUR.vert : '#a3abb7')
-  /** Fond plein de chaque case (teintes foncées pour que le texte blanc se lise) ; gris si pas encore d'avis */
-  const FOND_CASE = { vert: '#15803d', orange: '#c2410c', rouge: '#b91c1c' }
-  const fondCase = (e?: 'ok' | 'alerte' | 'info') => (e === 'alerte' ? FOND_CASE[signal.couleur === 'vert' ? 'orange' : signal.couleur] : e === 'ok' ? FOND_CASE.vert : undefined)
-  const petitBouton = (actif: boolean) => `min-h-11 flex-1 rounded-xl border px-1 text-[13px] font-semibold ${actif ? 'border-[#f87171] bg-[#f87171] text-fond' : 'border-bordure text-texte-2'}`
+  const couleurEtat = (e?: 'ok' | 'alerte' | 'info') => (e === 'alerte' ? COULEUR[signal.couleur === 'vert' ? 'orange' : signal.couleur] : e === 'ok' ? COULEUR.vert : 'var(--color-texte-2)')
+  /** Couleur de chaque case (texte de la couleur du feu sur un fond teinté) ; gris si pas encore d'avis */
+  const fondCase = (e?: 'ok' | 'alerte' | 'info') => (e === 'alerte' ? COULEUR[signal.couleur === 'vert' ? 'orange' : signal.couleur] : e === 'ok' ? COULEUR.vert : undefined)
+  const petitBouton = (actif: boolean) => `min-h-11 flex-1 rounded-xl border px-1 text-[13px] font-semibold ${actif ? 'border-mauvais bg-mauvais text-fond' : 'border-bordure text-texte-2'}`
 
   return (
     <>
@@ -154,7 +153,7 @@ export function CarteAujourdhui({ onModifierMatin }: {
               className={`presse flex flex-col items-center justify-center gap-0.5 rounded-[10px] px-0.5 py-1.5 ${fondCase(d?.etat) ? '' : 'bg-surface-2 text-texte-2'}`}
               style={fondCase(d?.etat) ? { background: `color-mix(in srgb, ${fondCase(d?.etat)} 16%, transparent)`, color: fondCase(d?.etat) } : undefined}>
               <span className="text-[11px] opacity-85">{NOMS_CASES[cle]}</span>
-              <span className="text-sm font-semibold leading-tight">{d?.court ?? '—'}</span>
+              <span className={`font-semibold leading-tight ${(d?.court?.length ?? 0) > 10 ? 'text-xs' : 'text-sm'}`}>{d?.court ?? '—'}</span>
               {resumes[cle] && <span className="text-[11px] leading-tight opacity-85">{resumes[cle]}</span>}
             </button>
           ))}
@@ -167,7 +166,7 @@ export function CarteAujourdhui({ onModifierMatin }: {
                 <div className="grid grid-cols-5 gap-1 text-center">
                   {QUESTIONS.map((q) => (
                     <span key={q.cle} className="rounded-lg bg-surface-2 py-1">
-                      <span className="block text-[10px] text-texte-3">{q.libelle}</span>
+                      <span className="block text-[11px] text-texte-3">{q.libelle}</span>
                       <b className="text-sm">{mesure[q.cle] ?? '–'}</b>
                     </span>
                   ))}
@@ -202,7 +201,7 @@ export function CarteAujourdhui({ onModifierMatin }: {
         )}
         {malade && <p className="text-xs text-texte-3">Noté pour aujourd'hui : la journée est marquée indisponible.</p>}
         {troisJours && (
-          <p className="rounded-xl border border-[#f87171]/40 bg-[#f87171]/10 p-3 text-sm">
+          <p className="rounded-xl border border-mauvais/40 bg-mauvais/10 p-3 text-sm">
             3 jours de suite en alerte avec une maladie ou une douleur : prends l'avis d'un médecin avant de reprendre.
           </p>
         )}
@@ -212,7 +211,7 @@ export function CarteAujourdhui({ onModifierMatin }: {
       <Carte ref={seanceRef} className={`flex flex-col p-3! ${detailOuvert ? 'border-accent!' : ''} shrink-0`}
 >
         <div className="flex items-baseline justify-between gap-2">
-          <p className="text-xs font-semibold uppercase tracking-wider text-texte-3">Séance du jour</p>
+          <p className="text-[13px] font-semibold text-texte-2">Séance du jour</p>
           {prevue && <span className="text-xs text-texte-2">{prevue.sport === 'velo' ? 'vélo' : prevue.sport}{prevue.kjPrevu ? ` · ${prevue.kjPrevu} kJ` : ''}</span>}
         </div>
         {reprise ? (
@@ -221,7 +220,7 @@ export function CarteAujourdhui({ onModifierMatin }: {
           </p>
         ) : null}
         {faites ? <SeancesFaites jour={jour} /> : null}
-        {faites && prevue && <p className="mt-3 text-xs uppercase tracking-wider text-texte-3">Encore prévu</p>}
+        {faites && prevue && <p className="mt-3 text-[13px] font-semibold text-texte-2">Encore prévu</p>}
         {prevue ? (
           <>
             <p className="mt-0.5 text-[22px] font-bold leading-tight">{prevue.titre}{prevue.sport === 'velo' && !/\d+ ?(min|h)/.test(prevue.titre) ? ` · ${prevue.dureeMin} min` : ''}</p>
@@ -296,7 +295,7 @@ export function CarteAujourdhui({ onModifierMatin }: {
             <div className="flex-1" />
             {demain && demain.length > 0 && (
               <>
-                <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-texte-3">Demain</p>
+                <p className="mt-1 text-[13px] font-semibold text-texte-2">Demain</p>
                 {demain.map((d) => (
                   <div key={d.id} className="mt-1.5 rounded-xl bg-surface-2 p-3">
                     <p className="flex justify-between gap-2 font-semibold"><span><IconeSport sport={d.sport} />{d.titre}</span><span className="font-normal text-texte-2">{d.dureeMin} min</span></p>

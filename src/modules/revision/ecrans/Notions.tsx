@@ -13,7 +13,7 @@ const GROUPES: { titre: string; themes: Theme[]; epreuve: 'E1' | 'E2' }[] = [
   { titre: 'Écrit 1', themes: ['T1', 'T2', 'T3'], epreuve: 'E1' },
   { titre: 'Écrit 2', themes: ['Théorie', 'Blocs'], epreuve: 'E2' },
 ]
-const COULEURS_NIVEAU = { 1: '#f87171', 2: '#fb923c', 3: '#4ade80' }
+const COULEURS_NIVEAU = { 1: 'var(--color-mauvais)', 2: 'var(--color-attention)', 3: 'var(--color-bon)' }
 
 /** Suivi des 41 notions : statut, J0, niveau ; toucher une notion montre ses rappels. */
 export function Notions() {

@@ -36,7 +36,7 @@ function Etapes({ etapes, unite }: { etapes: Etape[]; unite?: string }) {
   )
 }
 
-const Titre = ({ children }: { children: string }) => <p className="mt-3 text-[11px] font-semibold uppercase tracking-wider text-texte-3">{children}</p>
+const Titre = ({ children }: { children: string }) => <p className="mt-3 text-[11px] font-semibold text-texte-2">{children}</p>
 
 /** Une séance : résumé et profil, détail au toucher. */
 export function Fiche({ s }: { s: SeanceCatalogue }) {
@@ -49,7 +49,7 @@ export function Fiche({ s }: { s: SeanceCatalogue }) {
       <button type="button" onClick={() => setOuverte(!ouverte)} className="w-full p-3.5 text-left">
         <span className="flex items-baseline justify-between gap-2">
           <span className="font-semibold">{s.nom}</span>
-          <span className="shrink-0 rounded border px-1.5 text-[10px] font-semibold uppercase tracking-wider" style={{ color: COULEUR_PREUVE[p.niveau], borderColor: COULEUR_PREUVE[p.niveau] }}>{p.niveau}</span>
+          <span className="shrink-0 rounded border px-1.5 text-[11px] font-semibold uppercase tracking-wider" style={{ color: COULEUR_PREUVE[p.niveau], borderColor: COULEUR_PREUVE[p.niveau] }}>{p.niveau}</span>
         </span>
         <Profil s={s} />
         <span className="mt-1.5 block text-sm text-texte-2">{s.resume}</span>

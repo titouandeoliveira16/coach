@@ -26,7 +26,7 @@ export function Bilan({ d, mois, rituel = false }: { d: Donnees; mois: string; r
 
       {rep.revenus > 0 && (
         <div>
-          <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-texte-3">Règle 50/30/20 (part des revenus)</p>
+          <p className="mb-1 text-[13px] font-semibold text-texte-2">Règle 50/30/20 (part des revenus)</p>
           <p className="flex justify-between"><span className="text-texte-2">Besoins <span className="text-texte-3">(repère 50 %)</span></span><span className="font-semibold">{pct(rep.besoins)}</span></p>
           <p className="flex justify-between"><span className="text-texte-2">Loisirs <span className="text-texte-3">(repère 30 %)</span></span><span className="font-semibold">{pct(rep.loisirs)}</span></p>
           <p className="flex justify-between"><span className="text-texte-2">Épargne et investissement <span className="text-texte-3">(repère 20 %)</span></span><span className="font-semibold">{pct(rep.epargne)}</span></p>
@@ -36,23 +36,23 @@ export function Bilan({ d, mois, rituel = false }: { d: Donnees; mois: string; r
 
       {(b.hausses.length > 0 || b.baisses.length > 0) && (
         <div>
-          <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-texte-3">Par rapport à {nomMois(decalerMois(mois, -1))}</p>
-          {b.hausses.map((h) => <p key={h.categorieId} className="flex justify-between"><span>↗ {nom(h.categorieId)}</span><span className="text-[#fb923c]">{formatEuros(h.ecart, { signe: true })}</span></p>)}
-          {b.baisses.map((h) => <p key={h.categorieId} className="flex justify-between"><span>↘ {nom(h.categorieId)}</span><span className="text-[#4ade80]">{formatEuros(h.ecart)}</span></p>)}
+          <p className="mb-1 text-[13px] font-semibold text-texte-2">Par rapport à {nomMois(decalerMois(mois, -1))}</p>
+          {b.hausses.map((h) => <p key={h.categorieId} className="flex justify-between"><span>↗ {nom(h.categorieId)}</span><span className="text-attention">{formatEuros(h.ecart, { signe: true })}</span></p>)}
+          {b.baisses.map((h) => <p key={h.categorieId} className="flex justify-between"><span>↘ {nom(h.categorieId)}</span><span className="text-bon">{formatEuros(h.ecart)}</span></p>)}
         </div>
       )}
 
       <div>
-        <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-texte-3">Plafonds</p>
+        <p className="mb-1 text-[13px] font-semibold text-texte-2">Plafonds</p>
         {b.depassees.length === 0 ? <p className="text-texte-2">Aucun plafond dépassé.</p> : b.depassees.map((x) => (
           <p key={x.categorieId} className="flex justify-between"><span>{nom(x.categorieId)}</span><span>{formatEuros(x.depense)} / {formatEuros(x.plafond)}</span></p>
         ))}
       </div>
 
       <div>
-        <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-texte-3">Patrimoine</p>
+        <p className="mb-1 text-[13px] font-semibold text-texte-2">Patrimoine</p>
         <p className="flex justify-between"><span className="text-texte-2">Fin du mois</span><span className="font-semibold">{formatEuros(b.patrimoineFin)}</span></p>
-        {evolution !== undefined && <p className="flex justify-between"><span className="text-texte-2">Sur le mois</span><span className="font-semibold" style={{ color: evolution >= 0 ? '#4ade80' : '#f87171' }}>{formatEuros(evolution, { signe: true })}</span></p>}
+        {evolution !== undefined && <p className="flex justify-between"><span className="text-texte-2">Sur le mois</span><span className="font-semibold" style={{ color: evolution >= 0 ? 'var(--color-bon)' : 'var(--color-mauvais)' }}>{formatEuros(evolution, { signe: true })}</span></p>}
       </div>
 
       {rituel && (

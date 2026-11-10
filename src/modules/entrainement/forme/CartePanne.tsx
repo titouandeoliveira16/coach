@@ -32,13 +32,13 @@ export function CartePanne({ compact = false }: { compact?: boolean } = {}) {
 
   if (panne && compact)
     return (
-      <button type="button" onClick={() => veloRepare()} className="min-h-12 flex-1 rounded-xl border border-[#fb923c]/50 bg-[#fb923c]/10 px-2 text-sm font-semibold">
+      <button type="button" onClick={() => veloRepare()} className="min-h-12 flex-1 rounded-xl border border-attention/50 bg-attention/10 px-2 text-sm font-semibold">
         En panne · <span className="text-accent">il remarche</span>
       </button>
     )
   if (panne)
     return (
-      <div className="flex items-center justify-between rounded-2xl border border-[#fb923c]/50 bg-[#fb923c]/10 px-4 py-3 text-sm">
+      <div className="flex items-center justify-between rounded-2xl border border-attention/50 bg-attention/10 px-4 py-3 text-sm">
         <span>Vélo en panne jusqu'au {jourLong(panne.au)}</span>
         <button type="button" className="font-semibold text-accent" onClick={() => veloRepare()}>Il remarche</button>
       </div>

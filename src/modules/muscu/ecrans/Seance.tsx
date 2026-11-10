@@ -20,7 +20,7 @@ export function Seance({ e }: { e: EtatMuscu }) {
   return (
     <div className="space-y-3">
       <Carte>
-        <p className="text-xs uppercase tracking-wider text-texte-3">Cycle {e.cycle} · semaine {e.semaine}/4</p>
+        <p className="text-[13px] font-semibold text-texte-2">Cycle {e.cycle} · semaine {e.semaine}/4</p>
         <p className="text-2xl font-bold">{SEMAINES[e.semaine].nom}</p>
         <p className="mt-1 text-sm text-texte-2">
           Référence <b className="text-texte">{kg(reference)}</b>
@@ -100,7 +100,7 @@ function Minuteur({ secondes }: { secondes: number }) {
   const texte = (n: number) => `${Math.floor(n / 60)}:${String(n % 60).padStart(2, '0')}`
   return (
     <button type="button" onClick={() => { setMaintenant(Date.now()); setFin(reste ? undefined : Date.now() + secondes * 1000) }}
-      className={`mt-3 w-full rounded-xl border py-2.5 font-semibold ${reste === 0 ? 'border-[#4ade80] text-[#4ade80]' : 'border-bordure text-texte-2'}`}>
+      className={`mt-3 w-full rounded-xl border py-2.5 font-semibold ${reste === 0 ? 'border-bon text-bon' : 'border-bordure text-texte-2'}`}>
       {reste === undefined ? `⏱️ Repos ${texte(secondes)}` : reste === 0 ? 'Repos terminé · toucher pour relancer' : `⏱️ ${texte(reste)} · toucher pour arrêter`}
     </button>
   )

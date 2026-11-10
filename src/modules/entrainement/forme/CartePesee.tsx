@@ -29,7 +29,7 @@ export function FeuillePesee({ onFermer }: { onFermer: () => void }) {
         onFermer()
       }}>Enregistrer</Bouton>
       {duJour ? (
-        <button type="button" className="mt-1 w-full py-2 text-sm text-[#f87171]" onClick={async () => {
+        <button type="button" className="mt-1 w-full py-2 text-sm text-mauvais" onClick={async () => {
           await effacerPesee(duJour.date)
           onFermer()
         }}>Supprimer la pesée d'aujourd'hui</button>
@@ -72,7 +72,7 @@ export function CartePesee({ compact = false }: { compact?: boolean } = {}) {
           {duJour ? `${formatNombre(duJour.poidsKg, 1)} kg` : 'Me peser'}
         </button>
         {!duJour && (
-          <button type="button" onClick={() => marquerSansPesee(aujourdhui(), true)} className={`${bouton} border-[#f87171]/50 bg-[#f87171]/10 text-[#f87171]`}>
+          <button type="button" onClick={() => marquerSansPesee(aujourdhui(), true)} className={`${bouton} border-mauvais/50 bg-mauvais/10 text-mauvais`}>
             Pas de pesée
           </button>
         )}
@@ -102,7 +102,7 @@ export function CartePesee({ compact = false }: { compact?: boolean } = {}) {
       </button>
       {!duJour && (
         <div className="flex justify-end">
-          <button type="button" className="rounded-xl border border-[#f87171]/50 bg-[#f87171]/10 px-3.5 py-2 text-sm font-semibold text-[#f87171] active:opacity-60"
+          <button type="button" className="rounded-xl border border-mauvais/50 bg-mauvais/10 px-3.5 py-2 text-sm font-semibold text-mauvais active:opacity-60"
             onClick={() => marquerSansPesee(aujourdhui(), true)}>
             Pas de pesée aujourd'hui
           </button>
@@ -123,7 +123,7 @@ export function CartePesee({ compact = false }: { compact?: boolean } = {}) {
         setOuverte(false)
       }}>Enregistrer</Bouton>
       {duJour && (
-        <button type="button" className="mt-1 w-full py-2 text-sm text-[#f87171]" onClick={async () => {
+        <button type="button" className="mt-1 w-full py-2 text-sm text-mauvais" onClick={async () => {
           await effacerPesee(duJour.date)
           setOuverte(false)
         }}>Supprimer la pesée d'aujourd'hui</button>

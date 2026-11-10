@@ -26,7 +26,7 @@ function Tuile({ Icone, couleurIcone, libelle, valeur, couleurValeur, onClick, c
   const Balise = onClick ? 'button' : 'div'
   return (
     <Balise {...(onClick ? { type: 'button' as const, onClick } : {})} className={`entree rounded-[14px] bg-surface p-2.5 text-left ${onClick ? 'presse' : ''}`}>
-      <p className="flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-wider text-texte-3"><Icone className="h-3.5 w-3.5" style={{ color: couleurIcone }} strokeWidth={2} />{libelle}</p>
+      <p className="flex items-center gap-1.5 text-[11px] font-semibold text-texte-2"><Icone className="h-3.5 w-3.5" style={{ color: couleurIcone }} strokeWidth={2} />{libelle}</p>
       <p className="chiffre mt-0.5 text-lg" style={{ color: couleurValeur }}>{valeur}</p>
       {children}
     </Balise>
@@ -51,14 +51,14 @@ export function TuilesMatin({ onPoids }: { onPoids?: () => void } = {}) {
   const couleur = d.decision?.couleur
   return (
     <div className="grid shrink-0 grid-cols-3 gap-2">
-      <Tuile Icone={HeartPulse} couleurIcone={couleur ? COULEURS[couleur] : 'var(--color-texte-3)'} libelle="Forme" valeur={couleur ?? '—'} couleurValeur={couleur ? COULEURS[couleur] : 'var(--color-texte-3)'}>
+      <Tuile Icone={HeartPulse} couleurIcone={couleur ? COULEURS[couleur] : 'var(--color-texte-3)'} libelle="Forme" valeur={couleur ? couleur[0].toUpperCase() + couleur.slice(1) : '—'} couleurValeur={couleur ? COULEURS[couleur] : 'var(--color-texte-3)'}>
         <MiniCourbe valeurs={vfc} couleur={couleur ? COULEURS[couleur] : 'var(--color-texte-3)'} />
       </Tuile>
       <Tuile Icone={Moon} couleurIcone="var(--color-sommeil)" libelle="Nuit" valeur={nuit ? `${Math.floor(nuit)}:${String(Math.round((nuit % 1) * 60)).padStart(2, '0')}` : '—'}>
         <MiniCourbe valeurs={nuits} couleur="var(--color-sommeil)" />
       </Tuile>
       <Tuile Icone={Scale} couleurIcone="var(--color-texte-3)" libelle="Poids" onClick={onPoids} valeur={poids ? `${formatNombre(poids.poidsKg, 1)} kg` : '—'}>
-        {poids && poids.date === jour ? <MiniCourbe valeurs={d.pesees.map((p) => p.poidsKg)} couleur="var(--color-texte-2)" /> : <p className={`mt-2 text-[10.5px] ${d.sansPesee ? 'text-texte-3' : 'text-accent'}`}>{d.sansPesee ? 'pas de pesée' : 'à peser'}</p>}
+        {poids && poids.date === jour ? <MiniCourbe valeurs={d.pesees.map((p) => p.poidsKg)} couleur="var(--color-texte-2)" /> : <p className={`mt-2 text-[11px] ${d.sansPesee ? 'text-texte-3' : 'text-accent'}`}>{d.sansPesee ? 'pas de pesée' : 'à peser'}</p>}
       </Tuile>
     </div>
   )

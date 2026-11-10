@@ -72,7 +72,7 @@ function FicheAbonnement({ initial, d, existe, onFermer }: { initial: Abonnement
           <input type="checkbox" checked={a.actif} onChange={(e) => setA({ ...a, actif: e.target.checked })} className="h-6 w-6 accent-[#facc15]" /></label>
         <Bouton disabled={!valide} onClick={async () => { await enregistrerAbonnement({ ...a, nom: a.nom.trim(), montant: Math.round(m! * 100) }); onFermer() }}>Enregistrer</Bouton>
         {existe && (
-          <button type="button" className="w-full py-2 text-sm text-[#f87171]" onClick={async () => { await supprimerAbonnement(a.id); onFermer() }}>
+          <button type="button" className="w-full py-2 text-sm text-mauvais" onClick={async () => { await supprimerAbonnement(a.id); onFermer() }}>
             Supprimer (résilié) : les paiements déjà notés restent
           </button>
         )}

@@ -180,7 +180,7 @@ function FormulaireCourse({ course, min, contexte, dateDejaPrise, onValider, onR
         onClick={() => onValider({ date: f.date, nom: f.nom.trim(), niveau: f.niveau, epreuve: f.epreuve, ...champsParcours(f.parcours), ...(f.cols.length ? { cols: f.cols } : {}) })}>
         {course ? 'Enregistrer' : 'Ajouter'}
       </button>
-      {onRetirer && <button type="button" className="mt-1 w-full py-2.5 text-sm text-[#f87171]" onClick={onRetirer}>Retirer cette course</button>}
+      {onRetirer && <button type="button" className="mt-1 w-full py-2.5 text-sm text-mauvais" onClick={onRetirer}>Retirer cette course</button>}
     </div>
   )
 }

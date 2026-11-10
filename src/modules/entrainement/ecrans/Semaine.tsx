@@ -31,9 +31,9 @@ import { programmeDe, useReglagesEntrainement } from '../reglagesEntrainement'
 import { lundiDe, nouvelId } from '../seances/donnees'
 import { RAISONS, type Raison, type Seance, type SeancePrevue } from '../types'
 
-const VERT = '#4ade80'
-const ORANGE = '#fb923c'
-const ROUGE = '#f87171'
+const VERT = 'var(--color-bon)'
+const ORANGE = 'var(--color-attention)'
+const ROUGE = 'var(--color-mauvais)'
 const JAUNE = '#facc15'
 
 /**
@@ -99,7 +99,7 @@ export function Semaine() {
           const panne = pannes?.has(d)
           if (!duJour.length && !horsPlan.length)
             return (
-              <div key={d} className={`flex items-center gap-2.5 rounded-xl border-l-[3px] px-3 py-2 ${d === auj ? 'border-accent bg-accent/10' : 'border-transparent bg-surface'}`}>
+              <div key={d} className={`flex items-center gap-2.5 rounded-xl border-l-[3px] px-3 py-1.5 ${d === auj ? 'border-accent bg-accent/10' : 'border-transparent'}`}>
                 <span className="w-9 shrink-0 text-[13px] text-texte-3">{court(d)}</span>
                 <span className="text-sm text-texte-3">Repos{panne ? ' · vélo en panne' : ''}</span>
               </div>
@@ -219,7 +219,7 @@ function AVoir({ lundi, deps, onMessage }: { lundi: string; deps: unknown[]; onM
   if (!n && !chargee && !aVenir) return null
   const resume = n ? `⚠️ ${n} point${n > 1 ? 's' : ''} à voir` : chargee ? 'Semaine chargée : le minimum' : 'Rien à signaler · semaine chargée ?'
   return (
-    <Repliable titre="À voir cette semaine" resume={resume} libelle="Voir" className={n ? 'border-[#fb923c]/50' : ''}>
+    <Repliable titre="À voir cette semaine" resume={resume} libelle="Voir" className={n ? 'border-attention/50' : ''}>
       {n > 0 && <ul className="space-y-1.5 text-sm">{alertes.map((a, i) => <li key={i}>{a}</li>)}</ul>}
       {aVenir && (chargee ? (
         <div className="mt-2 text-sm">
@@ -259,11 +259,11 @@ function DetailSeance({ p, jours, prevues, onFermer, onMessage }: {
     <Feuille titre={p.titre} onFermer={onFermer}>
       {p.realiseDifferent && (
         <div className="mb-3 rounded-xl border border-[#facc15]/40 bg-[#facc15]/10 p-3 text-sm">
-          <p className="text-xs uppercase tracking-wider text-texte-3">Réalisé</p>
+          <p className="text-[13px] font-semibold text-texte-2">Réalisé</p>
           <p><IconeSport sport={p.sport} />{p.titreRealise ?? 'Séance faite'}</p>
           <p className="mt-1.5 text-xs text-texte-2">Réalisé différent du prévu : ni réussie ni ratée pour ta progression. Tes kJ comptent ; si c'était plus dur, le reste de ta semaine a été recalculé.<Aide titre="Réalisé différent" texte={AIDES.realiseDifferent} /></p>
           <button type="button" className="mt-2 w-full rounded-lg bg-surface-2 py-2 text-xs font-semibold" onClick={async () => { await enregistrer(db.prevues, { ...p, realiseDifferent: false }); onFermer() }}>C'était bien la séance prévue</button>
-          <p className="mt-2 text-xs uppercase tracking-wider text-texte-3">Prévu</p>
+          <p className="mt-2 text-[13px] font-semibold text-texte-2">Prévu</p>
         </div>
       )}
       {p.statut === 'faite' && !p.realiseDifferent && p.sport === 'velo' && (
@@ -308,15 +308,15 @@ function DetailSeance({ p, jours, prevues, onFermer, onMessage }: {
           {p.statut === 'prevue' && <Bouton variante="secondaire" onClick={() => setMode('annuler')}>✗ Je ne peux pas la faire</Bouton>}
           <Bouton variante="secondaire" onClick={() => setMode('modifier')}>Modifier</Bouton>
           {supprimerOk ? (
-            <div className="rounded-xl border border-[#f87171]/50 p-3 text-sm">
+            <div className="rounded-xl border border-mauvais/50 p-3 text-sm">
               <p>Supprimer la séance pour de bon (ex. ajoutée par erreur) ? Elle disparaît de ta semaine.</p>
               <div className="mt-2 grid grid-cols-2 gap-2">
                 <button type="button" className="rounded-lg border border-bordure py-2 font-semibold" onClick={() => setSupprimerOk(false)}>Non</button>
-                <button type="button" className="rounded-lg bg-[#f87171] py-2 font-semibold text-fond" onClick={async () => { await supprimerPrevue(p.id); onFermer() }}>Oui, supprimer</button>
+                <button type="button" className="rounded-lg bg-mauvais py-2 font-semibold text-fond" onClick={async () => { await supprimerPrevue(p.id); onFermer() }}>Oui, supprimer</button>
               </div>
             </div>
           ) : (
-            <button type="button" className="w-full py-2 text-[#f87171]" onClick={() => setSupprimerOk(true)}>Supprimer</button>
+            <button type="button" className="w-full py-2 text-mauvais" onClick={() => setSupprimerOk(true)}>Supprimer</button>
           )}
         </div>
       ) : mode === 'jour' ? (
@@ -365,7 +365,7 @@ function DetailSeance({ p, jours, prevues, onFermer, onMessage }: {
           ) : (
             <p className="text-sm text-texte-2">Pas de jour libre d'ici dimanche pour la déplacer.</p>
           )}
-          <button type="button" onClick={() => setMode('confirmer')} className="w-full rounded-xl border border-[#f87171]/50 py-2.5 text-sm font-semibold text-[#f87171]">Non, l'annuler</button>
+          <button type="button" onClick={() => setMode('confirmer')} className="w-full rounded-xl border border-mauvais/50 py-2.5 text-sm font-semibold text-mauvais">Non, l'annuler</button>
           <button type="button" onClick={() => setMode('actions')} className="w-full py-2 text-sm text-texte-3">Retour</button>
         </div>
       ) : (

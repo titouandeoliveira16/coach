@@ -18,6 +18,8 @@ export interface Serie {
   valeurs: (number | undefined)[]
   /** Trait pointillé (ex. moyenne, prévu) */
   pointille?: boolean
+  /** Trait large et pâle, dessous (ex. record) : reste visible quand une autre série passe dessus */
+  fond?: boolean
 }
 
 function echelle(min: number, max: number) {
@@ -40,13 +42,13 @@ function useLargeur() {
   }
 }
 
-function Legende({ series }: { series: { nom: string; couleur: string; pointille?: boolean }[] }) {
+function Legende({ series }: { series: { nom: string; couleur: string; pointille?: boolean; fond?: boolean }[] }) {
   if (series.length < 2) return null
   return (
     <div className="mb-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-texte-2">
       {series.map((s) => (
         <span key={s.nom} className="flex items-center gap-1.5">
-          <svg width="14" height="4" aria-hidden><line x1="0" y1="2" x2="14" y2="2" stroke={s.couleur} strokeWidth="2" strokeDasharray={s.pointille ? '3 2' : undefined} /></svg>
+          <svg width="14" height="6" aria-hidden><line x1="1" y1="3" x2="13" y2="3" stroke={s.couleur} strokeWidth={s.fond ? 5 : 2} strokeOpacity={s.fond ? 0.45 : 1} strokeLinecap="round" strokeDasharray={s.pointille ? '3 2' : undefined} /></svg>
           {s.nom}
         </span>
       ))}
@@ -68,7 +70,7 @@ function Bulle({ x, largeur, children }: { x: number; largeur: number; children:
  * `bande` : zone colorée entre deux valeurs (ex. zone normale de la VFC).
  */
 export function GraphiqueLignes({
-  etiquettes, series, bande, format: formatDonne, formatAxe: formatAxeDonne, zero = false,
+  etiquettes, series, bande, format: formatDonne, formatAxe: formatAxeDonne, zero = false, reperes: reperesDonnes,
 }: {
   etiquettes: string[]
   series: Serie[]
@@ -77,6 +79,8 @@ export function GraphiqueLignes({
   /** Graduations de l'axe (plus courtes) ; par défaut `format` */
   formatAxe?: (n: number) => string
   zero?: boolean
+  /** Index des étiquettes affichées sous l'axe (par défaut : début, milieu, fin) */
+  reperes?: number[]
 }) {
   const { ref, largeur } = useLargeur()
   const [survol, setSurvol] = useState<number>()
@@ -94,7 +98,7 @@ export function GraphiqueLignes({
   const chemin = (vals: (number | undefined)[]) =>
     vals.map((v, i) => (v === undefined ? '' : `${i === 0 || vals[i - 1] === undefined ? 'M' : 'L'}${x(i).toFixed(1)},${y(v).toFixed(1)}`)).join('')
   const graduations = Array.from({ length: Math.round((e.max - e.min) / e.pas) + 1 }, (_, i) => e.min + i * e.pas)
-  const reperes = [0, Math.floor((n - 1) / 2), n - 1]
+  const reperes = reperesDonnes ?? [0, Math.floor((n - 1) / 2), n - 1]
 
   const surDeplacement = (px: number) => setSurvol(Math.max(0, Math.min(n - 1, Math.round(((px - MARGE.gauche) / lp) * (n - 1)))))
 
@@ -123,7 +127,7 @@ export function GraphiqueLignes({
             })()} />
         )}
         {series.map((s) => (
-          <path key={s.nom} d={chemin(s.valeurs)} fill="none" stroke={s.couleur} strokeWidth={2} strokeLinejoin="round" strokeDasharray={s.pointille ? '4 3' : undefined} />
+          <path key={s.nom} d={chemin(s.valeurs)} fill="none" stroke={s.couleur} strokeWidth={s.fond ? 6 : 2} strokeOpacity={s.fond ? 0.45 : 1} strokeLinecap="round" strokeLinejoin="round" strokeDasharray={s.pointille ? '4 3' : undefined} />
         ))}
         {survol !== undefined && (
           <g>

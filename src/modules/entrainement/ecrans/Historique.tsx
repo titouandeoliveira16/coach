@@ -92,7 +92,7 @@ function CarteSeance({ s }: { s: Seance }) {
       </span>
       <span className="text-right">
         {s.rpe !== undefined && (
-          <span className={`block text-sm font-bold ${s.rpe < 3 ? 'text-nutrition' : s.rpe >= 7.5 ? 'text-[#f87171]' : 'text-texte'}`}>RPE {formatNombre(s.rpe, 1)}</span>
+          <span className={`block text-sm font-bold ${s.rpe < 3 ? 'text-nutrition' : s.rpe >= 7.5 ? 'text-mauvais' : 'text-texte'}`}>RPE {formatNombre(s.rpe, 1)}</span>
         )}
       </span>
     </Link>

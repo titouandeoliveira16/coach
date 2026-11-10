@@ -56,7 +56,7 @@ export function EcranCatalogue() {
           className="w-full rounded-xl border border-bordure bg-surface px-3 py-2.5 outline-none focus:border-accent" />
         {SPORTS.filter((sp) => liste.some((s) => s.sport === sp)).map((sp) => (
           <section key={sp} className="space-y-2">
-            <h2 className="pt-2 text-xs font-semibold uppercase tracking-wider text-texte-3">{NOMS_SPORTS[sp]}</h2>
+            <h2 className="pt-2 text-[13px] font-semibold text-texte-2">{NOMS_SPORTS[sp]}</h2>
             {liste.filter((s) => s.sport === sp).map((s) => <Fiche key={s.id} s={s} />)}
           </section>
         ))}
