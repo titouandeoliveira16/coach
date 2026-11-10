@@ -3,7 +3,7 @@ import { HeartPulse, Moon, Scale, type LucideIcon } from 'lucide-react'
 import { aujourdhui, decalerJour } from '../../../core/dates'
 import { db } from '../../../core/db'
 import { formatNombre } from '../../../core/format'
-import { peseesValides } from './pesees'
+import { lireSansPesee, peseesValides } from './pesees'
 
 const COULEURS = { vert: 'var(--color-bon)', orange: 'var(--color-attention)', rouge: 'var(--color-mauvais)' } as const
 
@@ -20,26 +20,28 @@ function MiniCourbe({ valeurs, couleur }: { valeurs: number[]; couleur: string }
   )
 }
 
-function Tuile({ Icone, couleurIcone, libelle, valeur, couleurValeur, children }: {
-  Icone: LucideIcon; couleurIcone: string; libelle: string; valeur: string; couleurValeur?: string; children?: React.ReactNode
+function Tuile({ Icone, couleurIcone, libelle, valeur, couleurValeur, onClick, children }: {
+  Icone: LucideIcon; couleurIcone: string; libelle: string; valeur: string; couleurValeur?: string; onClick?: () => void; children?: React.ReactNode
 }) {
+  const Balise = onClick ? 'button' : 'div'
   return (
-    <div className="entree rounded-[14px] bg-surface p-2.5">
+    <Balise {...(onClick ? { type: 'button' as const, onClick } : {})} className={`entree rounded-[14px] bg-surface p-2.5 text-left ${onClick ? 'presse' : ''}`}>
       <p className="flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-wider text-texte-3"><Icone className="h-3.5 w-3.5" style={{ color: couleurIcone }} strokeWidth={2} />{libelle}</p>
       <p className="chiffre mt-0.5 text-lg" style={{ color: couleurValeur }}>{valeur}</p>
       {children}
-    </div>
+    </Balise>
   )
 }
 
 /** En haut d'Aujourd'hui (maquette V1) : forme du jour, nuit et poids, chacun avec sa tendance sur 14 jours. */
-export function TuilesMatin() {
+export function TuilesMatin({ onPoids }: { onPoids?: () => void } = {}) {
   const jour = aujourdhui()
   const d = useLiveQuery(async () => {
     const mesures = (await db.mesures.where('date').between(decalerJour(jour, -13), jour, true, true).toArray()).filter((m) => !m.sansMontre)
     const decision = await db.decisions.get(jour)
     const pesees = (await peseesValides()).filter((p) => p.date >= decalerJour(jour, -27)).reverse()
-    return { mesures, decision, pesees }
+    const sansPesee = (await lireSansPesee()).includes(jour)
+    return { mesures, decision, pesees, sansPesee }
   }, [jour])
   if (!d) return null
   const vfc = d.mesures.filter((m) => m.vfcMs).map((m) => m.vfcMs!)
@@ -55,8 +57,8 @@ export function TuilesMatin() {
       <Tuile Icone={Moon} couleurIcone="var(--color-sommeil)" libelle="Nuit" valeur={nuit ? `${Math.floor(nuit)}:${String(Math.round((nuit % 1) * 60)).padStart(2, '0')}` : '—'}>
         <MiniCourbe valeurs={nuits} couleur="var(--color-sommeil)" />
       </Tuile>
-      <Tuile Icone={Scale} couleurIcone="var(--color-texte-3)" libelle="Poids" valeur={poids ? `${formatNombre(poids.poidsKg, 1)} kg` : '—'}>
-        {poids && poids.date === jour ? <MiniCourbe valeurs={d.pesees.map((p) => p.poidsKg)} couleur="var(--color-texte-2)" /> : <p className="mt-2 text-[10.5px] text-accent">à peser</p>}
+      <Tuile Icone={Scale} couleurIcone="var(--color-texte-3)" libelle="Poids" onClick={onPoids} valeur={poids ? `${formatNombre(poids.poidsKg, 1)} kg` : '—'}>
+        {poids && poids.date === jour ? <MiniCourbe valeurs={d.pesees.map((p) => p.poidsKg)} couleur="var(--color-texte-2)" /> : <p className={`mt-2 text-[10.5px] ${d.sansPesee ? 'text-texte-3' : 'text-accent'}`}>{d.sansPesee ? 'pas de pesée' : 'à peser'}</p>}
       </Tuile>
     </div>
   )
