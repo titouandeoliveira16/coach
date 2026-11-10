@@ -135,7 +135,7 @@ export function Saison() {
         ) : (
           <>
             <p className="mt-1 flex items-center gap-2 text-xl font-bold"><span className="h-3 w-3 shrink-0 rounded-full" style={{ background: COULEURS[actuelle.phase] }} />{NOMS_PHASES[actuelle.phase]}</p>
-            <p className="text-[15px] text-texte-2">
+            <p className="text-sm text-texte-2 min-[390px]:text-[15px]">
               Semaine {actuelle.numero}{actuelle.total ? ` sur ${actuelle.total}` : ''}
               {prochaine && ` · puis ${NOMS_PHASES[prochaine.type].replace(/^Dominante /, '')} dans ${Math.ceil(ecartJours(aujourdhui(), prochaine.debut) / 7)} sem.`}
               <Aide titre="Les phases" texte={AIDES.phases} />
