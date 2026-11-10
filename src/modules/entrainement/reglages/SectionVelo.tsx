@@ -8,6 +8,7 @@ import { useProfil } from '../../../core/profil'
 import { programmeDe, useReglagesEntrainement } from '../reglagesEntrainement'
 import { niveauDuProfil, verifierSemaineType } from '../../../metrics/programme'
 import { EditeurSemaine } from './EditeurSemaine'
+import { SemainesAVenir } from './SemainesAVenir'
 import type { ProfilSportif } from './ProfilSportif'
 import { CalculateurCP } from './CalculateurCP'
 import { poidsAu } from '../forme/pesees'
@@ -63,6 +64,10 @@ export function SectionVelo() {
         await modifier({ programme: { ...prog, semaineType } })
         // Semaine incomplète (ex. sortie longue pas encore placée) : on attend qu'elle soit valide
         if (verifierSemaineType(semaineType).ok) await recalculerSemainesAVenir()
+      }} />
+      <SemainesAVenir prog={prog} onChanger={async (semainesTypesFutures) => {
+        await modifier({ programme: { ...prog, semainesTypesFutures } })
+        await recalculerSemainesAVenir()
       }} />
     </section>
   )

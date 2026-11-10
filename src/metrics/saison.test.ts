@@ -33,10 +33,13 @@ describe('saison calculée depuis la course', () => {
     expect(s.testsCp.every((t) => t < aff)).toBe(true)
     for (let i = 1; i < s.testsCp.length; i++) expect(Date.parse(s.testsCp[i]) - Date.parse(s.testsCp[i - 1])).toBeGreaterThanOrEqual(5 * 7 * 86_400_000 - 6 * 86_400_000)
   })
-  it('semaine allégée comptée sur la saison, jamais près de la course', () => {
+  it('semaine allégée : au plus 3 semaines chargées d’affilée, jamais en affûtage', () => {
     const s = calculerSaison({ debut: '2026-11-09', course: '2027-02-14' })
     expect(estSemaineAllegee('2026-11-30', s.phases)).toBe(true) // 4e semaine de la saison
-    expect(estSemaineAllegee('2026-12-28', s.phases)).toBe(false) // 8e, mais en fin de prépa : pas d'allègement
+    expect(estSemaineAllegee('2026-12-28', s.phases)).toBe(true) // 8e : au plus 3 semaines chargées d'affilée, quelle que soit la phase
+    expect(estSemaineAllegee('2026-12-21', s.phases)).toBe(false)
+    // Course B : sa semaine remet le compteur à zéro
+    expect(estSemaineAllegee('2026-12-28', s.phases, (l) => l === '2026-12-14')).toBe(false)
     const spe = s.phases.find((p) => p.type === 'specifique')!.debut
     expect(estSemaineAllegee(spe, s.phases)).toBe(false)
     expect(coefficientPhase('2027-02-01', s.phases, [{ date: '2027-02-14' }])).toBe(0.65)
@@ -186,9 +189,13 @@ describe('plusieurs courses A', () => {
     expect(p.filter((x) => x.type === 'affutage').map((x) => x.debut)).toContain('2027-04-26')
     expect(p.at(-1)).toEqual({ debut: '2027-05-10', type: 'entretien' })
   })
-  it('9 semaines d’écart : bloc pour progresser, spécifique 2, affûtage 1', () => {
+  it('9 semaines d’écart : bloc pour progresser, spécifique 2, affûtage 2', () => {
     const p = phasesAvecCoursesA(s.phases, ['2027-04-04', '2027-06-06'])
-    expect(types(p, '2027-04-04').map((x) => x.split(' ')[1])).toEqual(['recuperation', 'seuil-tirage', 'fin-prepa', 'specifique', 'affutage', 'recuperation', 'entretien'])
+    expect(types(p, '2027-04-04').map((x) => x.split(' ')[1])).toEqual(['recuperation', 'seuil-tirage', 'specifique', 'affutage', 'recuperation', 'entretien'])
+  })
+  it('6 semaines d’écart : récup 1, spécifique 3, affûtage 2', () => {
+    const p = phasesAvecCoursesA(s.phases, ['2027-04-25', '2027-06-05'])
+    expect(types(p, '2027-04-25')).toEqual(['2027-04-26 recuperation', '2027-05-03 specifique', '2027-05-24 affutage', '2027-06-07 recuperation', '2027-06-14 entretien'])
   })
   it('une seule A : la saison ne change pas avant elle', () => {
     expect(phasesAvecCoursesA(s.phases, ['2027-04-04'])).toEqual(s.phases)

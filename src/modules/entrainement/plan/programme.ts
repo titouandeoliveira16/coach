@@ -7,7 +7,7 @@ import {
   cibleSortieLongue, dureeLongueVisee, type SeanceConstruite, type TypePhase,
   construireCourse, construireOuverture, construireSv1Dediee, specifiqueCols, testProcheCourse, delaiApresCourse, dureeDeCourse, epreuveDe, facteursVitesse, type CourseReference, niveauxCourses, procheCourse,
 } from '../../../metrics/programme'
-import { programmeDe } from '../reglagesEntrainement'
+import { fusionnerSemainesPassees, programmeAu, programmeDe } from '../reglagesEntrainement'
 import type { ProfilSportif } from '../reglages/ProfilSportif'
 import { chargeDe, chargerContexte, domaineDe, lundiDe } from '../seances/donnees'
 import type { ReglagesEntrainement, ReglagesProgramme, Seance, SeancePrevue } from '../types'
@@ -17,6 +17,12 @@ import { hausseCharge } from '../../../metrics/planif'
 import { ratioPic } from '../../../metrics/charge'
 import { joursPanneVelo } from './imprevus'
 import { lireSemaineChargee, passerSemaineChargee } from './semaineChargee'
+
+/** Semaines d'une course B (elles remettent à zéro le compteur des semaines chargées). */
+const semaineB = (prog: Pick<ReglagesProgramme, 'competitions' | 'phases'>) => {
+  const niveaux = niveauxCourses(prog.competitions, prog.phases)
+  return (lundi: string) => prog.competitions.some((c) => c.date >= lundi && c.date <= decalerJour(lundi, 6) && niveaux.get(c.date) === 'B')
+}
 
 /** Familles de séances d'intensité (hors Z2 et test). */
 const INTENSITES: Famille[] = ['vo2-courts', 'vo2-longs', 'seuil-plus', 'seuil', 'seuil-variable', 'sweet-spot', 'tempo', 'relances', 'sprints']
@@ -221,7 +227,13 @@ export async function genererSemaineVelo(lundi: string) {
   const aPartirDe = jour > lundi ? jour : lundi
   if (aPartirDe > semaine[6]) throw new Error('Cette semaine est terminée.')
   const r = await lireReglages()
-  const prog = r.programme
+  // Semaine type à venir déjà commencée : elle devient la semaine type
+  const fusion = fusionnerSemainesPassees(r.programme, lundiDe(jour))
+  if (fusion !== r.programme) {
+    const brut = (await db.reglages.get('entrainement'))?.valeur as Partial<ReglagesEntrainement> | undefined
+    await enregistrer(db.reglages, { id: 'entrainement', valeur: { ...brut, programme: fusion } })
+  }
+  const prog = programmeAu(fusion, lundi)
   const discipline = prog.discipline ?? 'route'
   // Profil sportif (questionnaire) : niveau et heures par semaine règlent le moteur
   const ps = (await db.reglages.get('profil-sportif'))?.valeur as Partial<ProfilSportif> | undefined
@@ -321,7 +333,7 @@ export async function genererSemaineVelo(lundi: string) {
   const course = courseB
   // Affûtage et récupération : volume fixé en part du budget de référence (pas de semaine allégée en plus)
   const coefPhase = coefficientPhase(lundi, prog.phases, prog.competitions)
-  const allegee = coefPhase === undefined && (estSemaineAllegee(lundi, prog.phases) || !!course)
+  const allegee = coefPhase === undefined && (estSemaineAllegee(lundi, prog.phases, semaineB(prog)) || !!course)
   const raisonAllegee = course ? `semaine de ta course B (${course.nom}) : allégée d’un tiers, mêmes watts` : 'semaine allégée (1 sur 4)'
   const recuperation = phase.type === 'recuperation'
   const { w: z2W } = await z2Actuel()
@@ -658,14 +670,19 @@ export async function saison() {
   const { w: z2W } = await z2Actuel()
   const kjIntensite = construireIntervalles(formatDe('30-15')!, 0, r.cpW, 0).kj
   // Un 2e jour « dur » compte comme une Z2 dans le plafond (la courbe suit tes jours de vélo)
-  const nZ2 = prog.semaineType.filter((x) => x === 'velo-z2').length + Math.max(0, prog.semaineType.filter((x) => x === 'velo-dur').length - 1)
+  // Semaine type de chaque semaine : les semaines types à venir font monter le plafond à leur date
+  const nZ2De = (l: string) => {
+    const t = programmeAu(prog, l).semaineType
+    return t.filter((x) => x === 'velo-z2').length + Math.max(0, t.filter((x) => x === 'velo-dur').length - 1)
+  }
   const capDe = (l: string) => {
     const { phase, semaine } = phaseDe(l, prog.phases)
-    return plafondsReprise(phase.type === 'reprise' ? semaine : undefined, prog.maxSemaineMin, prog.maxLongMin)
+    const pl = programmeAu(prog, l)
+    return plafondsReprise(phase.type === 'reprise' ? semaine : undefined, pl.maxSemaineMin, pl.maxLongMin)
   }
   const cap0 = capDe(lundi)
   const nominal = kjIntensite + construireZ2(Math.min(60, cap0.z2), z2W).kj + construireZ2(Math.min(100, cap0.long), z2W).kj
-  const plafondDe = (l: string) => kjIntensite + nZ2 * construireZ2(capDe(l).z2, z2W).kj + construireZ2(capDe(l).long, z2W).kj
+  const plafondDe = (l: string) => kjIntensite + nZ2De(l) * construireZ2(capDe(l).z2, z2W).kj + construireZ2(capDe(l).long, z2W).kj
   const plafond = plafondDe(lundi)
   const meta = await lireMeta(lundi)
   const derniere = [...prog.phases].sort((a, b) => a.debut.localeCompare(b.debut)).pop()!
@@ -754,9 +771,10 @@ export async function bilanDimanche(lundi: string) {
   const course = prog.competitions.find((c) => c.date >= suivant && c.date <= finSuivante)
   const test = prog.testsCp.find((d) => d >= suivant && d <= finSuivante)
   const coefSuivant = coefficientPhase(suivant, prog.phases, prog.competitions)
-  const allegee = coefSuivant === undefined && (estSemaineAllegee(suivant, prog.phases) || !!course)
+  const allegee = coefSuivant === undefined && (estSemaineAllegee(suivant, prog.phases, semaineB(prog)) || !!course)
   const { w: z2W } = await z2Actuel()
-  const cap = plafondsReprise(phase.type === 'reprise' ? nSemaine : undefined, prog.maxSemaineMin, prog.maxLongMin)
+  const progS = programmeAu(prog, suivant)
+  const cap = plafondsReprise(phase.type === 'reprise' ? nSemaine : undefined, progS.maxSemaineMin, progS.maxLongMin)
   const histo = await histoIntensite()
   let intensite: string
   let kjIntensite: number
@@ -772,7 +790,7 @@ export async function bilanDimanche(lundi: string) {
     intensite = `${s.titre} (palier ${palier + 1}/4)`
     kjIntensite = s.kj
   }
-  const nZ2 = prog.semaineType.filter((x) => x === 'velo-z2').length
+  const nZ2 = progS.semaineType.filter((x) => x === 'velo-z2').length
   const longue = await longueDeLaSemaine(suivant, prog, phase.type)
   const nominal = kjIntensite + construireZ2(Math.min(60, cap.z2), z2W).kj + construireZ2(Math.min(Math.max(100, longue.visee ?? 0), cap.long), z2W).kj
   const plafond = kjIntensite + nZ2 * construireZ2(cap.z2, z2W).kj + construireZ2(cap.long, z2W).kj

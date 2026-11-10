@@ -88,7 +88,9 @@ export function SectionProfilSportif() {
     const a = competitions.find((c) => niveaux.get(c.date) === 'A' || c.niveau === 'A')
     // Courses A : la saison après la 1re se recalcule (récupération, puis bloc adapté à l'écart jusqu'à la suivante)
     const datesA = datesCoursesA(competitions.map((c) => ({ ...c, niveau: c.niveau ?? niveaux.get(c.date) })))
-    changerProg({ competitions, ...(prog.modele === 'chauvin' && datesA.length ? { phases: phasesAvecCoursesA(prog.phases, datesA) } : {}), ...(a && (a.distanceKm || a.dureeMin) ? { dureeCourseMin: dureeDeCourse(a, contexteCourses) } : {}) })
+    void changerProg({ competitions, ...(prog.modele === 'chauvin' && datesA.length ? { phases: phasesAvecCoursesA(prog.phases, datesA) } : {}), ...(a && (a.distanceKm || a.dureeMin) ? { dureeCourseMin: dureeDeCourse(a, contexteCourses) } : {}) })
+      // Saison calculée : la préparation vise la 1re course A, puis un bloc par A suivante (recalcul complet)
+      .then(() => (prog.modele === 'chauvin' ? import('../arrivee/donnees').then((m) => m.recalculerSaison()) : undefined))
   }
   const resume = [NOMS_DISCIPLINES[discipline], objectifs.find((c) => niveaux.get(c.date) === 'A')?.nom, ps.heuresSemaine && `${ps.heuresSemaine}/sem.`].filter(Boolean).join(' · ')
 

@@ -39,6 +39,20 @@ export function programmeDe(p?: Partial<ReglagesProgramme>): ReglagesProgramme {
   return prog
 }
 
+/** Semaine type (jours et durées) qui s'applique la semaine de ce lundi : la plus récente des semaines types à venir déjà commencées. */
+export function programmeAu(p: ReglagesProgramme, lundi: string): ReglagesProgramme {
+  const c = [...(p.semainesTypesFutures ?? [])].filter((x) => x.debut <= lundi).sort((a, b) => a.debut.localeCompare(b.debut)).at(-1)
+  return c ? { ...p, semaineType: c.semaineType, maxSemaineMin: c.maxSemaineMin ?? p.maxSemaineMin, maxLongMin: c.maxLongMin ?? p.maxLongMin } : p
+}
+
+/** Les semaines types à venir déjà commencées deviennent la semaine type (elles quittent la liste). */
+export function fusionnerSemainesPassees(p: ReglagesProgramme, lundi: string): ReglagesProgramme {
+  const passees = (p.semainesTypesFutures ?? []).filter((x) => x.debut <= lundi)
+  if (!passees.length) return p
+  const base = programmeAu(p, lundi)
+  return { ...base, semainesTypesFutures: (p.semainesTypesFutures ?? []).filter((x) => x.debut > lundi) }
+}
+
 /** Valeurs neutres de départ : les vraies zones vivent dans tes données (Réglages → Avancé → Zones), jamais dans le code. */
 export const DEFAUT_ENTRAINEMENT: ReglagesEntrainement = {
   vmaKmh: 18.5,

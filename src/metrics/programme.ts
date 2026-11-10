@@ -841,17 +841,26 @@ export function phaseDe(lundi: string, phases: Phase[]) {
 }
 
 /**
- * Semaine allégée : 1 sur 4, comptée sur toute la saison (depuis le début de la 1re phase) et non plus phase par phase :
- * avec des phases courtes, on pouvait enchaîner 8 semaines sans allègement (relecteur, 5/11/2026).
- * Jamais près de la course, en affûtage ni en récupération (le volume y baisse déjà).
+ * Semaine allégée, comptée en continu sur toute la saison (relecteur, 10/11/2026) : au plus 3 semaines chargées d'affilée,
+ * puis une allégée (cycle 3 + 1 : choix d'entraîneur, aussi utilisé par Rønnestad 2014), quelle que soit la phase. Le
+ * compteur repart à zéro après une semaine basse : allégée, récupération, affûtage, ou semaine d'une course B
+ * (`semaineB`). Jamais d'allégée juste avant l'affûtage (4 semaines chargées au plus) ni en affûtage ou en récupération.
  */
-export function estSemaineAllegee(lundi: string, phases: Phase[]) {
+export function estSemaineAllegee(lundi: string, phases: Phase[], semaineB?: (lundi: string) => boolean) {
   const triees = [...phases].sort((a, b) => a.debut.localeCompare(b.debut))
-  if (!triees.length) return false
-  const { phase } = phaseDe(lundi, triees)
-  if (phase.type === 'specifique' || phase.type === 'affutage' || phase.type === 'recuperation' || phase.type === 'fin-prepa') return false
-  const rang = Math.floor((Date.parse(lundi) - Date.parse(triees[0].debut)) / (7 * 86_400_000))
-  return rang >= 0 && rang % 4 === 3
+  if (!triees.length || lundi < triees[0].debut) return false
+  let chargees = 0
+  for (let l = triees[0].debut; l <= lundi; l = decaler(l, 7)) {
+    const type = phaseDe(l, triees).phase.type
+    let allegee = false
+    if (type === 'affutage' || type === 'recuperation' || semaineB?.(l)) chargees = 0
+    else if (chargees >= 3 && phaseDe(decaler(l, 7), triees).phase.type !== 'affutage') {
+      allegee = true
+      chargees = 0
+    } else chargees++
+    if (l === lundi) return allegee
+  }
+  return false
 }
 
 /**
@@ -1425,7 +1434,8 @@ export function projeterSaison(o: {
     const test = o.testsCp.find((d) => d >= l && d <= fin)
     const coef = coefficientPhase(l, triees, o.competitions)
     // Seule une course B allège la semaine (A : affûtage ; C : semaine normale)
-    const allegee = coef === undefined && (estSemaineAllegee(l, triees) || (!!competition && niveaux.get(competition.date) === 'B'))
+    const semaineB = (x: string) => o.competitions.some((c) => c.date >= x && c.date <= decaler(x, 6) && niveaux.get(c.date) === 'B')
+    const allegee = coef === undefined && (estSemaineAllegee(l, triees, semaineB) || (!!competition && niveaux.get(competition.date) === 'B'))
     const plafond = o.plafondDe?.(l) ?? o.plafond
     if (semaines.length && !precedenteAllegee && coef === undefined) ref = ref * 1.075
     ref = Math.min(plafond, ref)

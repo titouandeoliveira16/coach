@@ -93,8 +93,10 @@ export function preparerArrivee(r: ReponsesArrivee, jour: string, testsFaits: Re
     : r.dureeCourseMin
   const jourLong = r.semaineType.indexOf('velo-long')
   const jourDur = r.semaineType.indexOf('velo-dur')
+  // Deux courses A ou plus : la préparation vise la 1re, puis récupération et bloc jusqu'à la suivante
+  const premiereA = datesCoursesA([principale, ...(r.autresCourses ?? [])])[0] ?? r.course.date
   const saison = calculerSaison({
-    debut: jour, course: r.course.date, arretSemaines: r.arretSemaines, debutant: niveauDuProfil(ps) === 'debutant', entraine: historique?.entraine,
+    debut: jour, course: premiereA, arretSemaines: r.arretSemaines, debutant: niveauDuProfil(ps) === 'debutant', entraine: historique?.entraine,
     jourLong: jourLong >= 0 ? jourLong : 6, jourDur: jourDur >= 0 ? jourDur : 1, aujourdhui: jour,
   })
   // CP déjà testée ces 4 dernières semaines (compte déjà utilisé) : pas de nouveau test dans les 2 premières semaines
@@ -214,10 +216,20 @@ export async function enregistrerArrivee(r: ReponsesArrivee) {
  * ta CP et tes réglages restent ; un test CP récent (moins de 4 semaines) évite un nouveau test les 2 premières semaines.
  */
 export async function migrerSaisonV2() {
+  const e = (await db.reglages.get('entrainement'))?.valeur as ReglagesEntrainement | undefined
+  if (!e?.programme || e.programme.modele !== 'chauvin' || e.programme.saisonV2) return
+  await recalculerSaison()
+}
+
+/**
+ * Saison recalculée depuis cette semaine : préparation vers la prochaine course A (à plus de 3 semaines), puis pour chaque
+ * A suivante récupération, bloc et affûtage. Les phases passées restent. Appelé quand les courses changent (Réglages).
+ */
+export async function recalculerSaison() {
   const ligne = await db.reglages.get('entrainement')
   const e = ligne?.valeur as ReglagesEntrainement | undefined
   const prog = e?.programme
-  if (!e || !prog || prog.modele !== 'chauvin' || prog.saisonV2) return
+  if (!e || !prog || prog.modele !== 'chauvin') return
   const jour = aujourdhui()
   // Course A : niveau noté, ou (anciennes données sans niveau) la plus lointaine
   const niveaux = niveauxCourses(prog.competitions, prog.phases)

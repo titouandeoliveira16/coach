@@ -12,7 +12,7 @@ import { AIDES } from '../aides'
 import { saison } from '../plan/programme'
 
 /** Couleur de chaque phase (rampe validée sur fond sombre). */
-const COULEURS: Record<TypePhase, string> = { reprise: '#7c7b74', base: '#3b9eff', vo2: '#46a758', seuil: '#12a594', entretien: '#6f6d66', 'seuil-tirage': '#46a758', 'seuil-maintien': '#12a594', 'fin-prepa': '#ffc53d', specifique: '#f76b15', affutage: '#e5484d', recuperation: '#9ca3af' }
+const COULEURS: Record<TypePhase, string> = { reprise: '#7c7b74', base: '#3184d6', vo2: '#a371f7', seuil: '#46a758', entretien: '#6f6d66', 'seuil-tirage': '#46a758', 'seuil-maintien': '#46a758', 'fin-prepa': '#a371f7', specifique: '#e0620f', affutage: '#e5484d', recuperation: '#1f9e8f' }
 const jm = (d: string) => depuisJour(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
 
 const BADGES: Record<SemaineSaison['type'], { texte: string; classe: string } | undefined> = {
@@ -37,60 +37,85 @@ function LigneSemaine({ x, actuelle }: { x: SemaineSaison; actuelle?: boolean })
   )
 }
 
+const MOIS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.']
+
 /**
- * Courbe du budget kJ prévu, semaine par semaine, jusqu'à la course (une seule série : le titre la nomme). Phases en
- * bandes de couleur, tests (○) et courses (pastille A / B / C) en repères. Toucher une semaine affiche son détail.
+ * Histogramme de la saison (maquette du 10/11/2026) : une barre par semaine (kJ prévus, couleur de la phase, pâle quand
+ * le volume baisse : allégée, affûtage, récup), les courses au-dessus, les tests dessous, et la bande des phases.
  */
-function CourbeKj({ semaines, niveaux, tests }: { semaines: SemaineSaison[]; niveaux: Map<string, string>; tests: string[] }) {
+function HistogrammeKj({ semaines, niveaux, tests }: { semaines: SemaineSaison[]; niveaux: Map<string, string>; tests: string[] }) {
   const [choisie, setChoisie] = useState<number>()
   if (semaines.length < 2) return null
-  const W = 340, H = 170, G = 30, D = 6, Hh = 14, B = 24
-  const max = Math.max(...semaines.map((x) => x.budget)) * 1.1
-  const x = (i: number) => G + (i * (W - G - D)) / (semaines.length - 1)
-  const y = (v: number) => H - B - (v / max) * (H - B - Hh)
-  const pas = max > 4000 ? 2000 : 1000
+  const W = 340, G = 30, D = 2, Hh = 22, Hb = 150
+  const n = semaines.length
+  const max = Math.max(...semaines.map((x) => x.budget)) * 1.08
+  const pasX = (W - G - D) / n
+  const larg = Math.max(2, pasX - 2)
+  const x = (i: number) => G + i * pasX + 1
+  const y = (v: number) => Hb - (v / max) * (Hb - Hh)
+  const pas = max > 6000 ? 2000 : 1000
   const graduations = Array.from({ length: Math.floor(max / pas) }, (_, i) => (i + 1) * pas)
-  const points = semaines.map((s, i) => `${x(i).toFixed(1)},${y(s.budget).toFixed(1)}`).join(' ')
-  const larg = (W - G - D) / (semaines.length - 1)
   const dansSemaine = (d: string, l: string) => d >= l && d <= decalerJour(l, 6)
+  const basse = (s: SemaineSaison) => s.type === 'allegee' || s.phase === 'affutage' || s.phase === 'recuperation'
+  // Bande des phases : segments consécutifs de même couleur
+  const segments: { phase: TypePhase; de: number; a: number }[] = []
+  semaines.forEach((s, i) => {
+    const der = segments.at(-1)
+    if (der && COULEURS[der.phase] === COULEURS[s.phase]) der.a = i
+    else segments.push({ phase: s.phase, de: i, a: i })
+  })
   const c = choisie !== undefined ? semaines[choisie] : undefined
+  const courseDe = (s: SemaineSaison) => [...niveaux.keys()].find((d) => dansSemaine(d, s.lundi))
   return (
     <div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Budget kJ prévu par semaine jusqu'à ta course">
+      <svg viewBox={`0 0 ${W} ${Hb + 34}`} className="w-full" role="img" aria-label="kJ prévus par semaine jusqu'à ta course, avec les phases">
         {graduations.map((v) => (
           <g key={v}>
             <line x1={G} x2={W - D} y1={y(v)} y2={y(v)} stroke="var(--color-bordure)" strokeWidth="1" />
-            <text x={G - 4} y={y(v) + 3} textAnchor="end" fontSize="9" fill="var(--color-texte-3)">{(v).toLocaleString('fr-FR')}</text>
+            <text x={G - 4} y={y(v) + 3} textAnchor="end" fontSize="9" fill="var(--color-texte-3)">{v.toLocaleString('fr-FR')}</text>
           </g>
         ))}
-        {semaines.map((s, i) => (
-          <rect key={s.lundi} x={x(i) - larg / 2} y={Hh} width={larg} height={H - B - Hh} fill={COULEURS[s.phase]} opacity="0.3" />
-        ))}
-        <polyline points={points} fill="none" stroke="var(--color-accent)" strokeWidth="2" strokeLinejoin="round" />
-        <line x1={x(0)} x2={x(0)} y1={Hh} y2={H - B} stroke="var(--color-texte-2)" strokeDasharray="3 3" />
-        <text x={x(0) + 3} y={Hh - 3} fontSize="9" fill="var(--color-texte-3)">aujourd’hui</text>
+        <g className="monte-svg">
+          {semaines.map((s, i) => {
+            const h = Hb - y(s.budget)
+            const r = Math.min(3, larg / 2, h)
+            return (
+              <path key={s.lundi} style={{ animationDelay: `${i * 18}ms` }}
+                d={`M${x(i)},${Hb} V${y(s.budget) + r} Q${x(i)},${y(s.budget)} ${x(i) + r},${y(s.budget)} H${x(i) + larg - r} Q${x(i) + larg},${y(s.budget)} ${x(i) + larg},${y(s.budget) + r} V${Hb} Z`}
+                fill={COULEURS[s.phase]} fillOpacity={basse(s) ? 0.45 : 1}
+                stroke={choisie === i ? 'var(--color-texte)' : 'none'} strokeWidth="1.5" />
+            )
+          })}
+        </g>
+        <line x1={G} x2={W - D} y1={Hb} y2={Hb} stroke="var(--color-texte-3)" strokeWidth="0.75" />
         {semaines.map((s, i) => {
-          const course = [...niveaux.keys()].find((d) => dansSemaine(d, s.lundi))
+          const course = courseDe(s)
           const test = tests.find((d) => dansSemaine(d, s.lundi))
+          const debutMois = i === 0 || s.lundi.slice(5, 7) !== semaines[i - 1].lundi.slice(5, 7)
+          const cx = x(i) + larg / 2
+          const yc = Math.max(2, y(s.budget) - 17)
           return (
             <g key={s.lundi}>
               {course && (
                 <g>
-                  <rect x={x(i) - 7} y={H - B + 4} width="14" height="14" rx="3" fill={niveaux.get(course) === 'A' ? 'var(--color-accent)' : niveaux.get(course) === 'B' ? '#facc15' : '#60a5fa'} />
-                  <text x={x(i)} y={H - B + 14.5} textAnchor="middle" fontSize="10" fontWeight="800" fill="var(--color-fond)">{niveaux.get(course)}</text>
+                  <rect x={cx - 6} y={yc} width="12" height="12" rx="3" fill={niveaux.get(course) === 'A' ? 'var(--color-accent)' : 'var(--color-texte-2)'} />
+                  <text x={cx} y={yc + 9.5} textAnchor="middle" fontSize="9" fontWeight="800" fill="var(--color-fond)">{niveaux.get(course)}</text>
                 </g>
               )}
-              {!course && test && <circle cx={x(i)} cy={H - B + 10} r="3.5" fill="none" stroke="var(--color-texte-2)" strokeWidth="1.5" />}
-              {choisie === i && <circle cx={x(i)} cy={y(s.budget)} r="4" fill="var(--color-accent)" stroke="var(--color-surface)" strokeWidth="2" />}
-              <rect x={x(i) - larg / 2} y={0} width={larg} height={H} fill="transparent" onClick={() => setChoisie(choisie === i ? undefined : i)} />
+              {test && <circle cx={cx} cy={Hb + 5} r="2.5" fill="none" stroke="var(--color-texte-2)" strokeWidth="1.2" />}
+              {debutMois && <text x={x(i)} y={Hb + 16} fontSize="9" fill="var(--color-texte-3)">{MOIS[Number(s.lundi.slice(5, 7)) - 1]}</text>}
+              <rect x={x(i) - 1} y={0} width={pasX} height={Hb + 20} fill="transparent" onClick={() => setChoisie(choisie === i ? undefined : i)} />
             </g>
           )
         })}
+        {segments.map((sg) => (
+          <rect key={sg.de} x={x(sg.de)} y={Hb + 23} width={x(sg.a) + larg - x(sg.de)} height="5" rx="2.5" fill={COULEURS[sg.phase]} />
+        ))}
       </svg>
-      <p className="min-h-5 text-xs text-texte-2">
-        {c ? <>Sem. du {jm(c.lundi)} · {NOMS_PHASES[c.phase]} · <b className="text-texte">≈ {c.budget.toLocaleString('fr-FR')} kJ</b>{c.competition ? ` · course : ${c.competition}` : ''}{c.type === 'allegee' ? ' · allégée' : ''}</> : 'Touche une semaine pour voir son budget.'}
+      <p className="mt-1 min-h-5 text-xs text-texte-2">
+        {c ? <>Sem. du {jm(c.lundi)} · {NOMS_PHASES[c.phase]} · <b className="text-texte">≈ {c.budget.toLocaleString('fr-FR')} kJ</b>{c.competition ? ` · course : ${c.competition}` : ''}{c.type === 'allegee' ? ' · allégée' : ''}{c.intensite ? ` · ${c.intensite}` : ''}</> : 'Touche une barre pour voir sa semaine.'}
       </p>
-      <p className="text-xs text-texte-3">Les creux : semaines allégées (1 sur 4), course B, affûtage. La courbe suit tes jours de vélo et tes durées : change-les dans Réglages, elle bouge.</p>
+      <p className="text-xs text-texte-3">Barres pâles : semaines où le volume baisse (allégée, affûtage, récup). Ta charge monte de 7,5 % par semaine réussie, dans la limite de tes jours et durées de vélo (Réglages → Ma semaine type, et « Plus tard »).</p>
     </div>
   )
 }
@@ -175,7 +200,7 @@ export function Saison() {
       </Carte>
 
       <Carte titre="Ta charge prévue (kJ par semaine)">
-        <CourbeKj semaines={s.semaines.filter((x) => x.lundi <= (courseA ?? s.fin))} niveaux={niveauxFuturs} tests={tests} />
+        <HistogrammeKj semaines={s.semaines.filter((x) => x.lundi <= (courseA ?? s.fin))} niveaux={niveauxFuturs} tests={tests} />
       </Carte>
 
       <Carte titre="Cette semaine et les 2 suivantes">
