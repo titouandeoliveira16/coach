@@ -91,7 +91,8 @@ Points décidés ou mis de côté, à reprendre au bon moment.
   + noter un des 7 derniers jours ; courses A multiples (récup 1 sem., bloc selon l'écart, ≥ 3 sem., 4 A max) ; cols des
   courses → montées de la prépa (N ≤ 3, T ≤ 40') et watts cibles par col (k0 × m × f, choix d'entraîneur).
   **À faire** : plan pour habituer l'estomac (nutrition à l'effort, à faire relire) ; point 3 (semaines à 3 séances :
-  capture demandée à Titouan) ; vérifier les watts cibles des cols sur sa 1re course de montagne.
+  capture demandée à Titouan) ; vérifier les watts cibles des cols sur sa 1re course de montagne ; un test CP peut tomber
+  2 jours après une course B ou C (vu au contrôle du 10/11) : le décaler d'une semaine (à proposer).
 - **Titouan a encore « 2-3 trucs à travailler »** (9/11 au soir, pas encore dits) : les lui demander à la prochaine conversation.
 - Les deux conversations ont été regroupées le 9/11/2026 (« Corrections et améliorations appli » supprimée par Titouan).
 
