@@ -5,7 +5,7 @@ import {
   ajustementZ2, BLOCS_SV1, signalSv1, signalFcSv1, plageFcSv1, sprintsDeLaPhase, SV1_DEPART_PCT, SV1_MAX_PCT, budgetDePhase, budgetSemaine, formatDe, gardeFouCourse, NOMS_FAMILLES, plafondsReprise, projeterSaison, choisirFormat, construireIntervalles, construireTest, construireZ2, coefficientPhase, estSemaineAllegee, etatProgression, palierRaccourci,
   construireCycloMontees, construireLongueCotes, construireSimulationLigne, construireSimulationXco, construireSpeciales, construireTerrain, cotesDe, minutesPourKj, NOMS_DISCIPLINES, NOMS_PHASES, deuxIntensitesPossibles, formatsPour, hausseBudget, heuresDe, jourDeuxiemeIntensite, niveauDuProfil, palierPossible, phaseDe, placer, retourDeCoupure, semainesChamboulees, type BilanSemaine, type Famille, type HistoIntensite,
   cibleSortieLongue, dureeLongueVisee, type SeanceConstruite, type TypePhase,
-  construireCourse, construireOuverture, specifiqueCols, delaiApresCourse, dureeDeCourse, epreuveDe, facteursVitesse, type CourseReference, niveauxCourses, procheCourse,
+  construireCourse, construireOuverture, specifiqueCols, testProcheCourse, delaiApresCourse, dureeDeCourse, epreuveDe, facteursVitesse, type CourseReference, niveauxCourses, procheCourse,
 } from '../../../metrics/programme'
 import { programmeDe } from '../reglagesEntrainement'
 import type { ProfilSportif } from '../reglages/ProfilSportif'
@@ -279,7 +279,30 @@ export async function genererSemaineVelo(lundi: string) {
   // Un 2e jour « dur » compte comme une Z2 (il devient la 2e intensité quand elle est possible)
   const nZ2 = Math.max(0, roles.filter((x) => x === 'velo-z2').length + Math.max(0, roles.filter((x) => x === 'velo-dur').length - 1) - z2Faites)
   const competitions = prog.competitions.map((x) => x.date)
-  const dateTest = prog.testsCp.find((d) => dansSemaine(d) && d >= aPartirDe)
+  let dateTest = prog.testsCp.find((d) => dansSemaine(d) && d >= aPartirDe)
+  // Test CP trop proche d'une course : la course le remplace si elle montre une CP au moins égale à la tienne
+  // (Karsten 2015 : CP de terrain tirée des meilleurs 3, 7 et 12 min, ~5 % d'erreur), sinon il est décalé d'une semaine
+  const phrasesTest: string[] = []
+  const coursesDurees = prog.competitions.map((x) => ({ date: x.date, dureeMin: dureeDe(x.date) }))
+  if (dateTest && testProcheCourse(dateTest, coursesDurees)) {
+    const ancien = dateTest
+    const courseFaiteAvant = prog.competitions.some((x) => x.date <= ancien && x.date >= decalerJour(ancien, -6) && courseFaite(x.date))
+    const { estimerCp } = await import('../analyse/progres')
+    const recentes = await db.seances.where('date').between(decalerJour(jour, -42), jour, true, true).toArray()
+    const estimee = courseFaiteAvant ? estimerCp(recentes, jour) : undefined
+    const reglagesE = (await db.reglages.get('entrainement'))?.valeur as ReglagesEntrainement
+    const autres = prog.testsCp.filter((x) => x !== ancien)
+    if (estimee && estimee >= r.cpW) {
+      await enregistrer(db.reglages, { id: 'entrainement', valeur: { ...reglagesE, cpW: estimee, programme: { ...reglagesE.programme, testsCp: autres }, tests: [...(reglagesE.tests ?? []), { date: jour, type: 'cp', valeur: estimee }] } })
+      phrasesTest.push(`Test CP du ${nomJour(ancien)} remplacé par ta course : tes meilleurs efforts donnent une CP de ${estimee} W.`)
+    } else {
+      const nouvelle = decalerJour(ancien, 7)
+      const garde = !testProcheCourse(nouvelle, coursesDurees) && !autres.includes(nouvelle)
+      await enregistrer(db.reglages, { id: 'entrainement', valeur: { ...reglagesE, programme: { ...reglagesE.programme, testsCp: [...autres, ...(garde ? [nouvelle] : [])].sort(), ...(reglagesE.programme.testsCourts?.includes(ancien) && garde ? { testsCourts: [...reglagesE.programme.testsCourts.filter((x) => x !== ancien), nouvelle] } : {}) } } })
+      phrasesTest.push(`Test CP du ${nomJour(ancien)} trop près d'une course : ${garde ? `décalé au ${nomJour(nouvelle)}` : 'retiré cette fois'}.`)
+    }
+    dateTest = undefined
+  }
 
   // Course B ou C : elle est la séance dure de la semaine ; en B, ou si elle dure plus de 2 h, aussi la sortie longue
   const courseRemplaceLong = !!courseSecondaire && (courseSecondaire.niveau === 'B' || dureeDe(courseSecondaire.date) > 120)
@@ -307,7 +330,7 @@ export async function genererSemaineVelo(lundi: string) {
   const parts = await partsRealisees(lundi)
   const coupure = retourDeCoupure(semainesChamboulees(parts), semainesChamboulees(parts.slice(1)))
   const cap = plafondsReprise(phase.type === 'reprise' ? nSemaine : coupure.semaineReprise, prog.maxSemaineMin, prog.maxLongMin)
-  const phrases: string[] = []
+  const phrases: string[] = [...phrasesTest]
 
   // Séance d'intensité
   let intensite: SeanceConstruite | undefined
