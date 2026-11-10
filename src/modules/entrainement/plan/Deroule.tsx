@@ -1,5 +1,5 @@
 import { Aide } from '../../../core/ui/Aide'
-import { couleurPctCP } from '../../../core/zones'
+import { COULEUR_A_FOND, COULEURS_ZONES, couleurPctCP } from '../../../core/zones'
 import { AIDES } from '../aides'
 import { tempsLimite } from '../../../metrics/col'
 import { deplier, type Etape } from '../../../metrics/programme'
@@ -24,12 +24,22 @@ export function Profil({ etapes, cpW, extensible = false }: { etapes: Etape[]; c
   const largeurs = blocs.map((e) => (e.dureeSec / total) * 1000)
   const departs = largeurs.map((_, i) => largeurs.slice(0, i).reduce((a, w) => a + w, 0))
   return (
-    <svg viewBox="0 0 1000 60" preserveAspectRatio="none" className={`mt-2 block w-full rounded-lg bg-surface-2 ${extensible ? 'h-auto min-h-8 flex-1' : 'h-14'}`} aria-hidden>
-      {blocs.map((e, i) => {
-        const h = e.w ? Math.max(0.12, e.w / wMax) * 56 : 56
-        return <rect key={i} x={departs[i]} y={60 - h} width={Math.max(largeurs[i] - 1, 1)} height={h} fill={couleur(e, cpW)} />
-      })}
-    </svg>
+    <>
+      <svg viewBox="0 0 1000 60" preserveAspectRatio="none" className={`monte-svg mt-2 block w-full rounded-lg bg-surface-2 ${extensible ? 'h-auto min-h-8 flex-1' : 'h-14'}`} aria-hidden>
+        {blocs.map((e, i) => {
+          const h = e.w ? Math.max(0.12, e.w / wMax) * 56 : 56
+          return <rect key={i} x={departs[i]} y={60 - h} width={Math.max(largeurs[i] - 1, 1)} height={h} rx="3" fill={couleur(e, cpW)} style={{ animationDelay: `${Math.min(i * 12, 500)}ms` }} />
+        })}
+      </svg>
+      {/* Légende des zones présentes (la couleur n'est jamais seule) */}
+      {cpW && (
+        <p className="mt-1 flex flex-wrap gap-x-2.5 gap-y-0.5 text-[10px] text-texte-3">
+          {[...new Set(blocs.map((e) => (e.w ? couleur(e, cpW) : COULEUR_A_FOND)))].map((c) => (
+            <span key={c} className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm" style={{ background: c }} />{c === COULEUR_A_FOND ? 'à fond' : `Z${COULEURS_ZONES.indexOf(c as (typeof COULEURS_ZONES)[number]) + 1}`}</span>
+          ))}
+        </p>
+      )}
+    </>
   )
 }
 

@@ -12,7 +12,7 @@ export function FicheSeance({ velo }: { velo?: SeanceVelo }) {
   if (!s) return null
   return (
     <div className="mt-3">
-      <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-texte-3">📖 Fiche scientifique</p>
+      <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-texte-3">Fiche scientifique</p>
       <Fiche s={s} />
     </div>
   )

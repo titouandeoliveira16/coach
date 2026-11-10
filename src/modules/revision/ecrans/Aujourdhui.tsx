@@ -85,7 +85,7 @@ export function Aujourdhui() {
       {/* Notion du jour */}
       {finieAujourdhui ? (
         <Carte titre="Notion du jour">
-          <p className="text-lg font-semibold">✅ {finieAujourdhui.nom}</p>
+          <p className="text-lg font-semibold">{finieAujourdhui.nom}</p>
           <label className="mt-2 flex items-center gap-3">
             <input type="checkbox" checked={!!finieAujourdhui.fixation} onChange={(e) => modifierNotion({ ...finieAujourdhui, fixation: e.target.checked })} className="h-6 w-6 accent-[#60a5fa]" />
             <span>Feuille blanche de fixation faite <span className="text-texte-3">(cet après-midi, 45 min à 1 h)</span></span>
@@ -139,7 +139,7 @@ export function Aujourdhui() {
 
       {/* Mémoire */}
       {memoire && (
-        <Carte titre="📝 Mémoire de recherche">
+        <Carte titre="Mémoire de recherche">
           <input value={seanceMemoire?.objectif ?? ''} onChange={(e) => enregistrerMemoire({ id: jour, ...seanceMemoire, objectif: e.target.value })}
             placeholder="Objectif de la demi-journée" className="w-full rounded-lg border border-bordure bg-surface-2 px-3 py-2.5 outline-none focus:border-accent" />
           <label className="mt-2 flex items-center gap-3">

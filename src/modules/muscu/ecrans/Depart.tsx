@@ -20,7 +20,7 @@ export function Depart({ onFini }: { onFini?: () => void }) {
   const max = valide ? maxEstime(k!, r) : undefined
 
   return (
-    <Carte titre="🏋️ Ton point de départ">
+    <Carte titre="Ton point de départ">
       <p className="text-sm text-texte-2">
         Ton max au développé couché, ou une série récente faite près de ton maximum (3 à 8 reps).
         <Aide titre="Ton max" texte={AIDES_MUSCU.max} />

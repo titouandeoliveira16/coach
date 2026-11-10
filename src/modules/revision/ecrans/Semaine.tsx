@@ -45,9 +45,9 @@ export function Semaine() {
               <p className="font-semibold capitalize">{depuisJour(j).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric' })}</p>
               <p className="text-xs" style={{ color: COULEURS_PERIODES[per] }}>{NOMS_PERIODES[per]}</p>
             </div>
-            {finie ? <p className="text-sm">✅ {finie.nom}</p> : notion && <p className="text-sm">📖 {notion.nom}</p>}
+            {finie ? <p className="text-sm">{finie.nom}</p> : notion && <p className="text-sm">{notion.nom}</p>}
             <p className="text-sm text-texte-2">
-              🔁 {passe ? `${rappels.length} rappel${rappels.length > 1 ? 's' : ''} fait${rappels.length > 1 ? 's' : ''}` : `${minutes} min de rappels prévues`}
+              {passe ? `${rappels.length} rappel${rappels.length > 1 ? 's' : ''} fait${rappels.length > 1 ? 's' : ''}` : `${minutes} min de rappels prévues`}
               <span className="text-texte-3"> · capacité {capacite(j, p)} min</span>
             </p>
             {!passe && (

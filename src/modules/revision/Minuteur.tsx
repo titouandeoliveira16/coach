@@ -110,11 +110,11 @@ export function Minuteur({ objectifPropose, onFermer }: { objectifPropose?: stri
         <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
           <p className="text-sm font-semibold uppercase tracking-wider text-texte-3">Bloc {bloc} · {travail ? 'travail' : 'pause'}</p>
           <p className="text-7xl font-bold tabular-nums" style={{ color: travail ? undefined : '#4ade80' }}>{mmss(reste)}</p>
-          {(objectif || etat.objectif) && travail && <p className="text-lg">🎯 {objectif || etat.objectif}</p>}
+          {(objectif || etat.objectif) && travail && <p className="text-lg">{objectif || etat.objectif}</p>}
           {travail ? (
-            <p className="text-texte-2">📵 Téléphone loin. Dans {Math.ceil(reste / 60)} min : mini feuille blanche de ce bloc.</p>
+            <p className="text-texte-2">Téléphone loin. Dans {Math.ceil(reste / 60)} min : mini feuille blanche de ce bloc.</p>
           ) : dansCycle < TRAVAIL + 180 ? (
-            <p className="text-lg">✍️ Mini feuille blanche : écris en 3 min ce que tu retiens de ce bloc, puis vraie pause (lève-toi, bois, pas d'écran).</p>
+            <p className="text-lg">Mini feuille blanche : écris en 3 min ce que tu retiens de ce bloc, puis vraie pause (lève-toi, bois, pas d'écran).</p>
           ) : (
             <p className="text-texte-2">Vraie pause : bouge, bois, pas d'écran. Prochain bloc dans {Math.ceil(reste / 60)} min.</p>
           )}

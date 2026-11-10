@@ -12,7 +12,7 @@ export function CarteAVerifier({ d }: { d: Donnees }) {
   const liste = abonnementsAVerifier(d, jour)
   if (!liste.length) return null
   return (
-    <Carte titre="🔁 À vérifier sur ton compte">
+    <Carte titre="À vérifier sur ton compte">
       <div className="space-y-4">{liste.map((a) => <Ligne key={a.id} a={a} mois={moisDe(jour)} revenu={estRevenuAttendu(a, d)} />)}</div>
     </Carte>
   )
@@ -35,10 +35,10 @@ function Ligne({ a, mois, revenu }: { a: Abonnement; mois: string; revenu: boole
         </div>
       ) : (
         <div className="mt-2 grid grid-cols-2 gap-2">
-          <button type="button" className={`${bouton} bg-accent text-fond`} onClick={() => confirmerAbonnement(a, mois)}>✅ Oui</button>
-          <button type="button" className={bouton} onClick={() => setAutre(true)}>✏️ Autre montant</button>
+          <button type="button" className={`${bouton} bg-accent text-fond`} onClick={() => confirmerAbonnement(a, mois)}>Oui</button>
+          <button type="button" className={bouton} onClick={() => setAutre(true)}>Autre montant</button>
           <button type="button" className={bouton} onClick={() => relancerAbonnement(a, mois)}>⏳ Pas encore</button>
-          <button type="button" className={bouton} onClick={() => sauterAbonnement(a, mois)}>❌ Pas ce mois-ci</button>
+          <button type="button" className={bouton} onClick={() => sauterAbonnement(a, mois)}>Pas ce mois-ci</button>
         </div>
       )}
     </div>

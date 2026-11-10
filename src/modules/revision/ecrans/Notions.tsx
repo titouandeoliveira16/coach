@@ -65,7 +65,7 @@ function FicheNotion({ n, d, onFermer }: { n: Notion; d: DonneesRevision; onFerm
             {rappels.map((r) => (
               <li key={r.id} className="flex justify-between py-1">
                 <span className="text-texte-2">{libelleRappel(r)} · {jjmm(r.prevu)}</span>
-                <span>{r.fait ? `${r.resultat === 'su' ? '✅ su' : r.resultat === 'hesitant' ? '🟠 hésitant' : '🔁 raté'} le ${jjmm(r.fait)}` : <span className="text-texte-3">à venir</span>}</span>
+                <span>{r.fait ? `${r.resultat === 'su' ? 'su' : r.resultat === 'hesitant' ? 'hésitant' : 'raté'} le ${jjmm(r.fait)}` : <span className="text-texte-3">à venir</span>}</span>
               </li>
             ))}
           </ul>

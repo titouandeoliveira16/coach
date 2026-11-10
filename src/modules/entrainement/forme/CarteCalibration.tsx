@@ -10,7 +10,7 @@ export function CarteCalibration() {
   const c = useLiveQuery(calibration)
   if (!c) return null
   return (
-    <Carte titre="⚖️ Ton maintien mesuré">
+    <Carte titre="Ton maintien mesuré">
       <p className="text-sm text-texte-2">
         Sur {c.jours} jours : tu as mangé <b className="text-texte">{formatNombre(c.kcalMoyen)} kcal/j</b> en moyenne et ton poids a évolué de{' '}
         <b className="text-texte">{c.tendance > 0 ? '+' : ''}{formatNombre(c.tendance, 2)} kg/sem.</b>

@@ -13,7 +13,7 @@ export function CarteFcMax() {
   const ignoree = useLiveQuery(async () => ((await db.reglages.get('fcMaxIgnoree'))?.valeur as number | undefined) ?? null)
   if (!vue || ignoree === undefined || !profil.fcMax || vue.fc <= profil.fcMax || ignoree === vue.fc) return null
   return (
-    <Carte titre="❤️ Nouvelle FC max">
+    <Carte titre="Nouvelle FC max">
       <p className="text-sm text-texte-2">
         <b className="text-texte">{vue.fc} bpm</b> vu le {formatDate(vue.date).slice(0, 5)} ({vue.titre}), plus que ta FC max réglée ({profil.fcMax}).
         {vue.isolee && " C'est un pic isolé : si ta ceinture a pu décrocher, ignore-le."}

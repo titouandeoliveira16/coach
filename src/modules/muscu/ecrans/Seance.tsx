@@ -62,9 +62,9 @@ export function Seance({ e }: { e: EtatMuscu }) {
         </Carte>
       )}
 
-      <p className="px-1 text-xs text-texte-3">⚠️ Série « + » : toujours avec les barres de sécurité ou un pareur.</p>
+      <p className="px-1 text-xs text-texte-3">Série « + » : toujours avec les barres de sécurité ou un pareur.</p>
       {message && <p className="rounded-xl bg-surface p-3 text-sm">{message}</p>}
-      <Bouton onClick={async () => setMessage(await noterSeance(plus ? reps : undefined, plus?.kg))}>✅ Séance faite</Bouton>
+      <Bouton onClick={async () => setMessage(await noterSeance(plus ? reps : undefined, plus?.kg))}>Séance faite</Bouton>
       {e.seances.length > 0 && (
         <button type="button" onClick={() => { annulerDerniere(); setMessage(undefined) }} className="w-full py-2 text-sm text-texte-3 underline">
           Annuler la dernière séance notée
@@ -101,7 +101,7 @@ function Minuteur({ secondes }: { secondes: number }) {
   return (
     <button type="button" onClick={() => { setMaintenant(Date.now()); setFin(reste ? undefined : Date.now() + secondes * 1000) }}
       className={`mt-3 w-full rounded-xl border py-2.5 font-semibold ${reste === 0 ? 'border-[#4ade80] text-[#4ade80]' : 'border-bordure text-texte-2'}`}>
-      {reste === undefined ? `⏱️ Repos ${texte(secondes)}` : reste === 0 ? '✅ Repos terminé · toucher pour relancer' : `⏱️ ${texte(reste)} · toucher pour arrêter`}
+      {reste === undefined ? `⏱️ Repos ${texte(secondes)}` : reste === 0 ? 'Repos terminé · toucher pour relancer' : `⏱️ ${texte(reste)} · toucher pour arrêter`}
     </button>
   )
 }

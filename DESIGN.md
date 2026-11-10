@@ -22,7 +22,7 @@ Couleurs qui codent une information, **toujours avec un mot ou un nom à côté*
 
 | Information | Hex |
 |---|---|
-| Zones Z1 · Z2 · Z3 · Z4 · Z5 | `#7c7b74` · `#3b9eff` · `#46a758` · `#ffc53d` · `#f76b15` |
+| Zones Z1 · Z2 · Z3 · Z4 · Z5 · Z6 | `#7c7b74` · `#3b9eff` · `#46a758` · `#ffc53d` · `#f76b15` · `#e5484d` |
 | Feu vert · orange · rouge | `#30d158` · `#ffd60a` · `#ff453a` |
 | Sommeil | `#9b87f5` |
 | Nutrition | `#2ec5d3` |
