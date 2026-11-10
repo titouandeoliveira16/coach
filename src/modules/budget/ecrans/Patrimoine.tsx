@@ -52,7 +52,7 @@ export function Patrimoine() {
       </Carte>
 
       <Carte>
-        <p className="text-sm text-texte-2">🛟 Épargne de précaution<Aide titre="Épargne de précaution" texte="Total disponible tout de suite sur tes livrets (Livret A + Livret Jeune) : ton coussin en cas d'imprévu." /></p>
+        <p className="text-sm text-texte-2">Épargne de précaution<Aide titre="Épargne de précaution" texte="Total disponible tout de suite sur tes livrets (Livret A + Livret Jeune) : ton coussin en cas d'imprévu." /></p>
         <p className="text-3xl font-bold tabular-nums">{formatEuros(precaution)}</p>
       </Carte>
 

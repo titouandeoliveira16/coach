@@ -1,3 +1,4 @@
+import { Records, Repartition } from '../analyse/RecordsEtRepartition'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -58,6 +59,7 @@ export function Progres() {
           sous={prochain ? (t.testsCourts.includes(prochain) ? "court 3′ + 12′" : 'complet 12-7-3') : 'aucun prévu'} />
       </div>
 
+      <Records />
       <Carte titre="Évolution de mes tests">
         {t.tests.length === 0 ? (
           <p className="text-sm text-texte-3">Ton premier test donnera ton point de départ.</p>
@@ -102,6 +104,7 @@ export function Progres() {
         </Carte>
       )}
 
+      <Repartition />
       <CourbePuissance />
       <LigneFtp cpW={t.cpW ?? t.cpEstimee} poidsKg={t.poidsKg} estimee={!t.cpW} />
 
@@ -246,6 +249,6 @@ function PetitesVictoires({ t, nu = false }: { t: Donnees; nu?: boolean }) {
       <Aide titre="Petites victoires" texte={AIDES.victoires} />
     </>
   )
-  return nu ? contenu : <Carte titre="🏅 Petites victoires">{contenu}</Carte>
+  return nu ? contenu : <Carte titre="Petites victoires">{contenu}</Carte>
 }
 

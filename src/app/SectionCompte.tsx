@@ -15,8 +15,8 @@ function Connecte() {
   const libelles = {
     'en-cours': '⏳ Synchronisation…',
     ok: `✓ Synchronisé${derniereSynchro ? ` (${depuis(derniereSynchro)})` : ''}`,
-    'hors-ligne': '📴 Hors ligne : tes saisies partiront au retour du réseau',
-    erreur: `⚠️ Erreur : ${erreur}`,
+    'hors-ligne': 'Hors ligne : tes saisies partiront au retour du réseau',
+    erreur: `Erreur : ${erreur}`,
     deconnecte: '',
   }
 

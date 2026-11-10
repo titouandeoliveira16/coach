@@ -22,6 +22,7 @@
   --color-z3: #46a758;
   --color-z4: #ffc53d;
   --color-z5: #f76b15;
+  --color-z6: #e5484d;
   --color-bon: #30d158;
   --color-attention: #ffd60a;
   --color-mauvais: #ff453a;
@@ -125,6 +126,11 @@ input[type='date']::-webkit-date-and-time-value {
   from { transform: scaleY(0.05); }
   to { transform: scaleY(1); }
 }
+.monte-svg rect {
+  transform-box: fill-box;
+  transform-origin: bottom;
+  animation: monte 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
 .monte > * {
   transform-origin: bottom;
   animation: monte 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
@@ -145,7 +151,7 @@ input[type='date']::-webkit-date-and-time-value {
   animation: feuille 0.25s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 @media (prefers-reduced-motion: reduce) {
-  .entree, .monte > *, .trace polyline, .feuille { animation: none; }
+  .entree, .monte > *, .monte-svg rect, .trace polyline, .feuille { animation: none; }
   .presse:active { transform: none; }
 }
 

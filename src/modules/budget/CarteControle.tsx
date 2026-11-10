@@ -22,7 +22,7 @@ export function CarteControle({ d }: { d: Donnees }) {
     if (reste.length === 1) await modifier({ dernierControle: jour })
   }
   return (
-    <Carte titre="🔍 Contrôle de la semaine">
+    <Carte titre="Contrôle de la semaine">
       <p className="text-sm text-texte-2">Ouvre l'appli de ta banque et note le solde affiché : on vérifie que rien n'a été oublié.</p>
       {reste.map((c) => <Controle key={c.id} c={c} d={d} plusieurs={courants.length > 1} onFini={() => fini(c.id)} />)}
     </Carte>
@@ -49,7 +49,7 @@ function Controle({ c, d, plusieurs, onFini }: { c: Compte; d: Donnees; plusieur
       </div>
       {compare && banque !== undefined && (ecart === 0 ? (
         <div className="mt-2 text-sm">
-          <p>✅ Pile juste : {formatEuros(appli)}.</p>
+          <p>Pile juste : {formatEuros(appli)}.</p>
           <button type="button" onClick={onFini} className="mt-2 w-full rounded-xl bg-surface-2 py-2.5 font-semibold">C'est noté</button>
         </div>
       ) : (
@@ -61,7 +61,7 @@ function Controle({ c, d, plusieurs, onFini }: { c: Compte; d: Donnees; plusieur
           </p>
           <button type="button" className="w-full rounded-xl bg-surface-2 py-2.5 font-semibold"
             onClick={() => ouvrirSaisie({ type: ecart < 0 ? 'depense' : 'revenu', montant: Math.abs(ecart), compteId: c.id, date: jour })}>
-            ➕ Saisir l'oubli
+            Saisir l'oubli
           </button>
           <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Ou justifie l'écart (ex. frais)" className={champ} />
           <button type="button" className="w-full rounded-xl border border-bordure py-2.5 font-semibold text-texte-2"

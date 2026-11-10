@@ -11,7 +11,7 @@ import { AIDES } from '../aides'
 import { saison } from '../plan/programme'
 
 /** Couleur de chaque phase (rampe validée sur fond sombre). */
-const COULEURS: Record<TypePhase, string> = { reprise: '#86b6ef', base: '#5fb3a8', vo2: '#3987e5', seuil: '#1c5cab', entretien: '#199e70', 'seuil-tirage': '#3987e5', 'seuil-maintien': '#1c5cab', 'fin-prepa': '#7c3aed', specifique: '#d97706', affutage: '#dc2626', recuperation: '#9ca3af' }
+const COULEURS: Record<TypePhase, string> = { reprise: '#7c7b74', base: '#3b9eff', vo2: '#46a758', seuil: '#12a594', entretien: '#6f6d66', 'seuil-tirage': '#46a758', 'seuil-maintien': '#12a594', 'fin-prepa': '#ffc53d', specifique: '#f76b15', affutage: '#e5484d', recuperation: '#9ca3af' }
 const jm = (d: string) => depuisJour(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
 
 const BADGES: Record<SemaineSaison['type'], { texte: string; classe: string } | undefined> = {

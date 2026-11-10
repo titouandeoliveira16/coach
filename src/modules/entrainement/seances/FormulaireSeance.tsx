@@ -105,7 +105,7 @@ export function FormulaireSeance() {
           <div className="grid grid-cols-2 gap-2">
             <Bouton variante="secondaire" onClick={dupliquer} className="text-sm">⧉ Dupliquer la dernière</Bouton>
             <Bouton variante="secondaire" onClick={() => champFit.current?.click()} disabled={chargeFichier || !contexte} className="text-sm">
-              {chargeFichier ? 'Lecture…' : '📄 Importer un .FIT'}
+              {chargeFichier ? 'Lecture…' : 'Importer un .FIT'}
             </Bouton>
             {/* Pas de filtre de type : iOS grise parfois les .fit */}
             <input ref={champFit} type="file" className="hidden" onChange={(e) => { importer(e.target.files?.[0]); e.target.value = '' }} />

@@ -100,7 +100,7 @@ export function Semaine() {
             return (
               <div key={d} className={`flex items-center gap-2.5 rounded-xl border-l-[3px] px-3 py-2 ${d === auj ? 'border-accent bg-accent/10' : 'border-transparent bg-surface'}`}>
                 <span className="w-9 shrink-0 text-[13px] text-texte-3">{court(d)}</span>
-                <span className="text-sm text-texte-3">Repos{panne ? ' · 🔧 vélo en panne' : ''}</span>
+                <span className="text-sm text-texte-3">Repos{panne ? ' · vélo en panne' : ''}</span>
               </div>
             )
           return (
@@ -215,19 +215,19 @@ function AVoir({ lundi, deps, onMessage }: { lundi: string; deps: unknown[]; onM
   if (alertes === undefined || chargee === undefined) return null
   const n = alertes.length
   if (!n && !chargee && !aVenir) return null
-  const resume = n ? `⚠️ ${n} point${n > 1 ? 's' : ''} à voir` : chargee ? '📚 Semaine chargée : le minimum' : 'Rien à signaler · semaine chargée ?'
+  const resume = n ? `⚠️ ${n} point${n > 1 ? 's' : ''} à voir` : chargee ? 'Semaine chargée : le minimum' : 'Rien à signaler · semaine chargée ?'
   return (
     <Repliable titre="À voir cette semaine" resume={resume} libelle="Voir" className={n ? 'border-[#fb923c]/50' : ''}>
-      {n > 0 && <ul className="space-y-1.5 text-sm">{alertes.map((a, i) => <li key={i}>⚠️ {a}</li>)}</ul>}
+      {n > 0 && <ul className="space-y-1.5 text-sm">{alertes.map((a, i) => <li key={i}>{a}</li>)}</ul>}
       {aVenir && (chargee ? (
         <div className="mt-2 text-sm">
-          📚 <b>Semaine chargée</b> : on garde le minimum, sans rattraper.<Aide titre="Semaine chargée" texte={AIDES.semaineChargee} />
+          <b>Semaine chargée</b> : on garde le minimum, sans rattraper.<Aide titre="Semaine chargée" texte={AIDES.semaineChargee} />
           <button type="button" onClick={() => annulerSemaineChargee(lundi)} className="mt-1 block text-texte-3 underline">Annuler : remettre la semaine normale</button>
         </div>
       ) : (
         <button type="button" onClick={async () => onMessage(await passerSemaineChargee(lundi))}
           className="mt-2 w-full rounded-xl border border-dashed border-bordure py-2.5 text-sm font-semibold text-texte-2">
-          📚 Semaine chargée ? Garder le minimum
+          Semaine chargée ? Garder le minimum
         </button>
       ))}
     </Repliable>

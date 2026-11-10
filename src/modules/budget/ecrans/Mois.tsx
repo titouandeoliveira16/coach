@@ -59,7 +59,7 @@ export function Mois() {
       <NavMois mois={mois} onChanger={setMois} max={actuel} />
 
       {bilanAMontrer && (
-        <Carte titre={`📊 Bilan de ${nomMois(precedent)}`}>
+        <Carte titre={`Bilan de ${nomMois(precedent)}`}>
           <Bilan d={d} mois={precedent} rituel />
           <button type="button" onClick={() => modifierReglages({ bilanVu: precedent })} className="mt-3 w-full rounded-xl bg-surface-2 py-2.5 font-semibold">C'est noté</button>
         </Carte>
@@ -71,7 +71,7 @@ export function Mois() {
 
       {aReleverCeMois.length > 0 && (
         <Link to="/budget/patrimoine" className="block rounded-2xl border border-accent bg-surface p-4 active:scale-[0.98]">
-          <p className="font-semibold">📈 Relevés du mois</p>
+          <p className="font-semibold">Relevés du mois</p>
           <p className="mt-1 text-sm text-texte-2">Note la valeur du jour de : {aReleverCeMois.map((c) => c.nom).join(', ')} ›</p>
         </Link>
       )}
@@ -196,7 +196,7 @@ export function Mois() {
         </Link>
         <Link to="/budget/analyses" className="rounded-2xl border border-bordure bg-surface p-4 active:scale-[0.98]">
           <p className="text-xs font-semibold uppercase tracking-wider text-texte-3">Historique</p>
-          <p className="mt-1 text-xl font-bold">📊 Analyses</p>
+          <p className="mt-1 text-xl font-bold">Analyses</p>
         </Link>
       </div>
 

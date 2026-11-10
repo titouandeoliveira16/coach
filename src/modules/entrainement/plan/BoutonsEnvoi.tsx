@@ -31,7 +31,7 @@ export function BoutonsEnvoi({ p, etapes }: { p: SeancePrevue; etapes: Etape[] }
       {envoi ? (
         <>
           <p className="text-sm text-texte-2">
-            ✅ Envoyée à {NOMS[envoi.cible]} le {new Date(envoi.le).toLocaleDateString('fr-FR', { day: 'numeric', month: 'numeric' })}
+            Envoyée à {NOMS[envoi.cible]} le {new Date(envoi.le).toLocaleDateString('fr-FR', { day: 'numeric', month: 'numeric' })}
           </p>
           <div className="mt-2 flex gap-2">
             <button type="button" disabled={occupe} className={bouton} onClick={() => agir(() => envoyerSeance(p, etapes, envoi.cible), 'Mise à jour envoyée ✓')}>↻ Renvoyer</button>
@@ -41,7 +41,7 @@ export function BoutonsEnvoi({ p, etapes }: { p: SeancePrevue; etapes: Etape[] }
       ) : (
         <div className="flex gap-2">
           <button type="button" disabled={occupe} className={bouton} onClick={() => agir(() => envoyerSeance(p, etapes, 'garmin'), 'Envoyée ✓ Elle arrive sur ta montre après la synchro Garmin Connect.')}>⌚ Envoyer à Garmin</button>
-          <button type="button" disabled={occupe} className={bouton} onClick={() => agir(() => envoyerSeance(p, etapes, 'zwift'), 'Envoyée ✓ Zwift → Workouts → Custom → Intervals.icu.')}>🖥️ Envoyer à Zwift</button>
+          <button type="button" disabled={occupe} className={bouton} onClick={() => agir(() => envoyerSeance(p, etapes, 'zwift'), 'Envoyée ✓ Zwift → Workouts → Custom → Intervals.icu.')}>Envoyer à Zwift</button>
         </div>
       )}
       {occupe && <p className="mt-1 text-xs text-texte-3">Envoi…</p>}

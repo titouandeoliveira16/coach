@@ -50,7 +50,7 @@ export function Sujets() {
         </Carte>
       )}
 
-      <Carte titre="📝 Mémoire de recherche">
+      <Carte titre="Mémoire de recherche">
         <p className="text-sm text-texte-2">Une demi-journée par semaine de vacances (le mercredi après-midi), seulement pendant les vacances.</p>
         {d.memoire.length > 0 && (
           <ul className="mt-2 text-sm">

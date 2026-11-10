@@ -55,7 +55,7 @@ export function CarteNutrition({ ouverte: ouverteParent, onBasculer }: {
     const j = saisie
     return (
       assietteChoisie === undefined ? null :
-      <Formulaire key={j} jour={j} titre={`🍽️ Ton assiette ${nomJour(j, jour)}`}
+      <Formulaire key={j} jour={j} titre={`Ton assiette ${nomJour(j, jour)}`}
         existante={assietteChoisie ?? undefined} onFini={() => setSaisie(undefined)} />
     )
   }

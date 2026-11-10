@@ -26,7 +26,7 @@ export function CarteCpEnHausse() {
   const date = dimancheTest()
   const plusTard = () => enregistrer(db.reglages, { id: 'alerte-cp', valeur: { jusquau: decalerJour(aujourdhui(), 14) } })
   return (
-    <Carte titre="📈 Ta CP semble avoir progressé">
+    <Carte titre="Ta CP semble avoir progressé">
       <p className="text-sm text-texte-2">
         D'après tes meilleurs efforts des 6 dernières semaines : <b className="text-texte">~{a.estimee} W</b>, contre {a.cpW} W à ton dernier test.
         Ta CP ne change que si tu refais un test.

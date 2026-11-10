@@ -244,7 +244,7 @@ export function CarteAujourdhui({ onModifierMatin, autreOuvert = false }: {
         </div>
         {reprise ? (
           <p className="mt-2 rounded-xl bg-surface-2 p-3 text-sm">
-            💪 <b>Reprise après maladie (jour {reprise}/{JOURS_REPRISE})</b> : pas d'intensité, sorties très faciles de 45 min au plus. L'intensité revient ensuite, si le feu est vert.
+            <b>Reprise après maladie (jour {reprise}/{JOURS_REPRISE})</b> : pas d'intensité, sorties très faciles de 45 min au plus. L'intensité revient ensuite, si le feu est vert.
           </p>
         ) : null}
         {faites ? <SeancesFaites jour={jour} /> : null}

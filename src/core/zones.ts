@@ -7,7 +7,8 @@
 /** 1er seuil (limite facile / soutenu) estimé en fraction de la CP, tant qu'il n'est pas mesuré (Galán-Rioja 2020). */
 export const SEUIL1_PCT_CP = 0.7
 
-export const COULEURS_ZONES = ['#8b949e', '#3b9ce6', '#3fb950', '#f2c12e', '#f0883e', '#e5534b'] as const
+/** Couleurs des zones Z1 à Z6 (DESIGN.md) */
+export const COULEURS_ZONES = ['#7c7b74', '#3b9eff', '#46a758', '#ffc53d', '#f76b15', '#e5484d'] as const
 export const COULEUR_A_FOND = '#a371f7'
 
 export function couleurPctCP(pct: number | undefined) {

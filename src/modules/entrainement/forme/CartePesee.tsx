@@ -48,7 +48,7 @@ export function CartePesee({ compact = false }: { compact?: boolean } = {}) {
   if (sansPesee && !ouverte) {
     return (
       <div className="flex w-full items-center justify-between rounded-2xl border border-bordure bg-surface px-4 py-3">
-        <span className="text-texte-2">⚖️ Pas de pesée aujourd'hui</span>
+        <span className="text-texte-2">Pas de pesée aujourd'hui</span>
         <button type="button" className="text-sm text-texte-3 underline" onClick={() => marquerSansPesee(aujourdhui(), false)}>Annuler</button>
       </div>
     )
@@ -58,7 +58,7 @@ export function CartePesee({ compact = false }: { compact?: boolean } = {}) {
     return (
       <div className="space-y-1">
       <button type="button" onClick={() => setOuverte(true)} className="flex w-full items-center justify-between rounded-2xl border border-bordure bg-surface px-4 py-3">
-        <span className="text-texte-2">⚖️ Poids</span>
+        <span className="text-texte-2">Poids</span>
         <span>
           <span className="font-semibold">{derniere ? `${formatNombre(derniere.poidsKg, 1)} kg` : 'Me peser'}</span>
           {ecart !== undefined && <span className="ml-2 text-sm text-texte-3">{ecart > 0 ? '+' : ''}{formatNombre(ecart, 1)}</span>}
@@ -69,7 +69,7 @@ export function CartePesee({ compact = false }: { compact?: boolean } = {}) {
         <div className="flex justify-end">
           <button type="button" className="rounded-xl border border-[#f87171]/50 bg-[#f87171]/10 px-3.5 py-2 text-sm font-semibold text-[#f87171] active:opacity-60"
             onClick={() => marquerSansPesee(aujourdhui(), true)}>
-            ✕ Pas de pesée aujourd'hui
+            Pas de pesée aujourd'hui
           </button>
         </div>
       )}
@@ -97,6 +97,6 @@ export function CartePesee({ compact = false }: { compact?: boolean } = {}) {
     </>
   )
   return compact
-    ? <Feuille titre="⚖️ Pesée du jour" onFermer={() => setOuverte(false)}>{contenu}</Feuille>
-    : <Carte titre="⚖️ Pesée du jour">{contenu}</Carte>
+    ? <Feuille titre="Pesée du jour" onFermer={() => setOuverte(false)}>{contenu}</Feuille>
+    : <Carte titre="Pesée du jour">{contenu}</Carte>
 }

@@ -206,7 +206,7 @@ export function QuestionnaireArrivee({ montreSeulement = false }: { montreSeulem
               </div>
               <ul className="mt-2 space-y-0.5 text-sm text-texte-2">
                 {apercu.saison.phases.filter((p) => p.debut <= r.course!.date).map((p) => <li key={p.debut}>{jm(p.debut)} · {NOMS_PHASES[p.type]}</li>)}
-                <li>{jm(r.course!.date)} · 🏁 {r.course!.nom || 'ta course'}</li>
+                <li>{jm(r.course!.date)} · {r.course!.nom || 'ta course'}</li>
               </ul>
               <p className="mt-2 text-xs text-texte-3">
                 {apercu.saison.semaines} semaines · tests CP : {apercu.saison.testsCp.map(jm).join(', ') || 'aucun (course trop proche)'}.

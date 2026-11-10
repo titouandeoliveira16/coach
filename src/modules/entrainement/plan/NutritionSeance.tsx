@@ -7,10 +7,10 @@ import type { SeancePrevue } from '../types'
 export function NutritionSeance({ p }: { p: SeancePrevue }) {
   const c = conseilsSeance({ sport: p.sport, dureeMin: p.dureeMin, intensite: p.intensite, test: p.velo?.famille === 'test' })
   const lignes = [
-    ...(c.avant ? [['🍽️ Avant', c.avant]] : []),
-    ['🍌 Pendant', c.pendant],
-    ['💧 Boire', c.hydratation],
-    ['🥛 Après', c.apres],
+    ...(c.avant ? [['Avant', c.avant]] : []),
+    ['Pendant', c.pendant],
+    ['Boire', c.hydratation],
+    ['Après', c.apres],
   ]
   return (
     <div className="mt-2 rounded-xl bg-surface-2 p-2.5 text-sm">

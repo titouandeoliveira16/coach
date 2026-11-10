@@ -34,10 +34,10 @@ export function Calculateurs({ cpW, wPrimeKj, poidsKg }: { cpW?: number; wPrimeK
       className={`rounded-xl border py-2 text-sm font-semibold ${outil === o ? 'border-accent bg-accent text-fond' : 'border-bordure bg-surface-2 text-texte-2'}`}>{nom}</button>
   )
   return (
-    <Carte titre="🧮 Calculateurs">
+    <Carte titre="Calculateurs">
       <div className="grid grid-cols-2 gap-2">
-        {bouton('col', '⛰️ Col')}
-        {bouton('glucides', '🍌 Glucides')}
+        {bouton('col', 'Col')}
+        {bouton('glucides', 'Glucides')}
       </div>
       {outil === 'col' && (
         <div className="mt-3 space-y-1">

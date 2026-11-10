@@ -19,12 +19,12 @@ export function CartePanne({ compact = false }: { compact?: boolean } = {}) {
 
   if (bilan)
     return compact ? (
-      <Feuille titre="🔧 Programme adapté" onFermer={() => setBilan(undefined)}>
+      <Feuille titre="Programme adapté" onFermer={() => setBilan(undefined)}>
         <ul className="space-y-1 text-sm">{bilan.map((b, i) => <li key={i}>• {b}</li>)}</ul>
         <button type="button" onClick={() => setBilan(undefined)} className="mt-2 text-sm text-texte-3">OK</button>
       </Feuille>
     ) : (
-      <Carte titre="🔧 Programme adapté">
+      <Carte titre="Programme adapté">
         <ul className="space-y-1 text-sm">{bilan.map((b, i) => <li key={i}>• {b}</li>)}</ul>
         <button type="button" onClick={() => setBilan(undefined)} className="mt-2 text-sm text-texte-3">OK</button>
       </Carte>
@@ -33,13 +33,13 @@ export function CartePanne({ compact = false }: { compact?: boolean } = {}) {
   if (panne && compact)
     return (
       <button type="button" onClick={() => veloRepare()} className="min-h-12 flex-1 rounded-xl border border-[#fb923c]/50 bg-[#fb923c]/10 px-2 text-sm font-semibold">
-        🔧 En panne · <span className="text-accent">il remarche</span>
+        En panne · <span className="text-accent">il remarche</span>
       </button>
     )
   if (panne)
     return (
       <div className="flex items-center justify-between rounded-2xl border border-[#fb923c]/50 bg-[#fb923c]/10 px-4 py-3 text-sm">
-        <span>🔧 Vélo en panne jusqu'au {jourLong(panne.au)}</span>
+        <span>Vélo en panne jusqu'au {jourLong(panne.au)}</span>
         <button type="button" className="font-semibold text-accent" onClick={() => veloRepare()}>Il remarche</button>
       </div>
     )
@@ -52,7 +52,7 @@ export function CartePanne({ compact = false }: { compact?: boolean } = {}) {
         </button>
       ) : (
         <button type="button" onClick={() => setOuverte(true)} className="w-full rounded-2xl border border-bordure bg-surface px-4 py-3 text-left text-sm text-texte-2">
-          🔧 Un imprévu ? Vélo en panne…
+          Un imprévu ? Vélo en panne…
         </button>
       )}
       {ouverte && (

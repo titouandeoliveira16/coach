@@ -44,8 +44,8 @@ export function Bilan({ d, mois, rituel = false }: { d: Donnees; mois: string; r
 
       <div>
         <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-texte-3">Plafonds</p>
-        {b.depassees.length === 0 ? <p className="text-texte-2">✅ Aucun plafond dépassé.</p> : b.depassees.map((x) => (
-          <p key={x.categorieId} className="flex justify-between"><span>🔴 {nom(x.categorieId)}</span><span>{formatEuros(x.depense)} / {formatEuros(x.plafond)}</span></p>
+        {b.depassees.length === 0 ? <p className="text-texte-2">Aucun plafond dépassé.</p> : b.depassees.map((x) => (
+          <p key={x.categorieId} className="flex justify-between"><span>{nom(x.categorieId)}</span><span>{formatEuros(x.depense)} / {formatEuros(x.plafond)}</span></p>
         ))}
       </div>
 
@@ -58,8 +58,8 @@ export function Bilan({ d, mois, rituel = false }: { d: Donnees; mois: string; r
       {rituel && (
         <div className="rounded-xl bg-surface-2 p-3">
           <p className="font-semibold">Pour bien démarrer le mois :</p>
-          <Link to="/budget/patrimoine" className="mt-1 block text-accent">📈 Le 5 : relevés de tes placements (PEA, CTO, Bricks) ›</Link>
-          <Link to="/budget/plafonds" className="mt-1 block text-accent">🎯 Ajuste tes plafonds si besoin ›</Link>
+          <Link to="/budget/patrimoine" className="mt-1 block text-accent">Le 5 : relevés de tes placements (PEA, CTO, Bricks) ›</Link>
+          <Link to="/budget/plafonds" className="mt-1 block text-accent">Ajuste tes plafonds si besoin ›</Link>
         </div>
       )}
     </div>

@@ -23,7 +23,7 @@ export function CarteRepas() {
   const nutrition = useLiveQuery(lireReglagesNutrition)
   const [edition, setEdition] = useState(false)
   if (!cible) return null
-  const titre = cible.jour === aujourdhui() ? '🍽️ Ton assiette du jour' : "🍽️ Ton assiette d'hier"
+  const titre = cible.jour === aujourdhui() ? 'Ton assiette du jour' : "Ton assiette d'hier"
 
   if (cible.saisie && !edition) {
     const r = cible.saisie
