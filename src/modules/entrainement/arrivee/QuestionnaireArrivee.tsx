@@ -132,8 +132,11 @@ export function QuestionnaireArrivee({ montreSeulement = false }: { montreSeulem
             <Question libelle="Points sensibles (facultatif)">
               <input value={r.pointsSensibles ?? ''} placeholder="Ex. genoux, dos…" onChange={(e) => maj({ pointsSensibles: e.target.value })} className={champ} />
             </Question>
-            <Question libelle="Conseil nutrition ?" aide="Tes besoins du jour selon tes séances, le repas du soir et un bilan le dimanche. Sans, le module n'apparaît pas : tu pourras l'activer plus tard dans Réglages → Mon profil sportif → Module nutrition.">
+            <Question libelle="Tes repas du jour ?" aide="Tes besoins du jour selon ta séance, ce que tu as mangé et l'écart, un bilan le dimanche. Activable plus tard dans Réglages → Mon profil sportif.">
               <Choix options={[['Oui', true], ['Non', false]]} valeur={r.nutrition} onChoisir={(nutrition) => maj({ nutrition })} />
+            </Question>
+            <Question libelle="Ta nutrition à l'effort ?" aide="Les glucides par heure à prendre sur tes sorties longues et tes courses ; plus tard, un plan pour habituer ton estomac.">
+              <Choix options={[['Oui', true], ['Non', false]]} valeur={r.nutritionEffort ?? true} onChoisir={(nutritionEffort) => maj({ nutritionEffort })} />
             </Question>
             <Question libelle="Musculation">
               <Choix options={MUSCU.map((x) => [x, x])} valeur={r.muscu} onChoisir={(muscu) => maj({ muscu })} />
