@@ -24,7 +24,7 @@ export function Demarrage() {
       <EnTete titre="Budget" />
       <div className="space-y-3 px-4">
         <Carte>
-          <p className="text-lg font-semibold">Bienvenue 👋</p>
+          <p className="text-lg font-semibold">Bienvenue</p>
           <p className="mt-1 text-sm text-texte-2">
             Indique ce qu'il y a sur chaque compte <b className="text-texte">au départ</b> (aujourd'hui, ou le 1er du mois si tu démarres un mois). Ensuite, l'appli calcule les soldes toute seule
             à partir de ce que tu saisis. Tu pourras ajouter, renommer ou archiver des comptes plus tard.

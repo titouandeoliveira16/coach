@@ -137,7 +137,7 @@ export function Progres() {
         </Repliable>
       )}
 
-      <Repliable titre="Petites victoires" libelle="Voir" resume={nVictoires ? `🏅 ${nVictoires} victoire${nVictoires > 1 ? 's' : ''} ce mois-ci` : t.regularite ? `Régularité : ${t.regularite.faites}/${t.regularite.prevues} séances faites (4 sem.)` : 'Tes progrès d’une séance à l’autre'}>
+      <Repliable titre="Petites victoires" libelle="Voir" resume={nVictoires ? `${nVictoires} victoire${nVictoires > 1 ? 's' : ''} ce mois-ci` : t.regularite ? `Régularité : ${t.regularite.faites}/${t.regularite.prevues} séances faites (4 sem.)` : 'Tes progrès d’une séance à l’autre'}>
         <ListeVictoires />
         <PetitesVictoires t={t} nu />
       </Repliable>

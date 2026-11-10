@@ -201,7 +201,7 @@ function CarteVelo({ lundi, deps, onMessage, onPrecedente, onSuivante }: { lundi
         </>
       ) : (
         <>
-          <p className="mt-2 text-sm text-texte-2">Ajoute tes séances de course et ton renfo, puis génère ton vélo : il se place autour, sans deux jours durs d'affilée.<Aide titre="Programme vélo" texte={AIDES.programme} /></p>
+          <p className="mt-2 text-sm text-texte-2">Ajoute ton renfo ou une autre activité, puis génère ton vélo : il se place autour, sans deux jours durs d'affilée.<Aide titre="Programme vélo" texte={AIDES.programme} /></p>
           {!passee && <Bouton className="mt-3" disabled={occupe} onClick={generer}>{occupe ? 'Calcul…' : 'Générer mon vélo de la semaine'}</Bouton>}
         </>
       )}
@@ -217,7 +217,7 @@ function AVoir({ lundi, deps, onMessage }: { lundi: string; deps: unknown[]; onM
   if (alertes === undefined || chargee === undefined) return null
   const n = alertes.length
   if (!n && !chargee && !aVenir) return null
-  const resume = n ? `⚠️ ${n} point${n > 1 ? 's' : ''} à voir` : chargee ? 'Semaine chargée : le minimum' : 'Rien à signaler · semaine chargée ?'
+  const resume = n ? `${n} point${n > 1 ? 's' : ''} à voir` : chargee ? 'Semaine chargée : le minimum' : 'Rien à signaler · semaine chargée ?'
   return (
     <Repliable titre="À voir cette semaine" resume={resume} libelle="Voir" className={n ? 'border-attention/50' : ''}>
       {n > 0 && <ul className="space-y-1.5 text-sm">{alertes.map((a, i) => <li key={i}>{a}</li>)}</ul>}

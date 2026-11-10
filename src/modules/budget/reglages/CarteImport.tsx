@@ -23,8 +23,11 @@ export function CarteImport() {
   return (
     <Repliable titre="Importer des mouvements" libelle="Ouvrir" resume="Un fichier préparé pour toi">
       <p className="text-sm text-texte-2">Un fichier préparé pour toi (ex. un mois passé). Réimporter le même fichier n'ajoute rien en double.</p>
-      <input type="file" accept=".json,application/json,text/plain" className="mt-2 w-full text-sm text-texte-2"
-        onChange={async (e) => { const f = e.target.files?.[0]; if (f) lire(await f.text()) }} />
+      <label className="presse mt-3 flex w-full cursor-pointer items-center justify-center gap-2 rounded-[14px] bg-surface-2 py-3 font-semibold">
+        Choisir le fichier
+        <input type="file" accept=".json,application/json,text/plain" className="hidden"
+          onChange={async (e) => { const f = e.target.files?.[0]; if (f) lire(await f.text()); e.target.value = '' }} />
+      </label>
       <textarea value={texte} onChange={(e) => setTexte(e.target.value)} onBlur={() => texte.trim() && lire(texte)} rows={2}
         placeholder="… ou colle le texte du fichier ici" className="mt-2 w-full rounded-lg border border-bordure bg-surface-2 px-3 py-2 text-sm outline-none" />
       {r && (

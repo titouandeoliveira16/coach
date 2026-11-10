@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Circle, CircleCheck } from 'lucide-react'
 import { aujourdhui, depuisJour } from '../../../core/dates'
 import { formatNombre, lireNombre } from '../../../core/format'
 import { Bouton } from '../../../core/ui/Bouton'
@@ -55,7 +56,7 @@ export function Sujets() {
         {d.memoire.length > 0 && (
           <ul className="mt-2 text-sm">
             {[...d.memoire].sort((a, b) => b.id.localeCompare(a.id)).map((m) => (
-              <li key={m.id} className="py-0.5">{m.fait ? '✅' : '○'} {jjmm(m.id)}{m.objectif ? ` · ${m.objectif}` : ''}</li>
+              <li key={m.id} className="py-0.5">{m.fait ? <CircleCheck className="inline h-4 w-4 align-[-3px] text-bon" strokeWidth={2} /> : <Circle className="inline h-4 w-4 align-[-3px] text-texte-3" strokeWidth={1.8} />} {jjmm(m.id)}{m.objectif ? ` · ${m.objectif}` : ''}</li>
             ))}
           </ul>
         )}

@@ -26,7 +26,6 @@ export function SeancesFaites({ jour }: { jour: string }) {
 }
 
 const COULEURS = { vert: 'var(--color-bon)', orange: 'var(--color-attention)', rouge: 'var(--color-mauvais)', gris: 'var(--color-texte-3)' }
-const PASTILLES = { vert: '✅', orange: '🟠', rouge: '🔴', gris: '❤️' }
 
 function SeanceFaite({ s }: { s: Seance }) {
   const [edition, setEdition] = useState(false)
@@ -47,7 +46,7 @@ function SeanceFaite({ s }: { s: Seance }) {
       <p className="font-semibold">Faite · <IconeSport sport={s.sport} />{s.titre ?? 'Séance'}</p>
       <p className="text-sm text-texte-2">{resume}</p>
       {s.controle ? <ControleSeance s={{ ...s, controle: s.controle }} famille={info?.famille ?? ''} /> : s.blocs && <Blocs b={s.blocs} />}
-      {verdict && <p className="mt-1 text-sm" style={{ color: COULEURS[verdict.couleur] }}>{PASTILLES[verdict.couleur]} {verdict.texte}<Aide titre="Contrôle FC" texte={AIDES.controleFc} /></p>}
+      {verdict && <p className="mt-1 text-sm" style={{ color: COULEURS[verdict.couleur] }}><span className="mr-1.5 inline-block h-2 w-2 rounded-full align-middle" style={{ background: COULEURS[verdict.couleur] }} />{verdict.texte}<Aide titre="Contrôle FC" texte={AIDES.controleFc} /></p>}
       {s.rpe === undefined || edition ? (
         <div className="mt-2">
           <p className="text-sm">Ton ressenti (RPE) ?</p>

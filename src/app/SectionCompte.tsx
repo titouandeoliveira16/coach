@@ -13,7 +13,7 @@ export function SectionCompte() {
 function Connecte() {
   const { session, statut, derniereSynchro, erreur } = useSynchro()
   const libelles = {
-    'en-cours': '⏳ Synchronisation…',
+    'en-cours': 'Synchronisation…',
     ok: `✓ Synchronisé${derniereSynchro ? ` (${depuis(derniereSynchro)})` : ''}`,
     'hors-ligne': 'Hors ligne : tes saisies partiront au retour du réseau',
     erreur: `Erreur : ${erreur}`,

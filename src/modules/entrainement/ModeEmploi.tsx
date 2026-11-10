@@ -33,7 +33,7 @@ export function ModeEmploi() {
           <p>À l'ouverture, l'<b className="text-texte">Accueil</b> te propose les modules. Le bouton 🏠 Accueil en bas y ramène.</p>
         </Rubrique>
 
-        <Rubrique titre="☀️ Chaque matin : Aujourd'hui">
+        <Rubrique titre="Chaque matin : Aujourd'hui">
           <Etape n={1}>Remplis <b className="text-texte">Ton matin</b> : les chiffres de ta montre arrivent seuls, tu ajoutes juste tes 5 notes (sommeil, énergie, jambes, motivation, sérénité).</Etape>
           <Etape n={2}>Regarde ton <b className="text-texte">feu</b> et ta <b className="text-texte">séance du jour</b>.</Etape>
           <p>🟢 Fais la séance prévue.</p>
@@ -44,7 +44,7 @@ export function ModeEmploi() {
           <p>⚖️ <b className="text-texte">Poids</b> : touche la ligne quand tu veux te peser.</p>
         </Rubrique>
 
-        <Rubrique titre="📅 Chaque dimanche : Semaine">
+        <Rubrique titre="Chaque dimanche : Semaine">
           <Etape n={1}>Va sur la semaine suivante (flèche ›).</Etape>
           <Etape n={2}>Si besoin, ajoute avec le <b className="text-texte">+</b> d'un jour une séance à toi (renfo, sortie imposée).</Etape>
           <Etape n={3}>Appuie sur <b className="text-texte">Générer mon vélo de la semaine</b>.</Etape>
@@ -55,47 +55,47 @@ export function ModeEmploi() {
           <p>Touche une séance pour voir son <b className="text-texte">déroulé minute par minute</b>, la marquer faite ou pas faite, la modifier, ou <b className="text-texte">↔ changer de jour</b> (si le jour choisi est pris, les deux séances échangent).</p>
         </Rubrique>
 
-        <Rubrique titre="🚴 Pendant une séance vélo">
+        <Rubrique titre="Pendant une séance vélo">
           <p>Suis le <b className="text-texte">déroulé</b> : chaque ligne donne l'heure de départ, ce qu'il faut faire et les watts.</p>
           <p>Sous le déroulé : la <b className="text-texte">nutrition</b> de la séance (avant, pendant, boire, après).</p>
           <p>Enregistre la séance sur ta <b className="text-texte">Garmin 965</b> (associée au capteur de puissance du home trainer) : elle remonte seule dans l'appli, avec tes kJ.</p>
           <p>Après une séance d'intensité, réponds à <b className="text-texte">« Tenue ? »</b> : Oui = la prochaine sera un peu plus longue ou plus forte. Pas tout = un peu plus facile.</p>
         </Rubrique>
 
-        <Rubrique titre="🔧 Un imprévu (vélo en panne)">
+        <Rubrique titre="Un imprévu (vélo en panne)">
           <p>Dans <b className="text-texte">Aujourd'hui</b>, touche « Un imprévu ? Vélo en panne » et dis jusqu'à quand.</p>
           <p>L'appli annule le vélo de ces jours-là, déplace l'intensité après la réparation si possible, et rallonge un peu ton prochain footing facile (15 min au plus).</p>
           <p>Vélo réparé plus tôt ? Touche « Il remarche ».</p>
         </Rubrique>
 
-        <Rubrique titre="🎯 Les tests CP">
+        <Rubrique titre="Les tests CP">
           <p>Ils sont déjà dans ton programme (dates dans <b className="text-texte">Progrès → Mes prochains tests</b>).</p>
           <p>Complet = 3 efforts à fond (1 h 50, le dimanche). Court = 2 efforts (1 h 15).</p>
           <p>Pèse-toi dans les jours d'avant. Fais-le seulement un jour 🟢.</p>
           <p>Ensuite : <b className="text-texte">Réglages → Vélo → Calculer depuis mon test</b>, entre tes puissances moyennes. Zones et watts de tes séances se mettent à jour tout seuls.</p>
         </Rubrique>
 
-        <Rubrique titre="🗺️ Saison : où j'en suis">
+        <Rubrique titre="Saison : où j'en suis">
           <p>Ta phase du moment (reprise, VO2, seuil…), la frise jusqu'à ton objectif et les semaines à venir : séance d'intensité, budget, semaines allégées, tests, course.</p>
         </Rubrique>
 
-        <Rubrique titre="📈 Progrès : est-ce que j'avance ?">
+        <Rubrique titre="Progrès : est-ce que j'avance ?">
           <p><b className="text-texte">W/kg</b> : ta puissance rapportée à ton poids, test après test. C'est le meilleur signe de progrès.</p>
           <p><b className="text-texte">Efficacité</b> : plus de watts pour le même cœur en endurance = tu progresses.</p>
           <p><b className="text-texte">Forme et fatigue</b> et <b className="text-texte">Récupération</b> : pour vérifier que tu ne te crames pas.</p>
           <p>En bas : toutes tes séances.</p>
         </Rubrique>
 
-        <Rubrique titre="❓ Les petits « ? »">
+        <Rubrique titre="Les petits « ? »">
           <p>Partout dans l'appli, touche un <b className="text-texte">?</b> pour savoir comment un chiffre est calculé et sur quelle étude il s'appuie.</p>
         </Rubrique>
 
-        <Rubrique titre="🔔 Rappels">
+        <Rubrique titre="Rappels">
           <p>Chaque matin à 8 h 30 pour tes 5 notes (les chiffres de ta montre arrivent seuls), les lundi, mardi, mercredi, samedi et dimanche à 7 h pour la pesée. Rien n'arrive si c'est déjà fait.</p>
           <p>À activer une fois dans <b className="text-texte">Réglages → Rappels</b>, sur l'iPhone.</p>
         </Rubrique>
 
-        <Rubrique titre="🔄 Sauvegarde et mises à jour">
+        <Rubrique titre="Sauvegarde et mises à jour">
           <p>Tout se sauvegarde <b className="text-texte">seul sur le serveur</b> : téléphone et ordi voient les mêmes données.</p>
           <p>Après une mise à jour : <b className="text-texte">ferme complètement l'appli puis rouvre-la</b>. Le numéro de version est en bas de Réglages.</p>
         </Rubrique>

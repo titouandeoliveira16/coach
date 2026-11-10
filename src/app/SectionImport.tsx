@@ -16,8 +16,11 @@ export function SectionImport() {
   return (
     <Carte titre="Importer mes données">
       <p className="text-sm text-texte-2">Un fichier préparé pour toi (profil, records, soldes de départ). Il reste sur ton téléphone et dans tes données privées, jamais dans le code de l'appli.</p>
-      <input type="file" accept=".json,application/json,text/plain" className="mt-2 w-full text-sm text-texte-2"
-        onChange={async (e) => { const f = e.target.files?.[0]; if (f) await importer(await f.text()) }} />
+      <label className="presse mt-3 flex w-full cursor-pointer items-center justify-center gap-2 rounded-[14px] bg-surface-2 py-3 font-semibold">
+        Choisir le fichier
+        <input type="file" accept=".json,application/json,text/plain" className="hidden"
+          onChange={async (e) => { const f = e.target.files?.[0]; if (f) importer(await f.text()); e.target.value = '' }} />
+      </label>
       {message && <p className="mt-2 text-sm text-texte-2">{message}</p>}
     </Carte>
   )

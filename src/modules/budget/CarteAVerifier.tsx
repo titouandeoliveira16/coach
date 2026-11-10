@@ -37,7 +37,7 @@ function Ligne({ a, mois, revenu }: { a: Abonnement; mois: string; revenu: boole
         <div className="mt-2 grid grid-cols-2 gap-2">
           <button type="button" className={`${bouton} bg-accent text-fond`} onClick={() => confirmerAbonnement(a, mois)}>Oui</button>
           <button type="button" className={bouton} onClick={() => setAutre(true)}>Autre montant</button>
-          <button type="button" className={bouton} onClick={() => relancerAbonnement(a, mois)}>⏳ Pas encore</button>
+          <button type="button" className={bouton} onClick={() => relancerAbonnement(a, mois)}>Pas encore</button>
           <button type="button" className={bouton} onClick={() => sauterAbonnement(a, mois)}>Pas ce mois-ci</button>
         </div>
       )}

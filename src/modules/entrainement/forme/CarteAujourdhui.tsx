@@ -168,7 +168,7 @@ export function CarteAujourdhui({ onModifierMatin, apresForme }: {
               className={`presse flex flex-col items-center justify-center gap-0.5 rounded-[10px] px-0.5 py-1.5 ${fondCase(d?.etat) ? '' : 'bg-surface-2 text-texte-2'}`}
               style={fondCase(d?.etat) ? { background: `color-mix(in srgb, ${fondCase(d?.etat)} 16%, transparent)`, color: fondCase(d?.etat) } : undefined}>
               <span className="text-[11px] opacity-85">{NOMS_CASES[cle]}</span>
-              <span className={`font-semibold leading-tight ${(d?.court?.length ?? 0) > 10 ? 'text-xs' : 'text-sm'}`}>{d?.court ?? '—'}</span>
+              <span className={`font-semibold leading-tight ${(d?.court?.length ?? 0) > 10 ? 'text-xs' : 'text-sm'}`}>{d?.court === 'En calibration' ? 'Calibrage' : d?.court ?? '—'}</span>
               {resumes[cle] && <span className="text-[11px] leading-tight opacity-85">{resumes[cle]}</span>}
             </button>
           ))}
