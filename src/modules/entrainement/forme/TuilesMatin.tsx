@@ -1,11 +1,9 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { HeartPulse, Moon, Scale, type LucideIcon } from 'lucide-react'
+import { Moon, Scale, type LucideIcon } from 'lucide-react'
 import { aujourdhui, decalerJour } from '../../../core/dates'
 import { db } from '../../../core/db'
 import { formatNombre } from '../../../core/format'
 import { lireSansPesee, peseesValides } from './pesees'
-
-const COULEURS = { vert: 'var(--color-bon)', orange: 'var(--color-attention)', rouge: 'var(--color-mauvais)' } as const
 
 /** Mini-courbe des 14 derniers jours (une seule série : la tuile la nomme), qui se dessine à l'ouverture. */
 function MiniCourbe({ valeurs, couleur }: { valeurs: number[]; couleur: string }) {
@@ -33,28 +31,22 @@ function Tuile({ Icone, couleurIcone, libelle, valeur, couleurValeur, onClick, c
   )
 }
 
-/** En haut d'Aujourd'hui (maquette V1) : forme du jour, nuit et poids, chacun avec sa tendance sur 14 jours. */
+/** Sous « Ta forme » (maquette F2) : nuit et poids, chacun avec sa tendance sur 14 jours (la forme n'est que dans « Ta forme »). */
 export function TuilesMatin({ onPoids }: { onPoids?: () => void } = {}) {
   const jour = aujourdhui()
   const d = useLiveQuery(async () => {
     const mesures = (await db.mesures.where('date').between(decalerJour(jour, -13), jour, true, true).toArray()).filter((m) => !m.sansMontre)
-    const decision = await db.decisions.get(jour)
     const pesees = (await peseesValides()).filter((p) => p.date >= decalerJour(jour, -27)).reverse()
     const sansPesee = (await lireSansPesee()).includes(jour)
-    return { mesures, decision, pesees, sansPesee }
+    return { mesures, pesees, sansPesee }
   }, [jour])
   if (!d) return null
-  const vfc = d.mesures.filter((m) => m.vfcMs).map((m) => m.vfcMs!)
   const nuits = d.mesures.filter((m) => m.sommeilH).map((m) => m.sommeilH!)
   const nuit = d.mesures.find((m) => m.date === jour)?.sommeilH
   const poids = d.pesees.at(-1)
-  const couleur = d.decision?.couleur
   return (
-    <div className="grid shrink-0 grid-cols-3 gap-2">
-      <Tuile Icone={HeartPulse} couleurIcone={couleur ? COULEURS[couleur] : 'var(--color-texte-3)'} libelle="Forme" valeur={couleur ? couleur[0].toUpperCase() + couleur.slice(1) : '—'} couleurValeur={couleur ? COULEURS[couleur] : 'var(--color-texte-3)'}>
-        <MiniCourbe valeurs={vfc} couleur={couleur ? COULEURS[couleur] : 'var(--color-texte-3)'} />
-      </Tuile>
-      <Tuile Icone={Moon} couleurIcone="var(--color-sommeil)" libelle="Nuit" valeur={nuit ? `${Math.floor(nuit)}:${String(Math.round((nuit % 1) * 60)).padStart(2, '0')}` : '—'}>
+    <div className="grid shrink-0 grid-cols-2 gap-2">
+      <Tuile Icone={Moon} couleurIcone="var(--color-sommeil)" libelle="Nuit" valeur={nuit ? `${Math.floor(nuit)} h ${String(Math.round((nuit % 1) * 60)).padStart(2, '0')}` : '—'}>
         <MiniCourbe valeurs={nuits} couleur="var(--color-sommeil)" />
       </Tuile>
       <Tuile Icone={Scale} couleurIcone="var(--color-texte-3)" libelle="Poids" onClick={onPoids} valeur={poids ? `${formatNombre(poids.poidsKg, 1)} kg` : '—'}>

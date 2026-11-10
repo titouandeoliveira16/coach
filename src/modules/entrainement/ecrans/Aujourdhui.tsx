@@ -32,15 +32,17 @@ function useZoneEcran(pret: boolean) {
   useEffect(() => {
     const calculer = () => {
       if (!ref.current) return
-      const haut = ref.current.getBoundingClientRect().top
-      const nav = [...document.querySelectorAll('nav')].find((n) => getComputedStyle(n).position === 'fixed')
-      const hautBarre = nav?.getBoundingClientRect().top ?? window.innerHeight - 90
-      setZone({ haut, bas: window.innerHeight - hautBarre + 8 })
+      const hautZone = ref.current.getBoundingClientRect().top
+      // Les onglets sont posés en bas, au-dessus de la barre : l'écran s'arrête au-dessus d'eux
+      const haut = (sel: string) => document.querySelector(sel)?.getBoundingClientRect().top
+      const hautBarre = haut('[data-onglets]') ?? haut('nav[data-barre-bas]') ?? window.innerHeight - 90
+      setZone({ haut: hautZone, bas: window.innerHeight - hautBarre + 8 })
     }
     window.scrollTo(0, 0)
     calculer()
+    const t = setTimeout(calculer, 350)
     window.addEventListener('resize', calculer)
-    return () => window.removeEventListener('resize', calculer)
+    return () => { clearTimeout(t); window.removeEventListener('resize', calculer) }
   }, [pret])
   return { ref, zone }
 }
@@ -83,10 +85,9 @@ export function Aujourdhui() {
         <CarteBilanNutrition lieu="aujourdhui" />
         <CarteCalibration />
       </BandeauAVoir>
-      {complet && !edition && <TuilesMatin onPoids={() => setPeseeOuverte(true)} />}
       {peseeOuverte && <FeuillePesee onFermer={() => setPeseeOuverte(false)} />}
       {complet && !edition ? (
-        <CarteAujourdhui onModifierMatin={() => setEdition(true)} autreOuvert={nutriOuverte} />
+        <CarteAujourdhui onModifierMatin={() => setEdition(true)} autreOuvert={nutriOuverte} apresForme={<TuilesMatin onPoids={() => setPeseeOuverte(true)} />} />
       ) : (
         <SaisieMatin key={duJour?.modifieLe} existante={duJour} onTermine={() => setEdition(false)} />
       )}

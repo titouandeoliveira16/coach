@@ -1,6 +1,7 @@
 import { IconeSport } from '../IconeSport'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useEffect, useRef, useState } from 'react'
+import { HeartPulse } from 'lucide-react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { db } from '../../../core/db'
 import { aujourdhui, decalerJour, depuisJour } from '../../../core/dates'
@@ -46,7 +47,9 @@ function ChoixSeance({ maintenue, conseil, prevu, couleur, onChoisir }: {
 }
 
 /** Signal du jour, raison, séance prévue et recommandation. */
-export function CarteAujourdhui({ onModifierMatin }: {
+export function CarteAujourdhui({ onModifierMatin, apresForme }: {
+  /** Glissé entre « Ta forme » et la séance (tuiles Nuit et Poids) */
+  apresForme?: ReactNode
   onModifierMatin?: () => void
   /** Un autre encart (Nutrition du jour) est déplié : la séance garde sa taille et descend */
   autreOuvert?: boolean
@@ -143,9 +146,21 @@ export function CarteAujourdhui({ onModifierMatin }: {
     <>
       {/* Ta forme : le feu et ses 4 indicateurs, détail à ouvrir */}
       <Carte className={`flex shrink-0 flex-col gap-2.5 p-3! ${formeOuverte ? 'border-accent!' : ''}`}>
-        <button type="button" onClick={basculerForme} className="flex items-center justify-between text-left">
-          <span className="etiquette">Ta forme</span>
-          <span className={`text-sm ${formeOuverte ? 'font-semibold text-accent' : 'text-texte-3'}`}>{formeOuverte ? 'Réduire ▴' : 'Détail ▾'}</span>
+        <button type="button" onClick={basculerForme} className="flex flex-col gap-1.5 text-left">
+          <span className="flex w-full items-center justify-between">
+            <span className="etiquette">Ta forme</span>
+            <span className={`text-sm ${formeOuverte ? 'font-semibold text-accent' : 'text-texte-3'}`}>{formeOuverte ? 'Réduire ▴' : 'Détail ▾'}</span>
+          </span>
+          {/* Le feu du jour, en grand (la forme n'est affichée qu'ici) */}
+          <span className="flex items-center gap-2.5">
+            <HeartPulse className="h-7 w-7 shrink-0" style={{ color: COULEUR[signal.couleur] }} strokeWidth={2} />
+            <span>
+              <span className="chiffre block text-[26px] leading-none" style={{ color: COULEUR[signal.couleur] }}>{signal.couleur[0].toUpperCase() + signal.couleur.slice(1)}</span>
+              <span className="mt-0.5 block text-[13px] text-texte-2">
+                {enAlerte.length === 0 ? 'Tes signaux sont dans ta normale' : enAlerte.length === 1 ? '1 signal en alerte ce matin' : `${enAlerte.length} signaux en alerte ce matin`}
+              </span>
+            </span>
+          </span>
         </button>
         <div className="grid grid-cols-4 gap-1.5 text-center">
           {cases.map(({ cle, d }) => (
@@ -206,6 +221,8 @@ export function CarteAujourdhui({ onModifierMatin }: {
           </p>
         )}
       </Carte>
+
+      {apresForme}
 
       {/* Séance du jour : la carte qui prend toute la place restante (elle défile seule si besoin) */}
       <Carte ref={seanceRef} className={`flex flex-col p-3! ${detailOuvert ? 'border-accent!' : ''} shrink-0`}
