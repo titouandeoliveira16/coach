@@ -64,6 +64,15 @@ export interface ReglagesEntrainement {
   programme: ReglagesProgramme
 }
 
+/** Une semaine type qui s'applique à partir d'une date (le plafond de kJ suit les jours et les durées). */
+export interface SemaineTypeFuture {
+  /** Lundi à partir duquel elle s'applique */
+  debut: string
+  semaineType: Role[]
+  maxSemaineMin?: number
+  maxLongMin?: number
+}
+
 /** Programme vélo automatique : semaine type, phases, tests et compétitions. */
 export interface ReglagesProgramme {
   /** Discipline visée (absent : route) : choisit les séances (profils de discipline du catalogue) */
@@ -83,6 +92,8 @@ export interface ReglagesProgramme {
   competitions: Competition[]
   /** Courses déjà faites données à la main pour caler ta vitesse en course (s'ajoutent aux courses prévues puis importées) */
   coursesReference?: CourseReference[]
+  /** Semaines types à venir (ex. 5 vélos dès le déménagement) : chacune remplace la semaine type à partir de son lundi */
+  semainesTypesFutures?: SemaineTypeFuture[]
   /** Budget kJ de la 1re semaine quand tu roulais déjà (médiane de tes 4 semaines d'avant) */
   budgetDepart?: number
   /** Saison calculée avec la prépa hivernale Methodic (10/11/2026) */

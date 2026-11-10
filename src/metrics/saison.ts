@@ -148,14 +148,13 @@ export function phasesAvecCoursesA(phases: Phase[], datesA: string[]): Phase[] {
     const ln = lundiDe(a[i])
     const r = semainesEntre(lp, ln) - 1 // semaines après la récup, semaine de course comprise
     const blocs: [Phase['type'], number][] = [['recuperation', 1]]
-    if (r <= 5) blocs.push(['specifique', Math.max(0, r - 1)], ['affutage', 1])
+    // Relecteur 10/11/2026 : affûtage de 2 semaines (×0,65 puis ×0,45) dès qu'il reste 4 semaines (Bosquet 2007, Wang 2023)
+    if (r <= 5) blocs.push(['specifique', Math.max(0, r - (r >= 4 ? 2 : 1))], ['affutage', r >= 4 ? 2 : 1])
     else if (r <= 11) {
       const bloc = r - 3
-      blocs.push(['seuil-tirage', Math.min(4, bloc)], ['fin-prepa', bloc - Math.min(4, bloc)], ['specifique', 2], ['affutage', 1])
+      blocs.push(['seuil-tirage', Math.min(4, bloc - 1)], ['fin-prepa', bloc - 1 - Math.min(4, bloc - 1)], ['specifique', 2], ['affutage', 2])
     } else {
       const d = dureesPhases(r)
-      d['seuil-maintien'] += d.affutage - 1
-      d.affutage = 1
       for (const t of ['reprise', 'entretien', 'base', 'seuil-tirage', 'seuil-maintien', 'fin-prepa', 'specifique', 'affutage'] as const) blocs.push([t, d[t]])
     }
     let l = decaler(lp, 7)

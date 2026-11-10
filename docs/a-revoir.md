@@ -104,6 +104,12 @@ Points décidés ou mis de côté, à reprendre au bon moment.
 - 10.6 (10/11/2026) : notification « Séance remontée » (fonction « rappels », à redéployer par Titouan) et semaine
   recalculée à chaque import. Titouan arrête le journal des repas (Repas du jour désactivé) : il fait attention seul
   et regarde la courbe du poids. Lui reparler fin novembre de la tendance du poids et d'une reprise éventuelle.
+- 11.1 (11/11/2026, relus) : saison en deux pics (préparation vers la 1re course A, puis récup 1, spécifique 3, affûtage 2
+  vers la suivante ; recalcul complet quand les courses changent) ; semaine allégée au plus toutes les 4 semaines sur
+  toute la saison (le spécifique et la fin de prépa en étaient exclus : jusqu'à 9 semaines chargées) ; « semaines types
+  à venir » datées (le plafond de kJ suit les jours et durées : la hausse de 7,5 % continue) ; histogramme dans Saison.
+  À vérifier avec lui : que le plafond « heures par semaine » du profil sportif ne bloque pas la hausse ; budget de
+  l'entretien après la dernière course A (reste au niveau d'avant : à baisser ?).
 - **Titouan a encore « 2-3 trucs à travailler »** (9/11 au soir, pas encore dits) : les lui demander à la prochaine conversation.
 - Les deux conversations ont été regroupées le 9/11/2026 (« Corrections et améliorations appli » supprimée par Titouan).
 
