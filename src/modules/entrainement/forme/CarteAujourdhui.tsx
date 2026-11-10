@@ -130,7 +130,8 @@ export function CarteAujourdhui({ onModifierMatin }: {
   const resumes: Record<(typeof cases)[number]['cle'], string | undefined> = {
     recuperation: mesure?.vfcMs !== undefined && !mesure.sansMontre ? `${mesure.vfcMs} ms` : undefined,
     pouls: mesure?.fcRepos !== undefined && !mesure.sansMontre ? `${mesure.fcRepos} bpm` : undefined,
-    sommeil: mesure?.sommeilH !== undefined && !mesure.sansMontre ? enHeures(mesure.sommeilH) : undefined,
+    // La nuit est déjà dans la tuile Nuit en haut : ici, la moyenne des 7 dernières nuits
+    sommeil: moyenneNuits ? `7 j : ${moyenneNuits}` : undefined,
     ressenti: ressenti !== undefined ? `${formatNombre(ressenti, 1)} / 5` : undefined,
   }
   const couleurEtat = (e?: 'ok' | 'alerte' | 'info') => (e === 'alerte' ? COULEUR[signal.couleur === 'vert' ? 'orange' : signal.couleur] : e === 'ok' ? COULEUR.vert : '#a3abb7')
@@ -155,7 +156,6 @@ export function CarteAujourdhui({ onModifierMatin }: {
               <span className="text-[11px] opacity-85">{NOMS_CASES[cle]}</span>
               <span className="text-sm font-semibold leading-tight">{d?.court ?? '—'}</span>
               {resumes[cle] && <span className="text-[11px] leading-tight opacity-85">{resumes[cle]}</span>}
-              {cle === 'sommeil' && moyenneNuits && <span className="text-[11px] leading-tight text-texte-2">7 j : {moyenneNuits}</span>}
             </button>
           ))}
         </div>
