@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { calculerSaison, dureesPhases, migrerBase } from './saison'
+import { calculerSaison, datesCoursesA, dureesPhases, migrerBase, phasesAvecCoursesA } from './saison'
 import { estSemaineAllegee, coefficientPhase } from './programme'
 
 describe('saison calculée depuis la course', () => {
@@ -168,5 +168,27 @@ describe('migration vers la base', () => {
     expect(migrerBase(avant).map((p) => [p.debut, p.type])).toEqual([['2026-11-09', 'reprise'], ['2026-11-23', 'base'], ['2027-01-04', 'entretien']])
     const courte = [{ debut: '2026-11-09', type: 'reprise' as const }, { debut: '2026-11-23', type: 'seuil-tirage' as const }]
     expect(migrerBase(courte)).toBe(courte)
+  })
+})
+
+describe('plusieurs courses A', () => {
+  const s = calculerSaison({ debut: '2026-11-09', course: '2027-04-04' })
+  const types = (p: { debut: string; type: string }[], apres: string) => p.filter((x) => x.debut > apres).map((x) => `${x.debut} ${x.type}`)
+  it('4 semaines d’écart : récupération, spécifique court, affûtage d’1 semaine', () => {
+    const p = phasesAvecCoursesA(s.phases, ['2027-04-04', '2027-05-02'])
+    expect(p.find((x) => x.debut === '2027-04-05')?.type).toBe('recuperation')
+    expect(p.filter((x) => x.type === 'affutage').map((x) => x.debut)).toContain('2027-04-26')
+    expect(p.at(-1)).toEqual({ debut: '2027-05-10', type: 'entretien' })
+  })
+  it('9 semaines d’écart : bloc pour progresser, spécifique 2, affûtage 1', () => {
+    const p = phasesAvecCoursesA(s.phases, ['2027-04-04', '2027-06-06'])
+    expect(types(p, '2027-04-04').map((x) => x.split(' ')[1])).toEqual(['recuperation', 'seuil-tirage', 'fin-prepa', 'specifique', 'affutage', 'recuperation', 'entretien'])
+  })
+  it('une seule A : la saison ne change pas avant elle', () => {
+    expect(phasesAvecCoursesA(s.phases, ['2027-04-04'])).toEqual(s.phases)
+  })
+  it('A retenues : 3 semaines d’écart au moins, 4 au plus', () => {
+    expect(datesCoursesA([{ date: '2027-04-04', niveau: 'A' }, { date: '2027-04-18', niveau: 'A' }, { date: '2027-05-02', niveau: 'A' }, { date: '2027-03-01', niveau: 'B' }]))
+      .toEqual(['2027-04-04', '2027-05-02'])
   })
 })

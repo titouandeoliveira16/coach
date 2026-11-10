@@ -111,3 +111,58 @@ export function migrerBase(phases: Phase[]): Phase[] {
   if (!suivante || semainesEntre(triees[i].debut, suivante.debut) <= 4) return phases
   return [...triees.slice(0, i + 1), { debut: decaler(triees[i].debut, 14), type: 'base' }, ...triees.slice(i + 1)]
 }
+
+/** Écart minimum entre deux courses A (jours) et nombre maximum de courses A dans la saison : choix d'entraîneur. */
+export const ECART_A_JOURS = 21
+export const MAX_COURSES_A = 4
+
+/**
+ * Plusieurs courses A (relecture du 10/11/2026 : les pics multiples sont peu étudiés, Pyne 2009 ; on peut encore
+ * progresser en 4 semaines avec un bloc VO2, Rønnestad 2014 ; durées = choix d'entraîneur). La saison est construite
+ * vers la 1re A ; après chaque A : 1 semaine de récupération, puis selon l'écart jusqu'à la A suivante (en semaines) :
+ *  - 3 à 6 : spécifique court, puis 1 semaine d'affûtage ;
+ *  - 7 à 12 : bloc pour progresser encore (tirer le seuil, puis fin de prépa), 2 semaines de spécifique, 1 d'affûtage ;
+ *  - plus de 12 : une mini-prépa (durées de saison, affûtage d'1 semaine).
+ * Après la dernière A : récupération, puis entretien.
+ */
+export function phasesAvecCoursesA(phases: Phase[], datesA: string[]): Phase[] {
+  const a = [...new Set(datesA)].sort()
+  if (!a.length) return phases
+  const premiere = lundiDe(a[0])
+  // On garde la saison jusqu'à la 1re A comprise, puis on enchaîne
+  const res = [...phases].sort((x, y) => x.debut.localeCompare(y.debut)).filter((p) => p.debut <= premiere)
+  for (let i = 1; i < a.length; i++) {
+    const lp = lundiDe(a[i - 1])
+    const ln = lundiDe(a[i])
+    const r = semainesEntre(lp, ln) - 1 // semaines après la récup, semaine de course comprise
+    const blocs: [Phase['type'], number][] = [['recuperation', 1]]
+    if (r <= 5) blocs.push(['specifique', Math.max(0, r - 1)], ['affutage', 1])
+    else if (r <= 11) {
+      const bloc = r - 3
+      blocs.push(['seuil-tirage', Math.min(4, bloc)], ['fin-prepa', bloc - Math.min(4, bloc)], ['specifique', 2], ['affutage', 1])
+    } else {
+      const d = dureesPhases(r)
+      d['seuil-maintien'] += d.affutage - 1
+      d.affutage = 1
+      for (const t of ['reprise', 'base', 'entretien', 'seuil-tirage', 'seuil-maintien', 'fin-prepa', 'specifique', 'affutage'] as const) blocs.push([t, d[t]])
+    }
+    let l = decaler(lp, 7)
+    for (const [type, n] of blocs) {
+      if (n > 0) res.push({ debut: l, type })
+      l = decaler(l, 7 * n)
+    }
+  }
+  const derniere = lundiDe(a[a.length - 1])
+  res.push({ debut: decaler(derniere, 7), type: 'recuperation' }, { debut: decaler(derniere, 14), type: 'entretien' })
+  return res
+}
+
+/** Dates des courses A retenues : 3 semaines d'écart au moins, 4 au plus (les autres comptent comme des B). */
+export function datesCoursesA(courses: { date: string; niveau?: string }[]) {
+  const res: string[] = []
+  for (const c of [...courses].filter((x) => x.niveau === 'A').sort((x, y) => x.date.localeCompare(y.date))) {
+    const prec = res[res.length - 1]
+    if (res.length < MAX_COURSES_A && (!prec || (Date.parse(c.date) - Date.parse(prec)) / 86_400_000 >= ECART_A_JOURS)) res.push(c.date)
+  }
+  return res
+}

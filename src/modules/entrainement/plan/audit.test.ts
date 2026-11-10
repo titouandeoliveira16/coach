@@ -24,6 +24,7 @@ const profils: [string, Partial<ReponsesArrivee>][] = [
   ['marathon VTT 5 j', { discipline: 'xcm' }],
   ['débutant 3 j après arrêt', { anciennete: 'Moins d’un an', heuresRecentes: 'Moins de 3 h', intervalles: false, arretSemaines: 4, semaineType: semaineDepuisJours(3), heuresSemaine: 'Moins de 4 h' }],
   ['route 4 j, 2 jours durs choisis (mardi, vendredi)', { semaineType: ['libre', 'velo-dur', 'velo-z2', 'renfo', 'velo-dur', 'libre', 'velo-long'] }],
+  ['route cyclo, 2 courses A (6 semaines d’écart)', { typeCourse: 'cyclo', course: { nom: 'A1', date: '2027-04-11', distanceKm: 120, deniveleM: 1500 }, autresCourses: [{ date: '2027-05-23', nom: 'A2', niveau: 'A', epreuve: 'cyclo', distanceKm: 150, deniveleM: 2500 }] }],
   ['expert 6 j, course proche', { anciennete: 'Plus de 5 ans', heuresRecentes: 'Plus de 10 h', heuresSemaine: 'Plus de 12 h', semaineType: semaineDepuisJours(6), course: { nom: 'Proche', date: '2027-01-10' } }],
 ]
 
@@ -36,7 +37,8 @@ describe('audit du moteur sur une saison entière', () => {
       const r = { ...base, ...p }
       await enregistrerArrivee(r)
       const problemes: string[] = []
-      for (let l = '2026-11-09'; l <= decalerJour(r.course.date, 14); l = decalerJour(l, 7)) {
+      const fin = [r.course.date, ...(r.autresCourses ?? []).map((c) => c.date)].sort().pop()!
+      for (let l = '2026-11-09'; l <= decalerJour(fin, 14); l = decalerJour(l, 7)) {
         vi.setSystemTime(new Date(`${l}T06:00:00`))
         await genererSemaineVelo(l)
         const semaine = (await db.prevues.where('date').between(l, decalerJour(l, 6), true, true).toArray()).filter((x) => x.sport === 'velo' && x.statut === 'prevue')

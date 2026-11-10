@@ -6,6 +6,7 @@ import { ANCIENNETES, DISCIPLINES_PROPOSEES, HEURES_RECENTES, NOMS_DISCIPLINES, 
 import { AIDES } from '../aides'
 import { programmeDe, useReglagesEntrainement } from '../reglagesEntrainement'
 import { useLiveQuery } from 'dexie-react-hooks'
+import { datesCoursesA, phasesAvecCoursesA } from '../../../metrics/saison'
 import { poidsDesTests, recalculerSemainesAVenir, referencesVitesse } from '../plan/programme'
 import { CalageVitesse, CoursePrincipale, ListeCourses } from './ListeCourses'
 import type { ReglagesProgramme } from '../types'
@@ -85,7 +86,9 @@ export function SectionProfilSportif() {
   // La durée de la course principale règle aussi la sortie longue visée
   const changerCourses = (competitions: typeof prog.competitions) => {
     const a = competitions.find((c) => niveaux.get(c.date) === 'A' || c.niveau === 'A')
-    changerProg({ competitions, ...(a && (a.distanceKm || a.dureeMin) ? { dureeCourseMin: dureeDeCourse(a, contexteCourses) } : {}) })
+    // Courses A : la saison après la 1re se recalcule (récupération, puis bloc adapté à l'écart jusqu'à la suivante)
+    const datesA = datesCoursesA(competitions.map((c) => ({ ...c, niveau: c.niveau ?? niveaux.get(c.date) })))
+    changerProg({ competitions, ...(prog.modele === 'chauvin' && datesA.length ? { phases: phasesAvecCoursesA(prog.phases, datesA) } : {}), ...(a && (a.distanceKm || a.dureeMin) ? { dureeCourseMin: dureeDeCourse(a, contexteCourses) } : {}) })
   }
   const resume = [NOMS_DISCIPLINES[discipline], objectifs.find((c) => niveaux.get(c.date) === 'A')?.nom, ps.heuresSemaine && `${ps.heuresSemaine}/sem.`].filter(Boolean).join(' · ')
 
@@ -130,7 +133,7 @@ export function SectionProfilSportif() {
           ? <CoursePrincipale key={principale.date} course={principale} contexte={contexteCourses} onChanger={(a) => changerCourses(prog.competitions.map((c) => (c === principale ? a : c)))} />
           : <p className="text-sm text-texte-2">Aucune : remplis le questionnaire d'arrivée pour construire ta saison.</p>}
         <p className="mt-4 mb-1.5 text-xs font-semibold uppercase tracking-wider text-texte-3">Tes autres courses</p>
-        <ListeCourses courses={prog.competitions} effectifs={niveaux} contexte={contexteCourses} onChanger={changerCourses} />
+        <ListeCourses courses={prog.competitions} effectifs={niveaux} contexte={contexteCourses} onChanger={changerCourses} principale={principale?.date} />
         <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-texte-3">Ta vitesse en course</p>
         <CalageVitesse refs={prog.coursesReference ?? []} auto={vitesse?.auto ?? 0} facteurs={vitesse?.facteurs ?? {}} onChanger={(coursesReference) => changerProg({ coursesReference })} />
         <p className="mt-1.5 text-xs text-texte-3">{AIDES.niveauxCourses}</p>

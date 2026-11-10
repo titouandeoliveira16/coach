@@ -5,7 +5,7 @@ import { dureeDeCourse, epreuveDe, estimerDureeCourse, NOMS_EPREUVES, type Compe
 
 const COULEURS: Record<NiveauCourse, string> = { A: 'bg-accent', B: 'bg-yellow-400', C: 'bg-sky-400' }
 const NOTES: Record<NiveauCourse, string> = {
-  A: 'ta saison est construite autour',
+  A: 'objectif : affûtage avant, récupération après',
   B: 'semaine allégée, la course est ta séance dure',
   C: 'compte comme ta séance dure',
 }
@@ -95,19 +95,21 @@ export function CoursePrincipale({ course, contexte, onChanger }: { course: Comp
  * `courses` : toutes les courses (la A comprise, gardée telle quelle). `effectifs` : niveau appliqué par l'appli (une B
  * trop proche de la A, d'une autre B ou en reprise compte comme une C).
  */
-export function ListeCourses({ courses, effectifs, onChanger, min, contexte }: {
+export function ListeCourses({ courses, effectifs, onChanger, min, contexte, principale }: {
   courses: Competition[]; effectifs: Map<string, NiveauCourse>; onChanger: (c: Competition[]) => void; min?: string; contexte: Contexte
+  /** Date de la course principale (affichée à part) */
+  principale?: string
 }) {
   // undefined : feuille fermée ; null : ajout ; une course : modification
   const [feuille, setFeuille] = useState<Competition | null>()
-  const autres = [...courses].filter((c) => effectifs.get(c.date) !== 'A' && c.niveau !== 'A').sort((a, b) => a.date.localeCompare(b.date))
+  const autres = [...courses].filter((c) => c.date !== principale).sort((a, b) => a.date.localeCompare(b.date))
   return (
     <div>
       {autres.length === 0 && <p className="text-sm text-texte-2">Aucune pour l’instant.</p>}
       <ul>
         {autres.map((c) => {
           const n = effectifs.get(c.date) ?? c.niveau ?? 'B'
-          const declasse = c.niveau === 'B' && n === 'C'
+          const declasse = (c.niveau === 'B' && n === 'C') || (c.niveau === 'A' && n !== 'A')
           return (
             <li key={c.date + c.nom} className="border-b border-bordure">
               <button type="button" className="flex w-full items-center gap-2.5 py-1.5 text-left" aria-label={`Modifier ${c.nom}`} onClick={() => setFeuille(c)}>
@@ -115,7 +117,7 @@ export function ListeCourses({ courses, effectifs, onChanger, min, contexte }: {
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm">{c.nom}</span>
                   <span className="block text-xs text-texte-3">{dateCourte(c.date)} · {resumeParcours(c, contexte)}</span>
-                  <span className="block text-xs text-texte-3">{declasse ? 'trop proche d’une autre course ou en reprise : comptée comme une C' : NOTES[n]}</span>
+                  <span className="block text-xs text-texte-3">{declasse ? (c.niveau === 'A' ? 'moins de 3 semaines après une autre A (ou plus de 4 A) : comptée comme une B' : 'trop proche d’une autre course ou en reprise : comptée comme une C') : NOTES[n]}</span>
                 </span>
                 <span className="text-texte-3">›</span>
               </button>
@@ -141,7 +143,7 @@ function FormulaireCourse({ course, min, contexte, dateDejaPrise, onValider, onR
   course?: Competition; min?: string; contexte: Contexte; dateDejaPrise: (d: string) => boolean; onValider: (c: Competition) => void; onRetirer?: () => void
 }) {
   const [f, setF] = useState({
-    date: course?.date ?? '', nom: course?.nom ?? '', niveau: (course?.niveau === 'C' ? 'C' : 'B') as 'B' | 'C',
+    date: course?.date ?? '', nom: course?.nom ?? '', niveau: (course?.niveau === 'C' || course?.niveau === 'A' ? course.niveau : 'B') as NiveauCourse,
     epreuve: course?.epreuve ?? epreuveDe(contexte.discipline, contexte.typeCourse), parcours: parcoursDe(course),
   })
   return (
@@ -161,10 +163,11 @@ function FormulaireCourse({ course, min, contexte, dateDejaPrise, onValider, onR
       </div>
       <p className="mt-3 text-xs text-texte-3">Niveau</p>
       <div className="mt-1 flex flex-wrap gap-1.5">
+        <button type="button" className={puce(f.niveau === 'A')} onClick={() => setF({ ...f, niveau: 'A' })}>A · objectif</button>
         <button type="button" className={puce(f.niveau === 'B')} onClick={() => setF({ ...f, niveau: 'B' })}>B · importante</button>
         <button type="button" className={puce(f.niveau === 'C')} onClick={() => setF({ ...f, niveau: 'C' })}>C · pour s’entraîner</button>
       </div>
-      <p className="mt-1.5 text-xs text-texte-3">B : semaine allégée d’un tiers, la course est ta séance dure. C : semaine normale, la course remplace ta séance dure (ou ta sortie longue au-delà de 2 h).</p>
+      <p className="mt-1.5 text-xs text-texte-3">A : à fond, avec affûtage avant et récupération après ; entre deux A, l’appli adapte le bloc à l’écart (3 semaines au moins, 4 A au plus). B : semaine allégée d’un tiers, la course est ta séance dure. C : semaine normale, la course remplace ta séance dure (ou ta sortie longue au-delà de 2 h).</p>
       <button type="button" disabled={!f.date || !f.nom.trim() || dateDejaPrise(f.date)}
         className="mt-3 w-full rounded-xl bg-accent py-3 font-bold text-fond disabled:opacity-40"
         onClick={() => onValider({ date: f.date, nom: f.nom.trim(), niveau: f.niveau, epreuve: f.epreuve, ...champsParcours(f.parcours) })}>
