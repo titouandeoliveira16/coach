@@ -1,6 +1,6 @@
 import { IconeSport } from '../IconeSport'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { db } from '../../../core/db'
 import { aujourdhui, decalerJour, depuisJour } from '../../../core/dates'
@@ -47,7 +47,7 @@ function ChoixSeance({ maintenue, conseil, prevu, couleur, onChoisir }: {
 }
 
 /** Signal du jour, raison, séance prévue et recommandation. */
-export function CarteAujourdhui({ onModifierMatin, autreOuvert = false }: {
+export function CarteAujourdhui({ onModifierMatin }: {
   onModifierMatin?: () => void
   /** Un autre encart (Nutrition du jour) est déplié : la séance garde sa taille et descend */
   autreOuvert?: boolean
@@ -55,25 +55,9 @@ export function CarteAujourdhui({ onModifierMatin, autreOuvert = false }: {
   const jour = aujourdhui()
   const [formeOuverte, setFormeOuverte] = useState(false)
   const [detailOuvert, setDetailOuvert] = useState(false)
-  // Tout fermé : la séance remplit la place libre, et on retient sa hauteur. Un encart ouvert : elle garde
-  // cette hauteur (intacte) et descend ; son propre détail ouvert : elle s'allonge.
+  // La séance garde toute sa hauteur (boutons d'envoi et détail toujours visibles) : la page défile
   const seanceRef = useRef<HTMLElement>(null)
-  const [hauteurSeance, setHauteurSeance] = useState<number>()
-  const toutFerme = !formeOuverte && !autreOuvert && !detailOuvert
-  /** Au moment d'ouvrir un encart : on fige la hauteur exacte de la séance telle qu'elle est à l'écran */
-  const basculerForme = () => {
-    if (toutFerme && seanceRef.current) setHauteurSeance(seanceRef.current.getBoundingClientRect().height)
-    setFormeOuverte(!formeOuverte)
-  }
-  useLayoutEffect(() => {
-    const el = seanceRef.current
-    if (!el || !toutFerme) return
-    const lire = () => setHauteurSeance(el.getBoundingClientRect().height)
-    lire()
-    const obs = new ResizeObserver(lire)
-    obs.observe(el)
-    return () => obs.disconnect()
-  }, [toutFerme])
+  const basculerForme = () => setFormeOuverte(!formeOuverte)
   const navigate = useNavigate()
   // Jour de repos : on montre la séance de demain
   const demain = useLiveQuery(async () => (await db.prevues.where('date').equals(decalerJour(jour, 1)).toArray()).filter((p) => p.statut === 'prevue'), [jour])
@@ -135,8 +119,6 @@ export function CarteAujourdhui({ onModifierMatin, autreOuvert = false }: {
   }
 
   const etapesDuJour = prevue && (decision?.force ? prevue.velo?.etapes : adaptation!.etapes)
-  // Séance sans déroulé (footing, renfo…) : la carte prend la hauteur de son texte, sans grand vide dessous
-  const ajustee = !!prevue && !etapesDuJour && !faites
   const minutesAdaptees = adaptation?.etapes ? Math.round(adaptation.etapes.reduce((t, e) => t + e.dureeSec, 0) / 60) : undefined
   const cases = (['recuperation', 'pouls', 'sommeil', 'ressenti'] as const).map((cle) => ({ cle, d: signal.details.find((x) => x.cle === cle) }))
   const autres = signal.details.filter((x) => !x.cle || x.cle === 'charge')
@@ -177,8 +159,8 @@ export function CarteAujourdhui({ onModifierMatin, autreOuvert = false }: {
         <div className="grid grid-cols-4 gap-1.5 text-center">
           {cases.map(({ cle, d }) => (
             <button key={cle} type="button" onClick={basculerForme}
-              className={`flex flex-col items-center justify-center gap-0.5 rounded-xl px-0.5 py-1.5 ${fondCase(d?.etat) ? 'text-white' : 'bg-surface-2 text-texte-2'}`}
-              style={fondCase(d?.etat) ? { background: fondCase(d?.etat) } : undefined}>
+              className={`presse flex flex-col items-center justify-center gap-0.5 rounded-[10px] px-0.5 py-1.5 ${fondCase(d?.etat) ? '' : 'bg-surface-2 text-texte-2'}`}
+              style={fondCase(d?.etat) ? { background: `color-mix(in srgb, ${fondCase(d?.etat)} 16%, transparent)`, color: fondCase(d?.etat) } : undefined}>
               <span className="text-[11px] opacity-85">{NOMS_CASES[cle]}</span>
               <span className="text-sm font-semibold leading-tight">{d?.court ?? '—'}</span>
               {resumes[cle] && <span className="text-[11px] leading-tight opacity-85">{resumes[cle]}</span>}
@@ -236,8 +218,8 @@ export function CarteAujourdhui({ onModifierMatin, autreOuvert = false }: {
       </Carte>
 
       {/* Séance du jour : la carte qui prend toute la place restante (elle défile seule si besoin) */}
-      <Carte ref={seanceRef} className={`flex flex-col p-3! ${detailOuvert ? 'border-accent!' : ''} ${faites || detailOuvert ? 'shrink-0' : ajustee ? (toutFerme ? 'min-h-0 overflow-hidden' : 'shrink-0 overflow-hidden') : toutFerme ? 'min-h-0 flex-1 overflow-hidden' : 'shrink-0 overflow-hidden'}`}
-        style={!toutFerme && !detailOuvert && !faites && hauteurSeance ? { height: hauteurSeance } : undefined}>
+      <Carte ref={seanceRef} className={`flex flex-col p-3! ${detailOuvert ? 'border-accent!' : ''} shrink-0`}
+>
         <div className="flex items-baseline justify-between gap-2">
           <p className="text-xs font-semibold uppercase tracking-wider text-texte-3">Séance du jour</p>
           {prevue && <span className="text-xs text-texte-2">{prevue.sport === 'velo' ? 'vélo' : prevue.sport}{prevue.kjPrevu ? ` · ${prevue.kjPrevu} kJ` : ''}</span>}
