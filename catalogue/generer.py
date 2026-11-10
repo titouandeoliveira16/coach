@@ -234,6 +234,13 @@ seance("velo-durabilite-effort-final", famille="durabilite", nom="Sortie longue 
        conseils=["Mange régulièrement avant l'effort final (60-90 g/h) : on entraîne la tenue, pas la panne.", SANS_ERG],
        preuve=P("plausible", "La baisse de puissance après un gros travail sépare les vainqueurs des autres chez les pros ; un travail préalable intense fatigue plus qu'un travail facile. Seul essai d'entraînement : la musculation lourde a amélioré un 5 min à fond fait après 185 min de vélo. Aucun essai sur l'effort final lui-même ; la revue de 2025 sur la « résilience » recommande justement des sorties longues avec des efforts au rythme de course en fin de sortie, la régularité sur des années et la musculation lourde. Chez des débutants, facile et intense améliorent autant la durabilité.", VAN_ERP_2021, SPRAGG_2024, RONNESTAD_2011, MAUNDER_2021, JONES_KIRBY_2025, MATOMAKI_2023), **V)
 
+seance("velo-cycle-1er-seuil", famille="endurance", nom="Cycle 1er seuil 4 × 10 → 3 × 30 min",
+       objectif="Construire la base : tenir longtemps le haut de l'endurance, sans dérive du cœur", resume="Au 1er seuil (78-82 % de la FC max), effort linéaire : 4 × 10, 3 × 15, 4 × 15, 3 × 20, 5 × 20 puis 3 × 30 min, 3-4 min faciles entre.",
+       zone="haut de Z2 (1er seuil)", rpe="4-6", niveau="intermédiaire", deroule=[ECH(15), X(4, E(10, 70, 76, cad="85-95"), R(3)), CALME(10)],
+       variantes=["4 × 10", "3 × 15", "4 × 15", "3 × 20", "5 × 20", "3 × 30"], phases=["base"], parSemaine="1 (2 doses avec la sortie longue à partir de 5 jours)",
+       recuperation="24 h", conseils=["Reste sous ta plage de FC : tu parles encore en phrases.", "Watts et cœur bien lisses : pas de navette au-dessus et en dessous du seuil.", SANS_ERG],
+       preuve=P("plausible", "Prépa hivernale de Methodic Cycling (cycle 1er seuil de 3 semaines + 1). Remplacer les séances dures par du travail entre les deux seuils fait moins progresser (Neal 2013, Stöggl 2014) : cette séance s'ajoute au rappel d'intensité, elle ne le remplace pas. Aucun essai ne compare des blocs au 1er seuil au même temps en continu ; durées = choix d'entraîneur.", NEAL_2013, STOGGL_2014, SYLTA_2016), **V)
+
 seance("velo-tempo-2x20", famille="tempo", nom="Tempo 2 × 20 min",
        objectif="Endurance aérobie haute, préparation au sweet spot", resume="2 blocs de 20 min en Z3 basse, récupération 5 min.",
        zone="Z3", rpe="5", niveau="tous", deroule=[ECH(15), X(2, E(20, 76, 85, cad="85-95"), R(5)), CALME(10)],

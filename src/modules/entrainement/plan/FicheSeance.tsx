@@ -7,7 +7,8 @@ const AUTRES: Partial<Record<SeanceVelo['famille'], string>> = { z2: 'velo-endur
 
 export function FicheSeance({ velo }: { velo?: SeanceVelo }) {
   if (!velo) return null
-  const id = (velo.formatId && formatDe(velo.formatId)?.catalogueId) ?? AUTRES[velo.famille]
+  // Séance du cycle 1er seuil : sa propre fiche (ce n'est pas un format d'intensité)
+  const id = velo.formatId === 'sv1-dedie' ? 'velo-cycle-1er-seuil' : (velo.formatId && formatDe(velo.formatId)?.catalogueId) ?? AUTRES[velo.famille]
   const s = id && CATALOGUE.seances.find((x) => x.id === id)
   if (!s) return null
   return (

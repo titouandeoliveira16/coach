@@ -528,10 +528,15 @@ export async function genererSemaineVelo(lundi: string) {
     // Ce que la sortie longue prend au-delà de sa part (blocs au 1er seuil, allongement) est pris sur les Z2 de semaine
     extraSv1 = Math.max(0, sl.kj - kjLong)
   }
+  // Cycle 1er seuil : la séance dédiée peut dépasser ton créneau de semaine (jusqu'à 50 min de plus, 2 h 05 au plus)
+  // pour que la progression aille jusqu'à 5 × 20′ ou 3 × 30′ (choix d'entraîneur, validé par Titouan le 10/11/2026)
+  const seanceSv1 = jourSv1 ? construireSv1Dediee(nPalier, Math.min(125, maxDuJour(jourSv1) + 50), sv1.w, z2W, fcSv1) : undefined
   placement.z2.forEach((d) => {
-    const min = borner(Math.min(45, cap.z2), Math.min(maxDuJour(d), cap.z2), minutesPourKj((reste * (1 - partLong) - extraSv1) / placement.z2.length, z2W))
+    // Séance 1er seuil allongée au-delà de ton créneau : les autres endurances peuvent descendre à 30 min pour compenser
+    const minZ2 = seanceSv1 && seanceSv1.dureeMin > maxDuJour(jourSv1!) ? 30 : 45
+    const min = borner(Math.min(minZ2, cap.z2), Math.min(maxDuJour(d), cap.z2), minutesPourKj((reste * (1 - partLong) - extraSv1) / placement.z2.length, z2W))
     // VTT : la première Z2 de la semaine se fait sur le terrain (technique), jamais la sortie longue
-    if (d === jourSv1) aCreer.push([d, construireSv1Dediee(nPalier, maxDuJour(d), sv1.w, z2W, fcSv1)])
+    if (d === jourSv1 && seanceSv1) aCreer.push([d, seanceSv1])
     else if (d === terrain && discipline !== 'route') aCreer.push([d, construireTerrain(discipline, min, z2W)])
     else if (d === jourSprints) aCreer.push([d, construireZ2(min, z2W, sprints, { longue: false, espacementSec: sprints.espacementSec })])
     else aCreer.push([d, construireZ2(min, z2W, undefined, lendemains.has(d) && rappel && !sansBlocs ? { sv1: { w: sv1.w, reps: 2, min: 10, fc: fcSv1 } } : {})])

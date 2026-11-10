@@ -488,6 +488,110 @@
    ]
   },
   {
+   "id": "velo-cycle-1er-seuil",
+   "sport": "velo",
+   "famille": "endurance",
+   "nom": "Cycle 1er seuil 4 × 10 → 3 × 30 min",
+   "objectif": "Construire la base : tenir longtemps le haut de l'endurance, sans dérive du cœur",
+   "resume": "Au 1er seuil (78-82 % de la FC max), effort linéaire : 4 × 10, 3 × 15, 4 × 15, 3 × 20, 5 × 20 puis 3 × 30 min, 3-4 min faciles entre.",
+   "unite": "%CP",
+   "zone": "haut de Z2 (1er seuil)",
+   "rpe": "4-6",
+   "niveau": "intermédiaire",
+   "dureeMin": 77,
+   "travailMin": 0.0,
+   "deroule": [
+    {
+     "type": "echauffement",
+     "duree": 900,
+     "intensite": [
+      50,
+      75
+     ]
+    },
+    {
+     "type": "repetition",
+     "fois": 4,
+     "etapes": [
+      {
+       "type": "effort",
+       "duree": 600,
+       "intensite": [
+        70,
+        76
+       ],
+       "cadence": "85-95"
+      },
+      {
+       "type": "recup",
+       "duree": 180,
+       "intensite": [
+        45,
+        55
+       ]
+      }
+     ]
+    },
+    {
+     "type": "retour",
+     "duree": 600,
+     "intensite": [
+      45,
+      55
+     ]
+    }
+   ],
+   "variantes": [
+    "4 × 10",
+    "3 × 15",
+    "4 × 15",
+    "3 × 20",
+    "5 × 20",
+    "3 × 30"
+   ],
+   "quand": {
+    "phases": [
+     "base"
+    ],
+    "parSemaine": "1 (2 doses avec la sortie longue à partir de 5 jours)",
+    "recuperation": "24 h"
+   },
+   "conseils": [
+    "Reste sous ta plage de FC : tu parles encore en phrases.",
+    "Watts et cœur bien lisses : pas de navette au-dessus et en dessous du seuil.",
+    "Sans ERG : choisis ton braquet avant chaque effort (un ou deux pignons plus dur), lance les 5 premières secondes un peu au-dessus de la cible puis stabilise."
+   ],
+   "preuve": {
+    "niveau": "plausible",
+    "resultat": "Prépa hivernale de Methodic Cycling (cycle 1er seuil de 3 semaines + 1). Remplacer les séances dures par du travail entre les deux seuils fait moins progresser (Neal 2013, Stöggl 2014) : cette séance s'ajoute au rappel d'intensité, elle ne le remplace pas. Aucun essai ne compare des blocs au 1er seuil au même temps en continu ; durées = choix d'entraîneur.",
+    "references": [
+     {
+      "auteurs": "Neal CM, Hunter AM, Brennan L, et al.",
+      "annee": 2013,
+      "titre": "Six weeks of a polarized training-intensity distribution leads to greater physiological and performance adaptations than a threshold model in trained cyclists",
+      "revue": "J Appl Physiol",
+      "pmid": "23264537"
+     },
+     {
+      "auteurs": "Stöggl T, Sperlich B",
+      "annee": 2014,
+      "titre": "Polarized training has greater impact on key endurance variables than threshold, high intensity, or high volume training",
+      "revue": "Front Physiol",
+      "pmid": "24550842"
+     },
+     {
+      "auteurs": "Sylta Ø, Tønnessen E, Hammarström D, et al.",
+      "annee": 2016,
+      "titre": "The effect of different high-intensity periodization models on endurance adaptations",
+      "revue": "Med Sci Sports Exerc"
+     }
+    ]
+   },
+   "disciplines": [
+    "route"
+   ]
+  },
+  {
    "id": "velo-tempo-2x20",
    "sport": "velo",
    "famille": "tempo",
