@@ -101,6 +101,9 @@ Points décidés ou mis de côté, à reprendre au bon moment.
   des 4 semaines d'avant (entraîné : pas de reprise, budget de départ = médiane) ; saisons existantes recalculées une fois.
   À regarder : la séance 1er seuil plafonne à 4 × 10′ quand le créneau de semaine est de 75 min (5 × 20′ et 3 × 30′
   demandent 2 h) ; en parler s'il veut la placer un jour plus long.
+- 10.6 (10/11/2026) : notification « Séance remontée » (fonction « rappels », à redéployer par Titouan) et semaine
+  recalculée à chaque import. Titouan arrête le journal des repas (Repas du jour désactivé) : il fait attention seul
+  et regarde la courbe du poids. Lui reparler fin novembre de la tendance du poids et d'une reprise éventuelle.
 - **Titouan a encore « 2-3 trucs à travailler »** (9/11 au soir, pas encore dits) : les lui demander à la prochaine conversation.
 - Les deux conversations ont été regroupées le 9/11/2026 (« Corrections et améliorations appli » supprimée par Titouan).
 

@@ -11,6 +11,8 @@
 // Rappels : chaque matin (sauf si « Ton matin » est déjà rempli), pesée les jours choisis (sauf si déjà faite),
 // saisie du budget le soir si activée dans l'appli (sauf si déjà faite ; le 1er du mois : annonce du bilan),
 // et le 5 du mois à 9 h : relevés du mois (compte courant et placements), une fois les revenus de début de mois arrivés.
+// Séance remontée : dès qu'une nouvelle activité arrive sur Intervals.icu (montre, Zwift, Strava), une notification
+// (comme Strava) ; la clé Intervals est lue chiffrée, avec la même clé de chiffrement que la fonction « intervals ».
 // Aucun secret à ajouter : les clés VAPID sont créées et gardées par la fonction elle-même.
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
@@ -134,6 +136,46 @@ async function ligne(userId: string, table: string, cle: string) {
   return data && !data.supprime ? (data.valeur as Record<string, unknown>) : undefined
 }
 
+// ---------- Séances remontées (Intervals.icu) ----------
+const deB64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0))
+let cleIntervals: CryptoKey | undefined
+async function dechiffrerCleIntervals(valeur: string) {
+  if (!cleIntervals) {
+    const brute = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`coach-intervals|${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`)))
+    cleIntervals = await crypto.subtle.importKey('raw', brute, 'AES-GCM', false, ['decrypt'])
+  }
+  const [iv, ct] = valeur.split('.').map(deB64)
+  return new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, cleIntervals, ct))
+}
+const dureeTexte = (sec: number) => (sec >= 3600 ? `${Math.floor(sec / 3600)} h ${String(Math.round((sec % 3600) / 60)).padStart(2, '0')}` : `${Math.round(sec / 60)} min`)
+
+/**
+ * Nouvelles activités sur Intervals.icu depuis le dernier passage (2 derniers jours) : une notification par séance.
+ * Les activités déjà vues sont gardées dans tes données (réglage « notif-seances ») ; au premier passage, rien n'est
+ * envoyé (on mémorise seulement ce qui existe déjà).
+ */
+async function seancesRemontees(userId: string, date: string) {
+  const { data: c } = await admin.from('intervals_cles').select('*').eq('user_id', userId).maybeSingle()
+  if (!c) return []
+  const cle = await dechiffrerCleIntervals(c.cle_chiffre)
+  const depuis = new Date(Date.parse(`${date}T12:00:00Z`) - 2 * 86_400_000).toISOString().slice(0, 10)
+  const r = await fetch(`https://intervals.icu/api/v1/athlete/${c.athlete_id}/activities?oldest=${depuis}&newest=${date}`, { headers: { Authorization: `Basic ${btoa(`API_KEY:${cle}`)}` } })
+  if (!r.ok) return []
+  const activites = ((await r.json()) as { id: string; name?: string; type?: string; moving_time?: number; icu_joules?: number }[]).filter((a) => a.id)
+  const etat = (await ligne(userId, 'reglages', 'notif-seances'))?.valeur as { vus?: string[] } | undefined
+  const vus = new Set(etat?.vus ?? [])
+  const nouvelles = etat ? activites.filter((a) => !vus.has(String(a.id))) : []
+  if (!etat || nouvelles.length) {
+    const tous = [...new Set([...(etat?.vus ?? []), ...activites.map((a) => String(a.id))])].slice(-60)
+    await admin.from('donnees').upsert({ user_id: userId, table_nom: 'reglages', cle: 'notif-seances', valeur: { id: 'notif-seances', valeur: { vus: tous } }, supprime: false, modifie_le: new Date().toISOString() }, { onConflict: 'user_id,table_nom,cle' })
+  }
+  return nouvelles.map((a) => ({
+    titre: '🚴 Séance remontée',
+    texte: `${a.name ?? 'Ta séance'} · ${dureeTexte(a.moving_time ?? 0)}${a.icu_joules ? ` · ${Math.round(a.icu_joules / 1000)} kJ` : ''}. Ouvre l'appli : ta semaine se recalcule.`,
+    tag: `seance-${a.id}`, url: './#/entrainement/semaine',
+  }))
+}
+
 /** Heure du rappel de pesée (avant le petit-déjeuner). */
 const HEURE_PESEE = '07:00'
 
@@ -182,10 +224,15 @@ async function envoyerRappels() {
   const c = await cles()
   const { data: abonnements } = await admin.from('push_abonnements').select('*')
   let envoyes = 0
+  // Séances remontées : une fois par personne (sur tous ses appareils)
+  const remontees = new Map<string, { titre: string; texte: string; tag: string; url: string }[]>()
+  for (const a of abonnements ?? []) {
+    if (!remontees.has(a.user_id)) remontees.set(a.user_id, await seancesRemontees(a.user_id, maintenantDans(a.fuseau).date).catch(() => []))
+  }
   for (const a of abonnements ?? []) {
     const t = maintenantDans(a.fuseau)
     const maj: Record<string, string> = {}
-    const messages: { titre: string; texte: string; tag: string; url: string }[] = []
+    const messages: { titre: string; texte: string; tag: string; url: string }[] = [...(remontees.get(a.user_id) ?? [])]
 
     // Rappel du matin : à partir de l'heure choisie, jusqu'à midi
     if (t.heure >= a.heure && t.heure < '12:00' && a.dernier_matin !== t.date) {
