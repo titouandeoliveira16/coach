@@ -1,15 +1,18 @@
 import { describe, expect, it } from 'vitest'
-import { calculerSaison, datesCoursesA, dureesPhases, migrerBase, phasesAvecCoursesA } from './saison'
+import { calculerSaison, datesCoursesA, dureesPhases, lireHistorique, migrerBase, phasesAvecCoursesA } from './saison'
 import { estSemaineAllegee, coefficientPhase } from './programme'
 
 describe('saison calculée depuis la course', () => {
   it('durées selon les semaines disponibles', () => {
     const vide = { reprise: 0, base: 0, entretien: 0, 'seuil-tirage': 0, 'seuil-maintien': 0, 'fin-prepa': 0, specifique: 0, affutage: 0 }
-    expect(dureesPhases(12)).toEqual({ ...vide, reprise: 2, 'seuil-tirage': 1, 'seuil-maintien': 1, 'fin-prepa': 3, specifique: 3, affutage: 2 })
-    expect(dureesPhases(20)).toEqual({ ...vide, reprise: 2, 'seuil-tirage': 4, 'seuil-maintien': 6, 'fin-prepa': 3, specifique: 3, affutage: 2 })
-    // Course loin, sans arrêt : 2 semaines de reprise puis une base (relecture du 10/11/2026)
-    expect(dureesPhases(29)).toEqual({ ...vide, reprise: 2, base: 7, 'seuil-tirage': 4, 'seuil-maintien': 8, 'fin-prepa': 3, specifique: 3, affutage: 2 })
-    expect(dureesPhases(40)).toMatchObject({ reprise: 2, base: 10, entretien: 8 })
+    // Prépa hivernale Methodic (relecture du 10/11/2026) : VO2 3, spécifique 3, affûtage 2 ; 2e seuil tirée puis poussée ;
+    // cycle 1er seuil 4-10 ; reprise 0 si tu roulais déjà, 2 sinon
+    expect(dureesPhases(12, false, true)).toEqual({ ...vide, 'seuil-tirage': 2, 'seuil-maintien': 2, 'fin-prepa': 3, specifique: 3, affutage: 2 })
+    expect(dureesPhases(20, false, true)).toEqual({ ...vide, base: 4, 'seuil-tirage': 4, 'seuil-maintien': 4, 'fin-prepa': 3, specifique: 3, affutage: 2 })
+    expect(dureesPhases(28, false, true)).toEqual({ ...vide, base: 8, 'seuil-tirage': 4, 'seuil-maintien': 8, 'fin-prepa': 3, specifique: 3, affutage: 2 })
+    expect(dureesPhases(40, false, true)).toMatchObject({ reprise: 0, base: 10, entretien: 10 })
+    expect(dureesPhases(30, false, true)).toMatchObject({ reprise: 0, base: 10, entretien: 0 })
+    expect(dureesPhases(28)).toMatchObject({ reprise: 2, base: 8 })
     expect(dureesPhases(6)).toMatchObject({ reprise: 0, 'fin-prepa': 1, specifique: 3, affutage: 2 })
     expect(dureesPhases(20, true).reprise).toBe(4)
     expect(dureesPhases(2)).toMatchObject({ affutage: 2, specifique: 0 })
@@ -43,15 +46,18 @@ describe('saison calculée depuis la course', () => {
 })
 
 describe('séances des phases calculées (forme Chauvin)', () => {
-  it('tirer le seuil, allonger le seuil avec rappel 30/15, fin de prépa', async () => {
+  it('2e seuil tirée puis poussée avec rappel 30/15, cycle VO2max', async () => {
     const { choisirFormat } = await import('./programme')
     const ph = [{ debut: '2026-11-02', type: 'seuil-tirage' as const }, { debut: '2026-11-30', type: 'seuil-maintien' as const }, { debut: '2027-01-25', type: 'fin-prepa' as const }]
     expect(choisirFormat('2026-11-09', ph, []).format.id).toBe('tirage-seuil')
     expect(choisirFormat('2026-11-09', ph, [], 'xco').format.id).toBe('inoue')
     expect(choisirFormat('2026-11-30', ph, []).format.id).toBe('seuil-maintien')
     expect(choisirFormat('2026-12-14', ph, []).format.id).toBe('30-15') // 3e semaine : rappel
-    expect(choisirFormat('2027-01-25', ph, [], 'route', 1).format.id).toBe('sweet-spot-long')
-    expect(choisirFormat('2027-01-25', ph, []).famille).toMatch(/^vo2/)
+    // Cycle VO2max : 40/20, puis 3′, puis 4 × 4′ ; la 2e séance entretient le seuil
+    expect(choisirFormat('2027-01-25', ph, []).format.id).toBe('40-20')
+    expect(choisirFormat('2027-02-01', ph, []).format.id).toBe('3min')
+    expect(choisirFormat('2027-02-08', ph, []).format.id).toBe('4min')
+    expect(choisirFormat('2027-01-25', ph, [], 'route', 1).format.id).toBe('seuil-maintien')
     expect(choisirFormat('2027-01-25', ph, [], 'xco').format.id).toBe('sit-series')
   })
 })
@@ -190,5 +196,13 @@ describe('plusieurs courses A', () => {
   it('A retenues : 3 semaines d’écart au moins, 4 au plus', () => {
     expect(datesCoursesA([{ date: '2027-04-04', niveau: 'A' }, { date: '2027-04-18', niveau: 'A' }, { date: '2027-05-02', niveau: 'A' }, { date: '2027-03-01', niveau: 'B' }]))
       .toEqual(['2027-04-04', '2027-05-02'])
+  })
+})
+
+describe('tes 4 semaines d’avant', () => {
+  it('3 semaines sur 4 avec 2 sorties et 60 % du budget : entraîné, budget de départ = médiane', () => {
+    expect(lireHistorique([{ sorties: 4, kj: 2000 }, { sorties: 3, kj: 1800 }, { sorties: 4, kj: 2200 }, { sorties: 1, kj: 400 }], 2000))
+      .toEqual({ entraine: true, budgetDepart: Math.round((1900 * 0.9) / 10) * 10 })
+    expect(lireHistorique([{ sorties: 1, kj: 600 }, { sorties: 2, kj: 800 }, { sorties: 0, kj: 0 }, { sorties: 3, kj: 1500 }], 2000).entraine).toBe(false)
   })
 })

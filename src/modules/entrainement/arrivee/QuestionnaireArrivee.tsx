@@ -39,7 +39,7 @@ function Question({ libelle, aide, children }: { libelle: string; aide?: string;
 }
 /** « 2/11 » */
 const jm = (d: string) => `${Number(d.slice(8, 10))}/${d.slice(5, 7)}`
-const COURTS: Record<string, string> = { reprise: 'Reprise', base: 'Base', entretien: 'Entretien', vo2: 'VO2', seuil: 'Seuil', 'seuil-tirage': 'Seuil +', 'seuil-maintien': 'Seuil', 'fin-prepa': 'SS + VO2', specifique: 'Course', affutage: 'Aff.' }
+const COURTS: Record<string, string> = { reprise: 'Reprise', base: '1er seuil', entretien: 'Entretien', vo2: 'VO2', seuil: 'Seuil', 'seuil-tirage': 'Tirée', 'seuil-maintien': 'Poussée', 'fin-prepa': 'VO2max', specifique: 'Course', affutage: 'Aff.' }
 const nombre = (t: string) => (t.trim() === '' ? undefined : Number(t.replace(',', '.')) || undefined)
 
 /** Questionnaire d'arrivée d'un compte créé avec un code : 4 étapes, la saison calculée, puis la montre (Intervals.icu). */

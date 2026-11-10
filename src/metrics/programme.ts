@@ -823,10 +823,10 @@ export const NOMS_PHASES: Record<TypePhase, string> = {
   vo2: 'Dominante VO2max',
   seuil: 'Dominante seuil',
   entretien: 'Entretien (VO2 / seuil)',
-  base: 'Base (endurance + rappel d’intensité)',
-  'seuil-tirage': 'Tirer le seuil',
-  'seuil-maintien': 'Allonger le seuil',
-  'fin-prepa': 'Fin de prépa (sweet spot + VO2)',
+  base: 'Cycle 1er seuil',
+  'seuil-tirage': '2e seuil · tirée',
+  'seuil-maintien': '2e seuil · poussée',
+  'fin-prepa': 'Cycle VO2max',
   specifique: 'Proche de ta course',
   affutage: 'Affûtage',
   recuperation: 'Récupération',
@@ -964,6 +964,12 @@ function familleSaison(type: TypePhase, semaine: number, rang: number, disciplin
     if (semaine % 3 === 2) return { famille: 'sweet-spot', formatId: 'sweet-spot-long', dominante: 'sous-seuil' }
     return { famille: 'seuil', formatId: 'seuil-12-20', dominante: 'seuil' }
   }
+  // Cycle VO2max (prépa hivernale de Methodic, relue le 10/11/2026 ; blocs VO2 : petit avantage, Mølmen 2019) : des
+  // intervalles courts (40/20) vers des plus longs (4 × 4′) ; la 2e séance entretient le seuil (plutôt que du sweet spot)
+  if (type === 'fin-prepa' && !vtt) {
+    if (rang === 1) return { famille: 'seuil', formatId: 'seuil-maintien', dominante: 'seuil' }
+    return semaine === 0 ? { famille: 'vo2-courts', formatId: '40-20', dominante: 'vo2' } : semaine === 1 ? { famille: 'vo2-longs', formatId: '3min', dominante: 'vo2' } : { famille: 'vo2-longs', formatId: '4min', dominante: 'vo2' }
+  }
   if (type === 'fin-prepa') {
     if (rang === 1 && semaine < 2) return { famille: 'sweet-spot', formatId: 'sweet-spot-long', dominante: 'sous-seuil' }
     if (vtt) return derniere(['sprints', 'vo2-longs']) === 'sprints' ? { famille: 'vo2-longs', formatId: 'inoue', dominante: 'vo2' } : { famille: 'sprints', formatId: 'sit-series', dominante: 'vo2' }
@@ -1062,12 +1068,12 @@ export interface BilanSemaine {
  * @param nominal semaine type (séance d'intensité + Z2 1 h + Z2 longue 1 h 40)
  * @param plafond tout au maximum du créneau
  */
-export function budgetSemaine(prec: BilanSemaine | undefined, nominal: number, plafond: number, allegee: boolean, raisonAllegee = 'semaine allégée (1 sur 4)', hausse = 0.075) {
+export function budgetSemaine(prec: BilanSemaine | undefined, nominal: number, plafond: number, allegee: boolean, raisonAllegee = 'semaine allégée (1 sur 4)', hausse = 0.075, raisonDepart = 'Budget de départ (semaine type)') {
   let ref: number
   let raison: string
   if (!prec) {
     ref = nominal
-    raison = 'Budget de départ (semaine type)'
+    raison = raisonDepart
   } else if (prec.allegee) {
     ref = prec.budgetRef
     raison = 'Retour au budget d’avant la semaine allégée'
@@ -1754,4 +1760,46 @@ export function ciblesCols(o: { cols: Col[]; distanceKm?: number; dureeMin: numb
  */
 export function testProcheCourse(d: string, courses: { date: string; dureeMin: number }[]) {
   return courses.some((c) => (d >= decaler(c.date, -2) && d < c.date) || (d >= c.date && d <= decaler(c.date, c.dureeMin > 180 ? 5 : 3)))
+}
+
+/**
+ * Cycle 1er seuil (prépa hivernale de Methodic Cycling, relue le 10/11/2026) : une séance dédiée au 1er seuil par
+ * semaine, en plus de la sortie longue, de 4 × 10′ vers 5 × 20′ ou 3 × 30′, récupérations courtes, effort linéaire sans
+ * dérive (même plage de FC que les blocs de la sortie longue). Le travail au 1er seuil ne remplace pas l'intensité
+ * (Neal 2013, Stöggl 2014) : le rappel VO2 reste. Progression = choix d'entraîneur.
+ */
+export const PALIERS_SV1_DEDIE: { reps: number; min: number }[] = [
+  { reps: 4, min: 10 }, { reps: 3, min: 15 }, { reps: 4, min: 15 }, { reps: 3, min: 20 }, { reps: 5, min: 20 }, { reps: 3, min: 30 },
+]
+const recupSv1Dedie = (min: number) => (min >= 20 ? 4 : 3)
+export const dureeSv1Dediee = (p: { reps: number; min: number }) => 15 + p.reps * p.min + (p.reps - 1) * recupSv1Dedie(p.min) + 10
+
+export function construireSv1Dediee(palier: number, maxMin: number, sv1W: number, z2W: number, fc?: [number, number]): SeanceConstruite {
+  // Le palier visé, sinon le plus grand qui tient dans ton créneau
+  let i = Math.min(palier, PALIERS_SV1_DEDIE.length - 1)
+  while (i > 0 && dureeSv1Dediee(PALIERS_SV1_DEDIE[i]) > maxMin) i--
+  const p = PALIERS_SV1_DEDIE[i]
+  const recup = recupSv1Dedie(p.min)
+  const wEch = arrondi5(z2W * 0.85)
+  const pl = plage(sv1W, 'tempo')
+  const { etapes, kj } = enchainer([
+    { dureeSec: 900, libelle: 'Mise en route progressive', w: wEch },
+    {
+      dureeSec: (p.reps * p.min + (p.reps - 1) * recup) * 60, w: sv1W, libelle: `${p.reps} × ${p.min}′ au 1er seuil, ${recup}′ faciles entre`,
+      repetition: {
+        fois: p.reps, derniere: 1,
+        etapes: [
+          { dureeSec: p.min * 60, libelle: `1er seuil${fc ? ` (FC ${fc[0]}-${fc[1]})` : ''} : effort linéaire, tu parles en phrases`, w: sv1W, ...pl },
+          { dureeSec: recup * 60, libelle: 'Facile', w: wEch },
+        ],
+      },
+    },
+    { dureeSec: 600, libelle: 'Retour au calme', w: wEch },
+  ], z2W)
+  const dureeMin = dureeSv1Dediee(p)
+  return {
+    titre: `Cycle 1er seuil : ${p.reps} × ${p.min}′ à ${sv1W} W`, dureeMin, kj,
+    detail: `${p.reps} × ${p.min}′ à ${sv1W} W${fc ? ` · FC ${fc[0]}-${fc[1]}` : ''} · ${recup}′ faciles entre · effort linéaire, sans dérive du cœur (RPE 4-6)`,
+    velo: { famille: 'z2', formatId: 'sv1-dedie', cibleW: sv1W, sv1W, blocsSv1: p.reps, ...(fc ? { fcSv1: fc } : {}), etapes, pourquoi: 'Cycle 1er seuil (prépa hivernale) : la base de tout, une séance dédiée par semaine en plus de ta sortie longue.' },
+  }
 }

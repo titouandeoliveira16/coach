@@ -16,6 +16,8 @@ setTimeout(() => synchroniserRappels(), 5000)
 setTimeout(() => import('./modules/entrainement/plan/programme').then((m) => m.mettreAJourFormatSeances()).catch(() => {}), 8000)
 // Contrôle des séances récentes recalculé avec les règles du moment (ex. arrêts exclus des moyennes, v0.71)
 setTimeout(() => import('./modules/entrainement/import/intervals').then((m) => m.recontrolerRecentes()).catch(() => {}), 12000)
+// Saison recalculée une fois avec la prépa hivernale Methodic (v10.5)
+setTimeout(() => import('./modules/entrainement/arrivee/donnees').then((m) => m.migrerSaisonV2()).catch(() => {}), 9000)
 
 // Mises à jour : on vérifie s'il existe une nouvelle version à chaque retour
 // sur l'appli (iPhone : l'appli est souvent « réveillée » plutôt que relancée)

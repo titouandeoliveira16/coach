@@ -21,6 +21,8 @@ export interface EntreeSaison {
   debut: string
   /** Date de la course principale */
   course: string
+  /** Tu roulais déjà régulièrement (4 dernières semaines importées) : pas de reprise */
+  entraine?: boolean
   /** Semaines sans vélo juste avant (0 si aucune) */
   arretSemaines?: number
   debutant?: boolean
@@ -34,9 +36,15 @@ export interface EntreeSaison {
 const lundiDe = (d: string) => decaler(d, -((new Date(`${d}T12:00:00`).getDay() + 6) % 7))
 const semainesEntre = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse(a)) / (7 * 86_400_000))
 
-/** Durée de chaque phase (en semaines) selon le nombre de semaines jusqu'à la course, semaine de course comprise. */
-export function dureesPhases(n: number, repriseLongue = false) {
-  const d = { reprise: 0, base: 0, entretien: 0, 'seuil-tirage': 0, 'seuil-maintien': 0, 'fin-prepa': 0, specifique: 0, affutage: 0 }
+/**
+ * Durée de chaque phase (en semaines) selon le nombre de semaines jusqu'à la course, semaine de course comprise.
+ * Prépa hivernale de Methodic Cycling (cycles de 3 semaines + 1 allégée), relue le 10/11/2026 : l'ordre des blocs change
+ * peu les progrès à charge égale (Sylta 2016) ; durées = choix d'entraîneur. En partant de la course : affûtage 2,
+ * spécifique 3, cycle VO2max 3 ; puis le 2e seuil (tirée 2-4, poussée 2-8), le cycle 1er seuil (4-10), et au-delà de
+ * l'entretien au début. Reprise : 0 si tu roulais déjà régulièrement, sinon 2 (4 en débutant ou après un arrêt).
+ */
+export function dureesPhases(n: number, repriseLongue = false, entraine = false) {
+  const d = { reprise: 0, entretien: 0, base: 0, 'seuil-tirage': 0, 'seuil-maintien': 0, 'fin-prepa': 0, specifique: 0, affutage: 0 }
   if (n <= 0) return d
   if (n < 3) return { ...d, affutage: n }
   d.affutage = n >= 6 ? 2 : 1
@@ -45,14 +53,18 @@ export function dureesPhases(n: number, repriseLongue = false) {
   reste -= d.specifique
   d['fin-prepa'] = Math.min(3, reste)
   reste -= d['fin-prepa']
-  d.reprise = Math.min(reste, repriseLongue ? 4 : 2)
+  d.reprise = Math.min(reste, repriseLongue ? 4 : entraine ? 0 : 2)
   reste -= d.reprise
-  // Beaucoup de temps : une base (endurance + 1 rappel d'intensité par semaine), jusqu'à 10 semaines
-  d.base = Math.min(10, Math.max(0, reste - 12))
-  reste -= d.base
-  d['seuil-tirage'] = Math.min(4, Math.ceil(reste * 0.4))
-  d['seuil-maintien'] = Math.min(8, reste - d['seuil-tirage'])
-  d.entretien = reste - d['seuil-tirage'] - d['seuil-maintien']
+  // Cycle 1er seuil : la base de tout, dès qu'il reste plus de 4 semaines (4 à 10, en cycles de 4 quand c'est possible)
+  d.base = reste <= 4 ? 0 : Math.min(10, Math.max(4, Math.round((reste - 4) / 2 / 4) * 4))
+  const seuil = Math.min(12, reste - d.base)
+  d['seuil-tirage'] = seuil <= 2 ? seuil : seuil <= 4 ? 2 : 4
+  d['seuil-maintien'] = seuil - d['seuil-tirage']
+  d.entretien = reste - d.base - seuil
+  // Quelques semaines de trop : elles vont au cycle 1er seuil (jusqu'à 10) plutôt qu'à de l'entretien
+  const vers1erSeuil = Math.min(d.entretien, 10 - d.base)
+  d.base += vers1erSeuil
+  d.entretien -= vers1erSeuil
   return d
 }
 
@@ -60,10 +72,10 @@ export function calculerSaison(e: EntreeSaison) {
   const l0 = lundiDe(e.debut)
   const lc = lundiDe(e.course)
   const n = semainesEntre(l0, lc) + 1
-  const d = dureesPhases(n, (e.arretSemaines ?? 0) >= 4 || !!e.debutant)
+  const d = dureesPhases(n, (e.arretSemaines ?? 0) >= 4 || !!e.debutant, !!e.entraine && !e.debutant && (e.arretSemaines ?? 0) < 2)
   const phases: Phase[] = []
   let l = l0
-  for (const type of ['reprise', 'base', 'entretien', 'seuil-tirage', 'seuil-maintien', 'fin-prepa', 'specifique', 'affutage'] as const) {
+  for (const type of ['reprise', 'entretien', 'base', 'seuil-tirage', 'seuil-maintien', 'fin-prepa', 'specifique', 'affutage'] as const) {
     if (d[type] > 0) phases.push({ debut: l, type })
     l = decaler(l, 7 * d[type])
   }
@@ -144,7 +156,7 @@ export function phasesAvecCoursesA(phases: Phase[], datesA: string[]): Phase[] {
       const d = dureesPhases(r)
       d['seuil-maintien'] += d.affutage - 1
       d.affutage = 1
-      for (const t of ['reprise', 'base', 'entretien', 'seuil-tirage', 'seuil-maintien', 'fin-prepa', 'specifique', 'affutage'] as const) blocs.push([t, d[t]])
+      for (const t of ['reprise', 'entretien', 'base', 'seuil-tirage', 'seuil-maintien', 'fin-prepa', 'specifique', 'affutage'] as const) blocs.push([t, d[t]])
     }
     let l = decaler(lp, 7)
     for (const [type, n] of blocs) {
@@ -165,4 +177,20 @@ export function datesCoursesA(courses: { date: string; niveau?: string }[]) {
     if (res.length < MAX_COURSES_A && (!prec || (Date.parse(c.date) - Date.parse(prec)) / 86_400_000 >= ECART_A_JOURS)) res.push(c.date)
   }
   return res
+}
+
+/**
+ * Tes 4 dernières semaines importées (relecture du 10/11/2026, choix d'entraîneur ; le ratio charge aiguë / chronique
+ * est trop critiqué pour servir de règle, Impellizzeri 2020) : entraîné si au moins 3 semaines sur 4 ont 2 sorties ou
+ * plus et au moins 60 % du budget de la semaine type. Budget de départ : la médiane des 4 semaines, −10 % si elles
+ * sont irrégulières (une semaine sous la moitié de la médiane).
+ */
+export function lireHistorique(semaines: { sorties: number; kj: number }[], nominalKj: number) {
+  if (semaines.length < 4) return { entraine: false as const }
+  const bonnes = semaines.filter((s) => s.sorties >= 2 && s.kj >= nominalKj * 0.6).length
+  const kj = semaines.map((s) => s.kj).sort((a, b) => a - b)
+  const mediane = (kj[1] + kj[2]) / 2
+  const irreguliere = semaines.some((s) => s.kj < mediane / 2)
+  if (bonnes < 3) return { entraine: false as const }
+  return { entraine: true as const, budgetDepart: Math.round((mediane * (irreguliere ? 0.9 : 1)) / 10) * 10 }
 }
