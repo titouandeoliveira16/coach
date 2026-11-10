@@ -13,7 +13,7 @@ import { CarteHorsPlan } from '../forme/CarteHorsPlan'
 import { CarteBilanNutrition } from '../forme/CarteBilanNutrition'
 import { CarteFcMax } from '../forme/CarteFcMax'
 import { CartePanne } from '../forme/CartePanne'
-import { CartePesee } from '../forme/CartePesee'
+import { CartePesee, FeuillePesee } from '../forme/CartePesee'
 import { CarteResultat } from '../forme/CarteResultat'
 import { SaisieMatin } from '../forme/SaisieMatin'
 import { BandeauAVoir } from '../forme/BandeauAVoir'
@@ -51,6 +51,7 @@ export function Aujourdhui() {
   const recentes = useLiveQuery(() => mesuresRecentes(1))
   const [edition, setEdition] = useState(false)
   const [nutriOuverte, setNutriOuverte] = useState(false)
+  const [peseeOuverte, setPeseeOuverte] = useState(false)
   // Nutrition en option (Réglages → Mon profil sportif → Module nutrition)
   const nutrition = useNutritionActive()
   const { ref, zone } = useZoneEcran(recentes !== undefined)
@@ -82,16 +83,17 @@ export function Aujourdhui() {
         <CarteBilanNutrition lieu="aujourdhui" />
         <CarteCalibration />
       </BandeauAVoir>
-      {complet && !edition && <TuilesMatin />}
+      {complet && !edition && <TuilesMatin onPoids={() => setPeseeOuverte(true)} />}
+      {peseeOuverte && <FeuillePesee onFermer={() => setPeseeOuverte(false)} />}
       {complet && !edition ? (
         <CarteAujourdhui onModifierMatin={() => setEdition(true)} autreOuvert={nutriOuverte} />
       ) : (
         <SaisieMatin key={duJour?.modifieLe} existante={duJour} onTermine={() => setEdition(false)} />
       )}
       {nutrition && <CarteNutrition ouverte={nutriOuverte} onBasculer={setNutriOuverte} />}
-      {/* En bas : pesée et imprévu sur une ligne */}
+      {/* En bas : l'imprévu (la pesée se fait depuis la tuile Poids ; ici seulement avant les notes du matin) */}
       <div className="flex shrink-0 gap-2">
-        <CartePesee compact />
+        {!(complet && !edition) && <CartePesee compact />}
         <CartePanne compact />
       </div>
     </div>

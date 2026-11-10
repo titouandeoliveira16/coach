@@ -9,6 +9,41 @@ import { ChampNombre } from '../../../core/ui/ChampNombre'
 import { Feuille } from '../../../core/ui/Feuille'
 import { effacerPesee, enregistrerPesee, lireSansPesee, marquerSansPesee, peseesValides } from './pesees'
 
+/** Saisie de la pesée du jour dans une feuille qui monte du bas (ouverte depuis la tuile Poids d'Aujourd'hui). */
+export function FeuillePesee({ onFermer }: { onFermer: () => void }) {
+  const [profil] = useProfil()
+  const dernieres = useLiveQuery(peseesValides)
+  const sansPesee = useLiveQuery(async () => (await lireSansPesee()).includes(aujourdhui()))
+  const [poids, setPoids] = useState<number>()
+  if (!dernieres || sansPesee === undefined) return null
+  const duJour = dernieres[0]?.date === aujourdhui() ? dernieres[0] : undefined
+  const kg = poids ?? duJour?.poidsKg ?? profil.poidsKg
+  return (
+    <Feuille titre="Pesée du jour" onFermer={onFermer}>
+      <p className="mb-1 text-xs text-texte-3">Le matin, à jeun, après être passé aux toilettes.</p>
+      <ChampNombre libelle="Poids" unite="kg" valeur={kg} onValider={setPoids} />
+      <Bouton className="mt-2" disabled={!kg} onClick={async () => {
+        if (!kg) return
+        if (sansPesee) await marquerSansPesee(aujourdhui(), false)
+        await enregistrerPesee(aujourdhui(), kg)
+        onFermer()
+      }}>Enregistrer</Bouton>
+      {duJour ? (
+        <button type="button" className="mt-1 w-full py-2 text-sm text-[#f87171]" onClick={async () => {
+          await effacerPesee(duJour.date)
+          onFermer()
+        }}>Supprimer la pesée d'aujourd'hui</button>
+      ) : (
+        <button type="button" className="mt-1 w-full py-2 text-sm text-[#f87171]" onClick={async () => {
+          await marquerSansPesee(aujourdhui(), !sansPesee)
+          onFermer()
+        }}>{sansPesee ? 'Annuler « pas de pesée »' : 'Pas de pesée aujourd’hui'}</button>
+      )}
+      <button type="button" className="w-full py-2 text-sm text-texte-3" onClick={onFermer}>Fermer</button>
+    </Feuille>
+  )
+}
+
 /** Poids : une ligne avec la dernière pesée ; on se pèse quand on veut (toucher pour saisir ou effacer). */
 export function CartePesee({ compact = false }: { compact?: boolean } = {}) {
   const [profil] = useProfil()

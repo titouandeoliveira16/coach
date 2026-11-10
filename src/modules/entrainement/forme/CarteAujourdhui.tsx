@@ -126,18 +126,12 @@ export function CarteAujourdhui({ onModifierMatin }: {
   const enHeures = (h: number) => `${Math.floor(h)} h ${String(Math.round((h % 1) * 60)).padStart(2, '0')}`
   const nuits7 = a.mesures.filter((m) => m.date > decalerJour(jour, -7) && m.sommeilH !== undefined).map((m) => m.sommeilH!)
   const ressenti = mesure ? scoreRessenti(mesure) : undefined
+  const moyenneNuits = nuits7.length >= 3 ? enHeures(nuits7.reduce((x, y) => x + y, 0) / nuits7.length) : undefined
   const resumes: Record<(typeof cases)[number]['cle'], string | undefined> = {
     recuperation: mesure?.vfcMs !== undefined && !mesure.sansMontre ? `${mesure.vfcMs} ms` : undefined,
     pouls: mesure?.fcRepos !== undefined && !mesure.sansMontre ? `${mesure.fcRepos} bpm` : undefined,
-    // Heures de la nuit : déjà dans la tuile Nuit en haut
-    sommeil: undefined,
+    sommeil: mesure?.sommeilH !== undefined && !mesure.sansMontre ? enHeures(mesure.sommeilH) : undefined,
     ressenti: ressenti !== undefined ? `${formatNombre(ressenti, 1)} / 5` : undefined,
-  }
-  const chiffres: Record<(typeof cases)[number]['cle'], string | undefined> = {
-    recuperation: mesure?.vfcMs !== undefined && !mesure.sansMontre ? `VFC ${mesure.vfcMs} ms` : undefined,
-    pouls: mesure?.fcRepos !== undefined && !mesure.sansMontre ? `${mesure.fcRepos} bpm` : undefined,
-    sommeil: [mesure?.sommeilH !== undefined && !mesure.sansMontre ? enHeures(mesure.sommeilH) : undefined, nuits7.length >= 3 ? `7 j : ${enHeures(nuits7.reduce((x, y) => x + y, 0) / nuits7.length)}` : undefined].filter(Boolean).join(' · ') || undefined,
-    ressenti: ressenti !== undefined ? `${formatNombre(ressenti, 1)} / 5 en moyenne` : undefined,
   }
   const couleurEtat = (e?: 'ok' | 'alerte' | 'info') => (e === 'alerte' ? COULEUR[signal.couleur === 'vert' ? 'orange' : signal.couleur] : e === 'ok' ? COULEUR.vert : '#a3abb7')
   /** Fond plein de chaque case (teintes foncées pour que le texte blanc se lise) ; gris si pas encore d'avis */
@@ -161,13 +155,13 @@ export function CarteAujourdhui({ onModifierMatin }: {
               <span className="text-[11px] opacity-85">{NOMS_CASES[cle]}</span>
               <span className="text-sm font-semibold leading-tight">{d?.court ?? '—'}</span>
               {resumes[cle] && <span className="text-[11px] leading-tight opacity-85">{resumes[cle]}</span>}
+              {cle === 'sommeil' && moyenneNuits && <span className="text-[10px] leading-tight opacity-70">7 j : {moyenneNuits}</span>}
             </button>
           ))}
         </div>
         {formeOuverte && (
           <div className="space-y-2">
             {signal.calibrationVfc && <p className="text-xs text-texte-3">VFC en calibration ({a.vfc.nBase}/14 jours)</p>}
-            {Object.values(chiffres).some(Boolean) && <p className="text-sm text-texte-2">{Object.values(chiffres).filter(Boolean).join(' · ')}</p>}
             {mesure && (
               <div className="space-y-1">
                 <div className="grid grid-cols-5 gap-1 text-center">
