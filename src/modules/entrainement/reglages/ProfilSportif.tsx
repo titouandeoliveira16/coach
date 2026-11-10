@@ -81,7 +81,7 @@ export function SectionProfilSportif() {
     const refs = await referencesVitesse(prog)
     return { facteurs: facteursVitesse(refs, { cpW: r.cpW, poidsKg: poidsDesTests(r) }), auto: refs.length - (prog.coursesReference?.length ?? 0) }
   }, [r])
-  const contexteCourses = { discipline, typeCourse: prog.typeCourse, dureeCourseMin: prog.dureeCourseMin, cpW: r.cpW, poidsKg: poidsDesTests(r), facteurs: { route: vitesse?.facteurs.route?.facteur, vtt: vitesse?.facteurs.vtt?.facteur } }
+  const contexteCourses = { discipline, typeCourse: prog.typeCourse, dureeCourseMin: prog.dureeCourseMin, cpW: r.cpW, wPrimeKj: r.wPrimeKj, poidsKg: poidsDesTests(r), facteurs: { route: vitesse?.facteurs.route?.facteur, vtt: vitesse?.facteurs.vtt?.facteur } }
   const principale = objectifs.find((c) => niveaux.get(c.date) === 'A')
   // La durée de la course principale règle aussi la sortie longue visée
   const changerCourses = (competitions: typeof prog.competitions) => {

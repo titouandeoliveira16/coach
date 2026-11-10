@@ -12,7 +12,7 @@
  */
 import catalogue from '../../catalogue/seances.json'
 import { decaler } from './vfc'
-import { vitesseMontee } from './col'
+import { montee, puissanceTenable, vitesseMontee } from './col'
 
 export type Famille = 'vo2-courts' | 'vo2-longs' | 'seuil-plus' | 'seuil' | 'seuil-variable' | 'sweet-spot' | 'tempo' | 'relances' | 'sprints'
 /** Discipline visée : route (programme d'origine) ou une discipline VTT (catalogue, profils de discipline). */
@@ -499,6 +499,8 @@ export function construireCycloMontees(duree: number, z2W: number, cpW: number, 
   const dureeMin = Math.round(duree)
   const wEch = arrondi5(z2W * 0.85)
   const wM = arrondi5(cpW * 0.88)
+  // Sortie trop courte pour toutes les montées : une de moins (au moins 30' de Z2 avant)
+  while (n > 1 && n * minMontee + (n - 1) * 10 + 55 > dureeMin) n--
   const montees = n * minMontee + (n - 1) * 10
   const z2Min = Math.max(30, dureeMin - 15 - montees - 10)
   const { etapes, kj } = enchainer([
@@ -1500,7 +1502,10 @@ export interface Competition {
   deniveleM?: number
   /** Durée donnée par l'athlète (min) : remplace l'estimation */
   dureeMin?: number
+  /** Cols du parcours (option) : longueur, pente moyenne, position dans la course */
+  cols?: Col[]
 }
+export interface Col { longueurKm: number; pentePct: number; aKm?: number }
 
 /** Épreuve par défaut d'une course sans précision : celle de ta discipline visée. */
 export const epreuveDe = (discipline: Discipline, typeCourse?: 'en-ligne' | 'cyclo'): Epreuve =>
@@ -1694,4 +1699,51 @@ export function facteursVitesse(refs: CourseReference[], athlete?: { cpW?: numbe
     res[f] = { facteur: Math.round(Math.min(FACTEUR_VITESSE_BORNES[1], Math.max(FACTEUR_VITESSE_BORNES[0], moyenne)) * 100) / 100, n: liste.length }
   }
   return res
+}
+
+
+/** Durée d'un col (min) à une puissance donnée, vélo compris (+9 kg). */
+export const dureeCol = (c: Col, puissanceW: number, poidsKg: number) =>
+  montee(c.longueurKm, c.longueurKm * c.pentePct * 10, poidsKg + 9, puissanceW).tempsSec / 60
+
+/**
+ * Spécifique selon les cols de la course (relecture du 10/11/2026, choix d'entraîneur appuyé sur la durabilité,
+ * Maunder 2021) : T = durée de la plus longue montée à 85 % de la CP, N = nombre de cols. Fin de prépa : montées de
+ * 20 à 30 min qui s'allongent vers T ; phase spécifique : min(N ; 3) montées de min(T ; 40 min) en fin de sortie longue.
+ */
+export function specifiqueCols(cols: Col[] | undefined, cpW: number, poidsKg = 70) {
+  if (!cols?.length) return undefined
+  const t = Math.max(...cols.map((c) => dureeCol(c, cpW * 0.85, poidsKg)))
+  return { n: Math.min(cols.length, 3), minutes: Math.round(Math.min(t, 40) / 5) * 5 || 10, longueMin: Math.round(t) }
+}
+
+/**
+ * Watts cibles de chaque col pour faire la course « à 100 % théorique » (relecture du 10/11/2026 ; monter un peu plus
+ * fort qu'à plat fait gagner du temps : Atkinson 2007, Cangley 2011 ; les watts baissent avec la fatigue : Mateo-March
+ * 2022, Clark 2019 ; coefficients = choix d'entraîneur) :
+ *   cible = CP × k0(durée du col) × m(durée de l'épreuve, 1 pour le dernier col) × f(kJ/kg déjà faits),
+ *   k0 : < 10 min 1,00 · 10-20 0,95 · 20-40 0,92 · 40-60 0,90 · > 60 0,88 ; m : ≤ 4 h 1,00 · 4-6 h 0,97 · > 6 h 0,94 ;
+ *   f = max(0,88 ; 1 − 0,02 par 10 kJ/kg) ; jamais au-dessus de la puissance tenable, ni de la CP au-delà de 20 min.
+ * Travail avant le col : temps écoulé (position / distance × durée de la course) à environ 70 % de la CP.
+ */
+export function ciblesCols(o: { cols: Col[]; distanceKm?: number; dureeMin: number; cpW: number; wPrimeKj?: number; poidsKg?: number }) {
+  const poids = o.poidsKg ?? 70
+  const wPrime = o.wPrimeKj ?? 15
+  const k0 = (min: number) => (min < 10 ? 1 : min < 20 ? 0.95 : min < 40 ? 0.92 : min < 60 ? 0.9 : 0.88)
+  const m = o.dureeMin <= 240 ? 1 : o.dureeMin <= 360 ? 0.97 : 0.94
+  const tries = o.cols.map((c, i) => ({ c, i })).sort((a, b) => (a.c.aKm ?? a.i) - (b.c.aKm ?? b.i))
+  return tries.map(({ c, i }, rang) => {
+    const avantMin = c.aKm !== undefined && o.distanceKm ? (c.aKm / o.distanceKm) * o.dureeMin : (rang / Math.max(1, tries.length)) * o.dureeMin
+    const kjKg = (avantMin * 60 * 0.7 * o.cpW) / 1000 / poids
+    const f = Math.max(0.88, 1 - 0.02 * (kjKg / 10))
+    const mCol = rang === tries.length - 1 ? 1 : m
+    // La durée dépend de la puissance : 3 passes suffisent à se stabiliser
+    let w = o.cpW * 0.9
+    for (let k = 0; k < 3; k++) {
+      const duree = dureeCol(c, w, poids)
+      w = o.cpW * k0(duree) * mCol * f
+      w = Math.min(w, puissanceTenable(duree * 60, o.cpW, wPrime), duree > 20 ? o.cpW : Infinity)
+    }
+    return { index: i, col: c, watts: Math.round(w / 5) * 5, minutes: Math.round(dureeCol(c, w, poids)), kjKgAvant: Math.round(kjKg), dernier: rang === tries.length - 1 }
+  })
 }

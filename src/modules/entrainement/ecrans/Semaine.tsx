@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { db } from '../../../core/db'
 import { enregistrer } from '../../../core/stockage'
+import { CiblesCols } from '../reglages/ListeCourses'
 import { aujourdhui, decalerJour, depuisJour } from '../../../core/dates'
 import { Aide } from '../../../core/ui/Aide'
 import { Bouton } from '../../../core/ui/Bouton'
@@ -278,6 +279,7 @@ function DetailSeance({ p, jours, prevues, onFermer, onMessage }: {
       {p.velo?.famille === 'z2-long' && <p className="mt-1 text-xs text-texte-3">Sortie longue : elle s'allonge de semaine en semaine vers la durée de ta course.<Aide titre="Sortie longue" texte={AIDES.sortieLongue} /></p>}
       {!!p.velo?.blocsSv1 && <p className="mt-1 text-xs text-texte-3">Blocs au 1er seuil : haut de ta Z2{p.velo.fcSv1 ? `, FC ${p.velo.fcSv1[0]}-${p.velo.fcSv1[1]}` : ''}, le cœur ne dérive pas.<Aide titre="1er seuil" texte={AIDES.blocsSv1} /></p>}
       {p.velo?.etapes?.some((e) => e.repetition?.etapes.some((x) => x.libelle === 'Sprint à fond')) && <p className="mt-1 text-xs text-texte-3">Sprints à fond, longue récupération.<Aide titre="Sprints" texte={AIDES.sprintsSemaine} /></p>}
+      {p.velo?.famille === 'course' && <CiblesDeLaCourse date={p.date} />}
       <FicheSeance velo={p.velo} />
       {mode === 'actions' ? (
         <div className="mt-4 space-y-2">
@@ -381,4 +383,14 @@ function DetailSeance({ p, jours, prevues, onFermer, onMessage }: {
       )}
     </Feuille>
   )
+}
+
+/** Jour de course : watts cibles de chaque col (si les cols de la course sont notés). */
+function CiblesDeLaCourse({ date }: { date: string }) {
+  const [r] = useReglagesEntrainement()
+  const prog = programmeDe(r.programme)
+  const course = prog.competitions.find((c) => c.date === date)
+  if (!course) return null
+  const poidsKg = [...r.tests].reverse().find((t) => t.poidsKg)?.poidsKg
+  return <CiblesCols course={course} contexte={{ discipline: prog.discipline ?? 'route', typeCourse: prog.typeCourse, dureeCourseMin: prog.dureeCourseMin, cpW: r.cpW, wPrimeKj: r.wPrimeKj, poidsKg }} />
 }

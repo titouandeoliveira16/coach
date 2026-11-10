@@ -36,7 +36,7 @@ export interface ReponsesArrivee {
   minLongMin: number
   maxLongMin: number
   /** Course principale : distance, dénivelé et durée donnée comme les autres courses */
-  course: { nom: string; date: string; distanceKm?: number; deniveleM?: number; dureeMin?: number }
+  course: { nom: string; date: string; distanceKm?: number; deniveleM?: number; dureeMin?: number; cols?: Competition['cols'] }
   /** Autres courses (facultatif) : B importante, C pour s'entraîner */
   autresCourses?: Competition[]
   /** Route : course en ligne (FFC…) ou cyclosportive / longue distance */
@@ -86,6 +86,7 @@ export function preparerArrivee(r: ReponsesArrivee, jour: string, testsFaits: Re
   const principale: Competition = {
     date: r.course.date, nom: r.course.nom.trim() || 'Course principale', niveau: 'A', epreuve: epreuveDe(r.discipline, r.typeCourse),
     ...(r.course.distanceKm ? { distanceKm: r.course.distanceKm } : {}), ...(r.course.deniveleM ? { deniveleM: r.course.deniveleM } : {}), ...(r.course.dureeMin ? { dureeMin: r.course.dureeMin } : {}),
+    ...(r.course.cols?.length ? { cols: r.course.cols } : {}),
   }
   const dureePrincipale = r.course.distanceKm || r.course.dureeMin
     ? dureeDeCourse(principale, { discipline: r.discipline, typeCourse: r.typeCourse, cpW: r.cpW, poidsKg: r.poidsKg })
@@ -148,7 +149,7 @@ export async function reponsesExistantes() {
       // Course principale encore à venir : préremplie (distance, dénivelé, durée)
       ...((() => {
         const a = prog.competitions.find((x) => x.niveau === 'A' && x.date > aujourdhui())
-        return a ? { course: { nom: a.nom, date: a.date, ...(a.distanceKm ? { distanceKm: a.distanceKm } : {}), ...(a.deniveleM ? { deniveleM: a.deniveleM } : {}), ...(a.dureeMin ? { dureeMin: a.dureeMin } : {}) } } : {}
+        return a ? { course: { nom: a.nom, date: a.date, ...(a.distanceKm ? { distanceKm: a.distanceKm } : {}), ...(a.deniveleM ? { deniveleM: a.deniveleM } : {}), ...(a.dureeMin ? { dureeMin: a.dureeMin } : {}), ...(a.cols ? { cols: a.cols } : {}) } } : {}
       })()),
       // Courses B et C déjà notées : gardées
       ...(prog.competitions.some((x) => x.niveau === 'B' || x.niveau === 'C') ? { autresCourses: prog.competitions.filter((x) => x.niveau === 'B' || x.niveau === 'C') } : {}),

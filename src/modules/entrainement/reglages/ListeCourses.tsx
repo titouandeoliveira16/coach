@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { depuisJour } from '../../../core/dates'
 import { Feuille } from '../../../core/ui/Feuille'
-import { dureeDeCourse, epreuveDe, estimerDureeCourse, NOMS_EPREUVES, type Competition, type CourseReference, type Discipline, type Epreuve, type FamilleVitesse, type NiveauCourse } from '../../../metrics/programme'
+import { Aide } from '../../../core/ui/Aide'
+import { AIDES } from '../aides'
+import { ciblesCols, dureeDeCourse, type Col, epreuveDe, estimerDureeCourse, NOMS_EPREUVES, type Competition, type CourseReference, type Discipline, type Epreuve, type FamilleVitesse, type NiveauCourse } from '../../../metrics/programme'
 
 const COULEURS: Record<NiveauCourse, string> = { A: 'bg-accent', B: 'bg-yellow-400', C: 'bg-sky-400' }
 const NOTES: Record<NiveauCourse, string> = {
@@ -15,7 +17,7 @@ const champ = 'min-w-0 rounded-lg border border-bordure bg-surface-2 px-2 py-2 t
 const heures = (min: number) => `${Math.floor(min / 60)} h ${String(min % 60).padStart(2, '0')}`.replace(/^0 h /, '').replace(/ h 00$/, ' h')
 const virgule = (v: number) => v.toLocaleString('fr-FR', { maximumFractionDigits: 1 })
 const nombre = (t: string) => { const v = Number(t.replace(',', '.')); return t.trim() && v > 0 ? v : undefined }
-type Contexte = { discipline: Discipline; typeCourse?: 'en-ligne' | 'cyclo'; dureeCourseMin?: number; cpW?: number; poidsKg?: number; facteurs?: Partial<Record<FamilleVitesse, number>> }
+type Contexte = { discipline: Discipline; typeCourse?: 'en-ligne' | 'cyclo'; dureeCourseMin?: number; cpW?: number; wPrimeKj?: number; poidsKg?: number; facteurs?: Partial<Record<FamilleVitesse, number>> }
 
 export interface Parcours { distance: string; denivele: string; duree: string }
 export const parcoursVide: Parcours = { distance: '', denivele: '', duree: '' }
@@ -66,8 +68,9 @@ const resumeParcours = (c: Competition, contexte: Contexte) =>
 /** Ta course principale (A) : distance, dénivelé et durée modifiables sur place ; sa date ne bouge pas (la saison est construite dessus). */
 export function CoursePrincipale({ course, contexte, onChanger }: { course: Competition; contexte: Contexte; onChanger: (c: Competition) => void }) {
   const [parcours, setParcours] = useState(parcoursDe(course))
+  const [cols, setCols] = useState<Col[]>(course.cols ?? [])
   const [cle, setCle] = useState(0)
-  const change = JSON.stringify(champsParcours(parcours)) !== JSON.stringify(champsParcours(parcoursDe(course)))
+  const change = JSON.stringify(champsParcours(parcours)) !== JSON.stringify(champsParcours(parcoursDe(course))) || JSON.stringify(cols) !== JSON.stringify(course.cols ?? [])
   const epreuve = course.epreuve ?? epreuveDe(contexte.discipline, contexte.typeCourse)
   return (
     <div className="rounded-xl border border-accent p-3">
@@ -81,10 +84,12 @@ export function CoursePrincipale({ course, contexte, onChanger }: { course: Comp
       <div className="mt-2">
         <ChampsParcours key={cle} epreuve={epreuve} valeur={parcours} onChanger={setParcours} contexte={contexte} />
       </div>
+      {epreuve !== 'xcc' && <div className="mt-2"><EditeurCols cols={cols} onChanger={setCols} /></div>}
       {change && (
         <button type="button" className="mt-2 w-full rounded-xl bg-accent py-2.5 font-bold text-fond"
-          onClick={() => { onChanger({ date: course.date, nom: course.nom, niveau: 'A', epreuve, ...champsParcours(parcours) }); setCle(cle + 1) }}>Enregistrer</button>
+          onClick={() => { onChanger({ date: course.date, nom: course.nom, niveau: 'A', epreuve, ...champsParcours(parcours), ...(cols.length ? { cols } : {}) }); setCle(cle + 1) }}>Enregistrer</button>
       )}
+      {!change && <CiblesCols course={course} contexte={contexte} />}
       <p className="mt-1.5 text-xs text-texte-3">Ta saison est construite autour de cette course (sa date ne se change pas ici).</p>
     </div>
   )
@@ -145,6 +150,7 @@ function FormulaireCourse({ course, min, contexte, dateDejaPrise, onValider, onR
   const [f, setF] = useState({
     date: course?.date ?? '', nom: course?.nom ?? '', niveau: (course?.niveau === 'C' || course?.niveau === 'A' ? course.niveau : 'B') as NiveauCourse,
     epreuve: course?.epreuve ?? epreuveDe(contexte.discipline, contexte.typeCourse), parcours: parcoursDe(course),
+    cols: course?.cols ?? [],
   })
   return (
     <div>
@@ -161,6 +167,7 @@ function FormulaireCourse({ course, min, contexte, dateDejaPrise, onValider, onR
       <div className="mt-3">
         <ChampsParcours epreuve={f.epreuve} valeur={f.parcours} onChanger={(parcours) => setF({ ...f, parcours })} contexte={contexte} />
       </div>
+      {f.epreuve !== 'xcc' && <div className="mt-3"><EditeurCols cols={f.cols} onChanger={(cols) => setF({ ...f, cols })} /></div>}
       <p className="mt-3 text-xs text-texte-3">Niveau</p>
       <div className="mt-1 flex flex-wrap gap-1.5">
         <button type="button" className={puce(f.niveau === 'A')} onClick={() => setF({ ...f, niveau: 'A' })}>A · objectif</button>
@@ -170,7 +177,7 @@ function FormulaireCourse({ course, min, contexte, dateDejaPrise, onValider, onR
       <p className="mt-1.5 text-xs text-texte-3">A : à fond, avec affûtage avant et récupération après ; entre deux A, l’appli adapte le bloc à l’écart (3 semaines au moins, 4 A au plus). B : semaine allégée d’un tiers, la course est ta séance dure. C : semaine normale, la course remplace ta séance dure (ou ta sortie longue au-delà de 2 h).</p>
       <button type="button" disabled={!f.date || !f.nom.trim() || dateDejaPrise(f.date)}
         className="mt-3 w-full rounded-xl bg-accent py-3 font-bold text-fond disabled:opacity-40"
-        onClick={() => onValider({ date: f.date, nom: f.nom.trim(), niveau: f.niveau, epreuve: f.epreuve, ...champsParcours(f.parcours) })}>
+        onClick={() => onValider({ date: f.date, nom: f.nom.trim(), niveau: f.niveau, epreuve: f.epreuve, ...champsParcours(f.parcours), ...(f.cols.length ? { cols: f.cols } : {}) })}>
         {course ? 'Enregistrer' : 'Ajouter'}
       </button>
       {onRetirer && <button type="button" className="mt-1 w-full py-2.5 text-sm text-[#f87171]" onClick={onRetirer}>Retirer cette course</button>}
@@ -223,6 +230,52 @@ export function CalageVitesse({ refs, auto, facteurs, onChanger }: {
             }}>Caler</button>
         </div>
       )}
+    </div>
+  )
+}
+
+/** Cols du parcours (option) : longueur, pente, position. Ils règlent les montées de ta préparation et tes watts cibles. */
+export function EditeurCols({ cols, onChanger }: { cols: Col[]; onChanger: (c: Col[]) => void }) {
+  const [f, setF] = useState({ km: '', pente: '', a: '' })
+  const ok = nombre(f.km) && nombre(f.pente)
+  return (
+    <div>
+      <p className="text-xs text-texte-3">Cols (option) : ils calent tes montées en fin de prépa et tes watts cibles</p>
+      <ul>
+        {cols.map((c, i) => (
+          <li key={i} className="flex items-center justify-between py-0.5 text-xs text-texte-2">
+            <span>Col {i + 1} · {virgule(c.longueurKm)} km à {virgule(c.pentePct)} %{c.aKm !== undefined ? ` · au km ${c.aKm}` : ''}</span>
+            <button type="button" className="px-2 text-texte-3" aria-label={`Retirer le col ${i + 1}`} onClick={() => onChanger(cols.filter((_, k) => k !== i))}>×</button>
+          </li>
+        ))}
+      </ul>
+      <div className="mt-1 flex items-end gap-1.5 text-[11px] text-texte-3">
+        <label className="flex-1">Longueur (km)<input inputMode="decimal" value={f.km} onChange={(e) => setF({ ...f, km: e.target.value })} className={`${champ} mt-0.5 block w-full`} /></label>
+        <label className="flex-1">Pente (%)<input inputMode="decimal" value={f.pente} onChange={(e) => setF({ ...f, pente: e.target.value })} className={`${champ} mt-0.5 block w-full`} /></label>
+        <label className="flex-1">Au km<input inputMode="decimal" value={f.a} onChange={(e) => setF({ ...f, a: e.target.value })} className={`${champ} mt-0.5 block w-full`} /></label>
+        <button type="button" disabled={!ok} className="h-9 shrink-0 rounded-lg bg-accent px-3 font-bold text-fond disabled:opacity-40"
+          onClick={() => { onChanger([...cols, { longueurKm: nombre(f.km)!, pentePct: nombre(f.pente)!, ...(nombre(f.a) !== undefined ? { aKm: nombre(f.a) } : {}) }]); setF({ km: '', pente: '', a: '' }) }}>+</button>
+      </div>
+    </div>
+  )
+}
+
+/** Watts cibles de chaque col pour faire la course à 100 % théorique. */
+export function CiblesCols({ course, contexte }: { course: Competition; contexte: Contexte }) {
+  if (!course.cols?.length || !contexte.cpW) return null
+  const cibles = ciblesCols({ cols: course.cols, distanceKm: course.distanceKm, dureeMin: dureeDeCourse(course, contexte), cpW: contexte.cpW, wPrimeKj: contexte.wPrimeKj, poidsKg: contexte.poidsKg })
+  return (
+    <div className="mt-2 rounded-lg bg-surface-2 p-2.5">
+      <p className="text-xs font-semibold text-texte-2">Tes watts cibles dans les cols<Aide titre="Watts cibles des cols" texte={AIDES.ciblesCols} /></p>
+      <ul className="mt-1 space-y-0.5 text-xs">
+        {cibles.map((x) => (
+          <li key={x.index} className="flex justify-between gap-2">
+            <span className="text-texte-2">Col {x.index + 1} · {virgule(x.col.longueurKm)} km à {virgule(x.col.pentePct)} %{x.dernier ? ' · dernier' : ''}</span>
+            <span><b>{x.watts} W</b> <span className="text-texte-3">≈ {heures(x.minutes)}</span></span>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-1 text-[11px] text-texte-3">À plat entre les cols : un peu en dessous (environ 5 %). Seul le dernier col se monte sans garder de réserve.</p>
     </div>
   )
 }

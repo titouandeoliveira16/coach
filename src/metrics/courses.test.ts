@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { delaiApresCourse, dureeDeCourse, estimerDureeCourse, estMontagne, facteursVitesse, niveauxCourses, procheCourse, construireOuverture, construireCourse } from './programme'
+import { ciblesCols, delaiApresCourse, dureeDeCourse, estimerDureeCourse, estMontagne, facteursVitesse, specifiqueCols, niveauxCourses, procheCourse, construireOuverture, construireCourse } from './programme'
 
 const phases = [{ debut: '2026-11-09', type: 'reprise' as const }, { debut: '2026-12-07', type: 'seuil-tirage' as const }]
 
@@ -92,5 +92,24 @@ describe('montagne ou pas', () => {
     // Facteur sur toute la course : base / f ; sur le plat seulement : bien moins de gain
     expect(calee).toBeGreaterThan(base / f + 30)
     expect(calee).toBeLessThan(base)
+  })
+})
+
+describe('cols : spécifique et watts cibles', () => {
+  const cols = [{ longueurKm: 10, pentePct: 7, aKm: 40 }, { longueurKm: 15, pentePct: 6.5, aKm: 90 }, { longueurKm: 12, pentePct: 8, aKm: 140 }]
+  it('spécifique : 3 montées au plus, 40 min au plus', () => {
+    const s = specifiqueCols(cols, 260, 70)!
+    expect(s.n).toBe(3)
+    expect(s.minutes).toBeLessThanOrEqual(40)
+    expect(s.longueMin).toBeGreaterThan(40)
+    expect(specifiqueCols(undefined, 260)).toBeUndefined()
+  })
+  it('watts cibles : sous la CP pour les longs cols, la fatigue baisse les cols du milieu, le dernier sans réserve', () => {
+    const c = ciblesCols({ cols, distanceKm: 160, dureeMin: 400, cpW: 260, wPrimeKj: 18, poidsKg: 70 })
+    expect(c).toHaveLength(3)
+    for (const x of c) expect(x.watts).toBeLessThanOrEqual(260)
+    expect(c[1].watts).toBeLessThan(c[0].watts)
+    expect(c[2].dernier).toBe(true)
+    expect(c.every((x) => x.watts > 260 * 0.7)).toBe(true)
   })
 })
