@@ -14,7 +14,7 @@ const NOTES: Record<NiveauCourse, string> = {
 const puce = (actif: boolean) => `rounded-full border px-3 py-1.5 text-sm ${actif ? 'border-accent bg-accent text-fond font-semibold' : 'border-bordure text-texte-2'}`
 const champ = 'min-w-0 rounded-lg border border-bordure bg-surface-2 px-2 py-2 text-sm text-texte'
 
-const heures = (min: number) => `${Math.floor(min / 60)} h ${String(min % 60).padStart(2, '0')}`.replace(/^0 h /, '').replace(/ h 00$/, ' h')
+const heures = (min: number) => (min < 60 ? `${Math.round(min)} min` : `${Math.floor(min / 60)} h ${String(Math.round(min % 60)).padStart(2, '0')}`.replace(/ h 00$/, ' h'))
 const virgule = (v: number) => v.toLocaleString('fr-FR', { maximumFractionDigits: 1 })
 const nombre = (t: string) => { const v = Number(t.replace(',', '.')); return t.trim() && v > 0 ? v : undefined }
 type Contexte = { discipline: Discipline; typeCourse?: 'en-ligne' | 'cyclo'; dureeCourseMin?: number; cpW?: number; wPrimeKj?: number; poidsKg?: number; facteurs?: Partial<Record<FamilleVitesse, number>> }
@@ -245,7 +245,7 @@ export function EditeurCols({ cols, onChanger }: { cols: Col[]; onChanger: (c: C
         {cols.map((c, i) => (
           <li key={i} className="flex items-center justify-between py-0.5 text-xs text-texte-2">
             <span>Col {i + 1} · {virgule(c.longueurKm)} km à {virgule(c.pentePct)} %{c.aKm !== undefined ? ` · au km ${c.aKm}` : ''}</span>
-            <button type="button" className="px-2 text-texte-3" aria-label={`Retirer le col ${i + 1}`} onClick={() => onChanger(cols.filter((_, k) => k !== i))}>×</button>
+            <button type="button" className="min-h-9 min-w-9 px-2 text-lg text-texte-3" aria-label={`Retirer le col ${i + 1}`} onClick={() => onChanger(cols.filter((_, k) => k !== i))}>×</button>
           </li>
         ))}
       </ul>
@@ -253,7 +253,7 @@ export function EditeurCols({ cols, onChanger }: { cols: Col[]; onChanger: (c: C
         <label className="flex-1">Longueur (km)<input inputMode="decimal" value={f.km} onChange={(e) => setF({ ...f, km: e.target.value })} className={`${champ} mt-0.5 block w-full`} /></label>
         <label className="flex-1">Pente (%)<input inputMode="decimal" value={f.pente} onChange={(e) => setF({ ...f, pente: e.target.value })} className={`${champ} mt-0.5 block w-full`} /></label>
         <label className="flex-1">Au km<input inputMode="decimal" value={f.a} onChange={(e) => setF({ ...f, a: e.target.value })} className={`${champ} mt-0.5 block w-full`} /></label>
-        <button type="button" disabled={!ok} className="h-9 shrink-0 rounded-lg bg-accent px-3 font-bold text-fond disabled:opacity-40"
+        <button type="button" disabled={!ok} className="h-11 w-11 shrink-0 rounded-lg bg-accent text-xl font-bold text-fond disabled:opacity-40"
           onClick={() => { onChanger([...cols, { longueurKm: nombre(f.km)!, pentePct: nombre(f.pente)!, ...(nombre(f.a) !== undefined ? { aKm: nombre(f.a) } : {}) }]); setF({ km: '', pente: '', a: '' }) }}>+</button>
       </div>
     </div>
@@ -275,7 +275,7 @@ export function CiblesCols({ course, contexte }: { course: Competition; contexte
           </li>
         ))}
       </ul>
-      <p className="mt-1 text-[11px] text-texte-3">À plat entre les cols : un peu en dessous (environ 5 %). Seul le dernier col se monte sans garder de réserve.</p>
+      <p className="mt-1 text-[11px] text-texte-3">À plat entre les cols : un peu en dessous (environ 5 %). Seul le dernier col se monte sans garder de réserve.</p>
     </div>
   )
 }
