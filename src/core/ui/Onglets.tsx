@@ -43,6 +43,8 @@ export function Onglets({ onglets }: { onglets: Onglet[] }) {
   const { pathname } = useLocation()
   const naviguer = useNavigate()
   const actif = onglets.findIndex((o) => pathname === o.vers || pathname.startsWith(`${o.vers}/`))
+  // Sens du glissement de la page (vers la droite ou la gauche), lu par l'animation de passage
+  const sens = (vers: number) => { document.documentElement.dataset.sens = vers < actif ? 'arriere' : 'avant' }
 
   useEffect(() => {
     let depart: { x: number; y: number; t: number } | undefined
@@ -57,7 +59,10 @@ export function Onglets({ onglets }: { onglets: Onglet[] }) {
       depart = undefined
       if (!rapide || Math.abs(dx) < 70 || Math.abs(dy) > Math.abs(dx) * 0.6) return
       const suivant = actif + (dx < 0 ? 1 : -1)
-      if (suivant >= 0 && suivant < onglets.length) naviguer(onglets[suivant].vers)
+      if (suivant >= 0 && suivant < onglets.length) {
+        sens(suivant)
+        naviguer(onglets[suivant].vers, { viewTransition: true })
+      }
     }
     document.addEventListener('touchstart', debut, { passive: true })
     document.addEventListener('touchend', fin, { passive: true })
@@ -65,21 +70,27 @@ export function Onglets({ onglets }: { onglets: Onglet[] }) {
       document.removeEventListener('touchstart', debut)
       document.removeEventListener('touchend', fin)
     }
-  }, [actif, onglets, naviguer])
+  }, [actif, onglets, naviguer]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Pas de portail : les onglets gardent la couleur du module (variable --accent posée sur la page)
+  const n = onglets.length
   return (
-    <div className="pointer-events-none fixed inset-x-0 z-20 mx-auto max-w-lg bg-linear-to-b from-transparent to-fond to-40% px-4 pt-3 pb-2" style={{ bottom: bas }}>
-      <nav data-onglets className="pointer-events-auto flex rounded-full bg-surface-2 p-1 shadow-lg shadow-black/60">
-        {onglets.map((o) => (
+    <div className="vt-onglets pointer-events-none fixed inset-x-0 z-20 mx-auto max-w-lg bg-linear-to-b from-transparent to-fond to-40% px-4 pt-3 pb-2" style={{ bottom: bas }}>
+      <nav data-onglets className="pointer-events-auto relative flex rounded-full bg-surface-2 p-1 shadow-lg shadow-black/60">
+        {/* La bulle de l'onglet actif glisse d'un onglet à l'autre */}
+        {actif >= 0 && (
+          <span aria-hidden className="absolute top-1 bottom-1 left-1 rounded-full bg-accent transition-transform duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)]"
+            style={{ width: `calc((100% - 0.5rem) / ${n})`, transform: `translateX(${actif * 100}%)` }} />
+        )}
+        {onglets.map((o, i) => (
           <NavLink
             key={o.vers}
             to={o.vers}
             end
+            viewTransition
+            onClick={() => sens(i)}
             className={({ isActive }) =>
-              `presse flex-1 rounded-full py-2 text-center text-sm font-semibold transition-colors ${
-                isActive ? 'bg-accent text-fond' : 'text-texte-2'
-              }`
+              `presse relative flex-1 rounded-full py-2 text-center text-sm font-semibold transition-colors duration-300 ${isActive ? 'text-fond' : 'text-texte-2'}`
             }
           >
             {o.libelle}

@@ -1,4 +1,7 @@
+import { useLiveQuery } from 'dexie-react-hooks'
 import type { CSSProperties } from 'react'
+import { aujourdhui } from '../core/dates'
+import { db } from '../core/db'
 import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { BarreNavigation } from './BarreNavigation'
 import { Accueil } from './Accueil'
@@ -12,6 +15,8 @@ import type { ReglageCompte } from '../core/inscription'
 import { QuestionnaireArrivee } from '../modules/entrainement/arrivee/QuestionnaireArrivee'
 import type { EtatArrivee } from '../modules/entrainement/arrivee/donnees'
 
+const LUEURS = { vert: 'rgba(48,209,88,.14)', orange: 'rgba(255,159,10,.14)', rouge: 'rgba(255,69,58,.14)' }
+
 /**
  * Coquille commune : applique la couleur d'accent du module affiché,
  * affiche l'écran demandé et la barre de navigation du bas.
@@ -24,7 +29,10 @@ function Coquille() {
   const moduleActif = MODULES.find((m) => pathname.startsWith(m.chemin))
   // --color-accent est aussi redéfini ici : sinon il garde la valeur calculée à la racine (orange)
   const accent = moduleActif?.couleur ?? '#f2f4f7'
-  const style = { '--accent': accent, '--color-accent': accent } as CSSProperties
+  // Lueur en haut de l'écran (10/11/2026) : la couleur du feu du jour dans l'Entraînement, bleu léger dans la Révision
+  const feu = useLiveQuery(async () => (await db.decisions.get(aujourdhui()))?.couleur, [])
+  const lueur = moduleActif?.id === 'entrainement' && feu ? LUEURS[feu] : moduleActif?.id === 'revision' ? 'rgba(96,165,250,.16)' : 'transparent'
+  const style = { '--accent': accent, '--color-accent': accent, '--lueur': lueur } as CSSProperties
 
   // Personne de connecté sur cet appareil : connexion, ou création du compte avec un code
   if (!pret) return null
@@ -39,6 +47,7 @@ function Coquille() {
   // la barre du bas ne reste collée en bas que si la page peut défiler
   return (
     <div style={style} className={`mx-auto max-w-lg ${moduleActif ? 'min-h-[calc(100vh+1px)] pb-44' : 'min-h-full pb-8'}`}>
+      {moduleActif && <div aria-hidden className="lueur pointer-events-none fixed inset-x-0 top-0 -z-10 h-[380px]" />}
       <Routes>
         {MODULES.map((m) => (
           <Route key={m.id} path={`${m.chemin}/*`} element={<m.Ecran />} />
