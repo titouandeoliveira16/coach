@@ -242,3 +242,22 @@ Supabase ; remontée d'erreurs (ErrorBoundary, journal).
 Rendu et gestes sur un vrai iPhone ; configuration Supabase en ligne (pg_cron, Verify JWT, région, sauvegardes, offre) ;
 correspondance entre les fonctions déployées et le dépôt ; limites réelles d'Intervals.icu ; volumes réels des données
 de l'auteur ; couverture de tests chiffrée (outil non installé) ; justesse scientifique (rôle du relecteur).
+
+## 5. Suivi des corrections (11/11/2026)
+
+| Étape | Fait | Version |
+|---|---|---|
+| 1. Synchro sûre (déconnexion, suppressions, ligne refusée) + 6 tests | ✔ | 11.1.1 |
+| 2. Rappels : secret partagé, validations, un abonnement en erreur n'arrête plus les autres, un envoi par jour | ✔ (à déployer : SQL 06 + fonction) | — |
+| 3. Curseur de synchro sur une séquence serveur, repli si la colonne manque | ✔ (à déployer : SQL 05) | 11.1.1 |
+| 4. CI : lint + tests avant chaque mise en ligne | ✔ | — |
+| 5. Notes personnelles sorties du dépôt (`docs/a-revoir.md` réduit aux chantiers techniques) | ✔ (historique git non réécrit : voir ci-dessous) | — |
+| 6. Semaine gardée si son calcul échoue ; garde-fous phases vides / hors lundi | ✔ | 11.1.2 |
+| 7. « Pas de course prévue », restes course à pied retirés, invité direct sur Entraînement, textes neutres | ✔ | 11.2.0 |
+| 8. Export de toutes les données, suppression du compte, mentions santé et données | ✔ (à déployer : fonction inscription) | 11.3.0 |
+| 9. Paquet 1,65 Mo → 0,92 Mo (chargement à la demande), police en cache, mise à jour sans recharger en pleine saisie | ✔ | 11.4.0 |
+
+Historique git : les anciennes versions de `docs/a-revoir.md` restent dans l'historique public. Le réécrire demanderait
+de forcer l'envoi sur `main` (risqué) et n'effacerait pas les copies déjà faites ; choix : ne pas le réécrire.
+Restent pour plus tard : fonction unique `plafondEtNominal`, découpage de `genererSemaineVelo`, fusion champ par champ
+des réglages, écran Aujourd'hui sans position fixe, déploiement automatique des fonctions, remontée d'erreurs.
