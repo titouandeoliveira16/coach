@@ -22,9 +22,9 @@ jobs:
       PROJET: vjjuopkiwfyqjolxmnho
     steps:
       - uses: actions/checkout@v4
-      - uses: supabase/setup-cli@v1
+      - uses: actions/setup-node@v4
         with:
-          version: 2.54.11
+          node-version: 22
       - name: Déployer intervals, rappels, agenda, inscription
         run: |
           if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then
@@ -33,5 +33,5 @@ jobs:
           fi
           # « Verify JWT » reste désactivé : chaque fonction vérifie elle-même le compte (et rappels/envoyer le secret)
           for f in intervals rappels agenda inscription; do
-            supabase functions deploy "$f" --project-ref "$PROJET" --no-verify-jwt --use-api
+            npx --yes supabase@2.54.11 functions deploy "$f" --project-ref "$PROJET" --no-verify-jwt --use-api
           done
