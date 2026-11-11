@@ -10,7 +10,8 @@
  *  - budget kJ hebdomadaire : +7,5 % si validé et signaux au vert, stable si mitigé, −15 % si rouge ;
  *    semaine allégée (−35 %) toutes les 4 semaines et la semaine d'une course.
  */
-import catalogue from '../../catalogue/seances.json'
+// Extrait léger du catalogue (séances du programme seulement, catalogue/generer.py) : le catalogue entier pèse 250 Ko
+import catalogue from '../../catalogue/programme.json'
 import { decaler } from './vfc'
 import { montee, puissanceTenable, vitesseMontee } from './col'
 

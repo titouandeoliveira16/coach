@@ -1,4 +1,3 @@
-import { Decoder, Stream } from '@garmin/fitsdk'
 import type { Contexte } from '../seances/donnees'
 import { completerMetriques } from '../seances/donnees'
 import type { Seance, Sport } from '../types'
@@ -35,6 +34,8 @@ function sportDe(session: Session): Sport {
 
 /** Lit un fichier .FIT et renvoie la séance avec toutes ses métriques. */
 export async function importerFit(fichier: File, c: Contexte): Promise<Seance> {
+  // Kit Garmin (~400 Ko) chargé seulement quand on importe un fichier, pas au démarrage de l'appli
+  const { Decoder, Stream } = await import('@garmin/fitsdk')
   const octets = new Uint8Array(await fichier.arrayBuffer())
   const stream = Stream.fromByteArray(Array.from(octets))
   if (!Decoder.isFIT(stream)) throw new Error("Ce fichier n'est pas un fichier .FIT.")

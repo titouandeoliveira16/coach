@@ -16,7 +16,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       // Met à jour l'appli automatiquement dès qu'une nouvelle version est en ligne
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
         name: 'Coach',
@@ -37,7 +37,8 @@ export default defineConfig({
       },
       workbox: {
         // Tout le code et les icônes sont mis en cache : l'appli marche sans réseau
-        globPatterns: ['**/*.{js,css,html,svg,png}'],
+        // Police : seulement le jeu latin (les autres ne servent pas en français)
+        globPatterns: ['**/*.{js,css,html,svg,png}', '**/archivo-latin-wdth-*.woff2'],
         // Réception des notifications (rappels)
         importScripts: ['push-sw.js'],
       },

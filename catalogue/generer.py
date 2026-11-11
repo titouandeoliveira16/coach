@@ -1090,3 +1090,9 @@ data = {
 }
 json.dump(data, open(sys.argv[1], "w"), ensure_ascii=False, indent=1)
 print(len(S), "séances")
+
+# Extrait léger pour le moteur (audit du 11/11/2026) : seulement les séances du programme, chargé au démarrage de
+# l'appli à la place du catalogue complet (le catalogue entier n'est chargé qu'à l'ouverture du Catalogue).
+import os
+extrait = {"seances": [{"id": s["id"], **({"disciplines": s["disciplines"]} if "disciplines" in s else {}), "programme": s["programme"]} for s in S if s.get("programme")]}
+json.dump(extrait, open(os.path.join(os.path.dirname(os.path.abspath(sys.argv[1])), "programme.json"), "w"), ensure_ascii=False, indent=1)

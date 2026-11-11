@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { Aide } from '../../../core/ui/Aide'
 import { Carte } from '../../../core/ui/Carte'
 import { Tuile } from '../../../core/ui/Repliable'
 import { AIDES } from '../aides'
 import { useReglage } from '../../../core/reglages'
-import { ListeCatalogue } from '../../catalogue/ListeCatalogue'
+// Catalogue (250 Ko) chargé seulement quand on ouvre l'encart
+const ListeCatalogue = lazy(() => import('../../catalogue/ListeCatalogue').then((m) => ({ default: m.ListeCatalogue })))
 import type { SeanceCatalogue } from '../../catalogue/donnees'
 import { useReglagesEntrainement } from '../reglagesEntrainement'
 import { CalageFc } from './CalageFc'
@@ -46,7 +47,7 @@ export function SectionReglagesEntrainement() {
       {agenda && <SectionAgenda className="border-accent!" />}
       {catalogue && (
         <Carte titre="Catalogue scientifique" className="border-accent!">
-          <ListeCatalogue sports={sports} />
+          <Suspense fallback={<p className="text-sm text-texte-3">Chargement…</p>}><ListeCatalogue sports={sports} /></Suspense>
         </Carte>
       )}
       {avance && (

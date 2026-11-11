@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import type { CSSProperties } from 'react'
+import { Suspense, type CSSProperties } from 'react'
 import { aujourdhui } from '../core/dates'
 import { db } from '../core/db'
 import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
@@ -48,6 +48,8 @@ function Coquille() {
   return (
     <div style={style} className={`mx-auto max-w-lg ${moduleActif ? 'min-h-[calc(100vh+1px)] pb-44' : 'min-h-full pb-8'}`}>
       {moduleActif && <div aria-hidden className="lueur pointer-events-none fixed inset-x-0 top-0 -z-10 h-[380px]" />}
+      {/* Écrans des modules chargés à la demande : rien d'affiché pendant le (très court) chargement */}
+      <Suspense fallback={null}>
       <Routes>
         {MODULES.map((m) => (
           <Route key={m.id} path={`${m.chemin}/*`} element={compte.invite && m.id !== 'entrainement' && m.id !== 'catalogue' ? <Navigate to="/entrainement" replace /> : <m.Ecran />} />
@@ -64,6 +66,7 @@ function Coquille() {
         {/* Par défaut : l'accueil */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </Suspense>
       {/* Pas de barre sur l'accueil : il sert seulement à choisir un module */}
       {moduleActif && <BarreNavigation module={moduleActif} />}
     </div>

@@ -44,3 +44,10 @@ describe('catalogue de séances', () => {
     }
   })
 })
+
+it('l’extrait du programme (catalogue/programme.json) est à jour avec le catalogue', async () => {
+  const extrait = (await import('../catalogue/programme.json')).default
+  const attendu = (catalogue.seances as { id: string; disciplines?: string[]; programme?: unknown }[])
+    .filter((s) => s.programme).map((s) => ({ id: s.id, ...(s.disciplines ? { disciplines: s.disciplines } : {}), programme: s.programme }))
+  expect(extrait.seances).toEqual(attendu)
+})
