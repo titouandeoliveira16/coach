@@ -5,8 +5,8 @@
 //   /rappels/abonner      { abonnement, fuseau, heure, peseeJours, peseeDates } → enregistre cet appareil (utilisateur connecté)
 //   /rappels/desabonner   { endpoint } → retire cet appareil (utilisateur connecté)
 //   /rappels/tester       → envoie une notification de test à tes appareils (utilisateur connecté)
-//   /rappels/envoyer      → appelé toutes les 15 min par pg_cron : envoie les rappels dus.
-//                           Sans danger si quelqu'un l'appelle : un rappel n'est envoyé qu'une fois par jour.
+//   /rappels/envoyer      → appelé toutes les 15 min par pg_cron, avec l'en-tête secret « x-coach-cron » (table
+//                           secret_cron, sql/06) : sans lui, refusé. Chaque rappel n'est envoyé qu'une fois par jour.
 //
 // Rappels : chaque matin (sauf si « Ton matin » est déjà rempli), pesée les jours choisis (sauf si déjà faite),
 // saisie du budget le soir si activée dans l'appli (sauf si déjà faite ; le 1er du mois : annonce du bilan),
@@ -214,7 +214,7 @@ function dansLeQuart(heure: string, debut: string) {
 
 /** Vrai si un mouvement du budget a été saisi ou modifié aujourd'hui (dans le fuseau de l'appareil). */
 async function saisiAujourdhui(userId: string, fuseau: string, date: string) {
-  const { data } = await admin.from('donnees').select('modifie_le').eq('user_id', userId).eq('table_nom', 'mouvements')
+  const { data } = await admin.from('donnees').select('modifie_le').eq('user_id', userId).eq('table_nom', 'mouvements').eq('supprime', false)
     .order('modifie_le', { ascending: false }).limit(1).maybeSingle()
   if (!data) return false
   return new Intl.DateTimeFormat('en-CA', { timeZone: fuseau }).format(new Date(data.modifie_le)) === date
@@ -227,12 +227,29 @@ async function envoyerRappels() {
   // Séances remontées : une fois par personne (sur tous ses appareils)
   const remontees = new Map<string, { titre: string; texte: string; tag: string; url: string }[]>()
   for (const a of abonnements ?? []) {
-    if (!remontees.has(a.user_id)) remontees.set(a.user_id, await seancesRemontees(a.user_id, maintenantDans(a.fuseau).date).catch(() => []))
+    if (!remontees.has(a.user_id)) remontees.set(a.user_id, await seancesRemontees(a.user_id, maintenantDans(fuseauValide(a.fuseau) ? a.fuseau : 'Europe/Paris').date).catch(() => []))
   }
+  // Un abonnement en erreur (données anciennes invalides…) ne coupe plus les rappels des autres
   for (const a of abonnements ?? []) {
-    const t = maintenantDans(a.fuseau)
+    try {
+      envoyes += await rappelsDe(a, c, remontees.get(a.user_id) ?? [])
+    } catch (e) {
+      console.error('rappels : abonnement ignoré', a.user_id, (e as Error).message)
+    }
+  }
+  return envoyes
+}
+
+/** Rappels d'un abonnement (un appareil). Renvoie le nombre de notifications envoyées. */
+// deno-lint-ignore no-explicit-any
+async function rappelsDe(a: any, c: ClesVapid, remontees: { titre: string; texte: string; tag: string; url: string }[]) {
+  let envoyes = 0
+  {
+    const t = maintenantDans(fuseauValide(a.fuseau) ? a.fuseau : 'Europe/Paris')
     const maj: Record<string, string> = {}
-    const messages: { titre: string; texte: string; tag: string; url: string }[] = [...(remontees.get(a.user_id) ?? [])]
+    const messages: { titre: string; texte: string; tag: string; url: string }[] = [...remontees]
+    // Rappels calés sur un quart d'heure : une seule fois par jour, même si la fonction est appelée deux fois
+    const dejaEnvoyes: Record<string, string> = a.envoyes ?? {}
 
     // Rappel du matin : à partir de l'heure choisie, jusqu'à midi
     if (t.heure >= a.heure && t.heure < '12:00' && a.dernier_matin !== t.date) {
@@ -283,21 +300,69 @@ async function envoyerRappels() {
         messages.push({ titre: '💶 Budget', texte: "Tes dépenses du jour : 10 secondes chacune, avant d'oublier.", tag: 'budget', url: './#/budget/mois' })
     }
 
+    const envoyesDuJour = { ...dejaEnvoyes }
+    let changeEnvoyes = false
     for (const m of messages) {
+      const quotidien = !m.tag.startsWith('seance-')
+      if (quotidien && dejaEnvoyes[m.tag] === t.date) continue
       const statut = await envoyerPush(a.abonnement, m, c).catch(() => 0)
-      if (statut === 404 || statut === 410) await admin.from('push_abonnements').delete().eq('endpoint', a.endpoint)
-      else if (statut >= 200 && statut < 300) envoyes++
+      if (statut === 404 || statut === 410) {
+        await admin.from('push_abonnements').delete().eq('endpoint', a.endpoint)
+        return envoyes
+      }
+      if (statut >= 200 && statut < 300) {
+        envoyes++
+        if (quotidien) {
+          envoyesDuJour[m.tag] = t.date
+          changeEnvoyes = true
+        }
+      } else if (m.tag === 'matin') delete maj.dernier_matin // échec : on réessaiera au prochain passage
+      else if (m.tag === 'pesee') delete maj.derniere_pesee
     }
+    if (changeEnvoyes) (maj as Record<string, unknown>).envoyes = envoyesDuJour
     if (Object.keys(maj).length) await admin.from('push_abonnements').update(maj).eq('endpoint', a.endpoint)
   }
   return envoyes
+}
+
+// ---------- Contrôles (audit du 11/11/2026) ----------
+
+/** Fuseau reconnu par le moteur de dates (sinon toute la boucle des rappels plantait). */
+function fuseauValide(f: unknown): f is string {
+  if (typeof f !== 'string' || f.length > 64) return false
+  try {
+    new Intl.DateTimeFormat('en-GB', { timeZone: f })
+    return true
+  } catch {
+    return false
+  }
+}
+const heureValide = (h: unknown): h is string => typeof h === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(h)
+/** Seuls les services de notification des navigateurs sont acceptés comme destination. */
+function endpointValide(e: unknown): e is string {
+  try {
+    const u = new URL(String(e))
+    return u.protocol === 'https:' && /(^|\.)(push\.apple\.com|fcm\.googleapis\.com|push\.services\.mozilla\.com|notify\.windows\.com)$/.test(u.hostname)
+  } catch {
+    return false
+  }
+}
+/** Secret partagé avec la tâche pg_cron (table secret_cron, lisible seulement par le serveur). */
+async function appelDuCron(req: Request) {
+  const recu = req.headers.get('x-coach-cron')
+  if (!recu) return false
+  const { data } = await admin.from('secret_cron').select('valeur').eq('id', 1).maybeSingle()
+  return !!data?.valeur && data.valeur === recu
 }
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
   const route = new URL(req.url).pathname.split('/').pop()
   try {
-    if (route === 'envoyer') return json({ envoyes: await envoyerRappels() })
+    if (route === 'envoyer') {
+      if (!(await appelDuCron(req))) return json({ erreur: 'Réservé à la tâche planifiée.' }, 401)
+      return json({ envoyes: await envoyerRappels() })
+    }
     if (route === 'cle') return json({ cle: (await cles()).publique })
 
     const jeton = req.headers.get('Authorization')?.replace('Bearer ', '')
@@ -308,10 +373,15 @@ Deno.serve(async (req) => {
 
     if (route === 'abonner') {
       const ab = corps.abonnement
-      if (!ab?.endpoint || !ab?.keys?.p256dh || !ab?.keys?.auth) return json({ erreur: 'Abonnement invalide.' }, 400)
+      if (!ab?.endpoint || !ab?.keys?.p256dh || !ab?.keys?.auth || !endpointValide(ab.endpoint)) return json({ erreur: 'Abonnement invalide.' }, 400)
+      const fuseau = corps.fuseau ?? 'Europe/Paris'
+      const heure = corps.heure ?? '08:30'
+      if (!fuseauValide(fuseau) || !heureValide(heure)) return json({ erreur: 'Fuseau ou heure invalide.' }, 400)
+      const peseeJours = Array.isArray(corps.peseeJours) ? corps.peseeJours.filter((j: unknown) => Number.isInteger(j) && (j as number) >= 0 && (j as number) <= 6).slice(0, 7) : [2]
+      const peseeDates = Array.isArray(corps.peseeDates) ? corps.peseeDates.filter((d: unknown) => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)).slice(0, 120) : []
       const { error } = await admin.from('push_abonnements').upsert({
-        endpoint: ab.endpoint, user_id: user.id, abonnement: ab, fuseau: corps.fuseau ?? 'Europe/Paris', heure: corps.heure ?? '08:30',
-        pesee_jours: corps.peseeJours ?? [2], pesee_dates: corps.peseeDates ?? [],
+        endpoint: ab.endpoint, user_id: user.id, abonnement: { endpoint: ab.endpoint, keys: { p256dh: String(ab.keys.p256dh), auth: String(ab.keys.auth) } }, fuseau, heure,
+        pesee_jours: peseeJours, pesee_dates: peseeDates,
       }, { onConflict: 'endpoint' })
       if (error) throw error
       return json({ ok: true })
