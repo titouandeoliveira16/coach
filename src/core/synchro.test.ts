@@ -148,3 +148,11 @@ it('déconnexion en ligne : tout est envoyé, puis l’appareil est vidé', asyn
   expect(serveur.lignes.has('u1|reglages|saisie')).toBe(true)
   expect(await db.reglages.count()).toBe(0)
 })
+
+it('un autre compte qui se connecte sur l’appareil ne récupère pas les données du précédent', async () => {
+  const { db, enregistrer } = await demarrer()
+  memoire.set('coach-proprietaire', 'u1')
+  await enregistrer(db.reglages, { id: 'a-u1', valeur: 1 })
+  rappelSession!('SIGNED_IN', { user: { id: 'u2' } })
+  await vi.waitFor(async () => expect(await db.reglages.get('a-u1')).toBeUndefined())
+})
