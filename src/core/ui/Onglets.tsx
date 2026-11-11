@@ -43,32 +43,78 @@ export function Onglets({ onglets }: { onglets: Onglet[] }) {
   const { pathname } = useLocation()
   const naviguer = useNavigate()
   const actif = onglets.findIndex((o) => pathname === o.vers || pathname.startsWith(`${o.vers}/`))
-  // Sens du glissement de la page (vers la droite ou la gauche), lu par l'animation de passage
-  const sens = (vers: number) => { document.documentElement.dataset.sens = vers < actif ? 'arriere' : 'avant' }
+  // Arrivée de la nouvelle page : elle glisse depuis le côté d'où l'on vient (animation CSS « glisse-* », index.css)
+  const arriver = (vers: number) => {
+    const racine = document.documentElement
+    racine.dataset.glisse = vers < actif ? 'gauche' : 'droite'
+    clearTimeout(Number(racine.dataset.glisseMinuterie))
+    racine.dataset.glisseMinuterie = String(setTimeout(() => delete racine.dataset.glisse, 450))
+  }
+  const aller = (vers: number) => {
+    arriver(vers)
+    naviguer(onglets[vers].vers)
+  }
 
   useEffect(() => {
+    // Glissement qui suit le doigt : la page bouge avec lui, puis part sur le côté (ou revient si le geste est trop court)
     let depart: { x: number; y: number; t: number } | undefined
+    let page: HTMLElement | null = null
+    let horizontal: boolean | undefined
+    const pageActuelle = () => (document.querySelector('.vt-page-fixe') as HTMLElement | null) ?? (document.querySelector('.vt-page > *') as HTMLElement | null)
     const debut = (e: TouchEvent) => {
+      horizontal = undefined
       depart = e.touches.length === 1 && !gesteInterne(e.target) ? { x: e.touches[0].clientX, y: e.touches[0].clientY, t: Date.now() } : undefined
+      page = depart ? pageActuelle() : null
+    }
+    const mouvement = (e: TouchEvent) => {
+      if (!depart || !page || actif < 0) return
+      const dx = e.touches[0].clientX - depart.x
+      const dy = e.touches[0].clientY - depart.y
+      if (horizontal === undefined && Math.hypot(dx, dy) > 10) horizontal = Math.abs(dx) > Math.abs(dy) * 1.2
+      if (!horizontal) return
+      // En bout de liste (premier ou dernier onglet), la page résiste
+      const bout = (dx > 0 && actif === 0) || (dx < 0 && actif === onglets.length - 1)
+      page.style.transition = 'none'
+      page.style.transform = `translateX(${bout ? dx / 4 : dx}px)`
+      page.style.opacity = String(1 - Math.min(0.35, Math.abs(dx) / 900))
+    }
+    const remettre = (el: HTMLElement) => {
+      el.style.transition = 'transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.28s'
+      el.style.transform = ''
+      el.style.opacity = ''
+      setTimeout(() => { el.style.transition = '' }, 300)
     }
     const fin = (e: TouchEvent) => {
+      const el = page
+      page = null
       if (!depart || actif < 0) return
       const dx = e.changedTouches[0].clientX - depart.x
-      const dy = e.changedTouches[0].clientY - depart.y
-      const rapide = Date.now() - depart.t < 700
+      const vite = Math.abs(dx) / Math.max(1, Date.now() - depart.t) > 0.45
       depart = undefined
-      if (!rapide || Math.abs(dx) < 70 || Math.abs(dy) > Math.abs(dx) * 0.6) return
+      if (!horizontal || !el) return
       const suivant = actif + (dx < 0 ? 1 : -1)
-      if (suivant >= 0 && suivant < onglets.length) {
-        sens(suivant)
-        naviguer(onglets[suivant].vers, { viewTransition: true })
-      }
+      if ((Math.abs(dx) > window.innerWidth * 0.28 || (vite && Math.abs(dx) > 40)) && suivant >= 0 && suivant < onglets.length) {
+        // La page finit de sortir, puis la suivante arrive du côté opposé
+        el.style.transition = 'transform 0.18s cubic-bezier(0.4, 0, 1, 1), opacity 0.18s'
+        el.style.transform = `translateX(${dx < 0 ? -100 : 100}%)`
+        el.style.opacity = '0'
+        setTimeout(() => aller(suivant), 170)
+      } else remettre(el)
+    }
+    const annuler = () => {
+      if (page) remettre(page)
+      page = null
+      depart = undefined
     }
     document.addEventListener('touchstart', debut, { passive: true })
+    document.addEventListener('touchmove', mouvement, { passive: true })
     document.addEventListener('touchend', fin, { passive: true })
+    document.addEventListener('touchcancel', annuler, { passive: true })
     return () => {
       document.removeEventListener('touchstart', debut)
+      document.removeEventListener('touchmove', mouvement)
       document.removeEventListener('touchend', fin)
+      document.removeEventListener('touchcancel', annuler)
     }
   }, [actif, onglets, naviguer]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -87,8 +133,7 @@ export function Onglets({ onglets }: { onglets: Onglet[] }) {
             key={o.vers}
             to={o.vers}
             end
-            viewTransition
-            onClick={() => sens(i)}
+            onClick={() => arriver(i)}
             className={({ isActive }) =>
               `presse relative flex-1 rounded-full py-2 text-center text-sm font-semibold transition-colors duration-300 ${isActive ? 'text-fond' : 'text-texte-2'}`
             }

@@ -72,28 +72,14 @@ body {
   background: linear-gradient(var(--lueur, transparent), transparent);
 }
 
-/* Passage d'un onglet à l'autre (View Transitions, iPhone iOS 18+) : seul le contenu de la page s'anime, en fondu
-   enchaîné avec un léger glissement ; l'en-tête, les onglets (dont la bulle glisse seule) et la barre du bas restent. */
-.vt-page { view-transition-name: page; }
-.vt-page-fixe { view-transition-name: page-fixe; }
-::view-transition-old(root), ::view-transition-new(root), ::view-transition-group(page), ::view-transition-group(page-fixe) {
-  animation: none;
-}
-::view-transition-old(page), ::view-transition-old(page-fixe) {
-  /* L'ancienne page s'efface vite pendant que la nouvelle arrive en douceur */
-  animation: 0.2s cubic-bezier(0.4, 0, 1, 1) both sortie-avant;
-}
-::view-transition-new(page), ::view-transition-new(page-fixe) {
-  animation: 0.42s cubic-bezier(0.16, 1, 0.3, 1) 0.04s both entree-avant;
-}
-:root[data-sens='arriere']::view-transition-old(page), :root[data-sens='arriere']::view-transition-old(page-fixe) { animation-name: sortie-arriere; }
-:root[data-sens='arriere']::view-transition-new(page), :root[data-sens='arriere']::view-transition-new(page-fixe) { animation-name: entree-arriere; }
-@keyframes sortie-avant { to { opacity: 0; transform: translateX(-18px); } }
-@keyframes entree-avant { from { opacity: 0; transform: translateX(36px); } }
-@keyframes sortie-arriere { to { opacity: 0; transform: translateX(18px); } }
-@keyframes entree-arriere { from { opacity: 0; transform: translateX(-36px); } }
+/* Passage d'un onglet à l'autre (11/11/2026) : la page suit le doigt (Onglets.tsx), puis la nouvelle page arrive en
+   glissant depuis le côté d'où l'on vient. L'en-tête, les onglets (leur bulle glisse seule) et la barre restent. */
+:root[data-glisse='droite'] .vt-page > * { animation: glisse-depuis-droite 0.34s cubic-bezier(0.16, 1, 0.3, 1) both; }
+:root[data-glisse='gauche'] .vt-page > * { animation: glisse-depuis-gauche 0.34s cubic-bezier(0.16, 1, 0.3, 1) both; }
+@keyframes glisse-depuis-droite { from { transform: translateX(42%); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes glisse-depuis-gauche { from { transform: translateX(-42%); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) {
-  ::view-transition-old(page), ::view-transition-new(page), ::view-transition-old(page-fixe), ::view-transition-new(page-fixe) { animation: none; }
+  :root[data-glisse] .vt-page > * { animation: none; }
 }
 .pb-sur {
   padding-bottom: max(env(safe-area-inset-bottom), 8px);

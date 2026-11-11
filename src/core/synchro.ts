@@ -292,6 +292,28 @@ function planifier() {
 export async function seConnecter(email: string, motDePasse: string) {
   const { error } = await supabase.auth.signInWithPassword({ email, password: motDePasse })
   if (error) throw new Error(traduire(error.message))
+  // Une seule session active à la fois : les autres appareils sont déconnectés (leurs saisies non envoyées restent
+  // chez eux et partiront à leur prochaine connexion). Évite que deux appareils s'écrasent leurs réglages.
+  await supabase.auth.signOut({ scope: 'others' }).catch(() => {})
+}
+
+/** Compte à qui appartiennent les données de cet appareil (un appareil déconnecté à distance les garde). */
+const CLE_PROPRIETAIRE = 'coach-proprietaire'
+async function verifierProprietaire(userId: string) {
+  let avant: string | null = null
+  try {
+    avant = localStorage.getItem(CLE_PROPRIETAIRE)
+    localStorage.setItem(CLE_PROPRIETAIRE, userId)
+  } catch {
+    return
+  }
+  // Un autre compte se connecte sur un appareil qui garde encore les données du précédent : on repart d'une base vide
+  // (sinon elles partiraient sur le mauvais compte)
+  if (avant && avant !== userId) {
+    await db.transaction('rw', [...TABLES_DONNEES(), db.suppressions], async () => {
+      for (const t of [...TABLES_DONNEES(), db.suppressions]) await t.clear()
+    })
+  }
 }
 
 /**
@@ -311,6 +333,7 @@ export async function seDeconnecter() {
     localStorage.removeItem(cleCurseurs(userId))
     localStorage.removeItem(cleRefus(userId))
   }
+  localStorage.removeItem(CLE_PROPRIETAIRE)
   await db.transaction('rw', [...TABLES_DONNEES(), db.suppressions], async () => {
     for (const t of [...TABLES_DONNEES(), db.suppressions]) await t.clear()
   })
@@ -331,7 +354,8 @@ export function demarrerSynchro() {
   supabase.auth.onAuthStateChange((evenement, session) => {
     majEtat({ session, statut: session ? etat.statut : 'deconnecte', pret: true })
     // Synchro à l'ouverture de session (sans bloquer le rappel de Supabase)
-    if (session && (evenement === 'INITIAL_SESSION' || evenement === 'SIGNED_IN')) setTimeout(() => synchroniser(), 0)
+    if (session && (evenement === 'INITIAL_SESSION' || evenement === 'SIGNED_IN'))
+      setTimeout(() => verifierProprietaire(session.user.id).then(() => synchroniser()), 0)
   })
   surEcriture(planifier)
   window.addEventListener('online', () => synchroniser())
