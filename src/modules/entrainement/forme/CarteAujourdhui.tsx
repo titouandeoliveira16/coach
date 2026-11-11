@@ -145,7 +145,7 @@ export function CarteAujourdhui({ onModifierMatin, apresForme }: {
   return (
     <>
       {/* Ta forme : le feu et ses 4 indicateurs, détail à ouvrir */}
-      <Carte className={`flex shrink-0 flex-col gap-2.5 p-3! ${formeOuverte ? 'border-accent!' : ''}`}>
+      <Carte visite="forme" className={`flex shrink-0 flex-col gap-2.5 p-3! ${formeOuverte ? 'border-accent!' : ''}`}>
         <button type="button" onClick={basculerForme} className="flex flex-col gap-1.5 text-left">
           <span className="flex w-full items-center justify-between">
             <span className="etiquette">Ta forme</span>
@@ -225,7 +225,7 @@ export function CarteAujourdhui({ onModifierMatin, apresForme }: {
       {apresForme}
 
       {/* Séance du jour : la carte qui prend toute la place restante (elle défile seule si besoin) */}
-      <Carte ref={seanceRef} className={`flex flex-col p-3! ${detailOuvert ? 'border-accent!' : ''} shrink-0`}
+      <Carte ref={seanceRef} visite="seance" className={`flex flex-col p-3! ${detailOuvert ? 'border-accent!' : ''} shrink-0`}
 >
         <div className="flex items-baseline justify-between gap-2">
           <p className="text-[13px] font-semibold text-texte-2">Séance du jour</p>
