@@ -30,7 +30,7 @@ export function SectionRappels() {
 
   return (
     <Carte titre="Notifications">
-      <p className="text-sm text-texte-2">Active les notifications sur ce téléphone. Chaque module règle ses propres rappels dans ses réglages (Entraînement : matin et pesée ; Budget : saisie du soir).</p>
+      <p className="text-sm text-texte-2">Active les notifications sur ce téléphone. Chaque module règle ses propres rappels dans ses réglages (Entraînement : matin, pesée et nouvelle sortie).</p>
       {!notificationsPossibles() ? (
         <p className="mt-2 text-sm text-texte-2">Ouvre l'appli depuis l'écran d'accueil de l'iPhone pour activer les rappels.</p>
       ) : !session ? (

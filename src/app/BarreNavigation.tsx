@@ -1,5 +1,8 @@
 import { NavLink, useLocation } from 'react-router-dom'
+import { CircleUserRound } from 'lucide-react'
 import { IconeAccueil, IconeReglages } from '../core/ui/icones'
+import { useReglage } from '../core/reglages'
+import type { ReglageCompte } from '../core/inscription'
 import type { ModuleApp } from './modules'
 
 /**
@@ -8,10 +11,14 @@ import type { ModuleApp } from './modules'
  */
 export function BarreNavigation({ module: m }: { module: ModuleApp }) {
   const { pathname } = useLocation()
+  const [compte] = useReglage<ReglageCompte>('compte', {})
   const aide = `${m.chemin}/aide`
   const reglages = `${m.chemin}/reglages`
   const entrees = [
-    { id: 'accueil', nom: 'Accueil', chemin: '/', Icone: IconeAccueil, actif: false },
+    // Compte invité : pas d'accueil (un seul module) ; ce bouton mène au compte et aux notifications
+    compte.invite
+      ? { id: 'compte', nom: 'Compte', chemin: '/reglages', Icone: CircleUserRound, actif: false }
+      : { id: 'accueil', nom: 'Accueil', chemin: '/', Icone: IconeAccueil, actif: false },
     { id: m.id, nom: m.nom, chemin: m.chemin, Icone: m.Icone, actif: pathname !== aide && pathname !== reglages },
     ...(m.SectionReglages ? [{ id: 'reglages', nom: 'Réglages', chemin: reglages, Icone: IconeReglages, actif: pathname === reglages || pathname === aide }] : []),
   ]

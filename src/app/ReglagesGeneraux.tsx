@@ -5,6 +5,8 @@ import { SectionCodes } from './SectionCodes'
 import { SectionCompte } from './SectionCompte'
 import { SectionImport } from './SectionImport'
 import { SectionRappels } from './SectionRappels'
+import { useReglage } from '../core/reglages'
+import type { ReglageCompte } from '../core/inscription'
 
 /** Vrai si l'appli est lancée depuis l'écran d'accueil (et non dans Safari). */
 function estInstallee() {
@@ -18,6 +20,7 @@ function estInstallee() {
 /** Réglages communs à toute l'appli (depuis l'accueil) : compte, notifications, état. */
 export function ReglagesGeneraux() {
   const installee = estInstallee()
+  const [compte] = useReglage<ReglageCompte>('compte', {})
   return (
     <>
       <EnTete titre="Réglages" />
@@ -25,7 +28,8 @@ export function ReglagesGeneraux() {
         <SectionCompte />
         <SectionCodes />
         <SectionRappels />
-        <SectionImport />
+        {/* Import de fichiers préparés : propre au compte de Titouan */}
+        {!compte.invite && <SectionImport />}
         <Carte titre="État de l'appli">
           <Ligne libelle="Installée sur l'écran d'accueil" valeur={installee ? 'Oui ✓' : 'Non'} ok={installee} />
           <Ligne libelle="Version" valeur={__VERSION__.replace(/\.0$/, '')} />

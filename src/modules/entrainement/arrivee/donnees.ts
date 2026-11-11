@@ -35,6 +35,8 @@ export interface ReponsesArrivee {
   maxSemaineMin: number
   minLongMin: number
   maxLongMin: number
+  /** Pas de course prévue : la saison vise une « forme générale » dans 20 semaines (aucune course enregistrée) */
+  sansCourse?: boolean
   /** Course principale : distance, dénivelé et durée donnée comme les autres courses */
   course: { nom: string; date: string; distanceKm?: number; deniveleM?: number; dureeMin?: number; cols?: Competition['cols'] }
   /** Autres courses (facultatif) : B importante, C pour s'entraîner */
@@ -94,7 +96,7 @@ export function preparerArrivee(r: ReponsesArrivee, jour: string, testsFaits: Re
   const jourLong = r.semaineType.indexOf('velo-long')
   const jourDur = r.semaineType.indexOf('velo-dur')
   // Deux courses A ou plus : la préparation vise la 1re, puis récupération et bloc jusqu'à la suivante
-  const premiereA = datesCoursesA([principale, ...(r.autresCourses ?? [])])[0] ?? r.course.date
+  const premiereA = datesCoursesA([...(r.sansCourse ? [] : [principale]), ...(r.autresCourses ?? [])])[0] ?? r.course.date
   const saison = calculerSaison({
     debut: jour, course: premiereA, arretSemaines: r.arretSemaines, debutant: niveauDuProfil(ps) === 'debutant', entraine: historique?.entraine,
     jourLong: jourLong >= 0 ? jourLong : 6, jourDur: jourDur >= 0 ? jourDur : 1, aujourdhui: jour,
@@ -115,8 +117,8 @@ export function preparerArrivee(r: ReponsesArrivee, jour: string, testsFaits: Re
     programme: {
       semaineType: r.semaineType, maxSemaineMin: r.maxSemaineMin, minLongMin: r.minLongMin, maxLongMin: r.maxLongMin,
       // Autres courses A : après la 1re, récupération puis bloc adapté à l'écart jusqu'à la suivante
-      phases: phasesAvecCoursesA(saison.phases, datesCoursesA([principale, ...(r.autresCourses ?? [])])), testsCp: saison.testsCp, testsCourts: saison.testsCourts,
-      competitions: [principale, ...(r.autresCourses ?? []).filter((x) => x.date !== r.course.date)], discipline: r.discipline, modele: 'chauvin', ...(r.discipline === 'route' ? { typeCourse: r.typeCourse ?? 'cyclo' } : {}),
+      phases: phasesAvecCoursesA(saison.phases, datesCoursesA([...(r.sansCourse ? [] : [principale]), ...(r.autresCourses ?? [])])), testsCp: saison.testsCp, testsCourts: saison.testsCourts,
+      competitions: [...(r.sansCourse ? [] : [principale]), ...(r.autresCourses ?? []).filter((x) => r.sansCourse || x.date !== r.course.date)], discipline: r.discipline, modele: 'chauvin', ...(r.discipline === 'route' ? { typeCourse: r.typeCourse ?? 'cyclo' } : {}),
       // Durée de la course principale : donnée, ou estimée par sa distance et son dénivelé (règle la sortie longue visée)
       ...(dureePrincipale ? { dureeCourseMin: dureePrincipale } : {}),
       // Tu roulais déjà : le budget de la 1re semaine part de tes kJ réels, pas de la semaine type

@@ -40,7 +40,8 @@ export function useNutritionActive() {
   return ps.nutrition !== false
 }
 
-const SPORTS = ['Vélo route', 'VTT', 'Course à pied', 'Natation', 'Musculation']
+// Vélo seul depuis 11/2026 : la course à pied et la natation n'ont plus d'effet sur le programme
+const SPORTS = ['Vélo route', 'VTT', 'Musculation']
 const HEURES = ['Moins de 4 h', '4 à 6 h', '6 à 8 h', '8 à 10 h', '10 à 12 h', 'Plus de 12 h']
 const MATERIEL = ['Home trainer connecté', 'Capteur de puissance', 'Ceinture cardio', 'Montre GPS']
 const NOMS_NIVEAUX = { debutant: 'débutant', intermediaire: 'intermédiaire', confirme: 'confirmé', expert: 'expert' }
@@ -114,14 +115,13 @@ export function SectionProfilSportif() {
       <p className="mb-1 text-xs text-texte-3">Tes réponses règlent le programme. Touche une ligne pour la changer.</p>
       <Ligne {...props('sports')} libelle="Sports pratiqués" valeur={ps.sports.join(', ')}>
         {choixMultiple(SPORTS, ps.sports, (sports) => modifierPs({ sports }))}
-        {ps.sports.includes('Course à pied') && <p className="mt-1.5 text-xs text-texte-3">{AIDES.profilCourse}</p>}
       </Ligne>
       <Ligne {...props('discipline')} libelle="Discipline visée" valeur={NOMS_DISCIPLINES[discipline]}>
         {choixUnique(DISCIPLINES_PROPOSEES.map((d) => NOMS_DISCIPLINES[d]), NOMS_DISCIPLINES[discipline], (nom) => {
           const d = (Object.keys(NOMS_DISCIPLINES) as Discipline[]).find((k) => NOMS_DISCIPLINES[k] === nom)
           if (d) changerProg({ discipline: d })
         })}
-        <p className="mt-1.5 text-xs text-texte-3">Pense à recalculer ta semaine (onglet Semaine) après un changement.</p>
+        <p className="mt-1.5 text-xs text-texte-3">Ta semaine se recalcule toute seule après un changement.</p>
       </Ligne>
       {discipline === 'route' && (
         <Ligne {...props('typeCourse')} libelle="Type de course" valeur={prog.typeCourse === 'en-ligne' ? 'Course en ligne' : 'Cyclosportive'}>
