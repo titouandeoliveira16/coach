@@ -1118,6 +1118,33 @@ export function budgetSemaine(prec: BilanSemaine | undefined, nominal: number, p
   return { budgetRef: ref, budget: Math.round(allegee ? ref * 0.65 : ref), raison: allegee ? `${raison} · ${raisonAllegee} : −35 %` : raison }
 }
 
+/**
+ * Budget de référence (nominal) et plafond de kJ d'une semaine (audit du 11/11/2026) : UNE seule formule, utilisée par
+ * la vraie semaine, la projection de la Saison et l'aperçu du dimanche (avant, trois versions qui pouvaient différer).
+ * Plafond = intensité + chaque endurance au plus long de ton créneau (un 2e jour « dur » compte comme une endurance)
+ * + la sortie longue au plus long ; aussi limité par le haut de ta tranche d'heures. Nominal = intensité + une
+ * endurance de 60 min + la sortie longue visée (100 min au moins), dans tes créneaux.
+ */
+export function plafondEtNominal(o: {
+  semaineType: Role[]
+  kjIntensite: number
+  cap: { z2: number; long: number }
+  z2W: number
+  /** Durée visée de la sortie longue (s'allonge vers la course) */
+  longueVisee?: number
+  /** Haut de ta tranche d'heures par semaine (profil sportif) */
+  heuresMax?: number
+  /** Minutes d'autres sports déjà prévues cette semaine (retirées des heures) */
+  minutesAutres?: number
+}) {
+  const kjZ2 = (min: number) => construireZ2(min, o.z2W).kj
+  const nZ2 = o.semaineType.filter((x) => x === 'velo-z2').length + Math.max(0, o.semaineType.filter((x) => x === 'velo-dur').length - 1)
+  const nominal = o.kjIntensite + kjZ2(Math.min(60, o.cap.z2)) + kjZ2(Math.min(Math.max(100, o.longueVisee ?? 0), o.cap.long))
+  const plafondJours = o.kjIntensite + nZ2 * kjZ2(o.cap.z2) + kjZ2(o.cap.long)
+  const plafondHeures = o.heuresMax ? Math.max(nominal, Math.round(((o.heuresMax * 60 - (o.minutesAutres ?? 0)) * 60 * o.z2W) / 1000)) : Infinity
+  return { nominal, plafond: Math.min(plafondJours, plafondHeures) }
+}
+
 /** Affûtage / récupération : budget = part fixe du budget de référence d'avant (pas de hausse, pas de −35 % en plus). */
 export function budgetDePhase(prec: BilanSemaine | undefined, nominal: number, coef: number, nomPhase: string) {
   const ref = Math.round(prec?.budgetRef ?? nominal)
