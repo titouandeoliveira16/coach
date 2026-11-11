@@ -18,8 +18,10 @@ En ligne : https://titouandeoliveira16.github.io/coach/ (GitHub Pages, déployé
 - Les règles d'entraînement doivent être **appuyées sur la littérature scientifique** (sous-agent
   `relecteur-scientifique`) et expliquées dans les « ? » de l'appli (`src/modules/entrainement/aides.ts`).
 - Il veut une appli **simple** : peu d'écrans, peu de chiffres, autonome (pas de service d'IA en ligne).
-- Les points mis de côté sont dans **`docs/a-revoir.md`** : le tenir à jour et le lui rappeler au bon moment
-  (ex. 4 semaines après sa nouvelle saison calculée : point sur les paliers au 1er seuil).
+- Les points mis de côté : chantiers techniques dans **`docs/a-revoir.md`** (public, sans donnée personnelle) ; son
+  suivi personnel (santé, budget, saison, emploi du temps) dans son fichier privé `notes-privees-coach.md`, hors dépôt
+  depuis l'audit du 11/11/2026 : le lui demander quand il faut, et lui renvoyer une version à jour (SendUserFile) au
+  lieu de l'écrire dans le dépôt. Les lui rappeler au bon moment.
 - Ne jamais lui demander de coller un mot de passe, une clé ou un jeton dans la conversation.
 - **Le dépôt GitHub est public : aucune donnée personnelle dans le code, les tests ou les docs** (montants, soldes,
   poids, taille, date de naissance, FC, records, employeur, proches). Ses valeurs vivent dans ses données synchronisées ;
