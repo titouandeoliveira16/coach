@@ -6,6 +6,8 @@ import { SectionCompte } from './SectionCompte'
 import { SectionImport } from './SectionImport'
 import { SectionRappels } from './SectionRappels'
 import { SectionErreurs } from './SectionErreurs'
+import { useNavigate } from 'react-router-dom'
+import { useVisite } from '../modules/entrainement/forme/VisiteGuidee'
 import { useReglage } from '../core/reglages'
 import type { ReglageCompte } from '../core/inscription'
 
@@ -22,6 +24,8 @@ function estInstallee() {
 export function ReglagesGeneraux() {
   const installee = estInstallee()
   const [compte] = useReglage<ReglageCompte>('compte', {})
+  const [, modifierVisite] = useVisite()
+  const naviguer = useNavigate()
   return (
     <>
       <EnTete titre="Réglages" />
@@ -43,6 +47,10 @@ export function ReglagesGeneraux() {
             </ol>
           )}
         </Carte>
+        <button type="button" className="presse w-full rounded-[14px] bg-surface p-4 text-left font-semibold"
+          onClick={async () => { await modifierVisite({ faite: false }); naviguer('/entrainement/aujourdhui') }}>
+          Revoir la visite guidée
+        </button>
         <p className="text-center text-sm text-texte-3">Les réglages propres à chaque module sont dans son onglet Réglages.</p>
         <Link to="/" className="block py-2 text-center text-sm text-texte-2">‹ Retour à l'accueil</Link>
       </div>

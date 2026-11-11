@@ -17,6 +17,7 @@ import { CartePesee, FeuillePesee } from '../forme/CartePesee'
 import { CarteResultat } from '../forme/CarteResultat'
 import { SaisieMatin } from '../forme/SaisieMatin'
 import { BandeauAVoir } from '../forme/BandeauAVoir'
+import { AstuceDuJour, VisiteGuidee } from '../forme/VisiteGuidee'
 import { BravoSeance, CarteVictoire } from '../forme/Celebration'
 import { QUESTIONS, mesuresRecentes } from '../forme/donnees'
 
@@ -74,6 +75,9 @@ export function Aujourdhui() {
       style={zone ? { top: zone.haut, bottom: zone.bas } : { visibility: 'hidden' }}>
       {/* Cartes ponctuelles : un seul bandeau qui les ouvre */}
       <BravoSeance />
+      {/* Premiers jours : visite guidée (une fois les notes du matin remplies), puis une astuce par jour */}
+      {complet && !edition && <VisiteGuidee />}
+      <AstuceDuJour />
       <BandeauAVoir>
         <CarteVictoire />
         <CarteResultat />
@@ -93,7 +97,7 @@ export function Aujourdhui() {
       )}
       {nutrition && <CarteNutrition ouverte={nutriOuverte} onBasculer={setNutriOuverte} />}
       {/* En bas : l'imprévu (la pesée se fait depuis la tuile Poids ; ici seulement avant les notes du matin) */}
-      <div className="flex shrink-0 gap-2">
+      <div data-visite="imprevu" className="flex shrink-0 gap-2">
         {!(complet && !edition) && <CartePesee compact />}
         <CartePanne compact />
       </div>

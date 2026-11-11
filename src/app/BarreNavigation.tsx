@@ -29,6 +29,7 @@ export function BarreNavigation({ module: m }: { module: ModuleApp }) {
         {entrees.map(({ id, nom, chemin, Icone, actif }) => (
           <li key={id} className="flex-1">
             <NavLink
+              data-visite={`barre-${id}`}
               to={chemin}
               className="presse flex flex-col items-center gap-1 pt-2.5 pb-1 text-[11px] font-medium"
               style={{ color: actif ? m.couleur : 'var(--color-texte-3)' }}
