@@ -29,6 +29,8 @@ export const PROGRAMME_DEFAUT: ReglagesProgramme = {
  */
 export function programmeDe(p?: Partial<ReglagesProgramme>): ReglagesProgramme {
   const prog = { ...PROGRAMME_DEFAUT, ...p }
+  // Phases absentes ou vides (données abîmées) : celles par défaut, pour que la semaine puisse toujours se calculer
+  if (!prog.phases?.length) prog.phases = PROGRAMME_DEFAUT.phases
   // Saison calculée avant le 10/11/2026 : longue reprise → 2 semaines de reprise puis une base
   if (prog.modele === 'chauvin') prog.phases = migrerBase(prog.phases)
   if (p && p.testsCourts === undefined) {

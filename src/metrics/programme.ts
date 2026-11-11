@@ -835,6 +835,8 @@ export const NOMS_PHASES: Record<TypePhase, string> = {
 /** Phase d'une semaine et numéro de la semaine dans la phase (0 = première). */
 export function phaseDe(lundi: string, phases: Phase[]) {
   const triees = [...phases].sort((a, b) => a.debut.localeCompare(b.debut))
+  // Aucune phase (données abîmées) : entretien, plutôt qu'une erreur qui bloquait toute la génération
+  if (!triees.length) return { phase: { debut: lundi, type: 'entretien' as TypePhase }, semaine: 0 }
   const phase = [...triees].reverse().find((ph) => ph.debut <= lundi) ?? triees[0]
   const semaine = Math.max(0, Math.floor((Date.parse(lundi) - Date.parse(phase.debut)) / (7 * 86_400_000)))
   return { phase, semaine }
@@ -848,9 +850,13 @@ export function phaseDe(lundi: string, phases: Phase[]) {
  */
 export function estSemaineAllegee(lundi: string, phases: Phase[], semaineB?: (lundi: string) => boolean) {
   const triees = [...phases].sort((a, b) => a.debut.localeCompare(b.debut))
-  if (!triees.length || lundi < triees[0].debut) return false
+  // Tout est ramené au lundi (une phase saisie un mercredi faisait sauter toutes les semaines allégées)
+  const auLundi = (d: string) => decaler(d, -((new Date(`${d}T12:00:00Z`).getUTCDay() + 6) % 7))
+  lundi = auLundi(lundi)
+  const premier = auLundi(triees[0]?.debut ?? lundi)
+  if (!triees.length || lundi < premier) return false
   let chargees = 0
-  for (let l = triees[0].debut; l <= lundi; l = decaler(l, 7)) {
+  for (let l = premier; l <= lundi; l = decaler(l, 7)) {
     const type = phaseDe(l, triees).phase.type
     let allegee = false
     if (type === 'affutage' || type === 'recuperation' || semaineB?.(l)) chargees = 0
