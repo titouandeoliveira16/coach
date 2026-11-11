@@ -21,7 +21,7 @@ export default defineConfig({
       manifest: {
         name: 'Coach',
         short_name: 'Coach',
-        description: 'Mon coach personnel : entraînement, nutrition, apprentissage, argent.',
+        description: 'Ton plan vélo calculé depuis ta course et ajusté chaque matin à ta récupération. En français, appuyé sur la science.',
         lang: 'fr',
         start_url: BASE,
         scope: BASE,

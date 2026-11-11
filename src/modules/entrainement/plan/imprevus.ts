@@ -8,8 +8,8 @@ import { appliquer, joursDe } from './donnees'
 
 /**
  * Imprévus : le vélo est en panne (matériel) pour quelques jours.
- * Les séances vélo de ces jours-là sont annulées (l'intensité est déplacée après la réparation si possible),
- * et le footing facile qui suit est un peu rallongé pour compenser une partie de l'endurance perdue.
+ * Les séances vélo de ces jours-là sont annulées (l'intensité est déplacée après la réparation si possible) ;
+ * on ne rattrape pas les séances perdues (vélo seul depuis 11/2026 : plus de footing à rallonger).
  * Prudence (reprise de la course) : au plus +15 min, +25 % de la séance, et seulement en endurance fondamentale.
  */
 export interface Panne {
@@ -33,13 +33,6 @@ export async function panneEnCours() {
 }
 
 const nomJour = (d: string) => NOMS_JOURS[depuisJour(d).getDay()]
-const arrondi5 = (n: number) => Math.round(n / 5) * 5
-
-/** Minutes ajoutées à un footing pour compenser des minutes de vélo facile perdues. */
-export function minutesCompensation(minutesVeloPerdues: number, dureeFooting: number) {
-  const m = Math.min(15, arrondi5(dureeFooting * 0.25), arrondi5(minutesVeloPerdues / 2))
-  return m >= 5 ? m : 0
-}
 
 export async function declarerPanneVelo(du: string, au: string) {
   await enregistrer(db.reglages, { id: CLE, valeur: [...(await lirePannes()).filter((p) => p.au < du || p.du > au), { du, au }] })
@@ -64,26 +57,10 @@ export async function declarerPanneVelo(du: string, au: string) {
     }
   }
 
-  // Compensation : le premier footing facile prévu pendant la panne ou le lendemain
-  const footing = (await db.prevues.where('date').between(aujourdhui() > du ? aujourdhui() : du, decalerJour(au, 1), true, true).toArray())
-    .filter((p) => p.sport === 'course' && p.statut === 'prevue' && p.intensite === 'basse' && !p.compensationMin)
-    .sort((a, b) => a.date.localeCompare(b.date))[0]
-  const plus = footing ? minutesCompensation(minutesPerdues, footing.dureeMin) : 0
-  if (footing && plus) {
-    await enregistrer(db.prevues, compenser(footing, plus))
-    phrases.push(`${nomJour(footing.date)} : ${footing.titre} passe à ${footing.dureeMin + plus} min (+${plus}'), toujours en endurance fondamentale, seulement si ton feu est vert.`)
-  } else if (minutesPerdues) {
-    phrases.push('Pas de footing facile à rallonger : on ne rattrape pas, la semaine reprend normalement.')
-  }
+  // Vélo seul (11/2026) : on ne rattrape pas les séances perdues, la semaine reprend normalement après la réparation
+  if (minutesPerdues) phrases.push('On ne rattrape pas : la semaine reprend normalement après la réparation.')
   return phrases
 }
-
-const compenser = (p: SeancePrevue, plus: number): SeancePrevue => ({
-  ...p,
-  dureeMin: p.dureeMin + plus,
-  compensationMin: plus,
-  detail: `${p.detail ? `${p.detail} · ` : ''}+${plus}' pour compenser le vélo en panne, en endurance fondamentale (aisance respiratoire).`,
-})
 
 /** Le vélo remarche : fin de la panne aujourd'hui (les séances vélo peuvent être recalculées). */
 export async function veloRepare() {

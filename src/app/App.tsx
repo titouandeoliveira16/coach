@@ -50,12 +50,13 @@ function Coquille() {
       {moduleActif && <div aria-hidden className="lueur pointer-events-none fixed inset-x-0 top-0 -z-10 h-[380px]" />}
       <Routes>
         {MODULES.map((m) => (
-          <Route key={m.id} path={`${m.chemin}/*`} element={<m.Ecran />} />
+          <Route key={m.id} path={`${m.chemin}/*`} element={compte.invite && m.id !== 'entrainement' && m.id !== 'catalogue' ? <Navigate to="/entrainement" replace /> : <m.Ecran />} />
         ))}
         {/* Mode d'emploi et réglages : propres à chaque module */}
         {MODULES.filter((m) => m.ModeEmploi).map((m) => <Route key={`${m.id}-aide`} path={`${m.chemin}/aide`} element={m.ModeEmploi && <m.ModeEmploi />} />)}
         {MODULES.filter((m) => m.SectionReglages).map((m) => <Route key={`${m.id}-reglages`} path={`${m.chemin}/reglages`} element={<Reglages module={m} />} />)}
-        <Route path="/" element={<Accueil />} />
+        {/* Compte invité (élève, frère) : l'Entraînement seul, sans passer par un accueil à une seule carte */}
+        <Route path="/" element={compte.invite ? <Navigate to="/entrainement" replace /> : <Accueil />} />
         {/* Anciennes adresses (notifications, liens) */}
         <Route path="/reglages" element={<ReglagesGeneraux />} />
         <Route path="/aide" element={<Navigate to="/entrainement/aide" replace />} />

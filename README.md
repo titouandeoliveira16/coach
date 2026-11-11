@@ -1,8 +1,9 @@
 # Coach
 
-Application personnelle (PWA) de coaching : entraînement, puis nutrition, apprentissage et argent.
+Application (PWA, en français) de coaching vélo : plan calculé depuis ta course, feu du jour selon ta récupération,
+séances envoyées à Zwift / Intervals.icu. Modules annexes réservés au compte de l'auteur : révision d'un concours, budget.
 
-- Données stockées uniquement sur l'appareil (IndexedDB), sauvegarde en JSON.
+- Données « local d'abord » sur l'appareil (IndexedDB), synchronisées avec Supabase (une ligne par donnée, RLS par compte).
 - Stack : React + Vite + TypeScript + Tailwind, vite-plugin-pwa.
 - Publiée automatiquement sur GitHub Pages à chaque envoi sur `main`.
 

@@ -48,7 +48,7 @@ export function ModeEmploi() {
           <Etape n={1}>Va sur la semaine suivante (flèche ›).</Etape>
           <Etape n={2}>Si besoin, ajoute avec le <b className="text-texte">+</b> d'un jour une séance à toi (renfo, sortie imposée).</Etape>
           <Etape n={3}>Appuie sur <b className="text-texte">Générer mon vélo de la semaine</b>.</Etape>
-          <p>Si ta semaine change : déplace ou annule la séance, puis « Recalculer le vélo ». Ce qui est déjà fait est gardé.</p>
+          <p>Si ta semaine change : déplace ou annule la séance, la semaine se recalcule toute seule (sinon, touche ↻ dans Semaine). Ce qui est déjà fait est gardé.</p>
           <p>Le dimanche, le <b className="text-texte">bilan</b> s'affiche dans Aujourd'hui (rappel le lundi dans Semaine) : ce qui a été fait, ce qui change la semaine suivante, et pourquoi.</p>
           <p className="pt-1 font-semibold text-texte">Les couleurs</p>
           <p>🟢 faite · 🟠 à valider (rien n'est remonté, ou « Tenue ? » sans réponse) · 🔴 pas faite · sans couleur : à venir.</p>
@@ -58,13 +58,13 @@ export function ModeEmploi() {
         <Rubrique titre="Pendant une séance vélo">
           <p>Suis le <b className="text-texte">déroulé</b> : chaque ligne donne l'heure de départ, ce qu'il faut faire et les watts.</p>
           <p>Sous le déroulé : la <b className="text-texte">nutrition</b> de la séance (avant, pendant, boire, après).</p>
-          <p>Enregistre la séance sur ta <b className="text-texte">Garmin 965</b> (associée au capteur de puissance du home trainer) : elle remonte seule dans l'appli, avec tes kJ.</p>
+          <p>Enregistre la séance sur ta <b className="text-texte">montre, ton compteur ou Zwift</b> (avec le capteur de puissance) : reliée à Intervals.icu, elle remonte seule dans l'appli, avec tes kJ.</p>
           <p>Après une séance d'intensité, réponds à <b className="text-texte">« Tenue ? »</b> : Oui = la prochaine sera un peu plus longue ou plus forte. Pas tout = un peu plus facile.</p>
         </Rubrique>
 
         <Rubrique titre="Un imprévu (vélo en panne)">
           <p>Dans <b className="text-texte">Aujourd'hui</b>, touche « Un imprévu ? Vélo en panne » et dis jusqu'à quand.</p>
-          <p>L'appli annule le vélo de ces jours-là, déplace l'intensité après la réparation si possible, et rallonge un peu ton prochain footing facile (15 min au plus).</p>
+          <p>L'appli annule le vélo de ces jours-là, et déplace l'intensité après la réparation si possible. On ne rattrape pas les séances perdues.</p>
           <p>Vélo réparé plus tôt ? Touche « Il remarche ».</p>
         </Rubrique>
 

@@ -42,7 +42,7 @@ export function FormulaireCompte() {
         onChange={(e) => setMotDePasse(e.target.value)} className={champ} />
       <Bouton type="submit" disabled={!pret}>{occupe ? 'Un instant…' : avecCode ? 'Créer mon compte' : 'Me connecter'}</Bouton>
       {message && <p className="text-sm text-mauvais">{message}</p>}
-      {avecCode && <p className="text-xs text-texte-3">Sans code, pas de compte : c'est Titouan qui te le donne. Un code ne sert qu'une fois.</p>}
+      {avecCode && <p className="text-xs text-texte-3">Sans code, pas de compte : c'est ton entraîneur qui te le donne. Un code ne sert qu'une fois.</p>}
       <button type="button" className="w-full py-2 text-sm font-semibold text-accent" onClick={() => { setMode(avecCode ? 'connexion' : 'code'); setMessage(undefined) }}>
         {avecCode ? 'J’ai déjà un compte · Me connecter' : 'J’ai reçu un code · Créer mon compte'}
       </button>

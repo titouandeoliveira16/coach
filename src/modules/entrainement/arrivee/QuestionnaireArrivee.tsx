@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { aujourdhui } from '../../../core/dates'
+import { aujourdhui, decalerJour } from '../../../core/dates'
 import { enregistrer } from '../../../core/stockage'
 import { db } from '../../../core/db'
 import { Bouton } from '../../../core/ui/Bouton'
@@ -173,6 +173,13 @@ export function QuestionnaireArrivee({ montreSeulement = false }: { montreSeulem
         <>
           <Carte titre="Ta course principale">
             <div className="space-y-3">
+              <Choix options={[['J’ai une course', 'oui'], ['Pas de course prévue', 'non']]} valeur={r.sansCourse ? 'non' : 'oui'}
+                onChoisir={(v) => maj(v === 'non'
+                  ? { sansCourse: true, course: { nom: 'Forme générale', date: decalerJour(jour, 7 * 20) } }
+                  : { sansCourse: false, course: { nom: '', date: '' } })} />
+              {r.sansCourse ? (
+                <p className="text-sm text-texte-2">Ta saison vise une forme générale dans 20 semaines : base, seuils puis VO2max, avec des tests CP pour voir tes progrès. Ajoute une course quand tu en as une (Réglages → Mon profil sportif) : tout se recalcule.</p>
+              ) : <>
               <Question libelle="Nom"><input value={r.course?.nom ?? ''} placeholder="Ex. cyclosportive, manche XCO…" onChange={(e) => maj({ course: { ...r.course, date: r.course?.date ?? '', nom: e.target.value } })} className={champ} /></Question>
               <Question libelle="Date"><input type="date" min={jour} value={r.course?.date ?? ''} onChange={(e) => maj({ course: { ...r.course, nom: r.course?.nom ?? '', date: e.target.value } })} className={champ} /></Question>
               {r.discipline === 'route' && (
@@ -187,11 +194,12 @@ export function QuestionnaireArrivee({ montreSeulement = false }: { montreSeulem
               {epreuveDe(r.discipline ?? 'route', r.typeCourse) !== 'xcc' && (
                 <EditeurCols cols={r.course?.cols ?? []} onChanger={(cols) => maj({ course: { ...r.course, nom: r.course?.nom ?? '', date: r.course?.date ?? '', cols } })} />
               )}
+              </>}
             </div>
           </Carte>
           <Carte titre="Autres courses (facultatif)">
             <ListeCourses courses={r.autresCourses ?? []} min={jour} contexte={contexteCourses}
-              effectifs={niveauxCourses([...(r.course?.date ? [{ ...r.course, niveau: 'A' as const }] : []), ...(r.autresCourses ?? [])], apercu?.saison.phases ?? [])}
+              effectifs={niveauxCourses([...(r.course?.date && !r.sansCourse ? [{ ...r.course, niveau: 'A' as const }] : []), ...(r.autresCourses ?? [])], apercu?.saison.phases ?? [])}
               onChanger={(autresCourses) => maj({ autresCourses })} />
             <p className="mt-1.5 text-xs text-texte-3">Tu pourras en ajouter plus tard dans Réglages → Mon profil sportif.</p>
           </Carte>
