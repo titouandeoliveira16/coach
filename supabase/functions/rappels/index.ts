@@ -229,6 +229,12 @@ async function envoyerRappels() {
   for (const a of abonnements ?? []) {
     if (!remontees.has(a.user_id)) remontees.set(a.user_id, await seancesRemontees(a.user_id, maintenantDans(fuseauValide(a.fuseau) ? a.fuseau : 'Europe/Paris').date).catch(() => []))
   }
+  // Erreurs de l'appli (tous comptes, sql/07) : le coach est prévenu dès qu'il y en a de nouvelles
+  try {
+    envoyes += await prevenirCoachs(abonnements ?? [], c)
+  } catch (e) {
+    console.error('rappels : alerte erreurs impossible', (e as Error).message)
+  }
   // Un abonnement en erreur (données anciennes invalides…) ne coupe plus les rappels des autres
   for (const a of abonnements ?? []) {
     try {
@@ -238,6 +244,23 @@ async function envoyerRappels() {
     }
   }
   return envoyes
+}
+
+/** Nouvelles erreurs de l'appli : une notification aux appareils des coachs, puis elles sont marquées « notifiées ». */
+// deno-lint-ignore no-explicit-any
+async function prevenirCoachs(abonnements: any[], c: ClesVapid) {
+  const { data: nouvelles, error } = await admin.from('erreurs').select('id, message').eq('notifiee', false).order('le').limit(50)
+  if (error || !nouvelles?.length) return 0
+  const { data: coachs } = await admin.from('coachs').select('user_id')
+  const ids = new Set((coachs ?? []).map((x: { user_id: string }) => x.user_id))
+  let n = 0
+  const texte = nouvelles.length === 1 ? nouvelles[0].message.slice(0, 120) : `${nouvelles.length} nouvelles erreurs, dont : ${nouvelles[0].message.slice(0, 90)}`
+  for (const a of abonnements.filter((x) => ids.has(x.user_id))) {
+    const statut = await envoyerPush(a.abonnement, { titre: '⚠️ Erreur dans Coach', texte, tag: 'erreurs', url: './#/reglages' }, c).catch(() => 0)
+    if (statut >= 200 && statut < 300) n++
+  }
+  await admin.from('erreurs').update({ notifiee: true }).in('id', nouvelles.map((x: { id: number }) => x.id))
+  return n
 }
 
 /** Rappels d'un abonnement (un appareil). Renvoie le nombre de notifications envoyées. */

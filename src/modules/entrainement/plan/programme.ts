@@ -1,4 +1,5 @@
 import { db } from '../../../core/db'
+import { signalerErreur } from '../../../core/erreurs'
 import { aujourdhui, decalerJour, depuisJour, ecartJours, NOMS_JOURS } from '../../../core/dates'
 import { enregistrer, supprimer } from '../../../core/stockage'
 import {
@@ -234,7 +235,7 @@ export async function genererSemaineVelo(lundi: string) {
     const ids = new Set(avant.map((p) => p.id))
     for (const p of await db.prevues.where('date').aboveOrEqual(lundi).toArray()) if (!ids.has(p.id)) await supprimer(db.prevues, p.id)
     for (const p of avant) await enregistrer(db.prevues, p)
-    console.error(`Semaine du ${lundi} non recalculée : la semaine d'avant est gardée`, e)
+    signalerErreur(e, `Semaine du ${lundi} non recalculée (semaine d'avant gardée)`)
     throw e
   }
 }

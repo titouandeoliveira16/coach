@@ -5,6 +5,7 @@ import { SectionCodes } from './SectionCodes'
 import { SectionCompte } from './SectionCompte'
 import { SectionImport } from './SectionImport'
 import { SectionRappels } from './SectionRappels'
+import { SectionErreurs } from './SectionErreurs'
 import { useReglage } from '../core/reglages'
 import type { ReglageCompte } from '../core/inscription'
 
@@ -27,6 +28,7 @@ export function ReglagesGeneraux() {
       <div className="space-y-3 px-4">
         <SectionCompte />
         <SectionCodes />
+        {!compte.invite && <SectionErreurs />}
         <SectionRappels />
         {/* Import de fichiers préparés : propre au compte de Titouan */}
         {!compte.invite && <SectionImport />}
