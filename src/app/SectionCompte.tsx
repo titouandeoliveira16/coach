@@ -33,8 +33,13 @@ function Connecte() {
         Synchroniser maintenant
       </Bouton>
       <button type="button" className="w-full py-2 text-sm text-texte-3"
-        onClick={() => {
-          if (confirm('Se déconnecter ? Les données seront effacées de CET appareil (elles restent sur ton compte et reviendront à la reconnexion).')) seDeconnecter()
+        onClick={async () => {
+          if (!confirm('Se déconnecter ? Les données seront effacées de CET appareil (elles restent sur ton compte et reviendront à la reconnexion).')) return
+          try {
+            await seDeconnecter()
+          } catch (e) {
+            alert((e as Error).message)
+          }
         }}>
         Se déconnecter
       </button>

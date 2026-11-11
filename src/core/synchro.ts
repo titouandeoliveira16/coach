@@ -49,7 +49,9 @@ export const useSynchro = () =>
 // ---------- Curseurs (où en est-on ?), propres à chaque compte et à chaque appareil ----------
 
 interface Curseurs {
-  /** Dernière date d'arrivée serveur (synchro_le) déjà reçue */
+  /** Dernier numéro d'arrivée serveur (seq, strictement croissant) déjà reçu */
+  recuSeq?: number
+  /** Ancien curseur (avant la colonne seq) : dernière date d'arrivée serveur (synchro_le) déjà reçue */
   recu?: string
   /** Dernière date de modification locale (_modifie) déjà envoyée */
   envoye?: string
@@ -79,6 +81,7 @@ interface LigneServeur {
   supprime: boolean
   modifie_le: string
   synchro_le: string
+  seq?: number
 }
 
 const tableParNom = (nom: string) => TABLES_DONNEES().find((t) => t.name === nom)
@@ -86,12 +89,23 @@ const cleDe = (table: ReturnType<typeof tableParNom>, ligne: object) =>
   String((ligne as Record<string, unknown>)[table!.schema.primKey.keyPath as string])
 
 /** Récupère les lignes arrivées sur le serveur depuis le dernier passage. */
+let colonneSeq = true
+
 async function recevoir(userId: string, curseurs: Curseurs) {
   const PAGE = 500
   for (;;) {
-    let requete = supabase.from('donnees').select('*').order('synchro_le').limit(PAGE)
-    if (curseurs.recu) requete = requete.gt('synchro_le', curseurs.recu)
+    // Curseur sur « seq » (numéro donné par le serveur à chaque écriture, unique et croissant) : avec la date
+    // d'arrivée, toutes les lignes d'un même envoi groupé avaient la même date et la page suivante en sautait.
+    let requete = colonneSeq
+      ? supabase.from('donnees').select('*').order('seq').limit(PAGE).gt('seq', curseurs.recuSeq ?? 0)
+      : supabase.from('donnees').select('*').order('synchro_le').limit(PAGE)
+    if (!colonneSeq && curseurs.recu) requete = requete.gt('synchro_le', curseurs.recu)
     const { data, error } = await requete
+    // Serveur pas encore mis à jour (colonne seq absente) : ancien curseur
+    if (error && colonneSeq && /seq/.test(error.message ?? '') && /column|colonne/i.test(error.message ?? '')) {
+      colonneSeq = false
+      continue
+    }
     if (error) throw error
     const lignes = data as LigneServeur[]
 
@@ -111,7 +125,9 @@ async function recevoir(userId: string, curseurs: Curseurs) {
     })
 
     if (lignes.length) {
-      curseurs.recu = lignes[lignes.length - 1].synchro_le
+      const derniere = lignes[lignes.length - 1]
+      curseurs.recu = derniere.synchro_le
+      if (colonneSeq && derniere.seq !== undefined) curseurs.recuSeq = derniere.seq
       ecrireCurseurs(userId, curseurs)
     }
     if (lignes.length < PAGE) return
@@ -123,9 +139,31 @@ async function recevoir(userId: string, curseurs: Curseurs) {
  * `tout` : renvoie aussi les lignes reçues du serveur, pour reconstruire la copie en ligne
  * (ex. compte supprimé puis recréé : le serveur est vide, l'appareil a tout).
  */
+const cleRefus = (userId: string) => `coach-synchro-refus-${userId}`
+function lireRefus(userId: string): string[] {
+  try {
+    return JSON.parse(localStorage.getItem(cleRefus(userId)) ?? '[]')
+  } catch {
+    return []
+  }
+}
+function ecrireRefus(userId: string, refus: string[]) {
+  try {
+    if (refus.length) localStorage.setItem(cleRefus(userId), JSON.stringify(refus))
+    else localStorage.removeItem(cleRefus(userId))
+  } catch {
+    /* stockage indisponible */
+  }
+}
+
+/** Lignes refusées au dernier envoi : retentées à chaque synchro, sans bloquer les autres. */
+let refusesDernierEnvoi = 0
+
 async function envoyer(userId: string, curseurs: Curseurs, tout: boolean) {
   const aEnvoyer: Omit<LigneServeur, 'synchro_le'>[] = []
   const depuis = curseurs.envoye ?? ''
+  // Lignes refusées la dernière fois : on les renvoie quelle que soit leur date
+  const refusAvant = new Set(lireRefus(userId))
 
   for (const table of TABLES_DONNEES()) {
     for (const ligne of (await table.toArray()) as (Horodate & Record<string, unknown>)[]) {
@@ -134,15 +172,20 @@ async function envoyer(userId: string, curseurs: Curseurs, tout: boolean) {
         ligne._modifie = new Date().toISOString()
         await table.put(ligne)
       }
-      if (!tout && (ligne._recu || ligne._modifie <= depuis)) continue
+      if (!tout && !refusAvant.has(`${table.name}|${cleDe(table, ligne)}`) && (ligne._recu || ligne._modifie <= depuis)) continue
       const { _modifie, _recu, ...valeur } = ligne
       aEnvoyer.push({ table_nom: table.name, cle: cleDe(table, ligne), valeur, supprime: false, modifie_le: _modifie })
     }
   }
-  for (const s of await db.suppressions.toArray()) {
+  const suppressionsEnvoyees = await db.suppressions.toArray()
+  for (const s of suppressionsEnvoyees) {
     aEnvoyer.push({ table_nom: s.table, cle: s.cle, valeur: null, supprime: true, modifie_le: s._modifie })
   }
-  if (!aEnvoyer.length) return
+  if (!aEnvoyer.length) {
+    ecrireRefus(userId, [])
+    refusesDernierEnvoi = 0
+    return
+  }
 
   // Une même ligne ne doit figurer qu'une fois dans l'envoi (ex. supprimée puis recréée) : on garde la version la plus récente
   const parCle = new Map<string, (typeof aEnvoyer)[number]>()
@@ -153,18 +196,46 @@ async function envoyer(userId: string, curseurs: Curseurs, tout: boolean) {
   }
 
   const lignes = [...parCle.values()].map((l) => ({ ...l, user_id: userId }))
+  const refus: string[] = []
   const { error } = await supabase.from('donnees').upsert(lignes, { onConflict: 'user_id,table_nom,cle' })
   if (error) {
-    // Envoi groupé refusé : on envoie ligne par ligne pour ne pas bloquer toute la synchro
+    if (estErreurReseau(error.message)) throw error
+    // Envoi groupé refusé : ligne par ligne ; une ligne refusée est mise de côté (retentée plus tard) sans bloquer les autres
     for (const l of lignes) {
       const r = await supabase.from('donnees').upsert(l, { onConflict: 'user_id,table_nom,cle' })
-      if (r.error) throw r.error
+      if (r.error && estErreurReseau(r.error.message)) throw r.error
+      if (r.error) refus.push(`${l.table_nom}|${l.cle}`)
     }
   }
 
-  await db.suppressions.clear()
+  // Suppressions : on n'efface que celles réellement envoyées et inchangées depuis (une suppression faite pendant
+  // l'envoi reste en attente pour la prochaine fois)
+  await db.transaction('rw', db.suppressions, async () => {
+    for (const s of suppressionsEnvoyees) {
+      if (refus.includes(s.id)) continue
+      const actuelle = await db.suppressions.get(s.id)
+      if (actuelle && actuelle._modifie === s._modifie) await db.suppressions.delete(s.id)
+    }
+  })
+  ecrireRefus(userId, refus)
+  refusesDernierEnvoi = refus.length
   curseurs.envoye = aEnvoyer.reduce((max, l) => (l.modifie_le > max ? l.modifie_le : max), depuis)
   ecrireCurseurs(userId, curseurs)
+}
+
+const estErreurReseau = (message?: string) => !navigator.onLine || /fetch|network|réseau/i.test(message ?? '')
+
+/** Reste-t-il sur cet appareil des modifications pas encore acceptées par le serveur ? */
+export async function resteAEnvoyer(): Promise<boolean> {
+  const userId = etat.session?.user.id
+  if (!userId) return false
+  if ((await db.suppressions.count()) > 0 || lireRefus(userId).length > 0) return true
+  const depuis = lireCurseurs(userId).envoye ?? ''
+  for (const table of TABLES_DONNEES()) {
+    const enAttente = await table.filter((l: Horodate) => !l._recu && (!l._modifie || l._modifie > depuis)).count()
+    if (enAttente) return true
+  }
+  return false
 }
 
 let enCours: Promise<void> | null = null
@@ -191,10 +262,11 @@ export async function synchroniser(): Promise<void> {
       const premiere = !curseurs.recu && !curseurs.envoye
       await recevoir(userId, curseurs)
       await envoyer(userId, curseurs, premiere)
-      majEtat({ statut: 'ok', derniereSynchro: new Date().toISOString() })
+      if (refusesDernierEnvoi) majEtat({ statut: 'erreur', erreur: `${refusesDernierEnvoi} donnée${refusesDernierEnvoi > 1 ? 's' : ''} refusée${refusesDernierEnvoi > 1 ? 's' : ''} par le serveur (nouvel essai à la prochaine synchro)`, derniereSynchro: new Date().toISOString() })
+      else majEtat({ statut: 'ok', derniereSynchro: new Date().toISOString() })
     } catch (e) {
       const message = (e as Error).message ?? String(e)
-      const reseau = !navigator.onLine || /fetch|network|réseau/i.test(message)
+      const reseau = estErreurReseau(message)
       majEtat({ statut: reseau ? 'hors-ligne' : 'erreur', erreur: reseau ? undefined : message })
     } finally {
       enCours = null
@@ -228,9 +300,17 @@ export async function seConnecter(email: string, motDePasse: string) {
  */
 export async function seDeconnecter() {
   await synchroniser()
+  // Jamais d'effacement tant que tout n'est pas parti : hors ligne ou en erreur, les saisies seraient perdues
+  if (etat.statut !== 'ok' || (await resteAEnvoyer()))
+    throw new Error(etat.statut === 'hors-ligne'
+      ? 'Pas de réseau : des saisies ne sont pas encore envoyées. Reconnecte-toi à internet puis réessaie.'
+      : 'Des saisies ne sont pas encore envoyées sur ton compte. Réessaie dans un moment (Synchroniser maintenant).')
   const userId = etat.session?.user.id
   await supabase.auth.signOut()
-  if (userId) localStorage.removeItem(cleCurseurs(userId))
+  if (userId) {
+    localStorage.removeItem(cleCurseurs(userId))
+    localStorage.removeItem(cleRefus(userId))
+  }
   await db.transaction('rw', [...TABLES_DONNEES(), db.suppressions], async () => {
     for (const t of [...TABLES_DONNEES(), db.suppressions]) await t.clear()
   })
