@@ -1,0 +1,933 @@
+{
+ "seances": [
+  {
+   "id": "velo-tempo-2x20",
+   "disciplines": [
+    "route",
+    "xcm"
+   ],
+   "programme": {
+    "id": "tempo",
+    "famille": "tempo",
+    "nom": "tempo",
+    "travailSec": 900,
+    "pct": 83,
+    "recupSec": 300,
+    "pctRecup": 50,
+    "paliers": [
+     [
+      1,
+      2
+     ],
+     [
+      1,
+      2,
+      1080
+     ],
+     [
+      1,
+      2,
+      1200
+     ],
+     [
+      1,
+      1,
+      2700
+     ]
+    ],
+    "preuve": "plus faible",
+    "source": "Zone 3 (« moyenne ») : utile en reprise, à doser (modèle pyramidal).",
+    "ordre": 18
+   }
+  },
+  {
+   "id": "velo-sweet-spot-3x15",
+   "disciplines": [
+    "route",
+    "xcm",
+    "xco"
+   ],
+   "programme": {
+    "id": "sweet-spot",
+    "famille": "sweet-spot",
+    "nom": "sweet spot",
+    "travailSec": 900,
+    "pct": 91,
+    "recupSec": 240,
+    "pctRecup": 50,
+    "paliers": [
+     [
+      1,
+      2
+     ],
+     [
+      1,
+      3,
+      720
+     ],
+     [
+      1,
+      2,
+      1200
+     ],
+     [
+      1,
+      3,
+      840
+     ]
+    ],
+    "preuve": "plus faible",
+    "source": "Peu étudié : utile en reprise pour accumuler du travail sous le seuil.",
+    "ordre": 17
+   }
+  },
+  {
+   "id": "velo-sweet-spot-long",
+   "disciplines": [
+    "route",
+    "xcm"
+   ],
+   "programme": {
+    "id": "sweet-spot-long",
+    "famille": "sweet-spot",
+    "nom": "sweet spot long",
+    "travailSec": 900,
+    "pct": 88,
+    "recupSec": 240,
+    "pctRecup": 50,
+    "paliers": [
+     [
+      1,
+      3
+     ],
+     [
+      1,
+      2,
+      1500
+     ],
+     [
+      1,
+      3,
+      1200
+     ],
+     [
+      1,
+      2,
+      1800
+     ]
+    ],
+    "preuve": "plus faible",
+    "source": "Pratique d'entraîneur en fin de préparation (entre le 1er seuil et la CP, moins de fatigue qu'au seuil) ; aucun essai contrôlé.",
+    "ordre": 15
+   }
+  },
+  {
+   "id": "velo-seuil-4x10",
+   "disciplines": [
+    "route",
+    "xco",
+    "xcc",
+    "xcm"
+   ],
+   "programme": {
+    "id": "seuil-8-10",
+    "famille": "seuil",
+    "nom": "seuil en blocs de 8-10'",
+    "travailSec": 480,
+    "pct": 97,
+    "recupSec": 180,
+    "pctRecup": 50,
+    "paliers": [
+     [
+      1,
+      3
+     ],
+     [
+      1,
+      3,
+      600
+     ],
+     [
+      1,
+      4
+     ],
+     [
+      1,
+      4,
+      600
+     ]
+    ],
+    "preuve": "bonne",
+    "source": "Sylta et al. 2016 : intervalles longs au seuil, progrès comparables aux formats VO2 à charge égale.",
+    "ordre": 10
+   }
+  },
+  {
+   "id": "velo-seuil-4x16",
+   "disciplines": [
+    "route",
+    "xcm"
+   ],
+   "programme": {
+    "id": "seuil-12-20",
+    "famille": "seuil",
+    "nom": "seuil en blocs de 12-20'",
+    "travailSec": 720,
+    "pct": 97,
+    "recupSec": 240,
+    "pctRecup": 50,
+    "paliers": [
+     [
+      1,
+      2
+     ],
+     [
+      1,
+      2,
+      900
+     ],
+     [
+      1,
+      3
+     ],
+     [
+      1,
+      2,
+      1200
+     ]
+    ],
+    "preuve": "bonne",
+    "source": "Sylta et al. 2016 : intervalles longs (jusqu’à 16 min), +5 à 10 % de puissance sur 40 min.",
+    "ordre": 11
+   }
+  },
+  {
+   "id": "velo-tirage-seuil",
+   "disciplines": [
+    "route",
+    "xcm"
+   ],
+   "programme": {
+    "id": "tirage-seuil",
+    "famille": "seuil-plus",
+    "nom": "tirer le seuil",
+    "travailSec": 300,
+    "pct": 102,
+    "recupSec": 180,
+    "pctRecup": 50,
+    "paliers": [
+     [
+      1,
+      5
+     ],
+     [
+      1,
+      5,
+      360
+     ],
+     [
+      1,
+      4,
+      480
+     ],
+     [
+      1,
+      4,
+      540
+     ]
+    ],
+    "preuve": "correcte",
+    "source": "Pratique d'entraîneur appuyée sur les intervalles de 5 à 8 min (Seiler 2013) ; ordre des blocs neutre (Sylta 2016).",
+    "ordre": 13
+   }
+  },
+  {
+   "id": "velo-seuil-maintien",
+   "disciplines": [
+    "route",
+    "xcm"
+   ],
+   "programme": {
+    "id": "seuil-maintien",
+    "famille": "seuil",
+    "nom": "allonger le seuil",
+    "travailSec": 600,
+    "pct": 95,
+    "recupSec": 180,
+    "pctRecup": 50,
+    "paliers": [
+     [
+      1,
+      4
+     ],
+     [
+      1,
+      3,
+      900
+     ],
+     [
+      1,
+      2,
+      1500
+     ],
+     [
+      1,
+      2,
+      1800
+     ]
+    ],
+    "preuve": "bonne",
+    "source": "Sylta et al. 2016 : intervalles longs au seuil ; le 2 × 30 min valide le cycle (pratique d'entraîneur).",
+    "ordre": 14
+   }
+  },
+  {
+   "id": "velo-over-unders",
+   "disciplines": [
+    "route",
+    "xco",
+    "xcc"
+   ],
+   "programme": {
+    "id": "over-under",
+    "famille": "seuil-variable",
+    "nom": "over-unders",
+    "travailSec": 60,
+    "pct": 105,
+    "recupSec": 120,
+    "pctRecup": 95,
+    "recupSerieSec": 240,
+    "continu": true,
+    "paliers": [
+     [
+      2,
+      3
+     ],
+     [
+      2,
+      4
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      3,
+      4
+     ]
+    ],
+    "preuve": "plus faible",
+    "source": "Pratique d’entraîneurs, peu étudiée : gardée pour varier le travail au seuil.",
+    "ordre": 16
+   }
+  },
+  {
+   "id": "velo-seuil-continu",
+   "disciplines": [
+    "route",
+    "xcm"
+   ],
+   "programme": {
+    "id": "seuil-continu",
+    "famille": "seuil",
+    "nom": "seuil continu",
+    "travailSec": 1200,
+    "pct": 95,
+    "recupSec": 0,
+    "pctRecup": 50,
+    "paliers": [
+     [
+      1,
+      1
+     ],
+     [
+      1,
+      1,
+      1500
+     ],
+     [
+      1,
+      1,
+      1800
+     ],
+     [
+      1,
+      1,
+      2100
+     ]
+    ],
+    "preuve": "bonne",
+    "source": "Travail continu juste sous la CP (état stable lactique maximal).",
+    "ordre": 12
+   }
+  },
+  {
+   "id": "velo-vo2-4x8-seiler",
+   "disciplines": [
+    "route"
+   ],
+   "programme": {
+    "id": "8min",
+    "famille": "vo2-longs",
+    "nom": "intervalles de 8'",
+    "travailSec": 480,
+    "pct": 104,
+    "recupSec": 120,
+    "pctRecup": 50,
+    "paliers": [
+     [
+      1,
+      2
+     ],
+     [
+      1,
+      3
+     ],
+     [
+      1,
+      3,
+      540
+     ],
+     [
+      1,
+      4
+     ]
+    ],
+    "preuve": "forte",
+    "source": "Seiler et al. 2013 : 4 × 8 min a donné plus de gains que 4 × 4 et 4 × 16 min.",
+    "ordre": 9
+   }
+  },
+  {
+   "id": "velo-vo2-30-15-ronnestad",
+   "disciplines": [
+    "route",
+    "xco",
+    "xcc"
+   ],
+   "programme": {
+    "id": "30-15",
+    "famille": "vo2-courts",
+    "nom": "30/15",
+    "travailSec": 30,
+    "pct": 120,
+    "recupSec": 15,
+    "pctRecup": 50,
+    "recupSerieSec": 180,
+    "paliers": [
+     [
+      2,
+      10
+     ],
+     [
+      2,
+      13
+     ],
+     [
+      3,
+      10
+     ],
+     [
+      3,
+      13
+     ]
+    ],
+    "preuve": "forte",
+    "source": "Rønnestad et al. 2015, 2020 : meilleurs gains de VO2max et de puissance que 4 × 5 min chez des cyclistes entraînés.",
+    "ordre": 0
+   }
+  },
+  {
+   "id": "velo-vo2-15-15",
+   "disciplines": [
+    "route",
+    "xco",
+    "xcc"
+   ],
+   "programme": {
+    "id": "15-15",
+    "famille": "vo2-courts",
+    "nom": "15/15",
+    "travailSec": 15,
+    "pct": 135,
+    "recupSec": 15,
+    "pctRecup": 50,
+    "recupSerieSec": 180,
+    "paliers": [
+     [
+      2,
+      10
+     ],
+     [
+      2,
+      12
+     ],
+     [
+      3,
+      10
+     ],
+     [
+      3,
+      12
+     ]
+    ],
+    "preuve": "correcte",
+    "source": "Buchheit & Laursen 2013 : les intervalles très courts accumulent du temps près de la VO2max avec peu de fatigue.",
+    "ordre": 2
+   }
+  },
+  {
+   "id": "velo-vo2-20-40",
+   "disciplines": [
+    "route"
+   ],
+   "programme": {
+    "id": "20-40",
+    "famille": "vo2-courts",
+    "nom": "20/40",
+    "travailSec": 20,
+    "pct": 140,
+    "recupSec": 40,
+    "pctRecup": 50,
+    "recupSerieSec": 180,
+    "paliers": [
+     [
+      2,
+      8
+     ],
+     [
+      2,
+      10
+     ],
+     [
+      3,
+      8
+     ],
+     [
+      3,
+      10
+     ]
+    ],
+    "preuve": "correcte",
+    "source": "Buchheit & Laursen 2013 : efforts courts plus intenses, récupération longue.",
+    "ordre": 4
+   }
+  },
+  {
+   "id": "velo-vo2-4x5",
+   "disciplines": [
+    "route",
+    "xco",
+    "xcc",
+    "xcm"
+   ],
+   "programme": {
+    "id": "5min",
+    "famille": "vo2-longs",
+    "nom": "intervalles de 5'",
+    "travailSec": 300,
+    "pct": 107,
+    "recupSec": 150,
+    "pctRecup": 50,
+    "paliers": [
+     [
+      1,
+      3
+     ],
+     [
+      1,
+      4
+     ],
+     [
+      1,
+      5
+     ],
+     [
+      1,
+      6
+     ]
+    ],
+    "preuve": "bonne",
+    "source": "Rønnestad et al. 2015 : 4 × 5 min, groupe contrôle qui progresse aussi.",
+    "ordre": 7
+   }
+  },
+  {
+   "id": "velo-vo2-3min",
+   "disciplines": [
+    "route"
+   ],
+   "programme": {
+    "id": "3min",
+    "famille": "vo2-longs",
+    "nom": "intervalles de 3'",
+    "travailSec": 180,
+    "pct": 115,
+    "recupSec": 180,
+    "pctRecup": 50,
+    "paliers": [
+     [
+      1,
+      4
+     ],
+     [
+      1,
+      5
+     ],
+     [
+      1,
+      6
+     ],
+     [
+      1,
+      7
+     ]
+    ],
+    "preuve": "correcte",
+    "source": "Buchheit & Laursen 2013 : intervalles longs de 2-4 min à la PMA.",
+    "ordre": 5
+   }
+  },
+  {
+   "id": "velo-vo2-6min",
+   "disciplines": [
+    "route"
+   ],
+   "programme": {
+    "id": "6min",
+    "famille": "vo2-longs",
+    "nom": "intervalles de 6'",
+    "travailSec": 360,
+    "pct": 106,
+    "recupSec": 150,
+    "pctRecup": 50,
+    "paliers": [
+     [
+      1,
+      2
+     ],
+     [
+      1,
+      3
+     ],
+     [
+      1,
+      4
+     ],
+     [
+      1,
+      5
+     ]
+    ],
+    "preuve": "correcte",
+    "source": "Buchheit & Laursen 2013 : intervalles longs proches de la PMA.",
+    "ordre": 8
+   }
+  },
+  {
+   "id": "velo-vo2-4x4-helgerud",
+   "disciplines": [
+    "route"
+   ],
+   "programme": {
+    "id": "4min",
+    "famille": "vo2-longs",
+    "nom": "intervalles de 4'",
+    "travailSec": 240,
+    "pct": 110,
+    "recupSec": 180,
+    "pctRecup": 50,
+    "paliers": [
+     [
+      1,
+      3
+     ],
+     [
+      1,
+      4
+     ],
+     [
+      1,
+      5
+     ],
+     [
+      1,
+      6
+     ]
+    ],
+    "preuve": "correcte",
+    "source": "Helgerud et al. 2007 : 4 × 4 min, gains de VO2max (étudié surtout en course à pied).",
+    "ordre": 6
+   }
+  },
+  {
+   "id": "velo-vo2-30-30",
+   "disciplines": [
+    "route",
+    "xco",
+    "xcc"
+   ],
+   "programme": {
+    "id": "30-30",
+    "famille": "vo2-courts",
+    "nom": "30/30",
+    "travailSec": 30,
+    "pct": 125,
+    "recupSec": 30,
+    "pctRecup": 50,
+    "recupSerieSec": 180,
+    "paliers": [
+     [
+      2,
+      8
+     ],
+     [
+      2,
+      10
+     ],
+     [
+      3,
+      8
+     ],
+     [
+      3,
+      10
+     ]
+    ],
+    "preuve": "correcte",
+    "source": "Billat 2000-2001 : le 30/30 permet de passer beaucoup de temps près de la VO2max.",
+    "ordre": 1
+   }
+  },
+  {
+   "id": "velo-vo2-40-20",
+   "disciplines": [
+    "route"
+   ],
+   "programme": {
+    "id": "40-20",
+    "famille": "vo2-courts",
+    "nom": "40/20",
+    "travailSec": 40,
+    "pct": 115,
+    "recupSec": 20,
+    "pctRecup": 50,
+    "recupSerieSec": 180,
+    "paliers": [
+     [
+      2,
+      6
+     ],
+     [
+      2,
+      8
+     ],
+     [
+      3,
+      6
+     ],
+     [
+      3,
+      8
+     ]
+    ],
+    "preuve": "correcte",
+    "source": "Buchheit & Laursen 2013 : même logique que le 30/15, avec un ratio travail/récup de 2:1.",
+    "ordre": 3
+   }
+  },
+  {
+   "id": "vtt-hit-inoue",
+   "disciplines": [
+    "xco",
+    "xcc",
+    "xcm"
+   ],
+   "programme": {
+    "id": "inoue",
+    "famille": "vo2-longs",
+    "nom": "intervalles longs du vététiste",
+    "travailSec": 300,
+    "pct": 105,
+    "recupSec": 240,
+    "pctRecup": 50,
+    "paliers": [
+     [
+      1,
+      7,
+      240
+     ],
+     [
+      1,
+      8,
+      240
+     ],
+     [
+      1,
+      8
+     ],
+     [
+      1,
+      10
+     ]
+    ],
+    "preuve": "bonne",
+    "source": "Inoue et al. 2016 : essai randomisé chez 16 vététistes, 7-10 × 4-6 min ; meilleur temps de course qu'avec des sprints de 30 s.",
+    "ordre": 19
+   }
+  },
+  {
+   "id": "vtt-sit-series",
+   "disciplines": [
+    "xco",
+    "xcc"
+   ],
+   "programme": {
+    "id": "sit-series",
+    "famille": "sprints",
+    "nom": "sprints de 30\" en séries",
+    "travailSec": 30,
+    "pct": 200,
+    "recupSec": 90,
+    "pctRecup": 50,
+    "recupSerieSec": 600,
+    "aFond": true,
+    "paliers": [
+     [
+      2,
+      4
+     ],
+     [
+      3,
+      4
+     ],
+     [
+      3,
+      5
+     ],
+     [
+      4,
+      4
+     ]
+    ],
+    "preuve": "bonne",
+    "source": "Hebisz 2016, 2021 ; Inoue 2016 : les sprints de 30 s font progresser VO2max et puissance anaérobie chez des vététistes.",
+    "ordre": 22
+   }
+  },
+  {
+   "id": "vtt-relances-xco",
+   "disciplines": [
+    "xco"
+   ],
+   "programme": {
+    "id": "relances-xco",
+    "famille": "relances",
+    "nom": "relances XCO",
+    "travailSec": 8,
+    "pct": 155,
+    "recupSec": 22,
+    "pctRecup": 80,
+    "recupSerieSec": 300,
+    "continu": true,
+    "paliers": [
+     [
+      2,
+      16
+     ],
+     [
+      3,
+      16
+     ],
+     [
+      3,
+      20
+     ],
+     [
+      4,
+      20
+     ]
+    ],
+    "preuve": "plus faible",
+    "source": "Næss 2021, Prinz 2021 : en XCO, ≈ 40 % du temps au-dessus de la CP en efforts de quelques secondes ; format qui copie la course, pas d'essai dédié.",
+    "ordre": 20
+   }
+  },
+  {
+   "id": "vtt-xcc-variable",
+   "disciplines": [
+    "xcc"
+   ],
+   "programme": {
+    "id": "relances-xcc",
+    "famille": "relances",
+    "nom": "relances short track",
+    "travailSec": 12,
+    "pct": 140,
+    "recupSec": 48,
+    "pctRecup": 97,
+    "recupSerieSec": 360,
+    "continu": true,
+    "paliers": [
+     [
+      2,
+      8
+     ],
+     [
+      2,
+      10
+     ],
+     [
+      3,
+      8
+     ],
+     [
+      3,
+      10
+     ]
+    ],
+    "preuve": "plus faible",
+    "source": "Arriel 2023 : le short track dure ≈ 20 min à une puissance plus haute que le XCO, allure variable ; pas d'essai dédié.",
+    "ordre": 21
+   }
+  },
+  {
+   "id": "vtt-dh-sprints",
+   "disciplines": [
+    "dh",
+    "enduro"
+   ],
+   "programme": {
+    "id": "sprints-courts",
+    "famille": "sprints",
+    "nom": "sprints courts",
+    "travailSec": 7,
+    "pct": 250,
+    "recupSec": 150,
+    "pctRecup": 45,
+    "aFond": true,
+    "paliers": [
+     [
+      1,
+      6
+     ],
+     [
+      1,
+      8
+     ],
+     [
+      1,
+      10
+     ],
+     [
+      1,
+      12
+     ]
+    ],
+    "preuve": "plus faible",
+    "source": "Hurst & Atkins 2006, Burr 2012 : descente = pics de puissance très courts ; pratique d'entraîneur, la technique prime.",
+    "ordre": 23
+   }
+  }
+ ]
+}

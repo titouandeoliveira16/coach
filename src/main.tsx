@@ -19,16 +19,21 @@ setTimeout(() => import('./modules/entrainement/import/intervals').then((m) => m
 // Saison recalculée une fois avec la prépa hivernale Methodic (v10.5)
 setTimeout(() => import('./modules/entrainement/arrivee/donnees').then((m) => m.migrerSaisonV2()).catch(() => {}), 9000)
 
-// Mises à jour : on vérifie s'il existe une nouvelle version à chaque retour
-// sur l'appli (iPhone : l'appli est souvent « réveillée » plutôt que relancée)
-// et toutes les heures. Si oui, elle s'installe et la page se recharge seule.
-registerSW({
+// Mises à jour : on vérifie s'il existe une nouvelle version à chaque retour sur l'appli (iPhone : l'appli est souvent
+// « réveillée » plutôt que relancée) et toutes les heures. Une nouvelle version ne recharge plus la page en pleine
+// saisie (audit du 11/11/2026) : elle s'installe quand tu quittes l'appli, et tu la retrouves au retour.
+let miseAJourPrete = false
+const appliquer = registerSW({
   immediate: true,
+  onNeedRefresh() {
+    miseAJourPrete = true
+  },
   onRegisteredSW(_url, enregistrement) {
     if (!enregistrement) return
     const verifier = () => enregistrement.update().catch(() => {})
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') verifier()
+      else if (miseAJourPrete) appliquer(true)
     })
     setInterval(verifier, 60 * 60 * 1000)
   },
