@@ -221,7 +221,25 @@ export async function facteursPersonnels(r: Pick<ReglagesEntrainement, 'tests' |
   return { route: f.route?.facteur, vtt: f.vtt?.facteur }
 }
 
+/**
+ * Génère (ou regénère) le vélo d'une semaine. Filet de sécurité (audit du 11/11/2026) : la génération supprime d'abord
+ * les anciennes séances ; si elle échoue en route (chargement impossible hors ligne, données incohérentes), la semaine
+ * d'avant est remise telle quelle au lieu de rester vide, et l'erreur est remontée.
+ */
 export async function genererSemaineVelo(lundi: string) {
+  const avant = await db.prevues.where('date').aboveOrEqual(lundi).toArray()
+  try {
+    return await genererSemaineVeloBrute(lundi)
+  } catch (e) {
+    const ids = new Set(avant.map((p) => p.id))
+    for (const p of await db.prevues.where('date').aboveOrEqual(lundi).toArray()) if (!ids.has(p.id)) await supprimer(db.prevues, p.id)
+    for (const p of avant) await enregistrer(db.prevues, p)
+    console.error(`Semaine du ${lundi} non recalculée : la semaine d'avant est gardée`, e)
+    throw e
+  }
+}
+
+async function genererSemaineVeloBrute(lundi: string) {
   const jour = aujourdhui()
   const semaine = joursDe(lundi)
   const aPartirDe = jour > lundi ? jour : lundi
@@ -726,7 +744,7 @@ export async function mettreAJourFormatSeances() {
     const aDesSeries = v.famille === 'vo2-courts' || v.famille === 'seuil-variable' || (v.famille === 'z2-long' && / sprints?/.test(p.titre))
     if (aDesSeries && !v.etapes.some((e) => e.repetition)) aRefaire.add(lundiDe(p.date))
   }
-  for (const l of aRefaire) if (await lireMeta(l)) await genererSemaineVelo(l).catch(() => {})
+  for (const l of aRefaire) if (await lireMeta(l)) await genererSemaineVelo(l).catch(() => {}) // erreur déjà journalisée, semaine d'avant gardée
 }
 
 export const recalculerApresTest = () => recalculerSemainesAVenir()
@@ -735,7 +753,7 @@ export const recalculerApresTest = () => recalculerSemainesAVenir()
 export async function recalculerSemainesAVenir() {
   const lundi = lundiDe(aujourdhui())
   for (const l of [lundi, decalerJour(lundi, 7), decalerJour(lundi, 14)]) {
-    if (await lireMeta(l)) await genererSemaineVelo(l).catch(() => {})
+    if (await lireMeta(l)) await genererSemaineVelo(l).catch(() => {}) // erreur déjà journalisée, semaine d'avant gardée
   }
 }
 

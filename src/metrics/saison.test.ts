@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { calculerSaison, datesCoursesA, dureesPhases, lireHistorique, migrerBase, phasesAvecCoursesA } from './saison'
-import { estSemaineAllegee, coefficientPhase } from './programme'
+import { estSemaineAllegee, coefficientPhase, phaseDe } from './programme'
+import { decalerJour } from '../core/dates'
 
 describe('saison calculée depuis la course', () => {
   it('durées selon les semaines disponibles', () => {
@@ -211,5 +212,17 @@ describe('tes 4 semaines d’avant', () => {
     expect(lireHistorique([{ sorties: 4, kj: 2000 }, { sorties: 3, kj: 1800 }, { sorties: 4, kj: 2200 }, { sorties: 1, kj: 400 }], 2000))
       .toEqual({ entraine: true, budgetDepart: Math.round((1900 * 0.9) / 10) * 10 })
     expect(lireHistorique([{ sorties: 1, kj: 600 }, { sorties: 2, kj: 800 }, { sorties: 0, kj: 0 }, { sorties: 3, kj: 1500 }], 2000).entraine).toBe(false)
+  })
+})
+
+describe('robustesse (audit du 11/11/2026)', () => {
+  it('aucune phase : entretien, sans erreur', () => {
+    expect(phaseDe('2026-11-09', []).phase.type).toBe('entretien')
+    expect(coefficientPhase('2026-11-09', [], [])).toBeUndefined()
+  })
+  it('1re phase qui ne commence pas un lundi : les semaines allégées tombent quand même', () => {
+    const phases = [{ debut: '2026-10-28', type: 'base' as const }]
+    const allegees = [0, 1, 2, 3, 4, 5, 6, 7].map((i) => estSemaineAllegee(decalerJour('2026-10-26', 7 * i), phases))
+    expect(allegees.filter(Boolean).length).toBe(2)
   })
 })
