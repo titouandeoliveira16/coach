@@ -33,3 +33,30 @@ export async function creerCompteAvecCode(code: string, email: string, motDePass
 export interface CodeInvitation { code: string; pour: string | null; cree_le: string; utilise_le: string | null }
 export const nouveauCode = (pour?: string) => appeler<{ code: string }>('nouveau-code', { pour }, true)
 export const mesCodes = () => appeler<{ codes: CodeInvitation[] }>('mes-codes', {}, true)
+
+/**
+ * Supprime le compte et toutes ses données sur le serveur (RGPD : droit à l'effacement), puis cet appareil.
+ * Irréversible.
+ */
+export async function supprimerMonCompte() {
+  await appeler('supprimer-compte', {}, true)
+  const { TABLES_DONNEES } = await import('./db')
+  await db.transaction('rw', [...TABLES_DONNEES(), db.suppressions], async () => {
+    for (const t of [...TABLES_DONNEES(), db.suppressions]) await t.clear()
+  })
+  for (const k of Object.keys(localStorage)) if (k.startsWith('coach-synchro')) localStorage.removeItem(k)
+  await supabase.auth.signOut()
+}
+
+/** Toutes les données de cet appareil dans un fichier JSON (sauvegarde personnelle). */
+export async function exporterToutesMesDonnees() {
+  const { TABLES_DONNEES } = await import('./db')
+  const contenu: Record<string, unknown[]> = {}
+  for (const t of TABLES_DONNEES()) contenu[t.name] = await t.toArray()
+  const blob = new Blob([JSON.stringify({ app: 'coach', exporteLe: new Date().toISOString(), tables: contenu }, null, 1)], { type: 'application/json' })
+  const lien = document.createElement('a')
+  lien.href = URL.createObjectURL(blob)
+  lien.download = `coach-sauvegarde-${new Date().toISOString().slice(0, 10)}.json`
+  lien.click()
+  setTimeout(() => URL.revokeObjectURL(lien.href), 5000)
+}

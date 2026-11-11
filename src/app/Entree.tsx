@@ -56,11 +56,16 @@ export function Entree() {
     <div className="pt-sur flex min-h-[100dvh] flex-col justify-center gap-5 px-4 pb-8">
       <div className="text-center">
         <h1 className="text-3xl font-extrabold">Coach</h1>
-        <p className="mt-1 text-sm text-texte-2">Ton entraînement vélo, réglé pour toi</p>
+        <p className="mt-1 text-sm text-texte-2">Ton plan vélo calculé depuis ta course, ajusté chaque matin à ta récupération</p>
       </div>
       <Carte titre="Ton compte">
         <FormulaireCompte />
       </Carte>
+      {/* Mentions santé et données (audit du 11/11/2026) */}
+      <div className="space-y-1.5 px-1 text-xs leading-relaxed text-texte-3">
+        <p><b className="text-texte-2">Santé.</b> Coach donne des repères d'entraînement, il ne remplace pas un avis médical : en cas de doute ou de douleur, consulte un médecin (un certificat d'aptitude est conseillé). Moins de 15 ans : avec l'accord d'un parent.</p>
+        <p><b className="text-texte-2">Tes données.</b> Elles (santé comprise : sommeil, VFC, poids) servent seulement à calculer ton plan, restent sur ton compte et ton téléphone, ne sont ni vendues ni partagées. Tu peux les exporter ou tout supprimer à tout moment (Réglages → Compte).</p>
+      </div>
     </div>
   )
 }

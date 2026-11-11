@@ -5,6 +5,8 @@
 //   /inscription/creer        { code, email, motDePasse } → crée le compte si le code est valable et pas encore utilisé
 //   /inscription/nouveau-code { pour? }                    → (coach connecté) crée un code à usage unique
 //   /inscription/mes-codes                                 → (coach connecté) liste des codes et leur état
+//   /inscription/supprimer-compte                          → (connecté) supprime le compte et TOUTES ses données (RGPD,
+//                                                            art. 17) : données, clé Intervals, rappels effacés en cascade
 //
 // Aucun secret à ajouter : la fonction utilise la clé « service role » du projet.
 
@@ -80,7 +82,16 @@ Deno.serve(async (req) => {
       const { data } = await admin.from('codes_invitation').select('code, pour, cree_le, utilise_le').eq('cree_par', coach).order('cree_le', { ascending: false }).limit(50)
       return json({ codes: data ?? [] })
     }
-    return json({ erreur: 'Route inconnue.' }, 404)
+    if (route === 'supprimer-compte') {
+      const jeton = req.headers.get('authorization')?.replace(/^Bearer /, '')
+      const { data } = jeton ? await admin.auth.getUser(jeton) : { data: { user: null } }
+      if (!data.user) return json({ erreur: 'Connecte-toi d’abord.' }, 401)
+      // Les tables liées au compte (donnees, intervals_cles, push_abonnements, coachs…) sont effacées en cascade
+      const { error } = await admin.auth.admin.deleteUser(data.user.id)
+      if (error) throw error
+      return json({ ok: true })
+    }
+        return json({ erreur: 'Route inconnue.' }, 404)
   } catch (e) {
     return json({ erreur: (e as Error).message }, 500)
   }
