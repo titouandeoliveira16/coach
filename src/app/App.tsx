@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Suspense, type CSSProperties } from 'react'
+import { FiletErreur } from '../core/ui/FiletErreur'
 import { aujourdhui } from '../core/dates'
 import { db } from '../core/db'
 import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
@@ -49,6 +50,7 @@ function Coquille() {
     <div style={style} className={`mx-auto max-w-lg ${moduleActif ? 'min-h-[calc(100vh+1px)] pb-44' : 'min-h-full pb-8'}`}>
       {moduleActif && <div aria-hidden className="lueur pointer-events-none fixed inset-x-0 top-0 -z-10 h-[380px]" />}
       {/* Écrans des modules chargés à la demande : rien d'affiché pendant le (très court) chargement */}
+      <FiletErreur key={pathname.split('/')[1]}>
       <Suspense fallback={null}>
       <Routes>
         {MODULES.map((m) => (
@@ -67,6 +69,7 @@ function Coquille() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       </Suspense>
+      </FiletErreur>
       {/* Pas de barre sur l'accueil : il sert seulement à choisir un module */}
       {moduleActif && <BarreNavigation module={moduleActif} />}
     </div>

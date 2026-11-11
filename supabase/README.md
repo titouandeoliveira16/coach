@@ -49,3 +49,8 @@ Les 4 fonctions se redéploient seules à chaque modification de `supabase/funct
    nom `SUPABASE_ACCESS_TOKEN`, valeur = le jeton copié. Ne le colle nulle part ailleurs (ni dans une conversation).
 3. **GitHub → Actions → Fonctions Supabase → Run workflow** pour un premier déploiement de test.
 Les scripts SQL restent à exécuter à la main dans le SQL Editor.
+
+## Alertes d'erreurs (11/11/2026)
+- **SQL Editor** : exécuter `sql/07-erreurs.sql` (table des erreurs, lisible seulement par les coachs).
+- La fonction `rappels` (à redéployer, ou automatiquement si le secret GitHub est en place) prévient les coachs par
+  notification dès qu'une nouvelle erreur arrive ; la liste est dans Accueil → ⚙️ → « Erreurs de l'appli ».
