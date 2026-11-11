@@ -1,0 +1,37 @@
+# Déploie les fonctions serveur Supabase à chaque modification de supabase/functions (11/11/2026).
+# Il faut une seule fois, dans GitHub → Settings → Secrets and variables → Actions, un secret SUPABASE_ACCESS_TOKEN
+# (Supabase → Account → Access Tokens). Sans lui, l'étape s'arrête avec un avertissement, sans rien casser.
+# Les scripts SQL (supabase/sql) restent exécutés à la main dans le SQL Editor.
+name: Fonctions Supabase
+
+on:
+  push:
+    branches: [main]
+    paths: ['supabase/functions/**', '.github/workflows/supabase.yml']
+  workflow_dispatch:
+
+concurrency:
+  group: supabase-fonctions
+  cancel-in-progress: false
+
+jobs:
+  deployer:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJET: vjjuopkiwfyqjolxmnho
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.54.11
+      - name: Déployer intervals, rappels, agenda, inscription
+        run: |
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then
+            echo "::warning::Secret SUPABASE_ACCESS_TOKEN absent : fonctions non déployées (voir supabase/README.md)."
+            exit 0
+          fi
+          # « Verify JWT » reste désactivé : chaque fonction vérifie elle-même le compte (et rappels/envoyer le secret)
+          for f in intervals rappels agenda inscription; do
+            supabase functions deploy "$f" --project-ref "$PROJET" --no-verify-jwt --use-api
+          done

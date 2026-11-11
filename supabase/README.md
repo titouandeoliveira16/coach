@@ -39,3 +39,13 @@ La fonction vérifie elle-même l'utilisateur connecté : la vérification JWT d
 
 État des fonctions : `intervals`, `rappels`, `agenda` et `inscription` ont « Verify JWT » désactivé ; chacune vérifie
 elle-même le compte connecté (et `rappels/envoyer` le secret de la tâche planifiée).
+
+## Déploiement automatique des fonctions (depuis le 11/11/2026)
+
+Les 4 fonctions se redéploient seules à chaque modification de `supabase/functions/` envoyée sur GitHub
+(`.github/workflows/supabase.yml`). À faire une seule fois :
+1. **Supabase → Account (en haut à droite) → Access Tokens → Generate new token** (nom : « GitHub coach »). Copie-le.
+2. **GitHub → dépôt coach → Settings → Secrets and variables → Actions → New repository secret** :
+   nom `SUPABASE_ACCESS_TOKEN`, valeur = le jeton copié. Ne le colle nulle part ailleurs (ni dans une conversation).
+3. **GitHub → Actions → Fonctions Supabase → Run workflow** pour un premier déploiement de test.
+Les scripts SQL restent à exécuter à la main dans le SQL Editor.
