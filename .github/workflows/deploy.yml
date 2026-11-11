@@ -25,6 +25,9 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # Audit du 11/11/2026 : rien ne part en ligne sans types, tests et lint au vert (quelle que soit l'origine du push)
+      - run: npm run lint
+      - run: npm test
       - run: npm run build
       - uses: actions/upload-pages-artifact@v3
         with:
