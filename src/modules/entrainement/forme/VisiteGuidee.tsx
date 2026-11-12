@@ -74,7 +74,7 @@ export function VisiteGuidee() {
       setRect(el.getBoundingClientRect())
     }
     // L'écran se met en place (cartes qui arrivent, onglets posés en bas) : mesure un peu après
-    const t = setTimeout(mesurer, 350)
+    const t = setTimeout(mesurer, 500)
     window.addEventListener('resize', mesurer)
     return () => { clearTimeout(t); window.removeEventListener('resize', mesurer) }
   }, [active, e?.cible])
