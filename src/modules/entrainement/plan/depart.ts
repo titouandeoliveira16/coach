@@ -9,6 +9,8 @@ const SEMAINES = 26
 export interface HistoriqueKj {
   semaines: Record<string, number>
   le: string
+  /** Dernière lecture (ISO) : relu au plus une fois par heure */
+  lu?: string
   viaStrava?: number
   /** Premier import ; relu une fois par jour pendant 30 jours tant que des sorties viennent de Strava (absentes) */
   debut?: string

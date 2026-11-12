@@ -239,7 +239,7 @@ export async function importerHistoriqueKj(relire = false) {
   for (const l of Object.keys(semaines)) semaines[l] = Math.round(semaines[l])
   const total = (h?: Record<string, number>) => Object.values(h ?? {}).reduce((a, x) => a + x, 0)
   const mieux = !!avant && total(semaines) > total(avant.semaines) * 1.2
-  await enregistrer(db.reglages, { id: 'historique-kj', valeur: { ...avant, semaines: mieux || !avant ? semaines : avant.semaines, le: aujourdhui(), viaStrava, debut: avant ? (avant.debut ?? avant.le) : aujourdhui(), ...(mieux ? { complet: true } : {}) } satisfies HistoriqueKj })
+  await enregistrer(db.reglages, { id: 'historique-kj', valeur: { ...avant, semaines: mieux || !avant ? semaines : avant.semaines, le: aujourdhui(), lu: new Date().toISOString(), viaStrava, debut: avant ? (avant.debut ?? avant.le) : aujourdhui(), ...(mieux ? { complet: true } : {}) } satisfies HistoriqueKj })
   return { mieux }
 }
 

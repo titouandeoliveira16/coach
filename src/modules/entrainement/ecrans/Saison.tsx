@@ -12,7 +12,8 @@ import { AIDES } from '../aides'
 import { saison } from '../plan/programme'
 
 /** Couleur de chaque phase (rampe validée sur fond sombre). */
-const COULEURS: Record<TypePhase, string> = { reprise: '#7c7b74', base: '#3184d6', vo2: '#a371f7', seuil: '#46a758', entretien: '#6f6d66', 'seuil-tirage': '#46a758', 'seuil-maintien': '#46a758', 'fin-prepa': '#a371f7', specifique: '#e0620f', affutage: '#e5484d', recuperation: '#1f9e8f' }
+/** Couleur de chaque phase = la zone qu'elle travaille, comme Zwift (Z1 gris → Z6 rouge), 12/11/2026 */
+const COULEURS: Record<TypePhase, string> = { reprise: '#7c7b74', base: '#3b9eff', entretien: '#46a758', seuil: '#ffc53d', 'seuil-tirage': '#ffc53d', 'seuil-maintien': '#ffc53d', vo2: '#f76b15', 'fin-prepa': '#f76b15', specifique: '#e5484d', affutage: '#b4474a', recuperation: '#5d5c57' }
 const jm = (d: string) => depuisJour(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
 
 const BADGES: Record<SemaineSaison['type'], { texte: string; classe: string } | undefined> = {
@@ -115,7 +116,7 @@ function HistogrammeKj({ semaines, niveaux, tests }: { semaines: SemaineSaison[]
       <p className="mt-1 min-h-5 text-xs text-texte-2">
         {c ? <>Sem. du {jm(c.lundi)} · {NOMS_PHASES[c.phase]} · <b className="text-texte">≈ {c.budget.toLocaleString('fr-FR')} kJ</b>{c.competition ? ` · course : ${c.competition}` : ''}{c.type === 'allegee' ? ' · allégée' : ''}{c.intensite ? ` · ${c.intensite}` : ''}</> : 'Touche une barre pour voir sa semaine.'}
       </p>
-      <p className="text-xs text-texte-3">Barres pâles : semaines où le volume baisse (allégée, affûtage, récup). Ta charge monte de 7,5 % par semaine réussie (10 % tant que tu es sous ta charge habituelle des 6 derniers mois), dans la limite de tes jours et durées de vélo (Réglages → Ma semaine type, et « Plus tard »).</p>
+      <p className="text-xs text-texte-3">Barres pâles : semaines plus légères (allégée, affûtage, récup).<Aide titre="Ta charge prévue" texte={AIDES.budgetAuto} /></p>
     </div>
   )
 }
@@ -125,11 +126,11 @@ function Blocage({ b }: { b: { lundi: string; jusquA?: string; par: 'heures' | '
   const jour = (d: string) => depuisJour(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })
   const quand = b.jusquA ? `Du ${jour(b.lundi)} au ${jour(b.jusquA)}` : `À partir du ${jour(b.lundi)}`
   const cause = b.par === 'heures'
-    ? `c’est ton temps par semaine (${b.heures?.toLowerCase() ?? 'profil'}) qui bloque`
-    : 'ce sont tes jours et tes durées de vélo qui bloquent'
+    ? `ton temps par semaine (${b.heures?.toLowerCase() ?? 'profil'}) bloque`
+    : 'tes jours et durées de vélo bloquent'
   const quoi = b.par === 'heures'
-    ? 'Pour continuer, choisis plus de temps (profil sportif, ou « Plus tard » à une date).'
-    : 'Pour continuer, ajoute un jour de vélo ou allonge tes durées (Ma semaine type, ou « Plus tard » à une date).'
+    ? 'Ajoute du temps (profil ou « Plus tard »).'
+    : 'Ajoute un jour ou allonge tes durées.'
   return (
     <p className="mt-3 rounded-xl bg-surface-2 px-3 py-2.5 text-sm">
       <span className="font-semibold text-attention">{quand}, ta charge ne peut plus monter</span> : {cause}. <span className="text-texte-2">{quoi}</span>
