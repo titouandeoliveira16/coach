@@ -10,6 +10,8 @@ import { MODULES } from './modules'
 import { Reglages } from './Reglages'
 import { ReglagesGeneraux } from './ReglagesGeneraux'
 import { Entree } from './Entree'
+import { NouveauMotDePasse } from './NouveauMotDePasse'
+import { useRecuperation } from '../core/motDePasse'
 import { useSynchro } from '../core/synchro'
 import { useReglage } from '../core/reglages'
 import type { ReglageCompte } from '../core/inscription'
@@ -25,6 +27,7 @@ const LUEURS = { vert: 'rgba(48,209,88,.14)', orange: 'rgba(255,159,10,.14)', ro
 function Coquille() {
   const { pathname } = useLocation()
   const { session, pret, derniereSynchro } = useSynchro()
+  const recuperation = useRecuperation()
   const [compte] = useReglage<ReglageCompte>('compte', {})
   const [arrivee] = useReglage<EtatArrivee>('arrivee', {})
   const moduleActif = MODULES.find((m) => pathname.startsWith(m.chemin))
@@ -38,6 +41,7 @@ function Coquille() {
   // Personne de connecté sur cet appareil : connexion, ou création du compte avec un code
   if (!pret) return null
   if (!session) return <Entree />
+  if (recuperation) return <div className="min-h-[100dvh]"><NouveauMotDePasse /></div>
   // Questionnaire d'arrivée (après la 1re synchro, pour ne pas le reposer sur un 2e appareil) : tout compte qui ne l'a
   // pas fait, y compris celui de Titouan (sa saison est calculée depuis 11/2026), puis la montre pour les comptes créés
   // avec un code

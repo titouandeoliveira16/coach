@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { creerCompteAvecCode } from '../core/inscription'
 import { seConnecter } from '../core/synchro'
+import { envoyerLienMotDePasse } from '../core/motDePasse'
 import { Bouton } from '../core/ui/Bouton'
 import { Carte } from '../core/ui/Carte'
 
@@ -14,6 +15,7 @@ export function FormulaireCompte() {
   const [motDePasse, setMotDePasse] = useState('')
   const [occupe, setOccupe] = useState(false)
   const [message, setMessage] = useState<string>()
+  const [info, setInfo] = useState<string>()
   const avecCode = mode === 'code'
   const pret = email.includes('@') && motDePasse.length >= 6 && (!avecCode || code.replace(/[^a-z0-9]/gi, '').length === 6) && !occupe
 
@@ -42,6 +44,17 @@ export function FormulaireCompte() {
         onChange={(e) => setMotDePasse(e.target.value)} className={champ} />
       <Bouton type="submit" disabled={!pret}>{occupe ? 'Un instant…' : avecCode ? 'Créer mon compte' : 'Me connecter'}</Bouton>
       {message && <p className="text-sm text-mauvais">{message}</p>}
+      {!avecCode && (
+        <button type="button" className="w-full py-1 text-sm text-texte-2 underline" onClick={async () => {
+          if (!email.includes('@')) { setMessage('Écris d’abord ton e-mail ci-dessus, puis touche « Mot de passe oublié ».'); return }
+          try {
+            await envoyerLienMotDePasse(email.trim())
+            setMessage(undefined)
+            setInfo(`E-mail envoyé à ${email.trim()} (regarde aussi les indésirables). Touche le lien qu’il contient : tu choisiras un nouveau mot de passe.`)
+          } catch (e) { setMessage((e as Error).message) }
+        }}>Mot de passe oublié ?</button>
+      )}
+      {info && <p className="text-sm text-bon">{info}</p>}
       {avecCode && <p className="text-xs text-texte-3">Sans code, pas de compte : c'est ton entraîneur qui te le donne. Un code ne sert qu'une fois.</p>}
       <button type="button" className="w-full py-2 text-sm font-semibold text-accent" onClick={() => { setMode(avecCode ? 'connexion' : 'code'); setMessage(undefined) }}>
         {avecCode ? 'J’ai déjà un compte · Me connecter' : 'J’ai reçu un code · Créer mon compte'}
