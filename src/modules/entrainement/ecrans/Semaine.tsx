@@ -201,7 +201,7 @@ function CarteVelo({ lundi, deps, onMessage, onPrecedente, onSuivante }: { lundi
         </>
       ) : (
         <>
-          <p className="mt-2 text-sm text-texte-2">Ajoute ton renfo ou une autre activité, puis génère ton vélo : il se place autour, sans deux jours durs d'affilée.<Aide titre="Programme vélo" texte={AIDES.programme} /></p>
+          <p className="mt-2 text-sm text-texte-2">Ajoute tes autres activités, puis génère ton vélo autour.<Aide titre="Programme vélo" texte={AIDES.programme} /></p>
           {!passee && <Bouton className="mt-3" disabled={occupe} onClick={generer}>{occupe ? 'Calcul…' : 'Générer mon vélo de la semaine'}</Bouton>}
         </>
       )}
@@ -261,7 +261,7 @@ function DetailSeance({ p, jours, prevues, onFermer, onMessage }: {
         <div className="mb-3 rounded-xl border border-[#facc15]/40 bg-[#facc15]/10 p-3 text-sm">
           <p className="text-[13px] font-semibold text-texte-2">Réalisé</p>
           <p><IconeSport sport={p.sport} />{p.titreRealise ?? 'Séance faite'}</p>
-          <p className="mt-1.5 text-xs text-texte-2">Réalisé différent du prévu : ni réussie ni ratée pour ta progression. Tes kJ comptent ; si c'était plus dur, le reste de ta semaine a été recalculé.<Aide titre="Réalisé différent" texte={AIDES.realiseDifferent} /></p>
+          <p className="mt-1.5 text-xs text-texte-2">Réalisé différent : tes kJ comptent, ta progression ne bouge pas.<Aide titre="Réalisé différent" texte={AIDES.realiseDifferent} /></p>
           <button type="button" className="mt-2 w-full rounded-lg bg-surface-2 py-2 text-xs font-semibold" onClick={async () => { await enregistrer(db.prevues, { ...p, realiseDifferent: false }); onFermer() }}>C'était bien la séance prévue</button>
           <p className="mt-2 text-[13px] font-semibold text-texte-2">Prévu</p>
         </div>
@@ -278,7 +278,7 @@ function DetailSeance({ p, jours, prevues, onFermer, onMessage }: {
       {p.velo?.famille?.startsWith('vtt') && <p className="mt-1 text-xs text-texte-3">Sur le terrain : jugée sur ton effort perçu, pas sur la FC ni les watts.<Aide titre="Sortie VTT sur le terrain" texte={AIDES.vttTerrain} /></p>}
       {p.velo?.famille === 'sprints' && <p className="mt-1 text-xs text-texte-3">Sprints à fond : pas de watts à viser.<Aide titre="Sprints à fond" texte={AIDES.aFond} /></p>}
       {(p.velo?.famille === 'simulation-ligne' || p.velo?.famille === 'cyclo-montees' || p.velo?.famille === 'simulation-xco') && <p className="mt-1 text-xs text-texte-3">Séance de course : séance dure, 48 h sans autre intensité.<Aide titre="Simulation de course" texte={AIDES.simulationCourse} /></p>}
-      {p.velo?.famille === 'z2-long' && <p className="mt-1 text-xs text-texte-3">Sortie longue : elle s'allonge de semaine en semaine vers la durée de ta course.<Aide titre="Sortie longue" texte={AIDES.sortieLongue} /></p>}
+      {p.velo?.famille === 'z2-long' && <p className="mt-1 text-xs text-texte-3">Sortie longue : elle s'allonge vers la durée de ta course.<Aide titre="Sortie longue" texte={AIDES.sortieLongue} /></p>}
       {!!p.velo?.blocsSv1 && <p className="mt-1 text-xs text-texte-3">Blocs au 1er seuil : haut de ta Z2{p.velo.fcSv1 ? `, FC ${p.velo.fcSv1[0]}-${p.velo.fcSv1[1]}` : ''}, le cœur ne dérive pas.<Aide titre="1er seuil" texte={AIDES.blocsSv1} /></p>}
       {p.velo?.etapes?.some((e) => e.repetition?.etapes.some((x) => x.libelle === 'Sprint à fond')) && <p className="mt-1 text-xs text-texte-3">Sprints à fond, longue récupération.<Aide titre="Sprints" texte={AIDES.sprintsSemaine} /></p>}
       {p.velo?.famille === 'course' && <CiblesDeLaCourse date={p.date} />}

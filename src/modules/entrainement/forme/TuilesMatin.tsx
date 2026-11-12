@@ -4,13 +4,14 @@ import { useState } from 'react'
 import { aujourdhui, decalerJour, depuisJour } from '../../../core/dates'
 import { db } from '../../../core/db'
 import { formatNombre } from '../../../core/format'
-import { analyserSommeil, enHeures, etatSommeil } from '../../../metrics/signal'
+import { analyserSommeil, enHeures, SEUILS_DEFAUT } from '../../../metrics/signal'
 import { plagesForme } from '../../../metrics/plages'
 import { mesureUtile, scoreRessenti } from './donnees'
 import { lireSansPesee, peseesValides } from './pesees'
 
 const VERT = 'var(--color-bon)'
 const ORANGE = 'var(--color-attention)'
+const ROUGE = 'var(--color-mauvais)'
 
 /** Petite courbe (tuile fermée) : la tuile nomme la série. */
 function MiniCourbe({ valeurs }: { valeurs: number[] }) {
@@ -67,11 +68,12 @@ export function TuilesMatin({ onPoids }: { onPoids?: () => void } = {}) {
   // Nuit
   const nuits = d.mesures.map((m) => ({ date: m.date, h: m.sommeilH }))
   const sommeil = analyserSommeil(nuits, jour)
-  const courte = etatSommeil(sommeil).nuitCourte
   const nuit = sommeil.nuit
   const matin = d.mesures.find((m) => m.date === jour)
   const ressenti = matin ? scoreRessenti(matin) : undefined
   const plage = plagesForme({ nBase: 0 }, sommeil)[2]
+  /** Couleur d'une nuit : verte dans ta normale, orange en dessous, rouge à 6 h ou moins (seuil de la règle du feu) */
+  const couleurNuit = (v: number) => (v <= SEUILS_DEFAUT.nuitMinH ? ROUGE : (plage.bas !== undefined && v < plage.bas) ? ORANGE : VERT)
 
   // Poids
   const poids = d.pesees.at(-1)
@@ -92,21 +94,20 @@ export function TuilesMatin({ onPoids }: { onPoids?: () => void } = {}) {
     return (
       <div className="entree shrink-0 rounded-[14px] border-[1.5px] border-accent bg-surface p-3.5">
         <EnTeteOuvert Icone={Moon} couleur="var(--color-sommeil)" titre="Nuit" onFermer={() => setOuverte(undefined)} />
-        <p className="mt-1 flex items-baseline gap-2.5"><span className="chiffre text-[30px]" style={{ color: nuit === undefined ? undefined : courte ? ORANGE : VERT }}>{nuit !== undefined ? enHeures(nuit) : '—'}</span><span className="text-[13px] text-texte-2">cette nuit</span></p>
-        <p className="mt-2.5 text-xs text-texte-2">14 dernières nuits · pointillés : moyenne sur 7 nuits</p>
+        <p className="mt-1 flex items-baseline gap-2.5"><span className="chiffre text-[30px]" style={{ color: nuit === undefined ? undefined : couleurNuit(nuit) }}>{nuit !== undefined ? enHeures(nuit) : '—'}</span><span className="text-[13px] text-texte-2">cette nuit</span></p>
+        <p className="mt-2.5 text-xs text-texte-2">14 dernières nuits · pointillés : moyenne 7 nuits</p>
         <svg viewBox="0 0 320 138" className="mt-1 w-full" aria-label="Durée de tes 14 dernières nuits">
           {plage.bas !== undefined && plage.haut !== undefined && <rect x="0" y={Y(plage.haut)} width="320" height={Y(plage.bas) - Y(plage.haut)} rx="3" fill="#2c2c2e" />}
           {quatorze.map((j, i) => {
             const v = h(j)
             if (v === undefined) return null
-            const basse = plage.bas !== undefined && v < plage.bas
-            return <rect key={j} x={i * bw + 3} y={Y(v)} width={bw - 6} height={120 - Y(v)} rx="3" fill={basse ? ORANGE : 'var(--color-sommeil)'} opacity={i === 13 ? 1 : 0.75} />
+            return <rect key={j} x={i * bw + 3} y={Y(v)} width={bw - 6} height={120 - Y(v)} rx="3" fill={couleurNuit(v)} opacity={i === 13 ? 1 : 0.75} />
           })}
           {ligne && <polyline points={ligne} fill="none" stroke="var(--color-texte)" strokeWidth="2" strokeDasharray="4 3" />}
           {quatorze.map((j, i) => <text key={j} x={i * bw + bw / 2} y="134" textAnchor="middle" fontSize="10" fill="var(--color-texte-3)">{depuisJour(j).toLocaleDateString('fr-FR', { weekday: 'narrow' })}</text>)}
         </svg>
         <div className="mt-2.5 flex gap-1.5">
-          <Chiffre titre="Moyenne 7 nuits" valeur={sommeil.moyenne7 !== undefined ? enHeures(sommeil.moyenne7) : '—'} couleur={sommeil.moyenne7 !== undefined && plage.bas !== undefined && sommeil.moyenne7 < plage.bas ? ORANGE : undefined} />
+          <Chiffre titre="Moyenne 7 nuits" valeur={sommeil.moyenne7 !== undefined ? enHeures(sommeil.moyenne7) : '—'} couleur={sommeil.moyenne7 !== undefined ? couleurNuit(sommeil.moyenne7) : undefined} />
           <Chiffre titre="Ta normale" valeur={plage.bas !== undefined && plage.haut !== undefined ? `${court(plage.bas)} – ${court(plage.haut)}` : '—'} />
           <Chiffre titre="Ressenti" valeur={ressenti !== undefined ? `${formatNombre(ressenti, 1)} / 5` : '—'} couleur={ressenti !== undefined ? (ressenti < 2.5 ? ORANGE : VERT) : undefined} />
         </div>
@@ -156,7 +157,7 @@ export function TuilesMatin({ onPoids }: { onPoids?: () => void } = {}) {
     <div className="grid shrink-0 grid-cols-2 gap-2">
       <button type="button" onClick={() => setOuverte('nuit')} className="presse entree rounded-[14px] border-[1.5px] border-transparent bg-surface p-3 text-left">
         <span className="flex items-center justify-between text-xs text-texte-2"><span className="flex items-center gap-1.5"><Moon className="h-3.5 w-3.5" style={{ color: 'var(--color-sommeil)' }} strokeWidth={2} />Nuit</span><span className="text-texte-3">▾</span></span>
-        <span className="chiffre mt-1 block text-[26px] leading-tight" style={{ color: nuit === undefined ? undefined : courte ? ORANGE : VERT }}>{nuit !== undefined ? enHeures(nuit) : '—'}</span>
+        <span className="chiffre mt-1 block text-[26px] leading-tight" style={{ color: nuit === undefined ? undefined : couleurNuit(nuit) }}>{nuit !== undefined ? enHeures(nuit) : '—'}</span>
         <span className="mt-1 block text-xs text-texte-2">
           {ressenti !== undefined ? <>Ressenti <b style={{ color: ressenti < 2.5 ? ORANGE : VERT }}>{ressentiMot(ressenti)} · {formatNombre(ressenti, 1)} / 5</b></> : 'Ressenti pas noté'}
         </span>

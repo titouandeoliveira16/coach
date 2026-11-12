@@ -16,7 +16,7 @@ const MUSCU = ['Pas pour l’instant', '1 séance par semaine', '2 séances par 
 const ARRETS: [string, number][] = [['Non', 0], ['2 à 3 semaines', 2], ['1 mois ou plus', 4]]
 const LONGUES: [string, number, number][] = [['1 h à 1 h 30', 60, 90], ['1 h 30 à 2 h', 90, 120], ['2 h à 3 h', 120, 180], ['2 h 30 à 4 h', 150, 240]]
 const COULEURS_PHASES: Record<string, string> = {
-  reprise: '#60a5fa', base: '#2dd4bf', entretien: '#34d399', vo2: '#4ade80', seuil: '#facc15', 'seuil-tirage': '#4ade80', 'seuil-maintien': '#facc15', 'fin-prepa': '#c084fc', specifique: '#fb923c', affutage: '#f87171',
+  reprise: '#7c7b74', base: '#3b9eff', entretien: '#46a758', seuil: '#ffc53d', 'seuil-tirage': '#ffc53d', 'seuil-maintien': '#ffc53d', vo2: '#f76b15', 'fin-prepa': '#f76b15', specifique: '#e5484d', affutage: '#b4474a', recuperation: '#5d5c57',
 }
 const champ = 'block h-12 w-full min-w-0 rounded-xl border border-bordure bg-surface-2 px-3 text-base outline-none focus:border-accent'
 const puce = (actif: boolean) => `rounded-full border px-3 py-1.5 text-sm ${actif ? 'border-accent bg-accent text-fond font-semibold' : 'border-bordure text-texte-2'}`

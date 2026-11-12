@@ -266,6 +266,7 @@ export async function migrerSaisonV4() {
   const lundi = decalerJour(aujourdhui(), -((new Date(`${aujourdhui()}T12:00:00`).getDay() + 6) % 7))
   const { phase } = phaseDe(lundi, prog.phases)
   if (phase.type === 'reprise' || phase.debut === lundi) await recalculerSaison(true)
+  else await (await import('../plan/programme')).recalculerSemainesAVenir()
   const apres = (await db.reglages.get('entrainement'))?.valeur as ReglagesEntrainement | undefined
   if (apres?.programme && !apres.programme.saisonV4) await enregistrer(db.reglages, { id: 'entrainement', valeur: { ...apres, programme: { ...apres.programme, saisonV3: true, saisonV4: true } } })
 }
@@ -278,7 +279,8 @@ export async function migrerSaisonV4() {
 export async function completerHistorique() {
   const h = (await db.reglages.get('historique-kj'))?.valeur as HistoriqueKj | undefined
   const jour = aujourdhui()
-  if (!h || !h.viaStrava || h.complet || h.le === jour || (h.debut && ecartJours(h.debut, jour) > 30)) return
+  // Relu au plus une fois par heure (l'historique Garmin peut arriver dans Intervals à tout moment de la journée)
+  if (!h || !h.viaStrava || h.complet || (h.lu && Date.now() - Date.parse(h.lu) < 3_600_000) || (h.debut && ecartJours(h.debut, jour) > 30)) return
   const { importerHistoriqueKj } = await import('../import/intervals')
   const r = await importerHistoriqueKj(true).catch(() => undefined)
   const prog = ((await db.reglages.get('entrainement'))?.valeur as ReglagesEntrainement | undefined)?.programme
@@ -286,6 +288,8 @@ export async function completerHistorique() {
   const lundi = decalerJour(jour, -((new Date(`${jour}T12:00:00`).getDay() + 6) % 7))
   const { phase } = phaseDe(lundi, prog.phases)
   if (phase.type === 'reprise' || phase.debut === lundi) await recalculerSaison(true)
+  // Dans tous les cas, ta semaine en cours (et les 2 suivantes) repart tout de suite de ta vraie charge habituelle
+  else await (await import('../plan/programme')).recalculerSemainesAVenir()
 }
 
 /**

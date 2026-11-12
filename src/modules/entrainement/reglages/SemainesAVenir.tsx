@@ -37,7 +37,7 @@ export function SemainesAVenir({ prog, onChanger }: { prog: ReglagesProgramme; o
   return (
     <div className="mt-3 border-t border-bordure pt-3">
       <p className="text-[13px] font-semibold text-texte-2">Plus tard</p>
-      <p className="mt-0.5 text-xs text-texte-3">Plus de jours ou plus de temps à partir d'une date (déménagement, fin d'examen) : ta charge pourra continuer de monter.</p>
+      <p className="mt-0.5 text-xs text-texte-3">Plus de jours ou de temps à partir d'une date.</p>
       {futures.map((f, i) => (
         <div key={f.debut} className="mt-2 flex items-center justify-between gap-2 rounded-xl bg-surface-2 px-3 py-2.5">
           <span className="min-w-0 text-sm">
