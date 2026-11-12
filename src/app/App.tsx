@@ -10,6 +10,8 @@ import { MODULES } from './modules'
 import { Reglages } from './Reglages'
 import { ReglagesGeneraux } from './ReglagesGeneraux'
 import { Entree } from './Entree'
+import { EcranInstallation } from './EcranInstallation'
+import { doitInstaller } from './installation'
 import { useSynchro } from '../core/synchro'
 import { useReglage } from '../core/reglages'
 import type { ReglageCompte } from '../core/inscription'
@@ -37,15 +39,17 @@ function Coquille() {
   const style = { '--accent': accent, '--color-accent': accent, '--lueur': lueur } as CSSProperties
 
   // Personne de connecté sur cet appareil : connexion, ou création du compte avec un code
+  // iPhone dans Safari : on installe d'abord l'appli sur l'écran d'accueil (notifications, et pas de 2e connexion)
+  if (doitInstaller()) return <EcranInstallation />
   if (!pret) return null
   if (!session) return <Entree />
+  // Compte créé avec un code : les notifications tout de suite après la connexion
+  if (compte.invite && derniereSynchro && !arrivee.notifs) return <EtapeNotifications />
   // Questionnaire d'arrivée (après la 1re synchro, pour ne pas le reposer sur un 2e appareil) : tout compte qui ne l'a
   // pas fait, y compris celui de Titouan (sa saison est calculée depuis 11/2026), puis la montre pour les comptes créés
   // avec un code
   if (derniereSynchro && !arrivee.fait) return <QuestionnaireArrivee />
   if (compte.invite && arrivee.fait && !arrivee.montre) return <QuestionnaireArrivee montreSeulement />
-  // Puis les notifications (sans cette étape, beaucoup ne les activaient jamais)
-  if (compte.invite && arrivee.fait && arrivee.montre && !arrivee.notifs) return <EtapeNotifications />
 
   // Dans un module, la page est toujours un peu plus haute que l'écran : sur iPhone (appli installée),
   // la barre du bas ne reste collée en bas que si la page peut défiler
