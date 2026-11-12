@@ -22,9 +22,31 @@ import { useNutritionEffort } from '../reglages/ProfilSportif'
 import { basculerSansMontre, QUESTIONS, scoreRessenti } from './donnees'
 import { SeancesFaites } from './SeancesFaites'
 import type { Raison, Seance } from '../types'
+import { plagesForme, positionPct, type Plage } from '../../../metrics/plages'
+import { analyserSommeil, enHeures } from '../../../metrics/signal'
 import { nouvelId } from '../seances/donnees'
 
 const COULEUR = { vert: 'var(--color-bon)', orange: 'var(--color-attention)', rouge: 'var(--color-mauvais)' }
+
+/** Une plage : ta normale (zone grise), ta valeur (le point, de la couleur de son état). */
+function LignePlage({ p, etat, couleur }: { p: Plage; etat?: 'ok' | 'alerte' | 'info'; couleur: (e?: 'ok' | 'alerte' | 'info') => string }) {
+  const texte = p.valeur === undefined ? '—'
+    : p.cle === 'recuperation' ? `${Math.round(p.valeur)} ms` : p.cle === 'pouls' ? `${Math.round(p.valeur)} bpm` : enHeures(p.valeur)
+  const c = p.valeur === undefined ? 'var(--color-texte-3)' : couleur(etat)
+  return (
+    <span className="mt-2.5 block">
+      <span className="flex justify-between text-xs"><span className="text-texte-2">{p.libelle}</span><b style={{ color: c }}>{p.bas === undefined && p.valeur !== undefined ? `${texte} · calibrage` : texte}</b></span>
+      <span className="relative mt-1.5 block h-2 rounded-full bg-surface-2">
+        {p.bas !== undefined && p.haut !== undefined && (
+          <span className="absolute inset-y-0 rounded-full bg-[#2c2c2e]" style={{ left: `${positionPct(p, p.bas)}%`, width: `${positionPct(p, p.haut) - positionPct(p, p.bas)}%` }} />
+        )}
+        {p.valeur !== undefined && p.bas !== undefined && (
+          <span className="absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-surface" style={{ left: `${positionPct(p, p.valeur)}%`, background: c }} />
+        )}
+      </span>
+    </span>
+  )
+}
 
 /** Choix bien visible entre la version conseillée par le feu et la séance prévue. */
 function ChoixSeance({ maintenue, conseil, prevu, couleur, onChoisir }: {
@@ -122,80 +144,54 @@ export function CarteAujourdhui({ onModifierMatin, apresForme }: {
 
   const etapesDuJour = prevue && (decision?.force ? prevue.velo?.etapes : adaptation!.etapes)
   const minutesAdaptees = adaptation?.etapes ? Math.round(adaptation.etapes.reduce((t, e) => t + e.dureeSec, 0) / 60) : undefined
-  const cases = (['recuperation', 'pouls', 'sommeil', 'ressenti'] as const).map((cle) => ({ cle, d: signal.details.find((x) => x.cle === cle) }))
   const autres = signal.details.filter((x) => !x.cle || x.cle === 'charge')
-  const NOMS_CASES = { recuperation: 'Récup.', pouls: 'Pouls', sommeil: 'Sommeil', ressenti: 'Ressenti' }
-  // Chiffres du matin sous chaque case (ex-carte « Ton matin »)
-  const enHeures = (h: number) => `${Math.floor(h)} h ${String(Math.round((h % 1) * 60)).padStart(2, '0')}`
-  const nuits7 = a.mesures.filter((m) => m.date > decalerJour(jour, -7) && m.sommeilH !== undefined).map((m) => m.sommeilH!)
   const ressenti = mesure ? scoreRessenti(mesure) : undefined
-  const moyenneNuits = nuits7.length >= 3 ? enHeures(nuits7.reduce((x, y) => x + y, 0) / nuits7.length) : undefined
-  const resumes: Record<(typeof cases)[number]['cle'], string | undefined> = {
-    recuperation: mesure?.vfcMs !== undefined && !mesure.sansMontre ? `${mesure.vfcMs} ms` : undefined,
-    pouls: mesure?.fcRepos !== undefined && !mesure.sansMontre ? `${mesure.fcRepos} bpm` : undefined,
-    // La nuit est déjà dans la tuile Nuit en haut : ici, la moyenne des 7 dernières nuits
-    sommeil: moyenneNuits ? `7 j : ${moyenneNuits}` : undefined,
-    ressenti: ressenti !== undefined ? `${formatNombre(ressenti, 1)} / 5` : undefined,
-  }
+  const plages = plagesForme(a.vfc, analyserSommeil(a.mesures.map((m) => ({ date: m.date, h: m.sommeilH })), jour))
   const couleurEtat = (e?: 'ok' | 'alerte' | 'info') => (e === 'alerte' ? COULEUR[signal.couleur === 'vert' ? 'orange' : signal.couleur] : e === 'ok' ? COULEUR.vert : 'var(--color-texte-2)')
-  /** Couleur de chaque case (texte de la couleur du feu sur un fond teinté) ; gris si pas encore d'avis */
-  const fondCase = (e?: 'ok' | 'alerte' | 'info') => (e === 'alerte' ? COULEUR[signal.couleur === 'vert' ? 'orange' : signal.couleur] : e === 'ok' ? COULEUR.vert : undefined)
   const petitBouton = (actif: boolean) => `min-h-11 flex-1 rounded-xl border px-1 text-[13px] font-semibold ${actif ? 'border-mauvais bg-mauvais text-fond' : 'border-bordure text-texte-2'}`
 
   return (
     <>
-      {/* Ta forme : le feu et ses 4 indicateurs, détail à ouvrir */}
-      <Carte visite="forme" className={`flex shrink-0 flex-col gap-2.5 p-3! ${formeOuverte ? 'border-accent!' : ''}`}>
-        <button type="button" onClick={basculerForme} className="flex flex-col gap-1.5 text-left">
-          <span className="flex w-full items-center justify-between">
-            <span className="etiquette">Ta forme</span>
-            <span className={`text-sm ${formeOuverte ? 'font-semibold text-accent' : 'text-texte-3'}`}>{formeOuverte ? 'Réduire ▴' : 'Détail ▾'}</span>
-          </span>
-          {/* Le feu du jour, en grand (la forme n'est affichée qu'ici) */}
-          <span className="flex items-center gap-2.5">
-            <HeartPulse className="h-7 w-7 shrink-0" style={{ color: COULEUR[signal.couleur] }} strokeWidth={2} />
-            <span>
-              <span className="chiffre block text-[26px] leading-none" style={{ color: COULEUR[signal.couleur] }}>{signal.couleur[0].toUpperCase() + signal.couleur.slice(1)}</span>
-              <span className="mt-0.5 block text-[13px] text-texte-2">
-                {enAlerte.length === 0 ? 'Tes signaux sont dans ta normale' : enAlerte.length === 1 ? '1 signal en alerte ce matin' : `${enAlerte.length} signaux en alerte ce matin`}
-              </span>
+      {/* Ta forme (maquette P, 12/11/2026) : le feu en un mot, puis tes 3 plages (ta normale en gris, ce matin = le point) */}
+      <Carte visite="forme" className={`flex shrink-0 flex-col p-3.5! ${formeOuverte ? 'border-accent!' : ''}`}>
+        <button type="button" onClick={basculerForme} className="flex items-center gap-2.5 text-left">
+          <HeartPulse className="h-7 w-7 shrink-0" style={{ color: COULEUR[signal.couleur] }} strokeWidth={2} />
+          <span className="min-w-0 flex-1">
+            <span className="chiffre block text-[26px] leading-none" style={{ color: COULEUR[signal.couleur] }}>{signal.couleur[0].toUpperCase() + signal.couleur.slice(1)}</span>
+            <span className="mt-1 block text-[13px] leading-snug text-texte-2">
+              {enAlerte.length === 0 ? 'Tes signaux sont dans ta normale'
+                : `${enAlerte.length === 1 ? '1 signal hors de ta normale' : `${enAlerte.length} signaux hors de ta normale`} · ${signal.couleur === 'rouge' ? 'pas d’intensité' : 'séance adaptée'}`}
             </span>
           </span>
+          <span className={`shrink-0 self-start text-[13px] ${formeOuverte ? 'font-semibold text-accent' : 'text-texte-3'}`}>{formeOuverte ? 'Réduire ▴' : 'Détail ▾'}</span>
         </button>
-        <div className="grid grid-cols-4 gap-1.5 text-center">
-          {cases.map(({ cle, d }) => (
-            <button key={cle} type="button" onClick={basculerForme}
-              className={`presse flex flex-col items-center justify-center gap-0.5 rounded-[10px] px-0.5 py-1.5 ${fondCase(d?.etat) ? '' : 'bg-surface-2 text-texte-2'}`}
-              style={fondCase(d?.etat) ? { background: `color-mix(in srgb, ${fondCase(d?.etat)} 16%, transparent)`, color: fondCase(d?.etat) } : undefined}>
-              <span className="text-[11px] opacity-85">{NOMS_CASES[cle]}</span>
-              <span className={`font-semibold leading-tight ${(d?.court?.length ?? 0) > 10 ? 'text-xs' : 'text-sm'}`}>{d?.court === 'En calibration' ? 'Calibrage' : d?.court ?? '—'}</span>
-              {resumes[cle] && <span className="text-[11px] leading-tight opacity-85">{resumes[cle]}</span>}
-            </button>
-          ))}
-        </div>
+        <button type="button" onClick={basculerForme} className="mt-1 text-left">
+          {plages.map((p) => <LignePlage key={p.cle} p={p} etat={signal.details.find((x) => x.cle === p.cle)?.etat} couleur={couleurEtat} />)}
+        </button>
         {formeOuverte && (
-          <div className="space-y-2">
-            {signal.calibrationVfc && <p className="text-xs text-texte-3">VFC en calibration ({a.vfc.nBase}/14 jours)</p>}
+          <div className="mt-3.5 space-y-3 border-t border-bordure pt-3">
+            {enAlerte.length > 0 && (
+              <p className="rounded-xl px-3 py-2.5 text-[13px] leading-snug" style={{ background: `color-mix(in srgb, ${COULEUR[signal.couleur]} 12%, transparent)` }}>
+                <b style={{ color: COULEUR[signal.couleur] }}>Pourquoi {signal.couleur} ?</b> {pourquoiCourt.replace(/^./, (c) => c.toUpperCase())}. {signal.couleur === 'orange' ? 'Une seule alerte : séance dure raccourcie, mêmes watts.' : 'Deux alertes ou plus : pas d’intensité aujourd’hui.'}<Aide titre="Règle du feu" texte={`${pourquoi} ${regle}`} />
+              </p>
+            )}
+            {signal.calibrationVfc && <p className="text-xs text-texte-3">Récupération en calibration ({a.vfc.nBase}/14 jours de mesures)</p>}
             {mesure && (
-              <div className="space-y-1">
-                <div className="grid grid-cols-5 gap-1 text-center">
+              <div>
+                <p className="text-xs text-texte-2">Tes notes du matin{ressenti !== undefined ? ` · ressenti ${formatNombre(ressenti, 1)} / 5` : ''}</p>
+                <div className="mt-1.5 grid grid-cols-5 gap-1 text-center">
                   {QUESTIONS.map((q) => (
-                    <span key={q.cle} className="rounded-lg bg-surface-2 py-1">
-                      <span className="block text-[11px] text-texte-3">{q.libelle}</span>
-                      <b className="text-sm">{mesure[q.cle] ?? '–'}</b>
+                    <span key={q.cle} className="rounded-[10px] bg-surface-2 py-1.5">
+                      <span className="block text-[10px] text-texte-3">{q.libelle}</span>
+                      <b className="text-base" style={{ color: (mesure[q.cle] ?? 5) <= 2 ? COULEUR.orange : undefined }}>{mesure[q.cle] ?? '–'}</b>
                     </span>
                   ))}
                 </div>
-                {onModifierMatin && <button type="button" onClick={onModifierMatin} className="text-xs font-semibold text-accent">Modifier mes notes du matin</button>}
+                {onModifierMatin && <button type="button" onClick={onModifierMatin} className="mt-2 text-[13px] font-semibold text-accent">Modifier mes notes</button>}
               </div>
             )}
-            {signal.details.some((x) => x.etat === 'alerte' && x.cle && x.cle !== 'charge' && x.texte !== x.court) && (
-              <p className="text-sm" style={{ color: couleurEtat('alerte') }}>
-                {signal.details.filter((x) => x.etat === 'alerte' && x.cle && x.cle !== 'charge' && x.texte !== x.court).map((x) => x.texte).join(' · ')}
-              </p>
-            )}
             {autres.length > 0 && (
-              <ul className="space-y-0.5 text-sm">
+              <ul className="space-y-0.5 text-[13px]">
                 {autres.map((x) => (
                   <li key={x.texte} style={{ color: x.etat === 'alerte' ? couleurEtat('alerte') : undefined }} className={x.etat === 'alerte' ? '' : 'text-texte-3'}>{x.texte}</li>
                 ))}
@@ -214,9 +210,9 @@ export function CarteAujourdhui({ onModifierMatin, apresForme }: {
             </div>
           </div>
         )}
-        {malade && <p className="text-xs text-texte-3">Noté pour aujourd'hui : la journée est marquée indisponible.</p>}
+        {malade && <p className="mt-2 text-xs text-texte-3">Noté pour aujourd'hui : la journée est marquée indisponible.</p>}
         {troisJours && (
-          <p className="rounded-xl border border-mauvais/40 bg-mauvais/10 p-3 text-sm">
+          <p className="mt-2 rounded-xl border border-mauvais/40 bg-mauvais/10 p-3 text-sm">
             3 jours de suite en alerte avec une maladie ou une douleur : prends l'avis d'un médecin avant de reprendre.
           </p>
         )}

@@ -165,7 +165,8 @@ export function Pager({ pages }: { pages: Page[] }) {
 
   if (actif < 0) return <Navigate to={pages[0].vers} replace />
   return (
-    <div data-pager className="fixed inset-x-0 mx-auto max-w-lg overflow-hidden" style={zone ? { top: zone.haut, bottom: zone.bas } : { top: 0, bottom: 0, visibility: 'hidden' }}>
+    // Un champ ou un focus dans une page voisine ne doit jamais décaler la bande (overflow caché mais défilable par le code)
+    <div data-pager onScroll={(e) => { if (e.currentTarget.scrollLeft) e.currentTarget.scrollLeft = 0 }} className="fixed inset-x-0 mx-auto max-w-lg overflow-hidden" style={zone ? { top: zone.haut, bottom: zone.bas } : { top: 0, bottom: 0, visibility: 'hidden' }}>
       <div ref={piste} className="flex h-full will-change-transform" style={{ width: `${n * 100}%`, transform: position(actif) }}>
         {pages.map((p, i) => (
           <section key={p.vers} aria-hidden={i !== actif} className="h-full touch-pan-y overflow-y-auto overscroll-contain px-4 pb-28" style={{ width: `${100 / n}%` }}
