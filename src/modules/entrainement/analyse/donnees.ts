@@ -11,16 +11,31 @@ import type { MesureMatin, Seance } from '../types'
 export const JOURS_AMORCAGE = 28
 
 /**
- * « entrainement » (12/11/2026) : tout sauf les footings faciles. Le vélo est le sport de l'appli : un footing tranquille
- * ne doit pas dérégler le feu du matin ni les Z2 vélo ; une course intense (au-dessus de la zone facile) compte toujours.
+ * « entrainement » (12/11/2026, relu le même jour) : tout sauf les footings faciles et courts. Le vélo est le sport de
+ * l'appli : un footing tranquille de 1 h au plus ne dérègle ni le feu du matin ni les Z2 vélo (il coûte peu, et la VFC
+ * repère le reste). Comptent toujours : une course au-dessus de la zone facile, un footing de plus de 1 h, le premier
+ * après plus de 4 semaines sans courir (courir abîme bien plus les muscles que pédaler : Nieman 2014 ; protection contre
+ * les courbatures jusqu'à ~6 semaines : Byrnes 1985), et une course sans FC ni ressenti (intensité inconnue).
+ * Seuils = choix d'entraîneur. « course-entrainement » : la course seule, avec le même filtre.
  */
-export type FiltreSport = 'velo' | 'course' | 'total' | 'entrainement'
+export type FiltreSport = 'velo' | 'course' | 'total' | 'entrainement' | 'course-entrainement'
+
+/** Footing facile qui ne compte pas dans la fatigue vélo (voir « entrainement » ci-dessus). */
+export function footingIgnore(s: Seance, c: Contexte, toutes: Seance[]) {
+  if (s.sport !== 'course' || s.dureeSec > 3600) return false
+  if (!s.fcMoy && s.rpe === undefined) return false
+  if (domaineDe(s, c.bornes) !== 'basse') return false
+  const avant = toutes.filter((x) => x.sport === 'course' && x.date < s.date).map((x) => x.date).sort().pop()
+  return !!avant && avant >= decalerJour(s.date, -28)
+}
 
 /** Charge de chaque jour entre deux dates (incluses), jours sans séance = 0. */
 export function chargesParJour(seances: Seance[], c: Contexte, du: string, au: string, sport: FiltreSport = 'total') {
   const parJour = new Map<string, number>()
   for (const s of seances) {
-    if (sport === 'entrainement' ? s.sport === 'course' && domaineDe(s, c.bornes) === 'basse' : sport !== 'total' && s.sport !== sport) continue
+    if (sport === 'entrainement' ? footingIgnore(s, c, seances)
+      : sport === 'course-entrainement' ? s.sport !== 'course' || footingIgnore(s, c, seances)
+      : sport !== 'total' && s.sport !== sport) continue
     parJour.set(s.date, (parJour.get(s.date) ?? 0) + chargeDe(s, c))
   }
   const res: { date: string; charge: number }[] = []
