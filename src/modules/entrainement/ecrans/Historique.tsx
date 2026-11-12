@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { db } from '../../../core/db'
-import { depuisJour } from '../../../core/dates'
+import { aujourdhui, decalerJour, depuisJour } from '../../../core/dates'
 import { formatMinSec, formatNombre } from '../../../core/format'
 import { Carte } from '../../../core/ui/Carte'
 import { Puces } from '../../../core/ui/Puces'
@@ -27,6 +27,9 @@ export function Historique() {
   const [filtre, setFiltre] = useState<Filtre>('Tous')
   const seances = useLiveQuery(() => db.seances.orderBy('date').reverse().toArray())
   if (!seances) return null
+  // « Course » seulement si tu as couru ces 3 derniers mois (vélo seul depuis 11/2026)
+  const depuis = decalerJour(aujourdhui(), -90)
+  const filtres = FILTRES.filter((f) => f !== 'Course' || seances.some((s) => s.sport === 'course' && s.date >= depuis))
 
   const visibles = seances.filter((s) =>
     filtre === 'Tous' || (filtre === 'Vélo' ? s.sport === 'velo' : filtre === 'Course' ? s.sport === 'course' : s.sport !== 'velo' && s.sport !== 'course'))
@@ -38,7 +41,7 @@ export function Historique() {
 
   return (
     <div className="space-y-3">
-      <Puces options={FILTRES} valeur={filtre} onChoisir={(f) => setFiltre(f ?? 'Tous')} effacable={false} />
+      <Puces options={filtres} valeur={filtre} onChoisir={(f) => setFiltre(f ?? 'Tous')} effacable={false} />
 
       {visibles.length === 0 && (
         <Carte>

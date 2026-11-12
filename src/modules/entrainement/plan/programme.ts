@@ -918,12 +918,13 @@ async function avecGardeFou<B extends { budget: number; raison: string }>(b: B, 
   const premier = seances.map((s) => s.date).sort()[0]
   if (!premier || premier > decalerJour(lundi, -35)) return b
   const coursePrevue = (await db.prevues.where('date').between(lundi, decalerJour(lundi, 6), true, true).toArray())
-    .filter((p) => p.sport === 'course' && p.statut !== 'abandonnee')
+    // Seule la course intense compte (un footing facile ne retire rien au vélo, 12/11/2026)
+    .filter((p) => p.sport === 'course' && p.statut !== 'abandonnee' && p.intensite !== 'basse')
     .reduce((a, p) => a + chargePrevue(p, c.chargeRef), 0)
-  const charge7 = chargesHebdo(seances, c, lundi, 1)[0]
+  const charge7 = chargesHebdo(seances, c, lundi, 1, 'entrainement')[0]
   const g = gardeFouCourse({
     hausseCoursePct: hausseCharge(coursePrevue, chargesHebdo(seances, c, lundi, 4, 'course')),
-    ratioPic: ratioPic(charge7, chargesHebdo(seances, c, decalerJour(lundi, -7), 4)),
+    ratioPic: ratioPic(charge7, chargesHebdo(seances, c, decalerJour(lundi, -7), 4, 'entrainement')),
   })
   return g ? { ...b, budget: Math.round(b.budget * (1 - g.pct)), raison: `${b.raison} · ${g.raison}` } : b
 }

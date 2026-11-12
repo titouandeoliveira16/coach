@@ -298,8 +298,14 @@ export function CarteAujourdhui({ onModifierMatin, apresForme }: {
           <>
             <p className="mt-1 text-[22px] font-bold">{signal.couleur === 'rouge' ? 'Très facile ou repos' : 'Repos'}</p>
             <p className="mt-1 text-sm text-texte-2">
-              {signal.couleur === 'rouge' ? '30 à 45 min très facile au plus, ou repos complet.' : 'Marche, étirements, bien dormir : c’est aussi là que tu progresses.'}
+              {signal.couleur === 'rouge' ? 'Repos complet, ou au plus une sortie très facile.' : 'Marche, étirements, bien dormir : c’est aussi là que tu progresses.'}
             </p>
+            {/* Si tu as envie de rouler (12/11/2026) : 20 à 30 min en zone 1, à peine plus que tourner les jambes */}
+            <div className="mt-3 rounded-xl bg-surface-2 p-3">
+              <p className="flex items-baseline justify-between text-sm"><span className="font-semibold">Si tu veux rouler</span><span className="text-texte-2">20 à 30 min · Z1</span></p>
+              <Profil etapes={[{ debutSec: 0, dureeSec: 1800, libelle: 'Très facile (Z1)', w: Math.round(cpW * 0.5), wMin: Math.round(cpW * 0.45), wMax: Math.round(cpW * 0.55) }]} cpW={cpW} />
+              <p className="mt-1 text-xs text-texte-3">Vers {Math.round(cpW * 0.45)}-{Math.round(cpW * 0.55)} W, en parlant facilement. Pas plus : le repos fait progresser.</p>
+            </div>
           </>
         )}
       </Carte>
