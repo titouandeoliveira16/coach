@@ -726,17 +726,21 @@ export async function saison() {
     const prevu = (await chargesSemaine(x.lundi)).kjPrevus
     if ((await lireMeta(x.lundi)) || (i === 0 && prevu > 0)) x.budget = Math.round(prevu)
   }
-  // Premier blocage de la hausse (hors semaine en cours) : quelle limite bute, et jusqu'à quand (une semaine type à venir peut la relever)
-  const i = semaines.findIndex((x, k) => k > 0 && x.bloquee)
-  let blocage: { lundi: string; jusquA?: string; par: 'heures' | 'jours'; heures?: string; levier?: ReturnType<typeof meilleurLevier> } | undefined
-  if (i > 0) {
+  // Chaque période où la hausse bute (hors semaine en cours, 3 au plus) : quelle limite, jusqu'à quand (une semaine type
+  // à venir peut la relever), et le réglage qui débloque le plus (12/11/2026 : avant, seule la 1re période était dite)
+  type Blocage = { lundi: string; jusquA?: string; par: 'heures' | 'jours'; heures?: string; levier?: ReturnType<typeof meilleurLevier> }
+  const blocages: Blocage[] = []
+  for (let i = 1; i < semaines.length && blocages.length < 3; i++) {
+    if (!semaines[i].bloquee) continue
     const l = semaines[i].lundi
     const p = calcul(l).plafond
-    const fin = semaines.slice(i + 1).find((x) => calcul(x.lundi).plafond > p * 1.02)
+    const k = semaines.findIndex((x, j) => j > i && calcul(x.lundi).plafond > p * 1.02)
     const par = calcul(l).limite
-    blocage = { lundi: l, jusquA: fin?.lundi, par, heures: heuresAu(prog, ps?.heuresSemaine, l), ...(par === 'jours' ? { levier: meilleurLevier({ semaineType: programmeAu(prog, l).semaineType, cap: capDe(l), z2W }) } : {}) }
+    blocages.push({ lundi: l, jusquA: k > 0 ? semaines[k].lundi : undefined, par, heures: heuresAu(prog, ps?.heuresSemaine, l), ...(par === 'jours' ? { levier: meilleurLevier({ semaineType: programmeAu(prog, l).semaineType, cap: capDe(l), z2W }) } : {}) })
+    if (k < 0) break
+    i = k - 1
   }
-  return { semaines, phases, blocage, fin: decalerJour(derniere.debut, 27), demarrage: lundi > lundiDe(aujourdhui()) ? lundi : undefined }
+  return { semaines, phases, blocages, fin: decalerJour(derniere.debut, 27), demarrage: lundi > lundiDe(aujourdhui()) ? lundi : undefined }
 }
 
 /** Progression de chaque famille de séances d'intensité déjà travaillée : palier (1 à 4) et bonus de watts. */

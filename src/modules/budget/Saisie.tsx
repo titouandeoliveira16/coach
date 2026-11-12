@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useBloquerFond } from '../../core/ui/bloquerFond'
 import { aujourdhui } from '../../core/dates'
 import { formatEuros } from '../../core/format'
 import { categoriesParUsage, moisDuRevenu, nomMois } from './calculs'
@@ -24,6 +25,7 @@ const versCentimes = (t: string) => Math.round(Number(t.replace(',', '.') || '0'
  */
 export function Saisie({ initial, onFermer }: { initial?: Partial<Mouvement>; onFermer: (message?: string) => void }) {
   const d = useBudget()
+  useBloquerFond()
   const [texte, setTexte] = useState(versTexte(initial?.montant))
   const [type, setType] = useState<TypeMouvement>(initial?.type ?? 'depense')
   const [categorieId, setCategorieId] = useState(initial?.categorieId)
@@ -74,8 +76,8 @@ export function Saisie({ initial, onFermer }: { initial?: Partial<Mouvement>; on
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex items-end bg-black/60" onClick={() => onFermer()}>
-      <div className="pb-sur max-h-[96vh] w-full overflow-y-auto rounded-t-3xl border-t border-bordure bg-surface px-4 pt-3" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-40 flex touch-none items-end bg-black/60" onClick={() => onFermer()}>
+      <div className="pb-sur max-h-[96dvh] w-full touch-pan-y overflow-y-auto overscroll-contain rounded-t-3xl border-t border-bordure bg-surface px-4 pt-3" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <p className="font-bold">{initial?.id ? 'Modifier' : 'Nouveau mouvement'}</p>
           <button type="button" onClick={() => onFermer()} aria-label="Fermer" className="px-2 text-2xl text-texte-3">×</button>

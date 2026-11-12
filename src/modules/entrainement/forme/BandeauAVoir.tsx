@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { useBloquerFond } from '../../../core/ui/bloquerFond'
 
 /**
  * Cartes ponctuelles (bilan du dimanche, test à valider, plan Campus…) rangées dans un seul bandeau, pour que
@@ -10,6 +11,7 @@ export function BandeauAVoir({ children }: { children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null)
   const [titres, setTitres] = useState<string[]>([])
   const [ouvert, setOuvert] = useState(false)
+  useBloquerFond(ouvert && titres.length > 0)
 
   useEffect(() => {
     const el = ref.current
@@ -39,8 +41,8 @@ export function BandeauAVoir({ children }: { children: ReactNode }) {
       )}
       {/* Plus rien à voir : la feuille se referme d'elle-même. Posée sur la page (portail) : dans la zone fixe
           d'Aujourd'hui, elle passait sous la barre du bas et cachait les boutons en bas des cartes */}
-      {createPortal(<div className={ouvert && titres.length ? 'fixed inset-0 z-40 flex items-end bg-black/60' : 'hidden'} onClick={() => setOuvert(false)}>
-        <div className="pb-sur max-h-[90dvh] w-full overflow-y-auto overscroll-contain rounded-t-3xl border-t border-bordure bg-fond p-4" onClick={(e) => e.stopPropagation()}>
+      {createPortal(<div className={ouvert && titres.length ? 'fixed inset-0 z-40 flex touch-none items-end bg-black/60' : 'hidden'} onClick={() => setOuvert(false)}>
+        <div className="pb-sur max-h-[90dvh] w-full touch-pan-y overflow-y-auto overscroll-contain rounded-t-3xl border-t border-bordure bg-fond p-4" onClick={(e) => e.stopPropagation()}>
           <div className="mb-3 flex items-center justify-between">
             <p className="text-lg font-bold">À voir aujourd'hui</p>
             <button type="button" onClick={() => setOuvert(false)} aria-label="Fermer" className="px-2 text-2xl text-texte-3">×</button>

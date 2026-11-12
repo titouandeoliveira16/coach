@@ -222,7 +222,7 @@ export function Saison() {
 
       <Carte titre="Ta charge prévue (kJ par semaine)">
         <HistogrammeKj semaines={s.semaines.filter((x) => x.lundi <= (courseA ?? s.fin))} niveaux={niveauxFuturs} tests={tests} />
-        {s.blocage && s.blocage.lundi <= (courseA ?? s.fin) && <Blocage b={s.blocage} />}
+        {s.blocages.filter((b) => b.lundi <= (courseA ?? s.fin)).map((b) => <Blocage key={b.lundi} b={b} />)}
       </Carte>
 
       <Carte titre="Cette semaine et les 2 suivantes">
