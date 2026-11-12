@@ -37,7 +37,7 @@ export async function alerteCp() {
   if (!r?.cpW) return undefined
   const vue = (await db.reglages.get('alerte-cp'))?.valeur as { jusquau?: string } | undefined
   if (vue?.jusquau && vue.jusquau >= jour) return undefined
-  const seances = await db.seances.where('date').above(decalerJour(jour, -42)).toArray()
+  const seances = (await db.seances.where('date').above(decalerJour(jour, -42)).toArray()).filter((s) => !s.horsAnalyse)
   const estimee = estimerCp(seances, jour)
   return estimee && estimee >= r.cpW * HAUSSE_CP ? { estimee, cpW: r.cpW } : undefined
 }

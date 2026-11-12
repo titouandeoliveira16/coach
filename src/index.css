@@ -198,3 +198,11 @@ input[type='date']::-webkit-date-and-time-value {
 
 /* Toucher sans délai (12/11/2026) : Safari attend sinon de savoir si c'est un double-tap avant de valider un bouton */
 button, a, [role='button'], label, summary { touch-action: manipulation; }
+
+/* Écrans à onglets (Pager) : seules les pages défilent, jamais l'écran entier (12/11/2026 : on pouvait tirer l'en-tête et
+   sa lueur vers le bas alors que rien ne défile) */
+html:has([data-pager]),
+html:has([data-pager]) body {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
