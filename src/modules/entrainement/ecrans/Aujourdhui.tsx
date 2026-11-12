@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { TuilesMatin } from '../forme/TuilesMatin'
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { aujourdhui } from '../../../core/dates'
 import { CarteBilan, lundiDuBilan } from '../plan/CarteBilan'
 import { lireReglagesNutrition } from '../forme/besoins'
@@ -21,34 +21,6 @@ import { AstuceDuJour, VisiteGuidee } from '../forme/VisiteGuidee'
 import { BravoSeance, CarteVictoire } from '../forme/Celebration'
 import { QUESTIONS, mesuresRecentes } from '../forme/donnees'
 
-/**
- * Zone de l'écran entre le haut de la page (sous les onglets) et la barre du bas : l'écran Aujourd'hui y est posé
- * en position fixe. Sous lui, la page garde une hauteur plus grande que l'écran : sur iPhone (appli installée), une
- * page qui ne peut pas défiler fait remonter la barre du bas fixe en laissant un vide dessous (comme Semaine, qui
- * défile, la barre reste alors collée en bas). Faire défiler cette page ne déplace rien à l'écran.
- */
-function useZoneEcran(pret: boolean) {
-  const ref = useRef<HTMLDivElement>(null)
-  const [zone, setZone] = useState<{ haut: number; bas: number }>()
-  // Mesuré avant l'affichage : l'écran est visible dès son arrivée (sinon il ratait son glissement depuis la gauche)
-  useLayoutEffect(() => {
-    const calculer = () => {
-      if (!ref.current) return
-      const hautZone = ref.current.getBoundingClientRect().top
-      // Les onglets sont posés en bas, au-dessus de la barre : l'écran s'arrête au-dessus d'eux
-      const haut = (sel: string) => document.querySelector(sel)?.getBoundingClientRect().top
-      const hautBarre = haut('[data-onglets]') ?? haut('nav[data-barre-bas]') ?? window.innerHeight - 90
-      setZone({ haut: hautZone, bas: window.innerHeight - hautBarre + 8 })
-    }
-    window.scrollTo(0, 0)
-    calculer()
-    const t = setTimeout(calculer, 350)
-    window.addEventListener('resize', calculer)
-    return () => { clearTimeout(t); window.removeEventListener('resize', calculer) }
-  }, [pret])
-  return { ref, zone }
-}
-
 /** Aujourd'hui sur un seul écran : ta forme, la séance (la plus grande), la nutrition, puis pesée et imprévu en bas.
  *  Les cartes se partagent toute la hauteur ; ce qu'on ouvre prend sa place, et la page ne défile qu'ensuite. */
 export function Aujourdhui() {
@@ -58,7 +30,6 @@ export function Aujourdhui() {
   const [peseeOuverte, setPeseeOuverte] = useState(false)
   // Nutrition en option (Réglages → Mon profil sportif → Module nutrition)
   const nutrition = useNutritionActive()
-  const { ref, zone } = useZoneEcran(recentes !== undefined)
   // Bilan du dimanche : une fois le bilan nutrition rempli, il quitte Aujourd'hui (rappel le lundi dans Semaine)
   const bilanRempli = useLiveQuery(async () => !!(await lireReglagesNutrition()).bilans?.some((b) => b.date === aujourdhui()))
 
@@ -69,11 +40,7 @@ export function Aujourdhui() {
   const complet = duJour !== undefined && QUESTIONS.some((q) => duJour[q.cle] !== undefined)
 
   return (
-    <>
-    {/* Repère (là où commence l'écran sous les onglets) et hauteur de page plus grande que l'écran */}
-    <div ref={ref} style={{ height: zone ? window.innerHeight - zone.haut + 40 : '100vh' }} aria-hidden />
-    <div className="vt-page-fixe fixed inset-x-0 mx-auto flex max-w-lg flex-col gap-2.5 overflow-y-auto overscroll-contain px-4"
-      style={zone ? { top: zone.haut, bottom: zone.bas } : { visibility: 'hidden' }}>
+    <div className="flex flex-col gap-2.5">
       {/* Cartes ponctuelles : un seul bandeau qui les ouvre */}
       <BravoSeance />
       {/* Premiers jours : visite guidée (une fois les notes du matin remplies), puis une astuce par jour */}
@@ -103,6 +70,5 @@ export function Aujourdhui() {
         <CartePanne compact />
       </div>
     </div>
-    </>
   )
 }

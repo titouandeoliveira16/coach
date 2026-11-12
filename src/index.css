@@ -72,14 +72,9 @@ body {
   background: linear-gradient(var(--lueur, transparent), transparent);
 }
 
-/* Passage d'un onglet à l'autre (11/11/2026) : la page suit le doigt (Onglets.tsx), puis la nouvelle page arrive en
-   glissant depuis le côté d'où l'on vient. L'en-tête, les onglets (leur bulle glisse seule) et la barre restent. */
-:root[data-glisse='droite'] .vt-page > * { animation: glisse-depuis-droite 0.34s cubic-bezier(0.16, 1, 0.3, 1) both; }
-:root[data-glisse='gauche'] .vt-page > * { animation: glisse-depuis-gauche 0.34s cubic-bezier(0.16, 1, 0.3, 1) both; }
-@keyframes glisse-depuis-droite { from { transform: translateX(42%); opacity: 0; } to { transform: none; opacity: 1; } }
-@keyframes glisse-depuis-gauche { from { transform: translateX(-42%); opacity: 0; } to { transform: none; opacity: 1; } }
-@media (prefers-reduced-motion: reduce) {
-  :root[data-glisse] .vt-page > * { animation: none; }
+/* Champs : au moins 16 px sur téléphone, sinon Safari agrandit toute la page quand on touche un champ (et la décale) */
+@media (pointer: coarse) {
+  input, select, textarea { font-size: max(16px, 1em) !important; }
 }
 .pb-sur {
   padding-bottom: max(env(safe-area-inset-bottom), 8px);
@@ -189,3 +184,6 @@ input[type='date']::-webkit-date-and-time-value {
   .confetti { display: none; }
 }
 
+
+/* Feuille ouverte : les pages derrière (onglets) ne défilent plus */
+:root[data-feuille] [data-pager] section { overflow: hidden; }

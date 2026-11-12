@@ -1,8 +1,9 @@
 import { useEffect } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Route, Routes } from 'react-router-dom'
 import { aujourdhui } from '../../core/dates'
 import { EnTete } from '../../core/ui/EnTete'
 import { Onglets } from '../../core/ui/Onglets'
+import { Pager } from '../../core/ui/Pager'
 import { Aujourdhui } from './ecrans/Aujourdhui'
 import { Progres } from './ecrans/Progres'
 import { Saison } from './ecrans/Saison'
@@ -46,15 +47,12 @@ function AvecOnglets() {
       <EnTete titre="Entraînement" aDroite={new Date(`${aujourdhui()}T12:00:00`).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}>
         <Onglets onglets={ONGLETS} />
       </EnTete>
-      <div className="vt-page px-4">
-        <Routes>
-          <Route path="aujourdhui" element={<Aujourdhui />} />
-          <Route path="semaine" element={<Semaine />} />
-          <Route path="saison" element={<Saison />} />
-          <Route path="progres" element={<Progres />} />
-          <Route path="*" element={<Navigate to="aujourdhui" replace />} />
-        </Routes>
-      </div>
+      <Pager pages={[
+        { vers: '/entrainement/aujourdhui', element: <Aujourdhui /> },
+        { vers: '/entrainement/semaine', element: <Semaine /> },
+        { vers: '/entrainement/saison', element: <Saison /> },
+        { vers: '/entrainement/progres', element: <Progres /> },
+      ]} />
     </>
   )
 }
