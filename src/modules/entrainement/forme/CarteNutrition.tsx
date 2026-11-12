@@ -135,7 +135,6 @@ export function CarteNutrition({ ouverte: ouverteParent, onBasculer }: {
           </p>
         )
       })()}
-      {b.demain && <p className="mt-1 text-sm text-texte-2">Demain : {b.demain}. Recharge bien en glucides ce soir.</p>}
 
       {aEtaler && (
         <div className="mt-3 rounded-xl bg-surface-2 p-3 text-sm">

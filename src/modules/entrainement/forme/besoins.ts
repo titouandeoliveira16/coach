@@ -82,9 +82,7 @@ export async function besoinsDe(jour: string, o: { sansCorrection?: boolean; san
     reduction: o.sansEtalement ? 0 : await reductionDuJour(jour, n),
   })
   const tendance = tendancePoids(await peseesValides(), jour)
-  const demain = (await db.prevues.where('date').equals(decalerJour(jour, 1)).toArray())
-    .find((p) => p.statut === 'prevue' && (p.intensite === 'haute' || p.dureeMin >= 90))
-  return { ...b, detailSeances, correction: o.sansCorrection ? undefined : n.correction, etalementDu: b.reduction ? n.etalements?.filter((e) => e.date < jour).at(-1)?.date : undefined, kg, objectif: profil.objectif ?? 'maintien', pauseJusquau: pause ? n.pauseJusquau : undefined, tendance, nbFaites: faites.length, nbAFaire: aFaire.length, demain: demain?.titre }
+  return { ...b, detailSeances, correction: o.sansCorrection ? undefined : n.correction, etalementDu: b.reduction ? n.etalements?.filter((e) => e.date < jour).at(-1)?.date : undefined, kg, objectif: profil.objectif ?? 'maintien', pauseJusquau: pause ? n.pauseJusquau : undefined, tendance, nbFaites: faites.length, nbAFaire: aFaire.length }
 }
 
 /** kcal retirées ce jour-là pour étaler les excès des 7 jours précédents (jours faciles seulement). */

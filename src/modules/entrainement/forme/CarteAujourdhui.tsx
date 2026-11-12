@@ -3,7 +3,7 @@ import { HeartPulse } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { db } from '../../../core/db'
-import { aujourdhui, decalerJour, depuisJour } from '../../../core/dates'
+import { aujourdhui, depuisJour } from '../../../core/dates'
 import { formatNombre } from '../../../core/format'
 import { enregistrer, supprimer } from '../../../core/stockage'
 import { Aide } from '../../../core/ui/Aide'
@@ -82,8 +82,6 @@ export function CarteAujourdhui({ onModifierMatin, apresForme }: {
   const seanceRef = useRef<HTMLElement>(null)
   const basculerForme = () => setFormeOuverte(!formeOuverte)
   const navigate = useNavigate()
-  // Jour de repos : seulement pour savoir si demain est une séance dure (repos actif conseillé)
-  const demain = useLiveQuery(async () => (await db.prevues.where('date').equals(decalerJour(jour, 1)).toArray()).filter((p) => p.statut === 'prevue'), [jour])
   const [r] = useReglagesEntrainement()
   // Repères de glucides de la séance : nutrition à l'effort
   const nutrition = useNutritionEffort()
@@ -300,9 +298,7 @@ export function CarteAujourdhui({ onModifierMatin, apresForme }: {
           <>
             <p className="mt-1 text-[22px] font-bold">{signal.couleur === 'rouge' ? 'Très facile ou repos' : 'Repos'}</p>
             <p className="mt-1 text-sm text-texte-2">
-              {signal.couleur === 'rouge' ? '30 à 45 min très facile au plus, ou repos complet.' : demain?.some((d) => d.intensite === 'haute')
-                ? 'Demain, séance dure : si tu te sens rouillé, 20 à 30 min très faciles aujourd’hui (repos actif, facultatif).'
-                : 'Marche, étirements, bien dormir : c’est aussi là que tu progresses.'}
+              {signal.couleur === 'rouge' ? '30 à 45 min très facile au plus, ou repos complet.' : 'Marche, étirements, bien dormir : c’est aussi là que tu progresses.'}
             </p>
           </>
         )}
