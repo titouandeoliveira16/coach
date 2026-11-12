@@ -187,3 +187,11 @@ input[type='date']::-webkit-date-and-time-value {
 
 /* Feuille ouverte : les pages derrière (onglets) ne défilent plus */
 :root[data-feuille] [data-pager] section { overflow: hidden; }
+
+/* Onglets : le nom sous la bulle (qui suit le doigt) passe en sombre */
+[data-onglets][data-proche="0"] a:nth-of-type(1),
+[data-onglets][data-proche="1"] a:nth-of-type(2),
+[data-onglets][data-proche="2"] a:nth-of-type(3),
+[data-onglets][data-proche="3"] a:nth-of-type(4),
+[data-onglets][data-proche="4"] a:nth-of-type(5),
+[data-onglets][data-proche="5"] a:nth-of-type(6) { color: var(--color-fond); }
