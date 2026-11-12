@@ -1,9 +1,9 @@
 import { Hourglass } from 'lucide-react'
 import { useEffect } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
 import { aujourdhui } from '../../core/dates'
 import { EnTete } from '../../core/ui/EnTete'
 import { Onglets } from '../../core/ui/Onglets'
+import { Pager } from '../../core/ui/Pager'
 import { installerNotions, useParametres } from './donnees'
 import { Aujourdhui } from './ecrans/Aujourdhui'
 import { Notions } from './ecrans/Notions'
@@ -37,15 +37,12 @@ export function EcranRevision() {
         </p>
         <Onglets onglets={ONGLETS} />
       </EnTete>
-      <div className="vt-page px-4">
-        <Routes>
-          <Route path="aujourdhui" element={<Aujourdhui />} />
-          <Route path="notions" element={<Notions />} />
-          <Route path="semaine" element={<Semaine />} />
-          <Route path="sujets" element={<Sujets />} />
-          <Route path="*" element={<Navigate to="aujourdhui" replace />} />
-        </Routes>
-      </div>
+      <Pager pages={[
+        { vers: '/revision/aujourdhui', element: <Aujourdhui /> },
+        { vers: '/revision/notions', element: <Notions /> },
+        { vers: '/revision/semaine', element: <Semaine /> },
+        { vers: '/revision/sujets', element: <Sujets /> },
+      ]} />
     </>
   )
 }

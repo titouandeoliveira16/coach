@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Route, Routes } from 'react-router-dom'
 import { EnTete } from '../../core/ui/EnTete'
 import { Onglets } from '../../core/ui/Onglets'
+import { Pager } from '../../core/ui/Pager'
 import { IconePlus } from '../../core/ui/icones'
 import { mettreAJour, useBudget } from './donnees'
 import { Demarrage } from './ecrans/Demarrage'
@@ -51,15 +52,12 @@ export function EcranBudget() {
             <EnTete titre="Budget">
               <Onglets onglets={ONGLETS} />
             </EnTete>
-            <div className="vt-page px-4">
-              <Routes>
-                <Route path="mois" element={<Mois />} />
-                <Route path="mouvements" element={<Mouvements />} />
-                <Route path="patrimoine" element={<Patrimoine />} />
-                <Route path="analyses" element={<Analyses />} />
-                <Route path="*" element={<Navigate to="mois" replace />} />
-              </Routes>
-            </div>
+            <Pager pages={[
+              { vers: '/budget/mois', element: <Mois /> },
+              { vers: '/budget/mouvements', element: <Mouvements /> },
+              { vers: '/budget/patrimoine', element: <Patrimoine /> },
+              { vers: '/budget/analyses', element: <Analyses /> },
+            ]} />
           </>
         } />
       </Routes>
