@@ -47,6 +47,12 @@ export function programmeAu(p: ReglagesProgramme, lundi: string): ReglagesProgra
   return c ? { ...p, semaineType: c.semaineType, maxSemaineMin: c.maxSemaineMin ?? p.maxSemaineMin, maxLongMin: c.maxLongMin ?? p.maxLongMin } : p
 }
 
+/** Temps par semaine qui s'applique la semaine de ce lundi : le dernier choisi dans une semaine type à venir déjà commencée, sinon celui du profil. */
+export function heuresAu(p: ReglagesProgramme, heuresProfil: string | undefined, lundi: string): string | undefined {
+  const c = [...(p.semainesTypesFutures ?? [])].filter((x) => x.debut <= lundi && x.heuresSemaine).sort((a, b) => a.debut.localeCompare(b.debut)).at(-1)
+  return c?.heuresSemaine ?? heuresProfil
+}
+
 /** Les semaines types à venir déjà commencées deviennent la semaine type (elles quittent la liste). */
 export function fusionnerSemainesPassees(p: ReglagesProgramme, lundi: string): ReglagesProgramme {
   const passees = (p.semainesTypesFutures ?? []).filter((x) => x.debut <= lundi)

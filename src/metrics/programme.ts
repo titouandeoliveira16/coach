@@ -1142,7 +1142,7 @@ export function plafondEtNominal(o: {
   const nominal = o.kjIntensite + kjZ2(Math.min(60, o.cap.z2)) + kjZ2(Math.min(Math.max(100, o.longueVisee ?? 0), o.cap.long))
   const plafondJours = o.kjIntensite + nZ2 * kjZ2(o.cap.z2) + kjZ2(o.cap.long)
   const plafondHeures = o.heuresMax ? Math.max(nominal, Math.round(((o.heuresMax * 60 - (o.minutesAutres ?? 0)) * 60 * o.z2W) / 1000)) : Infinity
-  return { nominal, plafond: Math.min(plafondJours, plafondHeures) }
+  return { nominal, plafond: Math.min(plafondJours, plafondHeures), limite: (plafondHeures < plafondJours ? 'heures' : 'jours') as 'heures' | 'jours' }
 }
 
 /** Affûtage / récupération : budget = part fixe du budget de référence d'avant (pas de hausse, pas de −35 % en plus). */
@@ -1426,6 +1426,8 @@ export interface SemaineSaison {
   /** Séance d'intensité prévue (famille et format) */
   intensite: string
   competition?: string
+  /** Semaine normale où la charge aurait dû monter mais bute sur le plafond (jours, durées ou heures) */
+  bloquee?: boolean
 }
 
 export const NOMS_FAMILLES: Record<Famille, string> = {
@@ -1471,7 +1473,9 @@ export function projeterSaison(o: {
     const semaineB = (x: string) => o.competitions.some((c) => c.date >= x && c.date <= decaler(x, 6) && niveaux.get(c.date) === 'B')
     const allegee = coef === undefined && (estSemaineAllegee(l, triees, semaineB) || (!!competition && niveaux.get(competition.date) === 'B'))
     const plafond = o.plafondDe?.(l) ?? o.plafond
-    if (semaines.length && !precedenteAllegee && coef === undefined) ref = ref * 1.075
+    const hausse = semaines.length > 0 && !precedenteAllegee && coef === undefined
+    if (hausse) ref = ref * 1.075
+    const bloquee = hausse && !allegee && ref > plafond
     ref = Math.min(plafond, ref)
     precedenteAllegee = allegee || coef !== undefined
 
@@ -1490,7 +1494,7 @@ export function projeterSaison(o: {
       total: suivante ? Math.round((Date.parse(suivante.debut) - Date.parse(phase.debut)) / (7 * 86_400_000)) : undefined,
       type: competition ? 'competition' : test ? 'test' : allegee ? 'allegee' : 'normale',
       budget: Math.round((coef !== undefined ? ref * coef : allegee ? ref * 0.65 : ref) / 50) * 50,
-      intensite, competition: competition?.nom,
+      intensite, competition: competition?.nom, ...(bloquee ? { bloquee } : {}),
     })
   }
   return semaines

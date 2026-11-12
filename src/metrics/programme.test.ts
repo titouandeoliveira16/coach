@@ -197,6 +197,15 @@ describe('saison', () => {
     expect(s[1].budget).toBeGreaterThan(s[0].budget)
     expect(s[3].budget).toBeLessThan(s[2].budget)
   })
+  it('signale les semaines où la charge bute sur le plafond', () => {
+    const s = projeterSaison({
+      lundi: '2026-10-26', jusquA: '2027-01-04', phases: PHASES, testsCp: [], competitions: [], histo: [], budgetDepart: 2000, plafond: 2200,
+    })
+    const i = s.findIndex((x) => x.bloquee)
+    expect(i).toBeGreaterThan(0)
+    expect(s[i].type).toBe('normale')
+    expect(s.every((x) => x.budget <= 2200)).toBe(true)
+  })
 })
 
 it('Z2 : ±5 W seulement après 2 sorties de suite dans le même sens', async () => {

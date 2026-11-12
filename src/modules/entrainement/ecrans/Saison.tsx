@@ -120,6 +120,23 @@ function HistogrammeKj({ semaines, niveaux, tests }: { semaines: SemaineSaison[]
   )
 }
 
+/** Quand tes choix (temps par semaine, jours, durées) empêchent ta charge de monter : à partir de quand, et quoi changer. */
+function Blocage({ b }: { b: { lundi: string; jusquA?: string; par: 'heures' | 'jours'; heures?: string } }) {
+  const jour = (d: string) => depuisJour(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })
+  const quand = b.jusquA ? `Du ${jour(b.lundi)} au ${jour(b.jusquA)}` : `À partir du ${jour(b.lundi)}`
+  const cause = b.par === 'heures'
+    ? `c’est ton temps par semaine (${b.heures?.toLowerCase() ?? 'profil'}) qui bloque`
+    : 'ce sont tes jours et tes durées de vélo qui bloquent'
+  const quoi = b.par === 'heures'
+    ? 'Pour continuer, choisis plus de temps (profil sportif, ou « Plus tard » à une date).'
+    : 'Pour continuer, ajoute un jour de vélo ou allonge tes durées (Ma semaine type, ou « Plus tard » à une date).'
+  return (
+    <p className="mt-3 rounded-xl bg-surface-2 px-3 py-2.5 text-sm">
+      <span className="font-semibold text-attention">{quand}, ta charge ne peut plus monter</span> : {cause}. <span className="text-texte-2">{quoi}</span>
+    </p>
+  )
+}
+
 /** Saison : où j'en suis (frise avec courses et tests), les 3 prochaines semaines, puis les phases repliées (validé le 7/11/2026). */
 export function Saison() {
   const s = useLiveQuery(saison)
@@ -201,6 +218,7 @@ export function Saison() {
 
       <Carte titre="Ta charge prévue (kJ par semaine)">
         <HistogrammeKj semaines={s.semaines.filter((x) => x.lundi <= (courseA ?? s.fin))} niveaux={niveauxFuturs} tests={tests} />
+        {s.blocage && s.blocage.lundi <= (courseA ?? s.fin) && <Blocage b={s.blocage} />}
       </Carte>
 
       <Carte titre="Cette semaine et les 2 suivantes">

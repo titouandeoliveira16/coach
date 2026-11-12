@@ -71,6 +71,8 @@ export interface SemaineTypeFuture {
   semaineType: Role[]
   maxSemaineMin?: number
   maxLongMin?: number
+  /** Temps par semaine à partir de cette date (même choix que le profil sportif) ; absent : celui du profil */
+  heuresSemaine?: string
 }
 
 /** Programme vélo automatique : semaine type, phases, tests et compétitions. */

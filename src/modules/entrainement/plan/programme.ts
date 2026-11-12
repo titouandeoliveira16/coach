@@ -8,7 +8,7 @@ import {
   cibleSortieLongue, dureeLongueVisee, type SeanceConstruite, type TypePhase,
   construireCourse, construireOuverture, construireSv1Dediee, specifiqueCols, testProcheCourse, delaiApresCourse, dureeDeCourse, epreuveDe, facteursVitesse, type CourseReference, niveauxCourses, procheCourse,
 } from '../../../metrics/programme'
-import { fusionnerSemainesPassees, programmeAu, programmeDe } from '../reglagesEntrainement'
+import { fusionnerSemainesPassees, heuresAu, programmeAu, programmeDe } from '../reglagesEntrainement'
 import type { ProfilSportif } from '../reglages/ProfilSportif'
 import { chargeDe, chargerContexte, domaineDe, lundiDe } from '../seances/donnees'
 import type { ReglagesEntrainement, ReglagesProgramme, Seance, SeancePrevue } from '../types'
@@ -249,6 +249,10 @@ async function genererSemaineVeloBrute(lundi: string) {
   // Semaine type à venir déjà commencée : elle devient la semaine type
   const fusion = fusionnerSemainesPassees(r.programme, lundiDe(jour))
   if (fusion !== r.programme) {
+    // Le temps par semaine choisi pour cette date passe dans ton profil sportif
+    const psAvant = (await db.reglages.get('profil-sportif'))?.valeur as Partial<ProfilSportif> | undefined
+    const heuresNouvelles = heuresAu(r.programme, psAvant?.heuresSemaine, lundiDe(jour))
+    if (psAvant && heuresNouvelles && heuresNouvelles !== psAvant.heuresSemaine) await enregistrer(db.reglages, { id: 'profil-sportif', valeur: { ...psAvant, heuresSemaine: heuresNouvelles } })
     const brut = (await db.reglages.get('entrainement'))?.valeur as Partial<ReglagesEntrainement> | undefined
     await enregistrer(db.reglages, { id: 'entrainement', valeur: { ...brut, programme: fusion } })
   }
@@ -257,7 +261,8 @@ async function genererSemaineVeloBrute(lundi: string) {
   // Profil sportif (questionnaire) : niveau et heures par semaine règlent le moteur
   const ps = (await db.reglages.get('profil-sportif'))?.valeur as Partial<ProfilSportif> | undefined
   const niveau = niveauDuProfil(ps)
-  const heures = heuresDe(ps?.heuresSemaine)
+  const heuresSemaine = heuresAu(prog, ps?.heuresSemaine, lundi)
+  const heures = heuresDe(heuresSemaine)
 
   // Anciennes séances à remplacer : séances auto encore à faire, plan importé et propositions de course (anciennes versions)
   for (const p of await db.prevues.where('date').aboveOrEqual(aPartirDe).toArray()) {
@@ -462,7 +467,7 @@ async function genererSemaineVeloBrute(lundi: string) {
   const longue = await longueDeLaSemaine(lundi, prog, phase.type)
   // Plafond aussi limité par tes heures : le haut de ta tranche, moins les autres sports prévus cette semaine
   const minutesAutres = prevues.filter((p) => p.sport === 'course' && dansSemaine(p.date)).reduce((a, p) => a + p.dureeMin, 0)
-  const { nominal, plafond } = plafondEtNominal({ semaineType: roles, kjIntensite, cap, z2W, longueVisee: longue.visee, heuresMax: ps?.heuresSemaine ? heures[1] : undefined, minutesAutres })
+  const { nominal, plafond } = plafondEtNominal({ semaineType: roles, kjIntensite, cap, z2W, longueVisee: longue.visee, heuresMax: heuresSemaine ? heures[1] : undefined, minutesAutres })
   const prec = await bilanPrecedent(lundi)
   const b = coefPhase !== undefined
     ? budgetDePhase(prec, nominal, coefPhase, NOMS_PHASES[phase.type])
@@ -688,13 +693,16 @@ export async function saison() {
   const kjIntensite = construireIntervalles(formatDe('30-15')!, 0, r.cpW, 0).kj
   // Semaine type de chaque semaine : les semaines types à venir font monter le plafond à leur date
   const ps = (await db.reglages.get('profil-sportif'))?.valeur as Partial<ProfilSportif> | undefined
-  const heuresMax = ps?.heuresSemaine ? heuresDe(ps.heuresSemaine)[1] : undefined
+  const heuresMax = (l: string) => {
+    const h = heuresAu(prog, ps?.heuresSemaine, l)
+    return h ? heuresDe(h)[1] : undefined
+  }
   const capDe = (l: string) => {
     const { phase, semaine } = phaseDe(l, prog.phases)
     const pl = programmeAu(prog, l)
     return plafondsReprise(phase.type === 'reprise' ? semaine : undefined, pl.maxSemaineMin, pl.maxLongMin)
   }
-  const calcul = (l: string) => plafondEtNominal({ semaineType: programmeAu(prog, l).semaineType, kjIntensite, cap: capDe(l), z2W, heuresMax })
+  const calcul = (l: string) => plafondEtNominal({ semaineType: programmeAu(prog, l).semaineType, kjIntensite, cap: capDe(l), z2W, heuresMax: heuresMax(l) })
   const { nominal, plafond } = calcul(lundi)
   const plafondDe = (l: string) => calcul(l).plafond
   const meta = await lireMeta(lundi)
@@ -710,7 +718,16 @@ export async function saison() {
     if (reelle) semaines[0].intensite = reelle.titre
     if (meta) semaines[0].budget = meta.budget
   }
-  return { semaines, phases, fin: decalerJour(derniere.debut, 27), demarrage: lundi > lundiDe(aujourdhui()) ? lundi : undefined }
+  // Premier blocage de la hausse (hors semaine en cours) : quelle limite bute, et jusqu'à quand (une semaine type à venir peut la relever)
+  const i = semaines.findIndex((x, k) => k > 0 && x.bloquee)
+  let blocage: { lundi: string; jusquA?: string; par: 'heures' | 'jours'; heures?: string } | undefined
+  if (i > 0) {
+    const l = semaines[i].lundi
+    const p = calcul(l).plafond
+    const fin = semaines.slice(i + 1).find((x) => calcul(x.lundi).plafond > p * 1.02)
+    blocage = { lundi: l, jusquA: fin?.lundi, par: calcul(l).limite, heures: heuresAu(prog, ps?.heuresSemaine, l) }
+  }
+  return { semaines, phases, blocage, fin: decalerJour(derniere.debut, 27), demarrage: lundi > lundiDe(aujourdhui()) ? lundi : undefined }
 }
 
 /** Progression de chaque famille de séances d'intensité déjà travaillée : palier (1 à 4) et bonus de watts. */
@@ -806,7 +823,7 @@ export async function bilanDimanche(lundi: string) {
   const longue = await longueDeLaSemaine(suivant, prog, phase.type)
   const meta = await lireMeta(lundi)
   const ps = (await db.reglages.get('profil-sportif'))?.valeur as Partial<ProfilSportif> | undefined
-  const { nominal, plafond } = plafondEtNominal({ semaineType: progS.semaineType, kjIntensite, cap, z2W, longueVisee: longue.visee, heuresMax: ps?.heuresSemaine ? heuresDe(ps.heuresSemaine)[1] : undefined })
+  const { nominal, plafond } = plafondEtNominal({ semaineType: progS.semaineType, kjIntensite, cap, z2W, longueVisee: longue.visee, heuresMax: (() => { const h = heuresAu(prog, ps?.heuresSemaine, suivant); return h ? heuresDe(h)[1] : undefined })() })
   const precSuivant = await bilanPrecedent(suivant)
   const b = coefSuivant !== undefined
     ? budgetDePhase(precSuivant, nominal, coefSuivant, NOMS_PHASES[phase.type])
