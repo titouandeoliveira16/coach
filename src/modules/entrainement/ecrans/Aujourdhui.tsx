@@ -40,7 +40,7 @@ export function Aujourdhui() {
   const complet = duJour !== undefined && QUESTIONS.some((q) => duJour[q.cle] !== undefined)
 
   return (
-    <div className="flex flex-col gap-2.5">
+    <div className="flex min-h-full flex-col gap-2.5">
       {/* Cartes ponctuelles : un seul bandeau qui les ouvre */}
       <BravoSeance />
       {/* Premiers jours : visite guidée (une fois les notes du matin remplies), puis une astuce par jour */}
@@ -59,16 +59,18 @@ export function Aujourdhui() {
       </BandeauAVoir>
       {peseeOuverte && <FeuillePesee onFermer={() => setPeseeOuverte(false)} />}
       {complet && !edition ? (
-        <CarteAujourdhui onModifierMatin={() => setEdition(true)} autreOuvert={nutriOuverte} apresForme={<TuilesMatin onPoids={() => setPeseeOuverte(true)} />} />
+        <CarteAujourdhui onModifierMatin={() => setEdition(true)} autreOuvert={nutriOuverte} remplir={!nutrition} apresForme={<TuilesMatin onPoids={() => setPeseeOuverte(true)} />} />
       ) : (
         <SaisieMatin key={duJour?.modifieLe} existante={duJour} onTermine={() => setEdition(false)} />
       )}
       {nutrition && <CarteNutrition ouverte={nutriOuverte} onBasculer={setNutriOuverte} />}
-      {/* En bas : l'imprévu (la pesée se fait depuis la tuile Poids ; ici seulement avant les notes du matin) */}
-      <div data-visite="imprevu" className="flex shrink-0 gap-2">
-        {!(complet && !edition) && <CartePesee compact />}
-        <CartePanne compact />
-      </div>
+      {/* Avant les notes du matin : pesée et imprévu en bas (ensuite, l'imprévu est un lien dans la carte de la séance) */}
+      {!(complet && !edition) && (
+        <div className="flex shrink-0 gap-2">
+          <CartePesee compact />
+          <CartePanne compact />
+        </div>
+      )}
     </div>
   )
 }

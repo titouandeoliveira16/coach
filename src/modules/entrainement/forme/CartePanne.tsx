@@ -9,7 +9,8 @@ import { declarerPanneVelo, panneEnCours, veloRepare } from '../plan/imprevus'
 const jourLong = (d: string) => depuisJour(d).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric' })
 
 /** Imprévu : vélo en panne. L'appli annule le vélo de ces jours-là et déplace l'intensité après la réparation. */
-export function CartePanne({ compact = false }: { compact?: boolean } = {}) {
+/** `lien` : petit lien « Imprévu › » (en haut de la carte de la séance, 12/11/2026) ; `compact` : bouton de la rangée du bas. */
+export function CartePanne({ compact = false, lien = false }: { compact?: boolean; lien?: boolean } = {}) {
   const panne = useLiveQuery(async () => (await panneEnCours()) ?? null)
   const [ouverte, setOuverte] = useState(false)
   const [au, setAu] = useState(aujourdhui())
@@ -18,7 +19,7 @@ export function CartePanne({ compact = false }: { compact?: boolean } = {}) {
   if (panne === undefined) return null
 
   if (bilan)
-    return compact ? (
+    return compact || lien ? (
       <Feuille titre="Programme adapté" onFermer={() => setBilan(undefined)}>
         <ul className="space-y-1 text-sm">{bilan.map((b, i) => <li key={i}>• {b}</li>)}</ul>
         <button type="button" onClick={() => setBilan(undefined)} className="mt-2 text-sm text-texte-3">OK</button>
@@ -30,6 +31,8 @@ export function CartePanne({ compact = false }: { compact?: boolean } = {}) {
       </Carte>
     )
 
+  if (panne && lien)
+    return <button type="button" onClick={() => veloRepare()} className="shrink-0 font-semibold text-attention">En panne · il remarche</button>
   if (panne && compact)
     return (
       <button type="button" onClick={() => veloRepare()} className="min-h-12 flex-1 rounded-xl border border-attention/50 bg-attention/10 px-2 text-sm font-semibold">
@@ -46,7 +49,9 @@ export function CartePanne({ compact = false }: { compact?: boolean } = {}) {
 
   return (
     <>
-      {compact ? (
+      {lien ? (
+        <button type="button" data-visite="imprevu" onClick={() => setOuverte(true)} className="shrink-0 font-semibold text-accent">Imprévu ›</button>
+      ) : compact ? (
         <button type="button" onClick={() => setOuverte(true)} className="min-h-12 flex-1 whitespace-nowrap rounded-xl border border-bordure bg-surface px-1 text-[13px] font-semibold text-texte-2">
           Imprévu
         </button>

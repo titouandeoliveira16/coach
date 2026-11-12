@@ -21,7 +21,7 @@ function MiniCourbe({ valeurs }: { valeurs: number[] }) {
   const pts = valeurs.map((v, i) => [(i / (valeurs.length - 1)) * 100, y(v)])
   const [dx, dy] = pts.at(-1)!
   return (
-    <svg viewBox="-3 -3 106 36" preserveAspectRatio="none" className="trace mt-1.5 h-7 w-full overflow-visible" aria-hidden>
+    <svg viewBox="-3 -3 106 36" preserveAspectRatio="none" className="trace mt-1 h-6 w-full overflow-visible" aria-hidden>
       <polyline points={pts.map(([x, yy]) => `${x.toFixed(1)},${yy.toFixed(1)}`).join(' ')} fill="none" stroke="var(--color-texte-2)" strokeWidth="2" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
       <circle cx={dx} cy={dy} r="3" fill="var(--color-texte)" vectorEffect="non-scaling-stroke" />
     </svg>
@@ -155,14 +155,14 @@ export function TuilesMatin({ onPoids }: { onPoids?: () => void } = {}) {
 
   return (
     <div className="grid shrink-0 grid-cols-2 gap-2">
-      <button type="button" onClick={() => setOuverte('nuit')} className="presse entree rounded-[14px] border-[1.5px] border-transparent bg-surface p-3 text-left">
+      <button type="button" onClick={() => setOuverte('nuit')} className="presse entree rounded-[14px] border-[1.5px] border-transparent bg-surface px-3 py-2.5 text-left">
         <span className="flex items-center justify-between text-xs text-texte-2"><span className="flex items-center gap-1.5"><Moon className="h-3.5 w-3.5" style={{ color: 'var(--color-sommeil)' }} strokeWidth={2} />Nuit</span><span className="text-texte-3">▾</span></span>
-        <span className="chiffre mt-1 block text-[26px] leading-tight" style={{ color: nuit === undefined ? undefined : couleurNuit(nuit) }}>{nuit !== undefined ? enHeures(nuit) : '—'}</span>
-        <span className="mt-1 block text-xs text-texte-2">
+        <span className="chiffre mt-0.5 block text-[24px] leading-tight" style={{ color: nuit === undefined ? undefined : couleurNuit(nuit) }}>{nuit !== undefined ? enHeures(nuit) : '—'}</span>
+        <span className="mt-0.5 block text-xs text-texte-2">
           {ressenti !== undefined ? <>Ressenti <b style={{ color: ressenti < 2.5 ? ORANGE : VERT }}>{ressentiMot(ressenti)} · {formatNombre(ressenti, 1)} / 5</b></> : 'Ressenti pas noté'}
         </span>
       </button>
-      <button type="button" onClick={() => setOuverte('poids')} className="presse entree rounded-[14px] border-[1.5px] border-transparent bg-surface p-3 text-left">
+      <button type="button" onClick={() => setOuverte('poids')} className="presse entree rounded-[14px] border-[1.5px] border-transparent bg-surface px-3 py-2.5 text-left">
         <span className="flex items-center justify-between text-xs text-texte-2"><span className="flex items-center gap-1.5"><Scale className="h-3.5 w-3.5 text-texte-3" strokeWidth={2} />Poids</span><b className="text-base text-texte">{poids ? `${formatNombre(poids.poidsKg, 1)} kg` : '—'}</b></span>
         <MiniCourbe valeurs={d.pesees.slice(-7).map((p) => p.poidsKg)} />
         <span className={`mt-1 block text-[11px] ${poids?.date !== jour && !d.sansPesee ? 'text-accent' : 'text-texte-3'}`}>
