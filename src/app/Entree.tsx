@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { creerCompteAvecCode } from '../core/inscription'
 import { seConnecter } from '../core/synchro'
-import { envoyerLienMotDePasse } from '../core/motDePasse'
+import { changerAvecCode, envoyerLienMotDePasse } from '../core/motDePasse'
 import { Bouton } from '../core/ui/Bouton'
 import { Carte } from '../core/ui/Carte'
 
@@ -16,6 +16,9 @@ export function FormulaireCompte() {
   const [occupe, setOccupe] = useState(false)
   const [message, setMessage] = useState<string>()
   const [info, setInfo] = useState<string>()
+  // Mot de passe oublié : code reçu par e-mail + nouveau mot de passe
+  const [oubli, setOubli] = useState(false)
+  const [codeOubli, setCodeOubli] = useState('')
   const avecCode = mode === 'code'
   const pret = email.includes('@') && motDePasse.length >= 6 && (!avecCode || code.replace(/[^a-z0-9]/gi, '').length === 6) && !occupe
 
@@ -50,11 +53,28 @@ export function FormulaireCompte() {
           try {
             await envoyerLienMotDePasse(email.trim())
             setMessage(undefined)
-            setInfo(`E-mail envoyé à ${email.trim()} (regarde aussi les indésirables). Touche le lien qu’il contient : tu choisiras un nouveau mot de passe.`)
+            setInfo(`E-mail envoyé à ${email.trim()} (regarde aussi les indésirables). Tape le code qu’il contient ci-dessous, avec ton nouveau mot de passe.`)
+            setOubli(true)
           } catch (e) { setMessage((e as Error).message) }
         }}>Mot de passe oublié ?</button>
       )}
       {info && <p className="text-sm text-bon">{info}</p>}
+      {oubli && !avecCode && (
+        <div className="space-y-2 rounded-xl border border-accent p-3">
+          <input value={codeOubli} onChange={(e) => setCodeOubli(e.target.value)} placeholder="Code reçu par e-mail" inputMode="numeric" autoComplete="one-time-code"
+            className={`${champ} tracking-widest`} />
+          <p className="text-xs text-texte-3">Écris ton nouveau mot de passe dans le champ « Mot de passe » au-dessus.</p>
+          <Bouton type="button" disabled={codeOubli.replace(/\D/g, '').length < 6 || motDePasse.length < 6 || occupe} onClick={async () => {
+            setOccupe(true)
+            setMessage(undefined)
+            try {
+              await changerAvecCode(email.trim(), codeOubli, motDePasse)
+              setInfo(undefined)
+              setOubli(false)
+            } catch (e) { setMessage((e as Error).message) } finally { setOccupe(false) }
+          }}>{occupe ? 'Un instant…' : 'Changer mon mot de passe'}</Bouton>
+        </div>
+      )}
       {avecCode && <p className="text-xs text-texte-3">Sans code, pas de compte : c'est ton entraîneur qui te le donne. Un code ne sert qu'une fois.</p>}
       <button type="button" className="w-full py-2 text-sm font-semibold text-accent" onClick={() => { setMode(avecCode ? 'connexion' : 'code'); setMessage(undefined) }}>
         {avecCode ? 'J’ai déjà un compte · Me connecter' : 'J’ai reçu un code · Créer mon compte'}

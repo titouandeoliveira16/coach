@@ -39,6 +39,16 @@ export async function envoyerLienMotDePasse(email: string) {
   if (error) throw new Error(/rate|seconds/i.test(error.message) ? 'Trop de demandes : attends quelques minutes avant de redemander un e-mail.' : error.message)
 }
 
+/**
+ * Avec le code à 6 chiffres de l'e-mail (pas de lien : marche même si la boîte mail a « vérifié » le lien avant toi,
+ * et sans passer par Safari). Ouvre la session puis enregistre le nouveau mot de passe.
+ */
+export async function changerAvecCode(email: string, code: string, motDePasse: string) {
+  const { error } = await supabase.auth.verifyOtp({ email, token: code.replace(/\D/g, ''), type: 'recovery' })
+  if (error) throw new Error(/expired|invalid/i.test(error.message) ? 'Code faux ou expiré : redemande un e-mail et prends le code du plus récent.' : error.message)
+  await changerMotDePasse(motDePasse)
+}
+
 export async function changerMotDePasse(motDePasse: string) {
   const { error } = await supabase.auth.updateUser({ password: motDePasse })
   if (error) throw new Error(/same|different/i.test(error.message) ? 'Choisis un mot de passe différent de l’ancien.' : error.message)
