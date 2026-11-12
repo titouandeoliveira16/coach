@@ -1,3 +1,4 @@
+import { useProfil } from '../../../core/profil'
 import { useState, type ReactNode } from 'react'
 import { useReglage } from '../../../core/reglages'
 import { ChampNombre } from '../../../core/ui/ChampNombre'
@@ -65,6 +66,7 @@ function Ligne({ libelle, valeur, ouvert, onBasculer, children }: { libelle: str
 
 export function SectionProfilSportif() {
   const [ps, modifierPs] = useReglage<ProfilSportif>('profil-sportif', DEFAUT)
+  const [profil, modifierProfil] = useProfil()
   const [r, modifier] = useReglagesEntrainement()
   const prog = programmeDe(r.programme)
   // Durées changées : la semaine en cours (et les suivantes déjà calculées) suit tout de suite
@@ -132,8 +134,8 @@ export function SectionProfilSportif() {
       <Ligne {...props('objectifs')} libelle="Mes courses" valeur={objectifs.map((c) => `${niveaux.get(c.date) ?? ''} ${c.nom}`).join(', ')}>
         <p className="mb-1.5 text-[13px] font-semibold text-texte-2">Ta course principale</p>
         {principale
-          ? <CoursePrincipale key={principale.date} course={principale} contexte={contexteCourses} onChanger={(a) => changerCourses(prog.competitions.map((c) => (c === principale ? a : c)))} />
-          : <p className="text-sm text-texte-2">Aucune : remplis le questionnaire d'arrivée pour construire ta saison.</p>}
+          ? <CoursePrincipale key={principale.date} course={principale} contexte={contexteCourses} onChanger={(a) => changerCourses(prog.competitions.map((c) => (c === principale ? a : c)))} onRetirer={() => changerCourses(prog.competitions.filter((c) => c !== principale))} />
+          : <p className="text-sm text-texte-2">Aucune : ajoute une course de niveau A ci-dessous, elle devient ta course principale et ta saison se construit autour.</p>}
         <p className="mt-4 mb-1.5 text-[13px] font-semibold text-texte-2">Tes autres courses</p>
         <ListeCourses courses={prog.competitions} effectifs={niveaux} contexte={contexteCourses} onChanger={changerCourses} principale={principale?.date} />
         <p className="mt-4 text-[13px] font-semibold text-texte-2">Ta vitesse en course</p>
@@ -172,6 +174,13 @@ export function SectionProfilSportif() {
       </Ligne>
       <Ligne {...props('nutrition')} libelle="Repas du jour" valeur={ps.nutrition === false ? 'Désactivé' : 'Activé'}>
         {choixUnique(['Activé', 'Désactivé'], ps.nutrition === false ? 'Désactivé' : 'Activé', (v) => modifierPs({ nutrition: v === 'Activé' }))}
+        {/* Objectif nutrition : seulement quand le module est activé (11/2026) */}
+        {ps.nutrition !== false && (
+          <>
+            <p className="mt-3 mb-1.5 text-[13px] font-semibold text-texte-2">Ton objectif</p>
+            {choixUnique(['Garder mon poids', 'Perte de gras légère'], profil.objectif === 'perte' ? 'Perte de gras légère' : 'Garder mon poids', (v) => modifierProfil({ objectif: v === 'Perte de gras légère' ? 'perte' : 'maintien' }))}
+          </>
+        )}
         <p className="mt-1.5 text-xs text-texte-3">Activé : tes besoins du jour selon ta séance, ce que tu as mangé et l'écart, et le bilan nutrition du dimanche.</p>
       </Ligne>
       <Ligne {...props('nutritionEffort')} libelle="Nutrition à l'effort" valeur={ps.nutritionEffort === false ? 'Désactivée' : 'Activée'}>
