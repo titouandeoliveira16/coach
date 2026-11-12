@@ -1,4 +1,4 @@
-# Coach — appli personnelle de Titouan
+# Cycle (ex-Coach) — appli personnelle de Titouan
 
 PWA en français (iPhone d'abord, thème sombre) : un accueil, puis des modules. **Entraînement** est construit
 (vélo seul depuis 11/2026 : la course à pied et le plan Campus sont retirés ; système kJ, CP, feu du jour par VFC) ; **Budget** est construit (saisie manuelle, plafonds, patrimoine) ;

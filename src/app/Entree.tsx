@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import { creerCompteAvecCode } from '../core/inscription'
 import { CLE_SESSION_FERMEE, seConnecter } from '../core/synchro'
-import { Bouton } from '../core/ui/Bouton'
-import { Carte } from '../core/ui/Carte'
+import { RoueCycle } from './RoueCycle'
 
 const champ = 'w-full rounded-xl border border-bordure bg-surface-2 px-4 py-3 text-lg outline-none focus:border-accent'
 
@@ -16,11 +15,11 @@ export function FormulaireCompte() {
   const [message, setMessage] = useState<string>()
   const [oubli, setOubli] = useState(false)
   // Session fermée parce que le compte s'est connecté sur un autre appareil
-  const [fermee, setFermee] = useState(false)
+  const [fermee] = useState(() => {
+    try { return !!sessionStorage.getItem(CLE_SESSION_FERMEE) } catch { return false }
+  })
   useEffect(() => {
-    try {
-      if (sessionStorage.getItem(CLE_SESSION_FERMEE)) { setFermee(true); sessionStorage.removeItem(CLE_SESSION_FERMEE) }
-    } catch { /* stockage indisponible */ }
+    try { sessionStorage.removeItem(CLE_SESSION_FERMEE) } catch { /* stockage indisponible */ }
   }, [])
   const avecCode = mode === 'code'
   const pret = email.includes('@') && motDePasse.length >= 6 && (!avecCode || code.replace(/[^a-z0-9]/gi, '').length === 6) && !occupe
@@ -48,7 +47,7 @@ export function FormulaireCompte() {
         onChange={(e) => setEmail(e.target.value)} className={champ} />
       <input type="password" autoComplete={avecCode ? 'new-password' : 'current-password'} placeholder="Mot de passe (6 caractères min.)" value={motDePasse}
         onChange={(e) => setMotDePasse(e.target.value)} className={champ} />
-      <Bouton type="submit" disabled={!pret}>{occupe ? 'Un instant…' : avecCode ? 'Créer mon compte' : 'Me connecter'}</Bouton>
+      <button type="submit" disabled={!pret} className="presse w-full rounded-xl bg-white py-3.5 text-[17px] font-bold text-black disabled:opacity-40">{occupe ? 'Un instant…' : avecCode ? 'Créer mon compte' : 'Me connecter'}</button>
       {message && <p className="text-sm text-mauvais">{message}</p>}
       {fermee && <p className="text-sm text-attention">Ton compte s’est connecté sur un autre appareil : cette session a été fermée (une seule à la fois).</p>}
       {!avecCode && (
@@ -58,28 +57,43 @@ export function FormulaireCompte() {
         <p className="rounded-xl bg-surface-2 px-3 py-2.5 text-sm text-texte-2">Contacte le créateur de l’appli (la personne qui t’a donné ton code) : il te remet un nouveau mot de passe.</p>
       )}
       {avecCode && <p className="text-xs text-texte-3">Sans code, pas de compte : c'est ton entraîneur qui te le donne. Un code ne sert qu'une fois.</p>}
-      <button type="button" className="w-full py-2 text-sm font-semibold text-accent" onClick={() => { setMode(avecCode ? 'connexion' : 'code'); setMessage(undefined) }}>
-        {avecCode ? 'J’ai déjà un compte · Me connecter' : 'J’ai reçu un code · Créer mon compte'}
+      <button type="button" className="w-full py-1.5 text-sm text-texte-2" onClick={() => { setMode(avecCode ? 'connexion' : 'code'); setMessage(undefined) }}>
+        {avecCode ? <>J’ai déjà un compte · <b className="text-texte">Me connecter</b></> : <>J’ai reçu un code · <b className="text-texte">Créer mon compte</b></>}
       </button>
     </form>
   )
 }
 
-/** Premier écran quand personne n'est connecté sur cet appareil. */
+/** Premier écran quand personne n'est connecté (maquette « E1 + auréole + roue », validée le 12/11/2026). */
 export function Entree() {
+  const [pose, setPose] = useState(false)
+  const [mentions, setMentions] = useState(false)
+  const apparait = (delai: number) => ({
+    className: `transition-[opacity,transform] duration-[600ms] ease-[cubic-bezier(.22,1,.36,1)] ${pose ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'}`,
+    style: { transitionDelay: `${delai}ms` },
+  })
   return (
-    <div className="pt-sur flex min-h-[100dvh] flex-col justify-center gap-5 px-4 pb-8">
-      <div className="text-center">
-        <h1 className="text-3xl font-extrabold">Cycle</h1>
-        <p className="mt-1 text-sm text-texte-2">Ton plan vélo calculé depuis ta course, ajusté chaque matin à ta récupération</p>
+    <div className="pt-sur flex min-h-[100dvh] flex-col bg-fond px-6 pb-[max(2rem,env(safe-area-inset-bottom))]">
+      <div className="flex flex-col items-center gap-3.5 pt-[9vh]">
+        <div className="relative flex h-[150px] w-full items-center justify-center">
+          {/* L'auréole blanche s'allume quand la roue s'est posée en C */}
+          <div aria-hidden className={`pointer-events-none absolute top-1/2 left-1/2 size-[380px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[6px] transition-[opacity,scale] duration-[1100ms] ease-[cubic-bezier(.22,1,.36,1)] ${pose ? 'scale-100 opacity-100' : 'scale-60 opacity-0'}`}
+            style={{ background: 'radial-gradient(circle, rgba(255,255,255,.30) 0%, rgba(255,255,255,.135) 35%, rgba(255,255,255,0) 70%)' }} />
+          <div className="relative"><RoueCycle taille={130} onFini={() => setPose(true)} /></div>
+        </div>
+        <h1 {...apparait(250)} className={`${apparait(250).className} text-[38px] font-extrabold tracking-[.06em] [font-stretch:125%]`}>CYCLE</h1>
+        <p {...apparait(400)} className={`${apparait(400).className} text-center text-[15px] leading-snug text-texte-2`}>Ton plan vélo, ajusté chaque matin<br />à ta forme.</p>
       </div>
-      <Carte titre="Ton compte">
+      <div {...apparait(600)} className={`${apparait(600).className} mt-auto pt-10`}>
         <FormulaireCompte />
-      </Carte>
-      {/* Mentions santé et données (audit du 11/11/2026) */}
-      <div className="space-y-1.5 px-1 text-xs leading-relaxed text-texte-3">
-        <p><b className="text-texte-2">Santé.</b> Cycle donne des repères d'entraînement, il ne remplace pas un avis médical : en cas de doute ou de douleur, consulte un médecin (un certificat d'aptitude est conseillé). Moins de 15 ans : avec l'accord d'un parent.</p>
-        <p><b className="text-texte-2">Tes données.</b> Elles (santé comprise : sommeil, VFC, poids) servent seulement à calculer ton plan, restent sur ton compte et ton téléphone, ne sont ni vendues ni partagées. Tu peux les exporter ou tout supprimer à tout moment (Réglages → Compte).</p>
+        <button type="button" onClick={() => setMentions(!mentions)} className="mt-3 w-full text-center text-xs text-texte-3">Santé et données {mentions ? '▴' : '›'}</button>
+        {/* Mentions santé et données (audit du 11/11/2026) */}
+        {mentions && (
+          <div className="mt-2 space-y-1.5 text-xs leading-relaxed text-texte-3">
+            <p><b className="text-texte-2">Santé.</b> Cycle donne des repères d'entraînement, il ne remplace pas un avis médical : en cas de doute ou de douleur, consulte un médecin (un certificat d'aptitude est conseillé). Moins de 15 ans : avec l'accord d'un parent.</p>
+            <p><b className="text-texte-2">Tes données.</b> Elles (santé comprise : sommeil, VFC, poids) servent seulement à calculer ton plan, restent sur ton compte et ton téléphone, ne sont ni vendues ni partagées. Tu peux les exporter ou tout supprimer à tout moment (Réglages → Compte).</p>
+          </div>
+        )}
       </div>
     </div>
   )
