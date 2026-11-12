@@ -88,6 +88,7 @@ function CarteSeance({ s }: { s: Seance }) {
         <span className="block truncate font-semibold">
           {s.titre ?? s.type ?? NOMS_SPORTS[s.sport]}
           {s.source !== 'manuel' && <span className="ml-1.5 text-xs font-normal text-texte-3">{s.source === 'fit' ? '.FIT' : 'Intervals'}</span>}
+          {s.horsAnalyse && <span className="ml-1.5 rounded-full bg-surface-2 px-1.5 py-0.5 text-[11px] font-normal text-texte-2">non prise en compte</span>}
         </span>
         <span className="block text-sm text-texte-3">
           <span className="capitalize">{depuisJour(s.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' })}</span> · {details.join(' · ')}

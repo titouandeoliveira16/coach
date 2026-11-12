@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { db } from '../../../core/db'
+import { enregistrer } from '../../../core/stockage'
 import { aujourdhui } from '../../../core/dates'
 import { formatMinSec, formatNombre } from '../../../core/format'
 import { Aide } from '../../../core/ui/Aide'
@@ -199,6 +200,13 @@ export function FormulaireSeance() {
         )}
 
         <Bouton onClick={valider} className="py-4 text-lg">Enregistrer</Bouton>
+        {edition && (
+          <button type="button" className={`w-full rounded-xl border px-4 py-3 text-left text-sm ${s.horsAnalyse ? 'border-accent text-accent' : 'border-bordure text-texte-2'}`}
+            onClick={async () => { const n = { ...s, horsAnalyse: !s.horsAnalyse || undefined }; setS(n); await enregistrer(db.seances, n) }}>
+            <b className="block">{s.horsAnalyse ? '✓ Séance non prise en compte' : 'Ne pas prendre en compte cette séance'}</b>
+            <span className="text-xs text-texte-3">Séance faussée ou pas celle prévue : seuls ses kJ comptent. Sa FC, sa dérive, la progression et les victoires l’ignorent.</span>
+          </button>
+        )}
         {edition && (
           <button type="button" className="w-full py-3 text-mauvais"
             onClick={async () => { if (confirm('Supprimer cette séance ?')) { await supprimerSeance(s.id); navigate(-1) } }}>

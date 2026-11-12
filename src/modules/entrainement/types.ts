@@ -189,6 +189,8 @@ export interface Seance {
   tss?: number
   /** Découplage cardiaque (%) pour les séances ≥ 45 min avec flux */
   decouplage?: number
+  /** « Ne pas prendre en compte » (séance faussée, ou pas celle prévue) : seuls ses kJ comptent ; FC, dérive, progression et victoires l'ignorent (12/11/2026) */
+  horsAnalyse?: boolean
   /** Meilleures puissances moyennes (W) sur 3, 7 et 12 min (clé : durée en s) */
   meilleurs?: Record<string, number>
   source: 'manuel' | 'fit' | 'intervals'

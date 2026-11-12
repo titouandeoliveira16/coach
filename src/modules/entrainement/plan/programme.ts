@@ -63,7 +63,9 @@ const arrondi5 = (n: number) => Math.round(n / 5) * 5
 
 /** Séances d'intensité générées (passées et prévues) : alternance des formats et progression. */
 async function histoIntensite(): Promise<HistoIntensite[]> {
-  const autos = (await db.prevues.toArray()).filter((p) => p.origine === 'auto' && estIntensite(p) && actives(p) && !p.realiseDifferent)
+  // Séance mise « hors analyse » : elle ne fait ni progresser ni reculer
+  const ignorees = new Set((await db.seances.toArray()).filter((s) => s.horsAnalyse && s.prevueId).map((s) => s.prevueId))
+  const autos = (await db.prevues.toArray()).filter((p) => p.origine === 'auto' && estIntensite(p) && actives(p) && !p.realiseDifferent && !ignorees.has(p.id))
   // Jour orange ou rouge (sans « je maintiens ») : séance raccourcie ou supprimée, elle ne fait pas progresser
   const adaptes = new Set((await db.decisions.toArray()).filter((d) => d.couleur !== 'vert' && !d.force).map((d) => d.date))
   return autos.map((p) => ({
@@ -82,7 +84,7 @@ export async function z2Actuel() {
   const depart = r.programme.z2W ?? arrondi5(r.cpW * 0.62)
   const dernierTest = r.tests.filter((t) => t.type === 'cp').map((t) => t.date).sort().pop() ?? ''
   const z2Ids = new Set((await db.prevues.toArray()).filter((p) => !p.realiseDifferent && ((p.velo?.famille === 'z2' && p.velo.formatId !== 'ouverture' && p.velo.formatId !== 'sv1-dedie') || p.velo?.famille === 'z2-long')).map((p) => p.id))
-  const seances = (await db.seances.where('date').above(dernierTest).toArray()).filter((s) => s.prevueId && z2Ids.has(s.prevueId))
+  const seances = (await db.seances.where('date').above(dernierTest).toArray()).filter((s) => s.prevueId && z2Ids.has(s.prevueId) && !s.horsAnalyse)
   // Chaque sortie Z2 donne un signal (+1 facile et stable, −1 trop dur) ; on ne bouge de ±5 W
   // que lorsque 2 sorties de suite vont dans le même sens (une sortie isolée est trop bruitée)
   const signaux = seances.sort((a, b) => a.date.localeCompare(b.date)).flatMap((s) => {
@@ -870,7 +872,7 @@ export async function bilanDimanche(lundi: string) {
  */
 async function signauxFc(seances: Seance[]) {
   const c = await chargerContexte()
-  const faciles = seances.filter((s) => (s.sport === 'velo' || s.sport === 'course') && domaineDe(s, c.bornes) === 'basse')
+  const faciles = seances.filter((s) => (s.sport === 'velo' || s.sport === 'course') && !s.horsAnalyse && domaineDe(s, c.bornes) === 'basse')
   const derive = faciles.filter((s) => !s.sansCeinture && (s.decouplage ?? 0) > 5).length
   const dures = faciles.filter((s) => s.reserve === 'non').length
   const r: string[] = []
