@@ -19,7 +19,7 @@ setTimeout(() => import('./modules/entrainement/plan/programme').then((m) => m.m
 // Contrôle des séances récentes recalculé avec les règles du moment (ex. arrêts exclus des moyennes, v0.71)
 setTimeout(() => import('./modules/entrainement/import/intervals').then((m) => m.recontrolerRecentes()).catch((e) => signalerErreur(e, 'Démarrage (contrôle des séances)')), 12000)
 // Saison recalculée une fois avec la prépa hivernale Methodic (v10.5)
-setTimeout(() => import('./modules/entrainement/arrivee/donnees').then((m) => m.migrerSaisonV2().then(m.migrerSaisonV3).then(m.migrerSaisonV4)).catch((e) => signalerErreur(e, 'Démarrage (saison)')), 9000)
+setTimeout(() => import('./modules/entrainement/arrivee/donnees').then((m) => m.migrerSaisonV2().then(m.migrerSaisonV3).then(m.migrerSaisonV4).then(m.completerHistorique)).catch((e) => signalerErreur(e, 'Démarrage (saison)')), 9000)
 
 // Mises à jour : on vérifie s'il existe une nouvelle version à chaque retour sur l'appli (iPhone : l'appli est souvent
 // « réveillée » plutôt que relancée) et toutes les heures. Une nouvelle version ne recharge plus la page en pleine

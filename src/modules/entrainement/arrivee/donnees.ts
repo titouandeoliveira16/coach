@@ -9,7 +9,7 @@ import { dureeDeCourse, epreuveDe, niveauDuProfil, niveauxCourses, phaseDe } fro
 import type { ProfilSportif } from '../reglages/ProfilSportif'
 import { DEFAUT_ENTRAINEMENT } from '../reglagesEntrainement'
 import type { ReglagesEntrainement, ZoneVelo } from '../types'
-import { chargeDeDepart } from '../plan/depart'
+import { chargeDeDepart, type HistoriqueKj } from '../plan/depart'
 
 /** Réponses du questionnaire d'arrivée d'un nouveau compte (élève, frère…). */
 export interface ReponsesArrivee {
@@ -268,6 +268,24 @@ export async function migrerSaisonV4() {
   if (phase.type === 'reprise' || phase.debut === lundi) await recalculerSaison(true)
   const apres = (await db.reglages.get('entrainement'))?.valeur as ReglagesEntrainement | undefined
   if (apres?.programme && !apres.programme.saisonV4) await enregistrer(db.reglages, { id: 'entrainement', valeur: { ...apres, programme: { ...apres.programme, saisonV3: true, saisonV4: true } } })
+}
+
+/**
+ * Sorties venues de Strava absentes de l'historique (Intervals ne les transmet pas) : relu une fois par jour pendant
+ * 30 jours. Dès que l'historique est nettement plus complet (montre reliée directement à Intervals), la saison en
+ * reprise (ou commencée cette semaine) est recalculée. Courses et tests gardés.
+ */
+export async function completerHistorique() {
+  const h = (await db.reglages.get('historique-kj'))?.valeur as HistoriqueKj | undefined
+  const jour = aujourdhui()
+  if (!h || !h.viaStrava || h.complet || h.le === jour || (h.debut && ecartJours(h.debut, jour) > 30)) return
+  const { importerHistoriqueKj } = await import('../import/intervals')
+  const r = await importerHistoriqueKj(true).catch(() => undefined)
+  const prog = ((await db.reglages.get('entrainement'))?.valeur as ReglagesEntrainement | undefined)?.programme
+  if (!r?.mieux || !prog?.phases?.length || prog.modele !== 'chauvin') return
+  const lundi = decalerJour(jour, -((new Date(`${jour}T12:00:00`).getDay() + 6) % 7))
+  const { phase } = phaseDe(lundi, prog.phases)
+  if (phase.type === 'reprise' || phase.debut === lundi) await recalculerSaison(true)
 }
 
 /**

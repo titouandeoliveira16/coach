@@ -6,7 +6,15 @@ import { chargeHabituelle } from '../../../metrics/saison'
 const SEMAINES = 26
 
 /** Réglage « historique-kj » : kJ de vélo par semaine (lundi) sur 6 mois, importés une fois d'Intervals. */
-export interface HistoriqueKj { semaines: Record<string, number>; le: string; viaStrava?: number }
+export interface HistoriqueKj {
+  semaines: Record<string, number>
+  le: string
+  viaStrava?: number
+  /** Premier import ; relu une fois par jour pendant 30 jours tant que des sorties viennent de Strava (absentes) */
+  debut?: string
+  /** Relecture qui a trouvé nettement plus de kJ (sorties Garmin reliées à Intervals) : plus de relecture */
+  complet?: boolean
+}
 
 /**
  * Charge habituelle avant la semaine de ce lundi (12/11/2026) : tes 26 semaines (6 mois) complètes de vélo d'avant,

@@ -222,8 +222,9 @@ export async function recontrolerRecentes() {
  * (pas ajoutés à tes séances). Sortie sans capteur : kJ estimés avec ta FC. Les sorties venues de Strava manquent
  * (Intervals ne les transmet pas). Rien sans Intervals relié.
  */
-export async function importerHistoriqueKj() {
-  if (!(await lireEtat()).relie || (await db.reglages.get('historique-kj'))) return
+export async function importerHistoriqueKj(relire = false) {
+  const avant = (await db.reglages.get('historique-kj'))?.valeur as HistoriqueKj | undefined
+  if (!(await lireEtat()).relie || (avant && !relire)) return
   const { activites, viaStrava } = await appeler<{ activites: Activite[]; viaStrava: number }>('activites', { oldest: decalerJour(aujourdhui(), -182) })
   const c = await chargerContexte()
   const semaines: Record<string, number> = {}
@@ -236,7 +237,10 @@ export async function importerHistoriqueKj() {
     semaines[l] = (semaines[l] ?? 0) + kj
   }
   for (const l of Object.keys(semaines)) semaines[l] = Math.round(semaines[l])
-  await enregistrer(db.reglages, { id: 'historique-kj', valeur: { semaines, le: aujourdhui(), viaStrava } satisfies HistoriqueKj })
+  const total = (h?: Record<string, number>) => Object.values(h ?? {}).reduce((a, x) => a + x, 0)
+  const mieux = !!avant && total(semaines) > total(avant.semaines) * 1.2
+  await enregistrer(db.reglages, { id: 'historique-kj', valeur: { ...avant, semaines: mieux || !avant ? semaines : avant.semaines, le: aujourdhui(), viaStrava, debut: avant ? (avant.debut ?? avant.le) : aujourdhui(), ...(mieux ? { complet: true } : {}) } satisfies HistoriqueKj })
+  return { mieux }
 }
 
 /** Import complet (séances + données Garmin). Première fois : 90 derniers jours. */
