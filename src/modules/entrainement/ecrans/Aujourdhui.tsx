@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { TuilesMatin } from '../forme/TuilesMatin'
-import { useEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { aujourdhui } from '../../../core/dates'
 import { CarteBilan, lundiDuBilan } from '../plan/CarteBilan'
 import { lireReglagesNutrition } from '../forme/besoins'
@@ -30,7 +30,8 @@ import { QUESTIONS, mesuresRecentes } from '../forme/donnees'
 function useZoneEcran(pret: boolean) {
   const ref = useRef<HTMLDivElement>(null)
   const [zone, setZone] = useState<{ haut: number; bas: number }>()
-  useEffect(() => {
+  // Mesuré avant l'affichage : l'écran est visible dès son arrivée (sinon il ratait son glissement depuis la gauche)
+  useLayoutEffect(() => {
     const calculer = () => {
       if (!ref.current) return
       const hautZone = ref.current.getBoundingClientRect().top
