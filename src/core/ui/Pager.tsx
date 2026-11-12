@@ -56,14 +56,33 @@ export function Pager({ pages }: { pages: Page[] }) {
   const piste = useRef<HTMLDivElement>(null)
   const actif = pages.findIndex((p) => pathname === p.vers || pathname.startsWith(`${p.vers}/`))
   // Pages montées : la page actuelle, ses voisines et celles déjà vues (leur défilement est gardé)
+  // (les nouvelles voisines sont construites une fois le glissement fini, pour ne pas le ralentir)
   const [montees, setMontees] = useState<Set<number>>(() => new Set([actif - 1, actif, actif + 1]))
   useEffect(() => {
     if (actif < 0) return
-    setMontees((m) => (m.has(actif - 1) && m.has(actif) && m.has(actif + 1) ? m : new Set([...m, actif - 1, actif, actif + 1])))
+    setMontees((m) => (m.has(actif) ? m : new Set([...m, actif])))
+    const t = setTimeout(() => setMontees((m) => (m.has(actif - 1) && m.has(actif + 1) ? m : new Set([...m, actif - 1, actif + 1]))), 450)
+    return () => clearTimeout(t)
   }, [actif])
+  // Chaque page n'est construite qu'une fois : changer d'onglet ne la recalcule pas (elle se met à jour seule avec ses données)
+  const elements = useRef(new Map<string, ReactNode>())
+  const element = (p: Page) => {
+    if (!elements.current.has(p.vers)) elements.current.set(p.vers, p.element)
+    return elements.current.get(p.vers)
+  }
 
   const n = pages.length
   const position = (i: number, dx = 0) => `translate3d(calc(${(-i * 100) / n}% + ${dx}px), 0, 0)`
+  // La bulle des onglets (en bas) suit la bande
+  const placerBulle = (pos: number, anime: boolean) => {
+    const b = document.querySelector<HTMLElement>('[data-bulle]')
+    if (!b) return
+    b.style.transition = anime ? TRANSITION : 'none'
+    b.style.transform = `translate3d(${pos * 100}%, 0, 0)`
+    // Le nom sous la bulle passe en sombre dès qu'elle est dessus
+    const nav = b.parentElement
+    if (nav) nav.dataset.proche = String(Math.round(pos))
+  }
 
   // Changement d'onglet (toucher un onglet, ou fin du geste) : la bande glisse jusqu'à la page
   const premiere = useRef(true)
@@ -72,20 +91,30 @@ export function Pager({ pages }: { pages: Page[] }) {
     if (!el || actif < 0) return
     el.style.transition = premiere.current ? 'none' : TRANSITION
     el.style.transform = position(actif)
+    placerBulle(actif, !premiere.current)
     premiere.current = false
   }, [actif, zone]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Glissement au doigt
+  // Glissement au doigt (écouteurs posés une seule fois : une mise à jour de l'écran ne coupe pas le geste)
+  const etat = useRef({ actif, pages, naviguer })
+  useLayoutEffect(() => {
+    etat.current = { actif, pages, naviguer }
+  })
+  const valide = actif >= 0
   useEffect(() => {
     const el = piste.current
-    if (!el || actif < 0) return
-    let depart: { x: number; y: number; t: number } | undefined
+    if (!el || !valide) return
+    let depart: { x: number; y: number; t: number; i: number } | undefined
     let horizontal: boolean | undefined
     let dx = 0
+    let enCours = false
+    const largeur = () => el.parentElement?.clientWidth ?? window.innerWidth
     const debut = (e: TouchEvent) => {
+      depart = undefined
+      if (enCours || e.touches.length !== 1 || gesteInterne(e.target)) return // (la bande finit de se caler)
       horizontal = undefined
       dx = 0
-      depart = e.touches.length === 1 && !gesteInterne(e.target) ? { x: e.touches[0].clientX, y: e.touches[0].clientY, t: Date.now() } : undefined
+      depart = { x: e.touches[0].clientX, y: e.touches[0].clientY, t: Date.now(), i: etat.current.actif }
     }
     const mouvement = (e: TouchEvent) => {
       if (!depart) return
@@ -93,24 +122,33 @@ export function Pager({ pages }: { pages: Page[] }) {
       const y = e.touches[0].clientY - depart.y
       if (horizontal === undefined && Math.hypot(x, y) > 8) horizontal = Math.abs(x) > Math.abs(y) * 1.15
       if (!horizontal) return
+      const n = etat.current.pages.length
       // En bout de bande (premier ou dernier onglet), elle résiste
-      const bout = (x > 0 && actif === 0) || (x < 0 && actif === n - 1)
+      const bout = (x > 0 && depart.i === 0) || (x < 0 && depart.i === n - 1)
       dx = bout ? x / 3.5 : x
       el.style.transition = 'none'
-      el.style.transform = position(actif, dx)
+      el.style.transform = position(depart.i, dx)
+      placerBulle(depart.i - dx / largeur(), false)
     }
     const fin = () => {
       if (!depart) return
-      const vitesse = Math.abs(dx) / Math.max(1, Date.now() - depart.t)
+      const { i, t } = depart
       depart = undefined
       if (!horizontal) return
-      const largeur = el.parentElement?.clientWidth ?? window.innerWidth
-      const cible = actif + (dx < 0 ? 1 : -1)
-      const changer = (Math.abs(dx) > largeur * 0.25 || (vitesse > 0.35 && Math.abs(dx) > 30)) && cible >= 0 && cible < n
-      if (changer) naviguer(pages[cible].vers)
-      else {
-        el.style.transition = TRANSITION
-        el.style.transform = position(actif)
+      const vitesse = Math.abs(dx) / Math.max(1, Date.now() - t)
+      const cible = i + (dx < 0 ? 1 : -1)
+      const changer = (Math.abs(dx) > largeur() * 0.25 || (vitesse > 0.35 && Math.abs(dx) > 30)) && cible >= 0 && cible < etat.current.pages.length
+      const arrivee = changer ? cible : i
+      el.style.transition = TRANSITION
+      el.style.transform = position(arrivee)
+      placerBulle(arrivee, true)
+      // On change d'onglet seulement une fois la bande calée : rien ne se recalcule pendant l'animation
+      if (changer) {
+        enCours = true
+        setTimeout(() => {
+          enCours = false
+          etat.current.naviguer(etat.current.pages[cible].vers)
+        }, 380)
       }
     }
     el.addEventListener('touchstart', debut, { passive: true })
@@ -123,7 +161,7 @@ export function Pager({ pages }: { pages: Page[] }) {
       el.removeEventListener('touchend', fin)
       el.removeEventListener('touchcancel', fin)
     }
-  }, [actif, n, pages, naviguer]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [valide]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (actif < 0) return <Navigate to={pages[0].vers} replace />
   return (
@@ -132,7 +170,7 @@ export function Pager({ pages }: { pages: Page[] }) {
         {pages.map((p, i) => (
           <section key={p.vers} aria-hidden={i !== actif} className="h-full touch-pan-y overflow-y-auto overscroll-contain px-4 pb-28" style={{ width: `${100 / n}%` }}
             {...(i !== actif ? { inert: true } : {})}>
-            {montees.has(i) ? p.element : null}
+            {montees.has(i) ? element(p) : null}
           </section>
         ))}
       </div>

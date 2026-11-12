@@ -36,20 +36,18 @@ export function Onglets({ onglets }: { onglets: Onglet[] }) {
   const n = onglets.length
   return (
     <div className="pointer-events-none fixed inset-x-0 z-20 mx-auto max-w-lg bg-linear-to-b from-transparent to-fond to-40% px-4 pt-3 pb-2" style={{ bottom: bas }}>
-      <nav data-onglets data-visite="onglets" className="pointer-events-auto relative flex rounded-full bg-surface-2 p-1 shadow-lg shadow-black/60">
+      <nav data-onglets data-proche={actif} data-visite="onglets" className="pointer-events-auto relative flex rounded-full bg-surface-2 p-1 shadow-lg shadow-black/60">
         {/* La bulle de l'onglet actif glisse d'un onglet à l'autre */}
         {actif >= 0 && (
-          <span aria-hidden className="absolute top-1 bottom-1 left-1 rounded-full bg-accent transition-transform duration-[420ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
-            style={{ width: `calc((100% - 0.5rem) / ${n})`, transform: `translateX(${actif * 100}%)` }} />
+          <span aria-hidden data-bulle className="absolute top-1 bottom-1 left-1 rounded-full bg-accent transition-transform duration-[360ms] ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform"
+            style={{ width: `calc((100% - 0.5rem) / ${n})`, transform: `translate3d(${actif * 100}%, 0, 0)` }} />
         )}
         {onglets.map((o) => (
           <NavLink
             key={o.vers}
             to={o.vers}
             end
-            className={({ isActive }) =>
-              `presse relative flex-1 rounded-full py-2 text-center text-sm font-semibold transition-colors duration-300 ${isActive ? 'text-fond' : 'text-texte-2'}`
-            }
+            className="presse relative flex-1 rounded-full py-2 text-center text-sm font-semibold text-texte-2 transition-colors duration-200"
           >
             {o.libelle}
           </NavLink>
