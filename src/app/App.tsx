@@ -14,6 +14,7 @@ import { useSynchro } from '../core/synchro'
 import { useReglage } from '../core/reglages'
 import type { ReglageCompte } from '../core/inscription'
 import { QuestionnaireArrivee } from '../modules/entrainement/arrivee/QuestionnaireArrivee'
+import { EtapeNotifications } from '../modules/entrainement/arrivee/EtapeNotifications'
 import type { EtatArrivee } from '../modules/entrainement/arrivee/donnees'
 
 const LUEURS = { vert: 'rgba(48,209,88,.14)', orange: 'rgba(255,159,10,.14)', rouge: 'rgba(255,69,58,.14)' }
@@ -43,6 +44,8 @@ function Coquille() {
   // avec un code
   if (derniereSynchro && !arrivee.fait) return <QuestionnaireArrivee />
   if (compte.invite && arrivee.fait && !arrivee.montre) return <QuestionnaireArrivee montreSeulement />
+  // Puis les notifications (sans cette étape, beaucoup ne les activaient jamais)
+  if (compte.invite && arrivee.fait && arrivee.montre && !arrivee.notifs) return <EtapeNotifications />
 
   // Dans un module, la page est toujours un peu plus haute que l'écran : sur iPhone (appli installée),
   // la barre du bas ne reste collée en bas que si la page peut défiler
