@@ -7,7 +7,8 @@ import { decaler } from './vfc'
  * reprise (base d'endurance) → tirer le seuil → allonger le seuil → fin de prépa (sweet spot + VO2, 3 sem.) →
  * proche de la course (3 sem.) → affûtage (1-2 sem. : volume en baisse, intensité gardée, Bosquet 2007) →
  * récupération (1 sem.) → entretien.
- *  - Reprise (sans intensité) : 2 semaines, 4 pour un débutant ou après un arrêt de 4 semaines ou plus.
+ *  - Reprise (sans intensité) : selon la coupure, 0 (1 semaine ou moins), 1 (2-3), 2 (4-6) ou 4 (plus) ; 4 pour un
+ *    débutant, 2 si tu ne roulais pas encore régulièrement.
  *  - Base (relecture du 10/11/2026) : quand la course est loin, 4 à 10 semaines d'endurance avec 1 rappel d'intensité
  *    par semaine (la VO2max s'entretient avec l'intensité : Hickson 1985, Rønnestad 2014) au lieu d'une longue reprise.
  *  - Tirer le seuil : 40 % du temps restant, 4 semaines au plus ; allonger le seuil : le reste, 8 semaines au plus ;
@@ -43,7 +44,7 @@ const semainesEntre = (a: string, b: string) => Math.round((Date.parse(b) - Date
  * spécifique 3, cycle VO2max 3 ; puis le 2e seuil (tirée 2-4, poussée 2-8), le cycle 1er seuil (4-10), et au-delà de
  * l'entretien au début. Reprise : 0 si tu roulais déjà régulièrement, sinon 2 (4 en débutant ou après un arrêt).
  */
-export function dureesPhases(n: number, repriseLongue = false, entraine = false) {
+export function dureesPhases(n: number, repriseLongue = false, entraine = false, semainesReprise?: number) {
   const d = { reprise: 0, entretien: 0, base: 0, 'seuil-tirage': 0, 'seuil-maintien': 0, 'fin-prepa': 0, specifique: 0, affutage: 0 }
   if (n <= 0) return d
   if (n < 3) return { ...d, affutage: n }
@@ -53,7 +54,7 @@ export function dureesPhases(n: number, repriseLongue = false, entraine = false)
   reste -= d.specifique
   d['fin-prepa'] = Math.min(3, reste)
   reste -= d['fin-prepa']
-  d.reprise = Math.min(reste, repriseLongue ? 4 : entraine ? 0 : 2)
+  d.reprise = Math.min(reste, semainesReprise ?? (repriseLongue ? 4 : entraine ? 0 : 2))
   reste -= d.reprise
   // Cycle 1er seuil : la base de tout, dès qu'il reste plus de 4 semaines (4 à 10, en cycles de 4 quand c'est possible)
   d.base = reste <= 4 ? 0 : Math.min(10, Math.max(4, Math.round((reste - 4) / 2 / 4) * 4))
@@ -72,7 +73,10 @@ export function calculerSaison(e: EntreeSaison) {
   const l0 = lundiDe(e.debut)
   const lc = lundiDe(e.course)
   const n = semainesEntre(l0, lc) + 1
-  const d = dureesPhases(n, (e.arretSemaines ?? 0) >= 4 || !!e.debutant, !!e.entraine && !e.debutant && (e.arretSemaines ?? 0) < 2)
+  // Reprise selon la coupure (12/11/2026) : 0, 1, 2 ou 4 semaines ; 4 pour un débutant, 2 si tu ne roulais pas encore régulièrement
+  const arret = e.arretSemaines ?? 0
+  const reprise = e.debutant ? 4 : e.entraine || arret >= 2 ? repriseSelonCoupure(arret) : 2
+  const d = dureesPhases(n, arret >= 4 || !!e.debutant, !!e.entraine && !e.debutant && arret < 2, reprise)
   const phases: Phase[] = []
   let l = l0
   for (const type of ['reprise', 'entretien', 'base', 'seuil-tirage', 'seuil-maintien', 'fin-prepa', 'specifique', 'affutage'] as const) {
@@ -192,4 +196,38 @@ export function lireHistorique(semaines: { sorties: number; kj: number }[], nomi
   const irreguliere = semaines.some((s) => s.kj < mediane / 2)
   if (bonnes < 3) return { entraine: false as const }
   return { entraine: true as const, budgetDepart: Math.round((mediane * (irreguliere ? 0.9 : 1)) / 10) * 10 }
+}
+
+// ——— Charge habituelle et retour après une coupure (12/11/2026) ———
+
+/** Une semaine complète passée (de la plus ancienne à la plus récente) : kJ de vélo, et si elle était prévue légère (affûtage, récupération). */
+export interface SemaineVecue { kj: number; legere?: boolean }
+
+/**
+ * Part de ta charge habituelle d'où tu repars selon le nombre de semaines de coupure (relecteur du 12/11/2026) : un arrêt
+ * fait perdre ~7 % de VO2max en 2 semaines et ~15 % en 2-3 mois (Coyle 1984 ; Mujika & Padilla 2000), lever le pied en
+ * gardant de l'intensité préserve l'essentiel (Hickson 1985). Les pourcentages exacts sont des choix d'entraîneur.
+ */
+export const facteurCoupure = (n: number) => (n <= 1 ? 0.9 : n <= 3 ? 0.75 : n <= 6 ? 0.6 : 0.45)
+/** Semaines de reprise (sans intensité) selon la coupure : 0, 1, 2 ou 4. */
+export const repriseSelonCoupure = (n: number) => (n <= 1 ? 0 : n <= 3 ? 1 : n <= 6 ? 2 : 4)
+
+/**
+ * Charge habituelle : la moyenne de tes 4 meilleures semaines d'affilée sur les 12 dernières (un bloc tenu, pas un
+ * record isolé ; sans affûtage ni récupération prévue). Coupure : les semaines d'après sous la moitié de cette charge
+ * (hors légères prévues). Plancher : la part de ta charge habituelle d'où tu repars.
+ */
+export function chargeHabituelle(semaines: SemaineVecue[]) {
+  let meilleur: { moyenne: number; fin: number } | undefined
+  for (let i = 0; i + 4 <= semaines.length; i++) {
+    const bloc = semaines.slice(i, i + 4)
+    if (bloc.some((s) => s.legere)) continue
+    const moyenne = bloc.reduce((a, s) => a + s.kj, 0) / 4
+    if (!meilleur || moyenne > meilleur.moyenne) meilleur = { moyenne, fin: i + 3 }
+  }
+  if (!meilleur || meilleur.moyenne < 300) return undefined
+  const habituelle = Math.round(meilleur.moyenne / 10) * 10
+  const coupure = semaines.slice(meilleur.fin + 1).filter((s) => !s.legere && s.kj < habituelle * 0.5).length
+  const facteur = facteurCoupure(coupure)
+  return { habituelle, coupure, facteur, plancher: Math.round((habituelle * facteur) / 10) * 10 }
 }

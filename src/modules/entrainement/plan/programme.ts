@@ -18,6 +18,7 @@ import { hausseCharge } from '../../../metrics/planif'
 import { ratioPic } from '../../../metrics/charge'
 import { joursPanneVelo } from './imprevus'
 import { lireSemaineChargee, passerSemaineChargee } from './semaineChargee'
+import { chargeDeDepart } from './depart'
 
 /** Semaines d'une course B (elles remettent à zéro le compteur des semaines chargées). */
 const semaineB = (prog: Pick<ReglagesProgramme, 'competitions' | 'phases'>) => {
@@ -365,7 +366,9 @@ async function genererSemaineVeloBrute(lundi: string) {
   // Reprise progressive : durées des séances Z2 plafonnées les premières semaines (phase de reprise, ou retour après 3 semaines très légères)
   const parts = await partsRealisees(lundi)
   const coupure = retourDeCoupure(semainesChamboulees(parts), semainesChamboulees(parts.slice(1)))
-  const cap = plafondsReprise(phase.type === 'reprise' ? nSemaine : coupure.semaineReprise, prog.maxSemaineMin, prog.maxLongMin)
+  // Charge habituelle (4 meilleures semaines d'affilée sur 12) : d'où tu repars, et la reprise part de tes durées
+  const depart = await chargeDeDepart(lundi, prog.phases)
+  const cap = plafondsReprise(phase.type === 'reprise' ? nSemaine : coupure.semaineReprise, prog.maxSemaineMin, prog.maxLongMin, depart?.facteur)
   const phrases: string[] = [...phrasesTest]
 
   // Séance d'intensité
@@ -471,7 +474,7 @@ async function genererSemaineVeloBrute(lundi: string) {
   const prec = await bilanPrecedent(lundi)
   const b = coefPhase !== undefined
     ? budgetDePhase(prec, nominal, coefPhase, NOMS_PHASES[phase.type])
-    : await avecGardeFou(avecCoupure(budgetSemaine(prec, !prec && prog.budgetDepart ? prog.budgetDepart : nominal, plafond, allegee, raisonAllegee, hausseBudget(niveau), !prec && prog.budgetDepart ? 'Budget de départ : tes kJ des 4 semaines d’avant' : undefined), coupure), lundi)
+    : await avecGardeFou(avecCoupure(avecPlancher(budgetSemaine(prec, !prec && prog.budgetDepart ? prog.budgetDepart : nominal, plafond, allegee, raisonAllegee, hausseSous(depart, prec, hausseBudget(niveau)), !prec && prog.budgetDepart ? 'Budget de départ : tes kJ des 4 semaines d’avant' : undefined), depart, prec, plafond, allegee), coupure), lundi)
 
   // Répartition du reste du budget en Z2 : 60 % pour la sortie longue
   const kjFaits = seances.filter((s) => s.sport === 'velo' && dansSemaine(s.date)).reduce((a, s) => a + (s.kj ?? 0), 0)
@@ -697,10 +700,11 @@ export async function saison() {
     const h = heuresAu(prog, ps?.heuresSemaine, l)
     return h ? heuresDe(h)[1] : undefined
   }
+  const depart = await chargeDeDepart(lundi, prog.phases)
   const capDe = (l: string) => {
     const { phase, semaine } = phaseDe(l, prog.phases)
     const pl = programmeAu(prog, l)
-    return plafondsReprise(phase.type === 'reprise' ? semaine : undefined, pl.maxSemaineMin, pl.maxLongMin)
+    return plafondsReprise(phase.type === 'reprise' ? semaine : undefined, pl.maxSemaineMin, pl.maxLongMin, depart?.facteur)
   }
   const calcul = (l: string) => plafondEtNominal({ semaineType: programmeAu(prog, l).semaineType, kjIntensite, cap: capDe(l), z2W, heuresMax: heuresMax(l) })
   const { nominal, plafond } = calcul(lundi)
@@ -710,6 +714,7 @@ export async function saison() {
   const semaines = projeterSaison({
     lundi, jusquA: decalerJour(derniere.debut, 21), phases: prog.phases, testsCp: prog.testsCp, testsCourts: prog.testsCourts, competitions: prog.competitions,
     histo: (await histoIntensite()).filter((h) => h.date < lundi), budgetDepart: meta?.budgetRef ?? nominal, plafond, plafondDe, discipline: prog.discipline, repriseSansIntensite: prog.modele === 'chauvin', typeCourse: prog.typeCourse,
+    habituelle: depart?.habituelle, plancher: depart?.plancher,
   })
   // Semaine en cours déjà générée : on montre la vraie séance et le vrai budget
   const reelle = (await db.prevues.where('date').between(lundi, decalerJour(lundi, 6), true, true).toArray())
@@ -804,7 +809,8 @@ export async function bilanDimanche(lundi: string) {
   const allegee = coefSuivant === undefined && (estSemaineAllegee(suivant, prog.phases, semaineB(prog)) || !!course)
   const { w: z2W } = await z2Actuel()
   const progS = programmeAu(prog, suivant)
-  const cap = plafondsReprise(phase.type === 'reprise' ? nSemaine : undefined, progS.maxSemaineMin, progS.maxLongMin)
+  const depart = await chargeDeDepart(suivant, prog.phases)
+  const cap = plafondsReprise(phase.type === 'reprise' ? nSemaine : undefined, progS.maxSemaineMin, progS.maxLongMin, depart?.facteur)
   const histo = await histoIntensite()
   let intensite: string
   let kjIntensite: number
@@ -827,7 +833,7 @@ export async function bilanDimanche(lundi: string) {
   const precSuivant = await bilanPrecedent(suivant)
   const b = coefSuivant !== undefined
     ? budgetDePhase(precSuivant, nominal, coefSuivant, NOMS_PHASES[phase.type])
-    : await avecGardeFou(budgetSemaine(precSuivant, nominal, plafond, allegee, course ? `semaine de ta course (${course.nom})` : 'semaine allégée (1 sur 4)', hausseBudget(niveauDuProfil(ps))), suivant)
+    : await avecGardeFou(avecPlancher(budgetSemaine(precSuivant, nominal, plafond, allegee, course ? `semaine de ta course (${course.nom})` : 'semaine allégée (1 sur 4)', hausseSous(depart, precSuivant, hausseBudget(niveauDuProfil(ps)))), depart, precSuivant, plafond, allegee), suivant)
   const ecart = meta ? b.budget - meta.budget : undefined
   const change = [
     `budget vélo ${b.budget} kJ${ecart !== undefined ? ` (${ecart >= 0 ? '+' : ''}${ecart})` : ''}`,
@@ -870,6 +876,28 @@ async function signauxFc(seances: Seance[]) {
  * précédentes, et pic de charge totale sur les 7 derniers jours. Il faut 35 jours d'historique.
  * Seul le budget de la semaine baisse (pas la base) : la semaine d'après repart normalement.
  */
+/** Sous ta charge habituelle, le budget remonte de 10 % par semaine validée (au lieu de 7,5 %). */
+function hausseSous(depart: Awaited<ReturnType<typeof chargeDeDepart>>, prec: BilanSemaine | undefined, hausse: number) {
+  return depart && prec && prec.budgetRef < depart.habituelle ? Math.max(hausse, 0.1) : hausse
+}
+
+/**
+ * Plancher (12/11/2026) : tu ne repars pas plus bas que la part de ta charge habituelle qui va avec ta coupure (90 %
+ * après 1 semaine au plus, 75 % après 2-3, 60 % après 4-6, 45 % au-delà). Pas après 2 jours rouges ni une semaine
+ * faite aux trois quarts seulement : la prudence l'emporte.
+ */
+function avecPlancher<B extends { budgetRef: number; budget: number; raison: string }>(b: B, depart: Awaited<ReturnType<typeof chargeDeDepart>>, prec: BilanSemaine | undefined, plafond: number, allegee: boolean): B {
+  if (!depart || b.budgetRef >= depart.plancher) return b
+  if (prec && (prec.rouges >= 2 || (prec.kjPrevus > 0 && prec.kjRealises / prec.kjPrevus < 0.75))) return b
+  const ref = Math.round(Math.min(plafond, depart.plancher))
+  if (ref <= b.budgetRef) return b
+  const coupure = depart.coupure ? `${depart.coupure} semaine${depart.coupure > 1 ? 's' : ''} de coupure` : 'pas de coupure'
+  return {
+    ...b, budgetRef: ref, budget: Math.round(allegee ? ref * 0.65 : ref),
+    raison: `${Math.round(depart.facteur * 100)} % de ta charge habituelle (${depart.habituelle.toLocaleString('fr-FR')} kJ, ${coupure})${allegee ? ' · semaine allégée : −35 %' : ''}`,
+  }
+}
+
 /** Retour après des semaines chamboulées : budget −10 % (la référence aussi, pour repartir plus bas). */
 function avecCoupure<B extends { budgetRef: number; budget: number; raison: string }>(b: B, c: ReturnType<typeof retourDeCoupure>): B {
   if (!c.raison) return b

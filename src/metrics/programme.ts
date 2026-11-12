@@ -1156,9 +1156,12 @@ export function budgetDePhase(prec: BilanSemaine | undefined, nominal: number, c
  * (sortie longue 75 min la 1re semaine puis +10 min par semaine ; Z2 de semaine 50 min puis +5 min),
  * sans dépasser les créneaux. `n` = numéro de semaine dans la reprise (0 = première), absent hors reprise.
  */
-export function plafondsReprise(n: number | undefined, maxSemaine: number, maxLong: number) {
+export function plafondsReprise(n: number | undefined, maxSemaine: number, maxLong: number, part?: number) {
   if (n === undefined) return { z2: maxSemaine, long: maxLong }
-  return { z2: Math.min(maxSemaine, 50 + 5 * n), long: Math.min(maxLong, 75 + 10 * n) }
+  // Avec une charge habituelle connue (12/11/2026) : on part de la même part de TES durées (au moins 50 min et 1 h 15)
+  const z2 = part ? Math.max(50, Math.round((maxSemaine * part) / 5) * 5) : 50
+  const long = part ? Math.max(75, Math.round((maxLong * part) / 5) * 5) : 75
+  return { z2: Math.min(maxSemaine, z2 + 5 * n), long: Math.min(maxLong, long + 10 * n) }
 }
 
 /** Semaine « chamboulée » : moins de la moitié du budget kJ réalisé. */
@@ -1452,6 +1455,10 @@ export function projeterSaison(o: {
   /** Plafond propre à une semaine (reprise progressive) */
   plafondDe?: (lundi: string) => number
   discipline?: Discipline
+  /** Charge habituelle (4 meilleures semaines d'affilée sur 12) : hausse de 10 % tant qu'on est en dessous */
+  habituelle?: number
+  /** Part de la charge habituelle d'où l'on repart (selon la coupure) : le budget ne descend pas en dessous */
+  plancher?: number
   /** Saison calculée : reprise sans intensité */
   repriseSansIntensite?: boolean
   typeCourse?: TypeCourse
@@ -1474,7 +1481,8 @@ export function projeterSaison(o: {
     const allegee = coef === undefined && (estSemaineAllegee(l, triees, semaineB) || (!!competition && niveaux.get(competition.date) === 'B'))
     const plafond = o.plafondDe?.(l) ?? o.plafond
     const hausse = semaines.length > 0 && !precedenteAllegee && coef === undefined
-    if (hausse) ref = ref * 1.075
+    if (hausse) ref = ref * (o.habituelle && ref < o.habituelle ? 1.1 : 1.075)
+    if (o.plancher && semaines.length > 0 && coef === undefined) ref = Math.max(ref, o.plancher)
     const bloquee = hausse && !allegee && ref > plafond
     ref = Math.min(plafond, ref)
     precedenteAllegee = allegee || coef !== undefined

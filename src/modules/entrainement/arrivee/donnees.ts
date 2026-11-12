@@ -3,12 +3,13 @@ import { aujourdhui, decalerJour, ecartJours } from '../../../core/dates'
 import { enregistrer } from '../../../core/stockage'
 import { zonesDepuisCp } from '../../../core/zones'
 import { ageAu, type Profil } from '../../../core/profil'
-import type { Competition, Discipline, Role } from '../../../metrics/programme'
+import type { Competition, Discipline, Phase, Role } from '../../../metrics/programme'
 import { calculerSaison, datesCoursesA, lireHistorique, phasesAvecCoursesA } from '../../../metrics/saison'
 import { dureeDeCourse, epreuveDe, niveauDuProfil, niveauxCourses } from '../../../metrics/programme'
 import type { ProfilSportif } from '../reglages/ProfilSportif'
 import { DEFAUT_ENTRAINEMENT } from '../reglagesEntrainement'
 import type { ReglagesEntrainement, ZoneVelo } from '../types'
+import { chargeDeDepart } from '../plan/depart'
 
 /** Réponses du questionnaire d'arrivée d'un nouveau compte (élève, frère…). */
 export interface ReponsesArrivee {
@@ -75,7 +76,7 @@ function zonesFc(fcMax: number): { fcMin?: number; fcMax?: number }[] {
 }
 
 /** Tout ce que le questionnaire enregistre (pur : testé). */
-export function preparerArrivee(r: ReponsesArrivee, jour: string, testsFaits: ReglagesEntrainement['tests'] = [], historique?: { entraine: boolean; budgetDepart?: number }) {
+export function preparerArrivee(r: ReponsesArrivee, jour: string, testsFaits: ReglagesEntrainement['tests'] = [], historique?: { entraine: boolean; budgetDepart?: number; coupure?: number }) {
   const age = ageAu(r.naissance, jour)
   const fcMax = r.fcMax ?? fcMaxTanaka(age)
   const cpW = r.cpW ?? cpProvisoire(r.poidsKg)
@@ -98,7 +99,7 @@ export function preparerArrivee(r: ReponsesArrivee, jour: string, testsFaits: Re
   // Deux courses A ou plus : la préparation vise la 1re, puis récupération et bloc jusqu'à la suivante
   const premiereA = datesCoursesA([...(r.sansCourse ? [] : [principale]), ...(r.autresCourses ?? [])])[0] ?? r.course.date
   const saison = calculerSaison({
-    debut: jour, course: premiereA, arretSemaines: r.arretSemaines, debutant: niveauDuProfil(ps) === 'debutant', entraine: historique?.entraine,
+    debut: jour, course: premiereA, arretSemaines: Math.max(r.arretSemaines, historique?.coupure ?? 0), debutant: niveauDuProfil(ps) === 'debutant', entraine: historique?.entraine,
     jourLong: jourLong >= 0 ? jourLong : 6, jourDur: jourDur >= 0 ? jourDur : 1, aujourdhui: jour,
   })
   // CP déjà testée ces 4 dernières semaines (compte déjà utilisé) : pas de nouveau test dans les 2 premières semaines
@@ -169,8 +170,12 @@ export async function reponsesExistantes() {
   }
 }
 
-/** Tes 4 semaines complètes avant celle-ci : sorties vélo et kJ, lus dans tes séances importées. */
-export async function historiqueRecent(jour: string, cpW: number, semaineType: Role[]) {
+/**
+ * Tes 4 semaines complètes avant celle-ci : sorties vélo et kJ, lus dans tes séances importées. Avec ta charge habituelle
+ * (12/11/2026, 4 meilleures semaines d'affilée sur 12) : budget de départ au moins à la part qui va avec ta coupure,
+ * et la coupure vue dans tes séances règle la reprise.
+ */
+export async function historiqueRecent(jour: string, cpW: number, semaineType: Role[], phases: Phase[] = []): Promise<{ entraine: boolean; budgetDepart?: number; coupure?: number }> {
   const lundi = decalerJour(jour, -((new Date(`${jour}T12:00:00`).getDay() + 6) % 7))
   const debut = decalerJour(lundi, -28)
   const seances = (await db.seances.where('date').between(debut, decalerJour(lundi, -1), true, true).toArray()).filter((s) => s.sport === 'velo')
@@ -182,7 +187,11 @@ export async function historiqueRecent(jour: string, cpW: number, semaineType: R
   // Semaine type estimée : Z2 à 62 % de la CP, 1 h par jour d'endurance, 1 h 40 de sortie longue, 45 min d'intensité
   const nZ2 = semaineType.filter((x) => x === 'velo-z2').length
   const nominal = (0.62 * cpW * 60 * (60 * nZ2 + 100) + 0.8 * cpW * 60 * 45) / 1000
-  return lireHistorique(semaines, nominal)
+  const h = lireHistorique(semaines, nominal)
+  const dep = await chargeDeDepart(lundi, phases)
+  if (!dep) return h
+  const budgetDepart = Math.max(h.budgetDepart ?? 0, dep.plancher)
+  return { entraine: h.entraine, budgetDepart, coupure: dep.coupure }
 }
 
 /** Réglage « arrivee » : le questionnaire est fait (sinon il s'affiche à l'ouverture d'un compte créé avec un code). */
@@ -238,11 +247,11 @@ export async function recalculerSaison() {
   const a = prog.competitions.filter((c) => niveaux.get(c.date) === 'A' && c.date > decalerJour(jour, 21)).sort((x, y) => x.date.localeCompare(y.date))[0]
   if (!a) return
   const ps = (await db.reglages.get('profil-sportif'))?.valeur as ProfilSportif | undefined
-  const historique = await historiqueRecent(jour, e.cpW ?? 260, prog.semaineType)
+  const historique = await historiqueRecent(jour, e.cpW ?? 260, prog.semaineType, prog.phases)
   const jourLong = prog.semaineType.indexOf('velo-long')
   const jourDur = prog.semaineType.indexOf('velo-dur')
   const saison = calculerSaison({
-    debut: jour, course: a.date, debutant: niveauDuProfil(ps) === 'debutant', entraine: historique.entraine,
+    debut: jour, course: a.date, arretSemaines: historique.coupure, debutant: niveauDuProfil(ps) === 'debutant', entraine: historique.entraine,
     jourLong: jourLong >= 0 ? jourLong : 6, jourDur: jourDur >= 0 ? jourDur : 1, aujourdhui: jour,
   })
   if ((e.tests ?? []).some((t) => t.type === 'cp' && t.date <= jour && ecartJours(t.date, jour) <= 28)) {
