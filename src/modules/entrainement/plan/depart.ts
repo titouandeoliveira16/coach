@@ -9,6 +9,8 @@ const SEMAINES = 26
 export interface HistoriqueKj {
   semaines: Record<string, number>
   le: string
+  /** 2 : sorties en double retirées (12/11/2026) */
+  version?: number
   /** Dernière lecture (ISO) : relu au plus une fois par heure */
   lu?: string
   viaStrava?: number

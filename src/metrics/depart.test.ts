@@ -76,3 +76,15 @@ describe('kJ estimés sans capteur', () => {
     expect(kjEstime({ ...base, fcMoy: 60 })).toBe(630)
   })
 })
+
+describe('sorties en double', () => {
+  it('une sortie vue deux fois (Zwift et Garmin) ne compte qu’une fois', async () => {
+    const { sansDoublons } = await import('./saison')
+    const r = sansDoublons([
+      { debut: '2026-11-10T17:00:00Z', kj: 800 },
+      { debut: '2026-11-10T17:02:00Z', kj: 790 },
+      { debut: '2026-11-11T07:00:00Z', kj: 500 },
+    ])
+    expect(r.map((x) => x.kj)).toEqual([800, 500])
+  })
+})
