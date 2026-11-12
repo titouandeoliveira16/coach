@@ -7,7 +7,7 @@ self.addEventListener('push', (e) => {
     d = { texte: e.data ? e.data.text() : '' }
   }
   e.waitUntil(
-    self.registration.showNotification(d.titre || 'Coach', {
+    self.registration.showNotification(d.titre || 'Cycle', {
       body: d.texte || '',
       icon: 'icon-192.png',
       badge: 'icon-192.png',

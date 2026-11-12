@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { mesCodes, nouveauCode, type CodeInvitation, type ReglageCompte } from '../core/inscription'
+import { X } from 'lucide-react'
+import { mesCodes, nouveauCode, supprimerCode, type CodeInvitation, type ReglageCompte } from '../core/inscription'
 import { useReglage } from '../core/reglages'
 import { Repliable } from '../core/ui/Repliable'
 
@@ -45,11 +46,27 @@ export function SectionCodes() {
           }}>Créer un code</button>
       </div>
       {message && <p className="mt-2 text-sm font-semibold text-accent">{message}</p>}
+      {/* Chaque code : pour qui, qui l'a utilisé (l'email du compte créé = qui a accès), et la croix pour le retirer */}
       <ul className="mt-2 divide-y divide-bordure text-sm">
         {codes.map((c) => (
-          <li key={c.code} className="flex justify-between py-2">
-            <span className="font-mono tracking-widest">{c.code}{c.pour && <span className="ml-2 font-sans tracking-normal text-texte-3">{c.pour}</span>}</span>
-            <span className={c.utilise_le ? 'text-texte-3' : 'text-nutrition'}>{c.utilise_le ? 'utilisé' : 'libre'}</span>
+          <li key={c.code} className="flex items-center gap-2 py-2">
+            <span className="min-w-0 flex-1">
+              <span className="block font-mono tracking-widest">{c.code}{c.pour && <span className="ml-2 font-sans tracking-normal text-texte-3">{c.pour}</span>}</span>
+              <span className={`block truncate text-xs ${c.utilise_le ? 'text-texte-2' : 'text-bon'}`}>{c.utilise_le ? `Utilisé par ${c.email ?? 'un compte'}` : 'Libre : pas encore utilisé'}</span>
+            </span>
+            <button type="button" aria-label={`Supprimer le code ${c.code}`} className="presse -mr-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-mauvais"
+              onClick={async () => {
+                const texte = c.utilise_le ? `Retirer le code ${c.code} de la liste ? Le compte ${c.email ?? ''} créé avec reste actif.` : `Supprimer le code ${c.code} ? Il ne pourra plus servir.`
+                if (!confirm(texte)) return
+                try {
+                  await supprimerCode(c.code)
+                  setCodes((await mesCodes()).codes)
+                } catch (e) {
+                  setMessage((e as Error).message)
+                }
+              }}>
+              <X className="h-5 w-5" strokeWidth={2.2} />
+            </button>
           </li>
         ))}
       </ul>

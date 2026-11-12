@@ -360,8 +360,33 @@ export function demarrerSynchro() {
   surEcriture(planifier)
   window.addEventListener('online', () => synchroniser())
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') synchroniser()
+    if (document.visibilityState === 'visible') {
+      synchroniser()
+      verifierSessionActive()
+    }
   })
+  setInterval(verifierSessionActive, 5 * 60 * 1000)
+}
+
+/** Message à montrer sur l'écran de connexion quand une session a été fermée par un autre appareil. */
+export const CLE_SESSION_FERMEE = 'coach-session-fermee'
+
+/**
+ * Une seule session active (12/11/2026) : la connexion sur un autre appareil ferme les autres sessions sur le serveur,
+ * mais cet appareil ne s'en rendait compte qu'à l'expiration de son jeton (jusqu'à 1 h). On demande donc au serveur, au
+ * retour dans l'appli et toutes les 5 minutes, si la session existe encore ; sinon, déconnexion de cet appareil (ses
+ * saisies non envoyées restent ici et partiront à la prochaine connexion du même compte).
+ */
+async function verifierSessionActive() {
+  if (!etat.session || !navigator.onLine) return
+  const { error } = await supabase.auth.getUser()
+  if (!error) return
+  const code = (error as { code?: string; status?: number }).code
+  const status = (error as { status?: number }).status
+  if (code === 'session_not_found' || code === 'refresh_token_not_found' || status === 401 || status === 403) {
+    try { sessionStorage.setItem(CLE_SESSION_FERMEE, '1') } catch { /* stockage indisponible */ }
+    await supabase.auth.signOut({ scope: 'local' }).catch(() => {})
+  }
 }
 
 /**

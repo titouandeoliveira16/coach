@@ -19,8 +19,8 @@ export default defineConfig({
       registerType: 'prompt',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Coach',
-        short_name: 'Coach',
+        name: 'Cycle',
+        short_name: 'Cycle',
         description: 'Ton plan vélo calculé depuis ta course et ajusté chaque matin à ta récupération. En français, appuyé sur la science.',
         lang: 'fr',
         start_url: BASE,

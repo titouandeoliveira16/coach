@@ -73,8 +73,8 @@ Deno.serve(async (req) => {
   const { data } = await admin.from('donnees').select('valeur, modifie_le').eq('user_id', proprio.user_id)
     .eq('table_nom', 'prevues').eq('supprime', false).gte('valeur->>date', debut).lte('valeur->>date', fin)
   const lignes = [
-    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Coach//Seances//FR', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
-    'X-WR-CALNAME:Coach · séances', 'X-WR-TIMEZONE:Europe/Paris', 'REFRESH-INTERVAL;VALUE=DURATION:PT1H', 'X-PUBLISHED-TTL:PT1H',
+    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Cycle//Seances//FR', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
+    'X-WR-CALNAME:Cycle · séances', 'X-WR-TIMEZONE:Europe/Paris', 'REFRESH-INTERVAL;VALUE=DURATION:PT1H', 'X-PUBLISHED-TTL:PT1H',
   ]
   for (const d of data ?? []) {
     const p = d.valeur as Prevue

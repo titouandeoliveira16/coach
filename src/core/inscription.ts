@@ -30,9 +30,10 @@ export async function creerCompteAvecCode(code: string, email: string, motDePass
   await enregistrer(db.reglages, { id: 'compte', valeur: { invite: true } satisfies ReglageCompte })
 }
 
-export interface CodeInvitation { code: string; pour: string | null; cree_le: string; utilise_le: string | null }
+export interface CodeInvitation { code: string; pour: string | null; cree_le: string; utilise_le: string | null; email?: string | null }
 export const nouveauCode = (pour?: string) => appeler<{ code: string }>('nouveau-code', { pour }, true)
 export const mesCodes = () => appeler<{ codes: CodeInvitation[] }>('mes-codes', {}, true)
+export const supprimerCode = (code: string) => appeler<{ ok: boolean }>('supprimer-code', { code }, true)
 
 /**
  * Supprime le compte et toutes ses données sur le serveur (RGPD : droit à l'effacement), puis cet appareil.

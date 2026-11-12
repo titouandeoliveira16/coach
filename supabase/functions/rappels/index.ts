@@ -256,7 +256,7 @@ async function prevenirCoachs(abonnements: any[], c: ClesVapid) {
   let n = 0
   const texte = nouvelles.length === 1 ? nouvelles[0].message.slice(0, 120) : `${nouvelles.length} nouvelles erreurs, dont : ${nouvelles[0].message.slice(0, 90)}`
   for (const a of abonnements.filter((x) => ids.has(x.user_id))) {
-    const statut = await envoyerPush(a.abonnement, { titre: '⚠️ Erreur dans Coach', texte, tag: 'erreurs', url: './#/reglages' }, c).catch(() => 0)
+    const statut = await envoyerPush(a.abonnement, { titre: '⚠️ Erreur dans Cycle', texte, tag: 'erreurs', url: './#/reglages' }, c).catch(() => 0)
     if (statut >= 200 && statut < 300) n++
   }
   await admin.from('erreurs').update({ notifiee: true }).in('id', nouvelles.map((x: { id: number }) => x.id))
@@ -391,7 +391,7 @@ Deno.serve(async (req) => {
     const jeton = req.headers.get('Authorization')?.replace('Bearer ', '')
     const { data } = jeton ? await admin.auth.getUser(jeton) : { data: { user: null } }
     const user = data.user
-    if (!user) return json({ erreur: 'Connecte-toi à ton compte Coach.' }, 401)
+    if (!user) return json({ erreur: 'Connecte-toi à ton compte Cycle.' }, 401)
     const corps = await req.json().catch(() => ({}))
 
     if (route === 'abonner') {
@@ -418,7 +418,7 @@ Deno.serve(async (req) => {
       const { data: abonnements } = await admin.from('push_abonnements').select('*').eq('user_id', user.id)
       let n = 0
       for (const a of abonnements ?? []) {
-        const statut = await envoyerPush(a.abonnement, { titre: '✅ Coach', texte: 'Les rappels fonctionnent sur cet appareil.', tag: 'test', url: './#/reglages' }, c).catch(() => 0)
+        const statut = await envoyerPush(a.abonnement, { titre: '✅ Cycle', texte: 'Les rappels fonctionnent sur cet appareil.', tag: 'test', url: './#/reglages' }, c).catch(() => 0)
         if (statut >= 200 && statut < 300) n++
       }
       return json({ envoyes: n })

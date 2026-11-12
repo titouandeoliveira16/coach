@@ -4,7 +4,8 @@
 // Routes (POST) :
 //   /inscription/creer        { code, email, motDePasse } → crée le compte si le code est valable et pas encore utilisé
 //   /inscription/nouveau-code { pour? }                    → (coach connecté) crée un code à usage unique
-//   /inscription/mes-codes                                 → (coach connecté) liste des codes et leur état
+//   /inscription/mes-codes                                 → (coach connecté) liste des codes, leur état et qui les a utilisés
+//   /inscription/supprimer-code { code }                   → (coach connecté) retire un code de la liste
 //   /inscription/supprimer-compte                          → (connecté) supprime le compte et TOUTES ses données (RGPD,
 //                                                            art. 17) : données, clé Intervals, rappels effacés en cascade
 //
@@ -68,6 +69,16 @@ Deno.serve(async (req) => {
       return json({ ok: true })
     }
 
+    // Supprimer son compte : ouvert à tous les comptes (avant, réservé au coach par erreur, 12/11/2026)
+    if (route === 'supprimer-compte') {
+      const jeton = req.headers.get('authorization')?.replace(/^Bearer /, '')
+      const { data } = jeton ? await admin.auth.getUser(jeton) : { data: { user: null } }
+      if (!data.user) return json({ erreur: 'Connecte-toi d’abord.' }, 401)
+      // Les tables liées au compte (donnees, intervals_cles, push_abonnements, coachs…) sont effacées en cascade
+      const { error } = await admin.auth.admin.deleteUser(data.user.id)
+      if (error) throw error
+      return json({ ok: true })
+    }
     const coach = await coachConnecte(req)
     if (!coach) return json({ erreur: 'Réservé au coach.' }, 403)
     if (route === 'nouveau-code') {
@@ -79,15 +90,18 @@ Deno.serve(async (req) => {
       return json({ erreur: 'Code non créé, réessaie.' }, 500)
     }
     if (route === 'mes-codes') {
-      const { data } = await admin.from('codes_invitation').select('code, pour, cree_le, utilise_le').eq('cree_par', coach).order('cree_le', { ascending: false }).limit(50)
-      return json({ codes: data ?? [] })
+      const { data } = await admin.from('codes_invitation').select('code, pour, cree_le, utilise_le, utilise_par').eq('cree_par', coach).order('cree_le', { ascending: false }).limit(50)
+      // Qui a utilisé chaque code (l'email du compte créé) : savoir qui a accès à l'appli
+      const codes = await Promise.all((data ?? []).map(async ({ utilise_par, ...c }) => {
+        if (!utilise_par) return { ...c, email: null }
+        const { data: u } = await admin.auth.admin.getUserById(utilise_par)
+        return { ...c, email: u.user?.email ?? '(compte supprimé)' }
+      }))
+      return json({ codes })
     }
-    if (route === 'supprimer-compte') {
-      const jeton = req.headers.get('authorization')?.replace(/^Bearer /, '')
-      const { data } = jeton ? await admin.auth.getUser(jeton) : { data: { user: null } }
-      if (!data.user) return json({ erreur: 'Connecte-toi d’abord.' }, 401)
-      // Les tables liées au compte (donnees, intervals_cles, push_abonnements, coachs…) sont effacées en cascade
-      const { error } = await admin.auth.admin.deleteUser(data.user.id)
+    if (route === 'supprimer-code') {
+      // Retire le code de la liste (le compte déjà créé avec ce code reste actif)
+      const { error } = await admin.from('codes_invitation').delete().eq('code', normaliser(String(corps.code ?? ''))).eq('cree_par', coach)
       if (error) throw error
       return json({ ok: true })
     }
