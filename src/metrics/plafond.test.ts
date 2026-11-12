@@ -37,3 +37,13 @@ describe('plafondEtNominal', () => {
     expect(plafondEtNominal({ ...base, semaineType: t, heuresMax: 16 }).limite).toBe('jours')
   })
 })
+
+describe('meilleurLevier', () => {
+  it('choisit le réglage qui débloque le plus de kJ', async () => {
+    const { meilleurLevier } = await import('./programme')
+    const l = meilleurLevier({ semaineType: semaine(['velo-dur', 'velo-z2', 'velo-long']), cap: { z2: 90, long: 120 }, z2W: 170 })
+    expect(l.levier).toBe('jour')
+    const sansJour = meilleurLevier({ semaineType: ['velo-dur', 'velo-z2', 'velo-z2', 'velo-z2', 'velo-z2', 'velo-long', 'libre'], cap: { z2: 60, long: 120 }, z2W: 170 })
+    expect(sansJour.levier).toBe('semaine')
+  })
+})

@@ -122,18 +122,21 @@ function HistogrammeKj({ semaines, niveaux, tests }: { semaines: SemaineSaison[]
 }
 
 /** Quand tes choix (temps par semaine, jours, durées) empêchent ta charge de monter : à partir de quand, et quoi changer. */
-function Blocage({ b }: { b: { lundi: string; jusquA?: string; par: 'heures' | 'jours'; heures?: string } }) {
+function Blocage({ b }: { b: { lundi: string; jusquA?: string; par: 'heures' | 'jours'; heures?: string; levier?: { levier: 'semaine' | 'longue' | 'jour'; gain: number; avant: number; apres: number } } }) {
   const jour = (d: string) => depuisJour(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })
+  const h = (min: number) => `${Math.floor(min / 60)} h${min % 60 ? ` ${String(min % 60).padStart(2, '0')}` : ''}`
   const quand = b.jusquA ? `Du ${jour(b.lundi)} au ${jour(b.jusquA)}` : `À partir du ${jour(b.lundi)}`
-  const cause = b.par === 'heures'
-    ? `ton temps par semaine (${b.heures?.toLowerCase() ?? 'profil'}) bloque`
-    : 'tes jours et durées de vélo bloquent'
-  const quoi = b.par === 'heures'
-    ? 'Ajoute du temps (profil ou « Plus tard »).'
+  const l = b.levier
+  const gain = l ? ` (≈ +${formatNombre(Math.round(l.gain / 10) * 10)} kJ)` : ''
+  // Le conseil : le réglage qui débloque le plus de kJ (Réglages → Ma semaine type, ou « Plus tard » à une date)
+  const conseil = b.par === 'heures' ? `C’est ton temps par semaine (${b.heures?.toLowerCase() ?? 'profil'}) : passe à la tranche au-dessus.`
+    : l?.levier === 'longue' ? `Le plus efficace : allonger ta sortie longue, ${h(l.avant)} → ${h(l.apres)}${gain}.`
+    : l?.levier === 'semaine' ? `Le plus efficace : allonger tes sorties de semaine, ${l.avant} → ${l.apres} min${gain}.`
+    : l?.levier === 'jour' ? `Le plus efficace : un jour de vélo de plus${gain}.`
     : 'Ajoute un jour ou allonge tes durées.'
   return (
     <p className="mt-3 rounded-xl bg-surface-2 px-3 py-2.5 text-sm">
-      <span className="font-semibold text-attention">{quand}, ta charge ne peut plus monter</span> : {cause}. <span className="text-texte-2">{quoi}</span>
+      <span className="font-semibold text-attention">{quand}, ta charge ne peut plus monter.</span> <span className="text-texte-2">{conseil}</span>
     </p>
   )
 }
