@@ -72,6 +72,11 @@ export function Pager({ pages }: { pages: Page[] }) {
   }
 
   const n = pages.length
+  // Pendant que des onglets sont affichés, la page ne fait que la hauteur de l'écran (voir « avec-pager » dans index.css)
+  useEffect(() => {
+    document.documentElement.classList.add('avec-pager')
+    return () => document.documentElement.classList.remove('avec-pager')
+  }, [])
   const position = (i: number, dx = 0) => `translate3d(calc(${(-i * 100) / n}% + ${dx}px), 0, 0)`
   // La bulle des onglets (en bas) suit la bande
   const placerBulle = (pos: number, anime: boolean) => {
