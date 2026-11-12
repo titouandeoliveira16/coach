@@ -115,7 +115,7 @@ function HistogrammeKj({ semaines, niveaux, tests }: { semaines: SemaineSaison[]
       <p className="mt-1 min-h-5 text-xs text-texte-2">
         {c ? <>Sem. du {jm(c.lundi)} · {NOMS_PHASES[c.phase]} · <b className="text-texte">≈ {c.budget.toLocaleString('fr-FR')} kJ</b>{c.competition ? ` · course : ${c.competition}` : ''}{c.type === 'allegee' ? ' · allégée' : ''}{c.intensite ? ` · ${c.intensite}` : ''}</> : 'Touche une barre pour voir sa semaine.'}
       </p>
-      <p className="text-xs text-texte-3">Barres pâles : semaines où le volume baisse (allégée, affûtage, récup). Ta charge monte de 7,5 % par semaine réussie (10 % tant que tu es sous ta charge habituelle de cet été ou des 3 derniers mois), dans la limite de tes jours et durées de vélo (Réglages → Ma semaine type, et « Plus tard »).</p>
+      <p className="text-xs text-texte-3">Barres pâles : semaines où le volume baisse (allégée, affûtage, récup). Ta charge monte de 7,5 % par semaine réussie (10 % tant que tu es sous ta charge habituelle des 6 derniers mois), dans la limite de tes jours et durées de vélo (Réglages → Ma semaine type, et « Plus tard »).</p>
     </div>
   )
 }

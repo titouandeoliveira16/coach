@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { calculerSaison, chargeHabituelle, facteurCoupure, repriseSelonCoupure } from './saison'
+import { calculerSaison, chargeHabituelle, facteurCoupure, kjEstime, repriseSelonCoupure } from './saison'
 import { plafondsReprise, projeterSaison, type Phase } from './programme'
 
 /** Retour après une coupure (12/11/2026) : charge habituelle, part d'où l'on repart, reprise. */
@@ -65,5 +65,14 @@ describe('projection avec charge habituelle', () => {
     expect(apres[1].budget).toBeGreaterThan(avant[1].budget)
     const normales = apres.filter((x) => x.type === 'normale')
     expect(Math.max(...normales.map((x) => x.budget))).toBeGreaterThan(5000)
+  })
+})
+
+describe('kJ estimés sans capteur', () => {
+  it('suivent la FC de réserve, sinon une endurance à 55 % de la CP', () => {
+    const base = { dureeSec: 7200, fcRepos: 50, fcMax: 190, cpW: 250 }
+    expect(kjEstime(base)).toBe(990)
+    expect(kjEstime({ ...base, fcMoy: 141 })).toBe(1170)
+    expect(kjEstime({ ...base, fcMoy: 60 })).toBe(630)
   })
 })

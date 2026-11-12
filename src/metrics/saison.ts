@@ -213,7 +213,7 @@ export const facteurCoupure = (n: number) => (n <= 1 ? 0.9 : n <= 3 ? 0.75 : n <
 export const repriseSelonCoupure = (n: number) => (n <= 1 ? 0 : n <= 3 ? 1 : n <= 6 ? 2 : 4)
 
 /**
- * Charge habituelle : la moyenne de tes 4 meilleures semaines d'affilée sur les 12 dernières (un bloc tenu, pas un
+ * Charge habituelle : la moyenne de tes 4 meilleures semaines d'affilée sur les 26 dernières (6 mois) (un bloc tenu, pas un
  * record isolé ; sans affûtage ni récupération prévue). Coupure : les semaines d'après sous la moitié de cette charge
  * (hors légères prévues). Plancher : la part de ta charge habituelle d'où tu repars.
  */
@@ -230,4 +230,14 @@ export function chargeHabituelle(semaines: SemaineVecue[]) {
   const coupure = semaines.slice(meilleur.fin + 1).filter((s) => !s.legere && s.kj < habituelle * 0.5).length
   const facteur = facteurCoupure(coupure)
   return { habituelle, coupure, facteur, plancher: Math.round((habituelle * facteur) / 10) * 10 }
+}
+
+/**
+ * kJ d'une sortie sans capteur de puissance (historique seulement, 12/11/2026) : la part de FC de réserve donne à peu
+ * près la part de CP tenue (≈ 65 % en endurance) ; sans FC, une endurance à 55 % de la CP. Choix d'entraîneur, à ±20 %.
+ */
+export function kjEstime(o: { dureeSec: number; fcMoy?: number; fcRepos: number; fcMax: number; cpW: number }) {
+  const reserve = o.fcMoy && o.fcMax > o.fcRepos ? (o.fcMoy - o.fcRepos) / (o.fcMax - o.fcRepos) : undefined
+  const part = reserve === undefined ? 0.55 : Math.min(0.95, Math.max(0.35, reserve))
+  return Math.round((o.cpW * part * o.dureeSec) / 1000)
 }
