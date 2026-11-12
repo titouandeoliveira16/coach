@@ -4,19 +4,23 @@ import { contrainte, modeleForme, monotonie, ratioPic, type PointForme } from '.
 import { analyserVfc, type AnalyseVfc } from '../../../metrics/vfc'
 import { analyserSommeil, calculerSignal, type Signal } from '../../../metrics/signal'
 import { mesureUtile, scoreRessenti } from '../forme/donnees'
-import { chargeDe, chargerContexte, type Contexte } from '../seances/donnees'
+import { chargeDe, chargerContexte, domaineDe, type Contexte } from '../seances/donnees'
 import type { MesureMatin, Seance } from '../types'
 
 /** Jours d'historique de charge nécessaires avant d'afficher CTL / TSB (amorçage). */
 export const JOURS_AMORCAGE = 28
 
-export type FiltreSport = 'velo' | 'course' | 'total'
+/**
+ * « entrainement » (12/11/2026) : tout sauf les footings faciles. Le vélo est le sport de l'appli : un footing tranquille
+ * ne doit pas dérégler le feu du matin ni les Z2 vélo ; une course intense (au-dessus de la zone facile) compte toujours.
+ */
+export type FiltreSport = 'velo' | 'course' | 'total' | 'entrainement'
 
 /** Charge de chaque jour entre deux dates (incluses), jours sans séance = 0. */
 export function chargesParJour(seances: Seance[], c: Contexte, du: string, au: string, sport: FiltreSport = 'total') {
   const parJour = new Map<string, number>()
   for (const s of seances) {
-    if (sport !== 'total' && s.sport !== sport) continue
+    if (sport === 'entrainement' ? s.sport === 'course' && domaineDe(s, c.bornes) === 'basse' : sport !== 'total' && s.sport !== sport) continue
     parJour.set(s.date, (parJour.get(s.date) ?? 0) + chargeDe(s, c))
   }
   const res: { date: string; charge: number }[] = []
@@ -55,10 +59,10 @@ function signalDu(date: string, a: Omit<Analyse, 'signal' | 'signauxPrecedents' 
   const vfc = analyserVfc(a.mesures.map((m) => ({ date: m.date, rmssd: m.vfcMs, fcRepos: m.fcRepos })), date)
   const matin = a.mesures.find((m) => m.date === date)
   const point = a.forme.find((p) => p.date === date)
-  const charges = chargesParJour(a.seances, a.contexte, decalerJour(date, -6), date)
+  const charges = chargesParJour(a.seances, a.contexte, decalerJour(date, -6), date, 'entrainement')
   const charge7 = charges.reduce((s, x) => s + x.charge, 0)
   // Les 4 semaines qui précèdent la fenêtre des 7 derniers jours
-  const hebdo = chargesHebdo(a.seances, a.contexte, decalerJour(date, -6), 4)
+  const hebdo = chargesHebdo(a.seances, a.contexte, decalerJour(date, -6), 4, 'entrainement')
   const signal = calculerSignal({
     vfc,
     ressenti: matin ? scoreRessenti(matin) : undefined,
@@ -83,13 +87,13 @@ export async function analyser(date = aujourdhui()): Promise<Analyse> {
 
   const premier = seances.reduce((min, s) => (s.date < min ? s.date : min), date)
   const debut = decalerJour(premier < decalerJour(date, -365) ? decalerJour(date, -365) : premier, 0)
-  const forme = modeleForme(chargesParJour(seances, contexte, debut, date))
+  const forme = modeleForme(chargesParJour(seances, contexte, debut, date, 'entrainement'))
   const joursHistorique = seances.length ? ecartJours(premier, date) + 1 : 0
   const base = { contexte, seances, mesures, forme, amorcage: joursHistorique < JOURS_AMORCAGE, joursHistorique }
 
   const { vfc, signal } = signalDu(date, base, maladeDates)
   const signauxPrecedents = [1, 2].map((n) => signalDu(decalerJour(date, -n), base, maladeDates).signal)
-  const charges7 = chargesParJour(seances, contexte, decalerJour(date, -6), date).map((x) => x.charge)
+  const charges7 = chargesParJour(seances, contexte, decalerJour(date, -6), date, 'entrainement').map((x) => x.charge)
   const charge7 = charges7.reduce((a, b) => a + b, 0)
 
   return {
@@ -99,6 +103,6 @@ export async function analyser(date = aujourdhui()): Promise<Analyse> {
     signauxPrecedents,
     monotonie: monotonie(charges7),
     contrainte: contrainte(charges7),
-    ratioPic: ratioPic(charge7, chargesHebdo(seances, contexte, decalerJour(date, -6), 4)),
+    ratioPic: ratioPic(charge7, chargesHebdo(seances, contexte, decalerJour(date, -6), 4, 'entrainement')),
   }
 }
