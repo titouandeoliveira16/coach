@@ -100,6 +100,8 @@ export interface ReglagesProgramme {
   budgetDepart?: number
   /** Saison calculée avec la prépa hivernale Methodic (10/11/2026) */
   saisonV2?: boolean
+  /** Saison recalculée une fois avec la reprise selon la coupure (12/11/2026) */
+  saisonV3?: boolean
   /** Puissance Z2 de départ (W) : ajustée ensuite automatiquement */
   z2W?: number
   /** Saison calculée depuis la course (forme Chauvin) : reprise sans intensité ; absent = saison écrite à la main */
