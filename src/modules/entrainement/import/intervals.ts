@@ -13,6 +13,8 @@ import { controlerSeance, controleTenu, type Tour } from '../../../metrics/contr
 import { regrouperEnchainements } from '../seances/enchainements'
 import { analyserFlux } from './flux'
 import { CLE_PESEES_EFFACEES, nettoyerPeseesEffacees } from '../forme/pesees'
+import { kjEstime } from '../../../metrics/saison'
+import type { HistoriqueKj } from '../plan/depart'
 
 /**
  * Import Intervals.icu (via la fonction serveur « intervals » : la clé API n'est jamais dans l'appli).
@@ -213,6 +215,28 @@ export async function recontrolerRecentes() {
     }
   }
   await enregistrer(db.reglages, { id: cle, valeur: VERSION_CONTROLE })
+}
+
+/**
+ * Une seule fois (12/11/2026) : tes kJ de vélo par semaine sur 6 mois, pour le calcul de ta charge habituelle seulement
+ * (pas ajoutés à tes séances). Sortie sans capteur : kJ estimés avec ta FC. Les sorties venues de Strava manquent
+ * (Intervals ne les transmet pas). Rien sans Intervals relié.
+ */
+export async function importerHistoriqueKj() {
+  if (!(await lireEtat()).relie || (await db.reglages.get('historique-kj'))) return
+  const { activites, viaStrava } = await appeler<{ activites: Activite[]; viaStrava: number }>('activites', { oldest: decalerJour(aujourdhui(), -182) })
+  const c = await chargerContexte()
+  const semaines: Record<string, number> = {}
+  for (const a of activites) {
+    if (sportDepuisType(a.type) !== 'velo' || !a.moving_time) continue
+    const kj = a.joules ? a.joules / 1000
+      : a.average_watts ? (a.average_watts * a.moving_time) / 1000
+      : kjEstime({ dureeSec: a.moving_time, fcMoy: a.average_heartrate, fcRepos: c.fcRepos, fcMax: c.fcMax, cpW: c.cpW ?? 220 })
+    const l = lundiDe(a.start_date.slice(0, 10))
+    semaines[l] = (semaines[l] ?? 0) + kj
+  }
+  for (const l of Object.keys(semaines)) semaines[l] = Math.round(semaines[l])
+  await enregistrer(db.reglages, { id: 'historique-kj', valeur: { semaines, le: aujourdhui(), viaStrava } satisfies HistoriqueKj })
 }
 
 /** Import complet (séances + données Garmin). Première fois : 90 derniers jours. */

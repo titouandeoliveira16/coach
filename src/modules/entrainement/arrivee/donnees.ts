@@ -124,7 +124,7 @@ export function preparerArrivee(r: ReponsesArrivee, jour: string, testsFaits: Re
       ...(dureePrincipale ? { dureeCourseMin: dureePrincipale } : {}),
       // Tu roulais déjà : le budget de la 1re semaine part de tes kJ réels, pas de la semaine type
       ...(historique?.budgetDepart ? { budgetDepart: historique.budgetDepart } : {}),
-      saisonV2: true, saisonV3: true,
+      saisonV2: true, saisonV3: true, saisonV4: true,
     },
   }
   return { profil, entrainement, profilSportif: ps, saison, cpConnue: r.cpW !== undefined, fcConnue: r.fcMax !== undefined }
@@ -250,6 +250,27 @@ export async function migrerSaisonV3() {
 }
 
 /**
+ * Charge habituelle sur 6 mois (12/11/2026) : tes kJ de 6 mois importés une fois d'Intervals, puis une saison en reprise
+ * (ou recalculée cette semaine) est recalculée une fois de plus. Courses et tests gardés. Sans réseau : réessayé plus tard.
+ */
+export async function migrerSaisonV4() {
+  const e = (await db.reglages.get('entrainement'))?.valeur as ReglagesEntrainement | undefined
+  const prog = e?.programme
+  if (!e || !prog || prog.modele !== 'chauvin' || prog.saisonV4 || !prog.phases?.length) return
+  const { importerHistoriqueKj } = await import('../import/intervals')
+  try {
+    await importerHistoriqueKj()
+  } catch {
+    return // pas de réseau : réessayé à la prochaine ouverture
+  }
+  const lundi = decalerJour(aujourdhui(), -((new Date(`${aujourdhui()}T12:00:00`).getDay() + 6) % 7))
+  const { phase } = phaseDe(lundi, prog.phases)
+  if (phase.type === 'reprise' || phase.debut === lundi) await recalculerSaison(true)
+  const apres = (await db.reglages.get('entrainement'))?.valeur as ReglagesEntrainement | undefined
+  if (apres?.programme && !apres.programme.saisonV4) await enregistrer(db.reglages, { id: 'entrainement', valeur: { ...apres, programme: { ...apres.programme, saisonV3: true, saisonV4: true } } })
+}
+
+/**
  * Saison recalculée depuis cette semaine : préparation vers la prochaine course A (à plus de 3 semaines), puis pour chaque
  * A suivante récupération, bloc et affûtage. Les phases passées restent. Appelé quand les courses changent (Réglages).
  */
@@ -280,7 +301,7 @@ export async function recalculerSaison(garderTests = false) {
   const lundi = decalerJour(jour, -((new Date(`${jour}T12:00:00`).getDay() + 6) % 7))
   const passees = prog.phases.filter((p) => p.debut < lundi)
   const phases = [...passees, ...phasesAvecCoursesA(saison.phases, datesCoursesA(prog.competitions.map((c) => ({ ...c, niveau: niveaux.get(c.date) }))))]
-  await enregistrer(db.reglages, { id: 'entrainement', valeur: { ...e, programme: { ...prog, phases, ...(garderTests ? {} : { testsCp: [...prog.testsCp.filter((d) => d < lundi), ...saison.testsCp], testsCourts: [...(prog.testsCourts ?? []).filter((d) => d < lundi), ...saison.testsCourts] }), saisonV2: true, saisonV3: true } } })
+  await enregistrer(db.reglages, { id: 'entrainement', valeur: { ...e, programme: { ...prog, phases, ...(garderTests ? {} : { testsCp: [...prog.testsCp.filter((d) => d < lundi), ...saison.testsCp], testsCourts: [...(prog.testsCourts ?? []).filter((d) => d < lundi), ...saison.testsCourts] }), saisonV2: true, saisonV3: true, saisonV4: true } } })
   const { recalculerSemainesAVenir } = await import('../plan/programme')
   await recalculerSemainesAVenir()
 }
