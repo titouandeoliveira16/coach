@@ -20,6 +20,7 @@ import { useReglagesEntrainement } from '../reglagesEntrainement'
 import { useNutritionEffort } from '../reglages/ProfilSportif'
 import { basculerSansMontre, QUESTIONS, scoreRessenti } from './donnees'
 import { SeancesFaites } from './SeancesFaites'
+import { CartePanne } from './CartePanne'
 import type { Raison, Seance } from '../types'
 import { plagesForme, positionPct, type Plage } from '../../../metrics/plages'
 import { analyserSommeil, enHeures } from '../../../metrics/signal'
@@ -68,7 +69,9 @@ function ChoixSeance({ maintenue, conseil, prevu, couleur, onChoisir }: {
 }
 
 /** Signal du jour, raison, séance prévue et recommandation. */
-export function CarteAujourdhui({ onModifierMatin, apresForme }: {
+export function CarteAujourdhui({ onModifierMatin, apresForme, remplir = false }: {
+  /** Sans la nutrition : la carte de la séance prend toute la place jusqu'aux onglets (Aujourd'hui sans défilement) */
+  remplir?: boolean
   /** Glissé entre « Ta forme » et la séance (tuiles Nuit et Poids) */
   apresForme?: ReactNode
   onModifierMatin?: () => void
@@ -218,11 +221,14 @@ export function CarteAujourdhui({ onModifierMatin, apresForme }: {
       {apresForme}
 
       {/* Séance du jour : la carte qui prend toute la place restante (elle défile seule si besoin) */}
-      <Carte ref={seanceRef} visite="seance" className={`flex flex-col p-3! ${detailOuvert ? 'border-accent!' : ''} shrink-0`}
+      <Carte ref={seanceRef} visite="seance" className={`flex flex-col p-3! ${detailOuvert ? 'border-accent!' : ''} ${remplir && !detailOuvert ? 'min-h-0 flex-1' : 'shrink-0'}`}
 >
         <div className="flex items-baseline justify-between gap-2">
           <p className="text-[13px] font-semibold text-texte-2">Séance du jour</p>
-          {prevue && <span className="text-xs text-texte-2">{prevue.sport === 'velo' ? 'vélo' : prevue.sport}{prevue.kjPrevu ? ` · ${prevue.kjPrevu} kJ` : ''}</span>}
+          <span className="flex items-baseline gap-1.5 text-xs text-texte-2">
+            {prevue && <span>{prevue.sport === 'velo' ? 'vélo' : prevue.sport}{prevue.kjPrevu ? ` · ${prevue.kjPrevu} kJ` : ''} ·</span>}
+            <CartePanne lien />
+          </span>
         </div>
         {reprise ? (
           <p className="mt-2 rounded-xl bg-surface-2 p-3 text-sm">
@@ -272,10 +278,14 @@ export function CarteAujourdhui({ onModifierMatin, apresForme }: {
                 </button>}
               </div>
             ) : (
+              <>
+              {/* Espace libre de la carte au-dessus de « Détail », qui reste calé en bas */}
+              <div aria-hidden className="min-h-2 flex-1" />
               <button type="button" onClick={() => setDetailOuvert(!detailOuvert)}
-                className={`mt-2 flex min-h-9 w-full shrink-0 items-center justify-between border-t border-bordure pt-2 text-sm font-semibold ${detailOuvert ? 'text-accent' : 'text-texte-2'}`}>
+                className={`flex min-h-9 w-full shrink-0 items-center justify-between border-t border-bordure pt-2 text-sm font-semibold ${detailOuvert ? 'text-accent' : 'text-texte-2'}`}>
                 <span>{nutrition ? 'Détail et nutrition' : 'Détail'}</span><span>{detailOuvert ? 'Réduire ▴' : '▾'}</span>
               </button>
+              </>
             )}
             {detailOuvert && (
               <div className="shrink-0 space-y-2 pb-1">
@@ -300,11 +310,13 @@ export function CarteAujourdhui({ onModifierMatin, apresForme }: {
             <p className="mt-1 text-sm text-texte-2">
               {signal.couleur === 'rouge' ? 'Repos complet, ou au plus une sortie très facile.' : 'Marche, étirements, bien dormir : c’est aussi là que tu progresses.'}
             </p>
-            {/* Si tu as envie de rouler (12/11/2026) : 20 à 30 min en zone 1, à peine plus que tourner les jambes */}
-            <div className="mt-3 rounded-xl bg-surface-2 p-3">
-              <p className="flex items-baseline justify-between text-sm"><span className="font-semibold">Si tu veux rouler</span><span className="text-texte-2">20 à 30 min · Z1</span></p>
-              <Profil etapes={[{ debutSec: 0, dureeSec: 1800, libelle: 'Très facile (Z1)', w: Math.round(cpW * 0.5), wMin: Math.round(cpW * 0.45), wMax: Math.round(cpW * 0.55) }]} cpW={cpW} />
-              <p className="mt-1 text-xs text-texte-3">Vers {Math.round(cpW * 0.45)}-{Math.round(cpW * 0.55)} W, en parlant facilement. Pas plus : le repos fait progresser.</p>
+            {/* Si tu as envie de rouler (12/11/2026) : 20 à 30 min en zone 1, sur une ligne (Aujourd'hui sans défilement) */}
+            <div className="mt-3 flex items-center gap-3 rounded-xl bg-surface-2 px-3 py-2.5">
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold">Si tu veux rouler</span>
+                <span className="block text-xs text-texte-3">20-30 min · Z1 · {Math.round(cpW * 0.45)}-{Math.round(cpW * 0.55)} W, en parlant facilement</span>
+              </span>
+              <span aria-hidden className="h-5 w-20 shrink-0 rounded" style={{ background: 'var(--color-z1)' }} />
             </div>
           </>
         )}
