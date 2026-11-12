@@ -7,10 +7,7 @@ import { registerSW } from 'virtual:pwa-register'
 import { demarrerSynchro } from './core/synchro'
 import { synchroniserRappels } from './core/notifications'
 import { signalerErreur, surveillerErreurs } from './core/erreurs'
-import { lireRetourRecuperation } from './core/motDePasse'
 
-// Retour du lien « mot de passe oublié » : lu avant que le routeur ne prenne l'adresse
-lireRetourRecuperation()
 surveillerErreurs()
 demanderStockagePersistant()
 demarrerSynchro()

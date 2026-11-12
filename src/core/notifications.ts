@@ -48,7 +48,7 @@ export async function abonnementActuel() {
 export async function activerRappels() {
   if (!notificationsPossibles()) throw new Error("Notifications indisponibles ici. Sur iPhone : ouvre l'appli depuis l'écran d'accueil (iOS 16.4 ou plus).")
   const permission = await Notification.requestPermission()
-  if (permission !== 'granted') throw new Error('Notifications refusées. Réglages de l’iPhone → Notifications → Coach → Autoriser.')
+  if (permission !== 'granted') throw new Error('Notifications refusées. Réglages de l’iPhone → Notifications → Cycle → Autoriser.')
   const { cle } = await appeler<{ cle: string }>('cle')
   const reg = await navigator.serviceWorker.ready
   const abonnement = (await reg.pushManager.getSubscription()) ??

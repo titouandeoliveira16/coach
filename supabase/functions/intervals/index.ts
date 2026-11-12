@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
     const jeton = req.headers.get('Authorization')?.replace('Bearer ', '')
     const { data } = jeton ? await admin.auth.getUser(jeton) : { data: { user: null } }
     const user = data.user
-    if (!user) return json({ erreur: 'Connecte-toi à ton compte Coach.' }, 401)
+    if (!user) return json({ erreur: 'Connecte-toi à ton compte Cycle.' }, 401)
     const corps = await req.json().catch(() => ({}))
 
     if (route === 'cle') {
