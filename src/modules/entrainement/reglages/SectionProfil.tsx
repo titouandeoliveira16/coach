@@ -5,14 +5,13 @@ import { useProfil } from '../../../core/profil'
 import { Repliable } from '../../../core/ui/Repliable'
 import { ChampNombre } from '../../../core/ui/ChampNombre'
 
-/** Profil (FC max, taille, objectif nutrition) : une ligne, à ouvrir pour modifier. La date de naissance n'est demandée qu'une fois. */
+/** Profil (FC max, taille ; l'objectif nutrition est sous « Repas du jour » dans Mon profil sportif) : une ligne, à ouvrir pour modifier. La date de naissance n'est demandée qu'une fois. */
 export function SectionProfil() {
   const [profil, modifierProfil] = useProfil()
   const vue = useLiveQuery(fcMaxObservee)
   const resume = [
     profil.fcMax && `FC max ${profil.fcMax}`,
     profil.tailleCm && `${formatNombre(profil.tailleCm / 100, 2)} m`,
-    profil.objectif === 'perte' ? 'perte de gras légère' : 'garder mon poids',
   ].filter(Boolean).join(' · ')
   return (
     <Repliable titre="Profil" resume={resume}>
@@ -35,14 +34,6 @@ export function SectionProfil() {
             className="rounded-lg border border-bordure bg-surface-2 px-2 py-2" />
         </label>
       )}
-      <label className="flex items-center justify-between py-1.5">
-        <span className="text-texte-2">Objectif nutrition</span>
-        <select value={profil.objectif ?? 'maintien'} onChange={(e) => modifierProfil({ objectif: e.target.value as 'maintien' | 'perte' })}
-          className="rounded-lg border border-bordure bg-surface-2 px-3 py-2 font-semibold outline-none">
-          <option value="maintien">Garder mon poids</option>
-          <option value="perte">Perte de gras légère</option>
-        </select>
-      </label>
     </Repliable>
   )
 }

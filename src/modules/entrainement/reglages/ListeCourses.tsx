@@ -1,3 +1,4 @@
+import { X } from 'lucide-react'
 import { useState } from 'react'
 import { depuisJour } from '../../../core/dates'
 import { Feuille } from '../../../core/ui/Feuille'
@@ -66,7 +67,20 @@ const resumeParcours = (c: Competition, contexte: Contexte) =>
   [c.epreuve && NOMS_EPREUVES[c.epreuve], c.distanceKm && `${virgule(c.distanceKm)} km`, c.deniveleM && `${c.deniveleM} m`, `≈ ${heures(dureeDeCourse(c, contexte))}`].filter(Boolean).join(' · ')
 
 /** Ta course principale (A) : distance, dénivelé et durée modifiables sur place ; sa date ne bouge pas (la saison est construite dessus). */
-export function CoursePrincipale({ course, contexte, onChanger }: { course: Competition; contexte: Contexte; onChanger: (c: Competition) => void }) {
+/** Croix rouge pour supprimer une course, avec confirmation. */
+function BoutonSupprimer({ nom, onSupprimer }: { nom: string; onSupprimer: () => void }) {
+  return (
+    <button type="button" aria-label={`Supprimer ${nom}`} className="presse -mr-1 ml-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-mauvais"
+      onClick={(e) => {
+        e.stopPropagation()
+        if (confirm(`Supprimer « ${nom} » de tes courses ? Ta saison sera recalculée.`)) onSupprimer()
+      }}>
+      <X className="h-5 w-5" strokeWidth={2.2} />
+    </button>
+  )
+}
+
+export function CoursePrincipale({ course, contexte, onChanger, onRetirer }: { course: Competition; contexte: Contexte; onChanger: (c: Competition) => void; onRetirer?: () => void }) {
   const [parcours, setParcours] = useState(parcoursDe(course))
   const [cols, setCols] = useState<Col[]>(course.cols ?? [])
   const [cle, setCle] = useState(0)
@@ -80,6 +94,7 @@ export function CoursePrincipale({ course, contexte, onChanger }: { course: Comp
           <p className="truncate font-semibold">{course.nom}</p>
           <p className="text-xs text-texte-2">{dateCourte(course.date)} · {NOMS_EPREUVES[epreuve]} · ≈ {heures(dureeDeCourse({ ...course, ...champsParcours(parcours), epreuve }, contexte))}</p>
         </div>
+        {onRetirer && <BoutonSupprimer nom={course.nom} onSupprimer={onRetirer} />}
       </div>
       <div className="mt-2">
         <ChampsParcours key={cle} epreuve={epreuve} valeur={parcours} onChanger={setParcours} contexte={contexte} />
@@ -116,8 +131,8 @@ export function ListeCourses({ courses, effectifs, onChanger, min, contexte, pri
           const n = effectifs.get(c.date) ?? c.niveau ?? 'B'
           const declasse = (c.niveau === 'B' && n === 'C') || (c.niveau === 'A' && n !== 'A')
           return (
-            <li key={c.date + c.nom} className="border-b border-bordure">
-              <button type="button" className="flex w-full items-center gap-2.5 py-1.5 text-left" aria-label={`Modifier ${c.nom}`} onClick={() => setFeuille(c)}>
+            <li key={c.date + c.nom} className="flex items-center border-b border-bordure">
+              <button type="button" className="flex min-w-0 flex-1 items-center gap-2.5 py-1.5 text-left" aria-label={`Modifier ${c.nom}`} onClick={() => setFeuille(c)}>
                 <Pastille niveau={n} />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm">{c.nom}</span>
@@ -126,6 +141,7 @@ export function ListeCourses({ courses, effectifs, onChanger, min, contexte, pri
                 </span>
                 <span className="text-texte-3">›</span>
               </button>
+              <BoutonSupprimer nom={c.nom} onSupprimer={() => onChanger(courses.filter((x) => x !== c))} />
             </li>
           )
         })}
