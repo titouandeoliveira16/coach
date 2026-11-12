@@ -280,14 +280,17 @@ export async function completerHistorique() {
   const h = (await db.reglages.get('historique-kj'))?.valeur as HistoriqueKj | undefined
   const jour = aujourdhui()
   // Relu au plus une fois par heure (l'historique Garmin peut arriver dans Intervals à tout moment de la journée)
-  if (!h || !h.viaStrava || h.complet || (h.lu && Date.now() - Date.parse(h.lu) < 3_600_000) || (h.debut && ecartJours(h.debut, jour) > 30)) return
+  // Ancienne version (sorties en double possibles) : relue une fois tout de suite
+  const ancienne = !!h && h.version !== 2
+  if (!h || (!ancienne && (!h.viaStrava || h.complet || (h.lu && Date.now() - Date.parse(h.lu) < 3_600_000) || (h.debut && ecartJours(h.debut, jour) > 30)))) return
   const { importerHistoriqueKj } = await import('../import/intervals')
   const r = await importerHistoriqueKj(true).catch(() => undefined)
   const prog = ((await db.reglages.get('entrainement'))?.valeur as ReglagesEntrainement | undefined)?.programme
   if (!r?.mieux || !prog?.phases?.length || prog.modele !== 'chauvin') return
   const lundi = decalerJour(jour, -((new Date(`${jour}T12:00:00`).getDay() + 6) % 7))
   const { phase } = phaseDe(lundi, prog.phases)
-  if (phase.type === 'reprise' || phase.debut === lundi) await recalculerSaison(true)
+  // Simple retrait des doublons : les phases restent, seules les semaines se recalculent
+  if (!ancienne && (phase.type === 'reprise' || phase.debut === lundi)) await recalculerSaison(true)
   // Dans tous les cas, ta semaine en cours (et les 2 suivantes) repart tout de suite de ta vraie charge habituelle
   else await (await import('../plan/programme')).recalculerSemainesAVenir()
 }

@@ -13,7 +13,7 @@ import { controlerSeance, controleTenu, type Tour } from '../../../metrics/contr
 import { regrouperEnchainements } from '../seances/enchainements'
 import { analyserFlux } from './flux'
 import { CLE_PESEES_EFFACEES, nettoyerPeseesEffacees } from '../forme/pesees'
-import { kjEstime } from '../../../metrics/saison'
+import { kjEstime, sansDoublons } from '../../../metrics/saison'
 import type { HistoriqueKj } from '../plan/depart'
 
 /**
@@ -228,18 +228,22 @@ export async function importerHistoriqueKj(relire = false) {
   const { activites, viaStrava } = await appeler<{ activites: Activite[]; viaStrava: number }>('activites', { oldest: decalerJour(aujourdhui(), -182) })
   const c = await chargerContexte()
   const semaines: Record<string, number> = {}
-  for (const a of activites) {
-    if (sportDepuisType(a.type) !== 'velo' || !a.moving_time) continue
-    const kj = a.joules ? a.joules / 1000
-      : a.average_watts ? (a.average_watts * a.moving_time) / 1000
-      : kjEstime({ dureeSec: a.moving_time, fcMoy: a.average_heartrate, fcRepos: c.fcRepos, fcMax: c.fcMax, cpW: c.cpW ?? 220 })
-    const l = lundiDe(a.start_date.slice(0, 10))
-    semaines[l] = (semaines[l] ?? 0) + kj
+  const sorties = activites.filter((a) => sportDepuisType(a.type) === 'velo' && a.moving_time).map((a) => ({
+    debut: a.start_date,
+    kj: a.joules ? a.joules / 1000
+      : a.average_watts ? (a.average_watts * a.moving_time!) / 1000
+      : kjEstime({ dureeSec: a.moving_time!, fcMoy: a.average_heartrate, fcRepos: c.fcRepos, fcMax: c.fcMax, cpW: c.cpW ?? 220 }),
+  }))
+  for (const s of sansDoublons(sorties)) {
+    const l = lundiDe(s.debut.slice(0, 10))
+    semaines[l] = (semaines[l] ?? 0) + s.kj
   }
   for (const l of Object.keys(semaines)) semaines[l] = Math.round(semaines[l])
   const total = (h?: Record<string, number>) => Object.values(h ?? {}).reduce((a, x) => a + x, 0)
-  const mieux = !!avant && total(semaines) > total(avant.semaines) * 1.2
-  await enregistrer(db.reglages, { id: 'historique-kj', valeur: { ...avant, semaines: mieux || !avant ? semaines : avant.semaines, le: aujourdhui(), lu: new Date().toISOString(), viaStrava, debut: avant ? (avant.debut ?? avant.le) : aujourdhui(), ...(mieux ? { complet: true } : {}) } satisfies HistoriqueKj })
+  // Version 2 (12/11/2026) : doublons retirés ; une ancienne version (doublons possibles) est toujours remplacée
+  const ancienne = !!avant && avant.version !== 2
+  const mieux = !!avant && (ancienne || total(semaines) > total(avant.semaines) * 1.2)
+  await enregistrer(db.reglages, { id: 'historique-kj', valeur: { ...avant, semaines: mieux || !avant ? semaines : avant.semaines, le: aujourdhui(), lu: new Date().toISOString(), viaStrava, version: 2, debut: avant ? (avant.debut ?? avant.le) : aujourdhui(), ...(mieux && !ancienne ? { complet: true } : {}) } satisfies HistoriqueKj })
   return { mieux }
 }
 

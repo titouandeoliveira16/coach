@@ -241,3 +241,19 @@ export function kjEstime(o: { dureeSec: number; fcMoy?: number; fcRepos: number;
   const part = reserve === undefined ? 0.55 : Math.min(0.95, Math.max(0.35, reserve))
   return Math.round((o.cpW * part * o.dureeSec) / 1000)
 }
+
+/**
+ * Une même sortie peut arriver deux fois dans Intervals (Zwift en direct et par Garmin Connect, ou montre et compteur) :
+ * deux sorties qui commencent à moins de 10 minutes d'écart ne comptent qu'une fois (on garde celle qui a le plus de kJ).
+ */
+export function sansDoublons<T extends { debut: string; kj: number }>(sorties: T[]): T[] {
+  const triees = [...sorties].sort((a, b) => a.debut.localeCompare(b.debut))
+  const res: T[] = []
+  for (const s of triees) {
+    const prec = res[res.length - 1]
+    if (prec && Math.abs(Date.parse(s.debut) - Date.parse(prec.debut)) < 10 * 60_000) {
+      if (s.kj > prec.kj) res[res.length - 1] = s
+    } else res.push(s)
+  }
+  return res
+}

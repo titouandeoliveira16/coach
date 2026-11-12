@@ -1,4 +1,3 @@
-import { IconeSport } from '../IconeSport'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { HeartPulse } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
@@ -83,7 +82,7 @@ export function CarteAujourdhui({ onModifierMatin, apresForme }: {
   const seanceRef = useRef<HTMLElement>(null)
   const basculerForme = () => setFormeOuverte(!formeOuverte)
   const navigate = useNavigate()
-  // Jour de repos : on montre la séance de demain
+  // Jour de repos : seulement pour savoir si demain est une séance dure (repos actif conseillé)
   const demain = useLiveQuery(async () => (await db.prevues.where('date').equals(decalerJour(jour, 1)).toArray()).filter((p) => p.statut === 'prevue'), [jour])
   const [r] = useReglagesEntrainement()
   // Repères de glucides de la séance : nutrition à l'effort
@@ -297,7 +296,7 @@ export function CarteAujourdhui({ onModifierMatin, apresForme }: {
             <p className="mt-1 text-xs text-texte-3">{regle}</p>
           </div>
         ) : (
-          // Repos : la place sert à montrer demain
+          // Repos (la séance de demain n'est pas montrée ici : elle est dans Semaine, demande de Titouan du 12/11/2026)
           <>
             <p className="mt-1 text-[22px] font-bold">{signal.couleur === 'rouge' ? 'Très facile ou repos' : 'Repos'}</p>
             <p className="mt-1 text-sm text-texte-2">
@@ -305,19 +304,6 @@ export function CarteAujourdhui({ onModifierMatin, apresForme }: {
                 ? 'Demain, séance dure : si tu te sens rouillé, 20 à 30 min très faciles aujourd’hui (repos actif, facultatif).'
                 : 'Marche, étirements, bien dormir : c’est aussi là que tu progresses.'}
             </p>
-            <div className="flex-1" />
-            {demain && demain.length > 0 && (
-              <>
-                <p className="mt-1 text-[13px] font-semibold text-texte-2">Demain</p>
-                {demain.map((d) => (
-                  <div key={d.id} className="mt-1.5 rounded-xl bg-surface-2 p-3">
-                    <p className="flex justify-between gap-2 font-semibold"><span><IconeSport sport={d.sport} />{d.titre}</span><span className="font-normal text-texte-2">{d.dureeMin} min</span></p>
-                    {d.velo?.etapes && <Profil etapes={d.velo.etapes} cpW={cpW} />}
-                    {d.intensite !== 'basse' && <p className="mt-1 text-[13px] text-texte-2">Séance dure : recharge en glucides ce soir.</p>}
-                  </div>
-                ))}
-              </>
-            )}
           </>
         )}
       </Carte>

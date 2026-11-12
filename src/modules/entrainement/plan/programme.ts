@@ -12,7 +12,7 @@ import { fusionnerSemainesPassees, heuresAu, programmeAu, programmeDe } from '..
 import type { ProfilSportif } from '../reglages/ProfilSportif'
 import { chargeDe, chargerContexte, domaineDe, lundiDe } from '../seances/donnees'
 import type { ReglagesEntrainement, ReglagesProgramme, Seance, SeancePrevue } from '../types'
-import { chargePrevue, joursDe } from './donnees'
+import { chargePrevue, chargesSemaine, joursDe } from './donnees'
 import { chargesHebdo } from '../analyse/donnees'
 import { hausseCharge } from '../../../metrics/planif'
 import { ratioPic } from '../../../metrics/charge'
@@ -719,9 +719,12 @@ export async function saison() {
   // Semaine en cours déjà générée : on montre la vraie séance et le vrai budget
   const reelle = (await db.prevues.where('date').between(lundi, decalerJour(lundi, 6), true, true).toArray())
     .find((p) => p.origine === 'auto' && (estIntensite(p) || p.velo?.famille === 'test'))
-  if (semaines[0]) {
-    if (reelle) semaines[0].intensite = reelle.titre
-    if (meta) semaines[0].budget = meta.budget
+  if (semaines[0] && reelle) semaines[0].intensite = reelle.titre
+  // Semaines déjà construites (cette semaine et les 2 suivantes) : le même chiffre que dans Semaine, ce qui est fait
+  // plus ce qui reste prévu (12/11/2026 : avant, Saison montrait le budget et Semaine le prévu, deux chiffres différents)
+  for (const [i, x] of semaines.slice(0, 3).entries()) {
+    const prevu = (await chargesSemaine(x.lundi)).kjPrevus
+    if ((await lireMeta(x.lundi)) || (i === 0 && prevu > 0)) x.budget = Math.round(prevu)
   }
   // Premier blocage de la hausse (hors semaine en cours) : quelle limite bute, et jusqu'à quand (une semaine type à venir peut la relever)
   const i = semaines.findIndex((x, k) => k > 0 && x.bloquee)
