@@ -199,10 +199,8 @@ input[type='date']::-webkit-date-and-time-value {
 /* Toucher sans délai (12/11/2026) : Safari attend sinon de savoir si c'est un double-tap avant de valider un bouton */
 button, a, [role='button'], label, summary { touch-action: manipulation; }
 
-/* Écrans à onglets (Pager) : seules les pages défilent, jamais l'écran entier (12/11/2026 : on pouvait tirer l'en-tête et
-   sa lueur vers le bas alors que rien ne défile) */
-html:has([data-pager]),
-html:has([data-pager]) body {
-  overflow: hidden;
-  overscroll-behavior: none;
-}
+/* Écrans à onglets (Pager) : la page fait juste la hauteur de l'écran, rien à faire défiler, donc l'en-tête et sa lueur
+   ne se tirent plus vers le bas (12/11/2026). Pas de « overflow: hidden » sur la page : sur iPhone, le couper puis le
+   rendre en changeant d'écran laissait la barre du bas sans réaction (bloqué dans Réglages). */
+html { overscroll-behavior: none; }
+html.avec-pager .coquille { min-height: 0; padding-bottom: 0; }

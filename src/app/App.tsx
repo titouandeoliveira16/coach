@@ -54,7 +54,7 @@ function Coquille() {
   // Dans un module, la page est toujours un peu plus haute que l'écran : sur iPhone (appli installée),
   // la barre du bas ne reste collée en bas que si la page peut défiler
   return (
-    <div style={style} className={`mx-auto max-w-lg ${moduleActif ? 'min-h-[calc(100vh+1px)] pb-44' : 'min-h-full pb-8'}`}>
+    <div style={style} className={`coquille mx-auto max-w-lg ${moduleActif ? 'min-h-[calc(100vh+1px)] pb-44' : 'min-h-full pb-8'}`}>
       {moduleActif && <div aria-hidden className="lueur pointer-events-none fixed inset-x-0 top-0 -z-10 h-[380px]" />}
       {/* Écrans des modules chargés à la demande : rien d'affiché pendant le (très court) chargement */}
       <FiletErreur key={pathname.split('/')[1]}>

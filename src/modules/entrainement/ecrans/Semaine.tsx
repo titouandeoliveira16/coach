@@ -261,13 +261,16 @@ function DetailSeance({ p, jours, prevues, onFermer, onMessage }: {
         <div className="mb-3 rounded-xl border border-[#facc15]/40 bg-[#facc15]/10 p-3 text-sm">
           <p className="text-[13px] font-semibold text-texte-2">Réalisé</p>
           <p><IconeSport sport={p.sport} />{p.titreRealise ?? 'Séance faite'}</p>
-          <p className="mt-1.5 text-xs text-texte-2">Réalisé différent : tes kJ comptent, ta progression ne bouge pas.<Aide titre="Réalisé différent" texte={AIDES.realiseDifferent} /></p>
-          <button type="button" className="mt-2 w-full rounded-lg bg-surface-2 py-2 text-xs font-semibold" onClick={async () => { await enregistrer(db.prevues, { ...p, realiseDifferent: false }); onFermer() }}>C'était bien la séance prévue</button>
+          <p className="mt-1.5 text-xs text-texte-2">Réalisé différent : seuls tes kJ comptent. Sa FC, sa dérive, ta progression et tes victoires l’ignorent.<Aide titre="Réalisé différent" texte={AIDES.realiseDifferent} /></p>
+          <button type="button" className="presse mt-2.5 min-h-12 w-full rounded-xl border border-bordure bg-surface-2 py-3 text-sm font-semibold" onClick={async () => { await enregistrer(db.prevues, { ...p, realiseDifferent: false }); onFermer() }}>C’était bien la séance prévue</button>
           <p className="mt-2 text-[13px] font-semibold text-texte-2">Prévu</p>
         </div>
       )}
       {p.statut === 'faite' && !p.realiseDifferent && p.sport === 'velo' && (
-        <button type="button" className="mb-2 text-xs font-semibold text-texte-3 underline" onClick={async () => { await enregistrer(db.prevues, { ...p, realiseDifferent: true, titreRealise: p.titreRealise ?? 'Autre séance' }); onFermer() }}>J'ai fait autre chose que prévu</button>
+        <button type="button" className="presse mb-3 min-h-12 w-full rounded-xl border border-bordure bg-surface-2 px-4 py-3 text-left text-sm" onClick={async () => { await enregistrer(db.prevues, { ...p, realiseDifferent: true, titreRealise: p.titreRealise ?? 'Autre séance' }); onFermer() }}>
+          <b className="block">J’ai fait autre chose que prévu</b>
+          <span className="text-xs text-texte-3">Seuls tes kJ compteront : sa FC, sa dérive, ta progression et tes victoires l’ignoreront.</span>
+        </button>
       )}
       <p className={`text-sm text-texte-2 ${p.realiseDifferent ? 'line-through' : ''}`}>{p.dureeMin} min{p.kjPrevu ? ` · ${p.kjPrevu} kJ` : ''}</p>
       {p.detail && <p className="mt-2 text-sm">{p.detail}</p>}

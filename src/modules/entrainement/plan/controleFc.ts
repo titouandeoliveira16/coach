@@ -23,8 +23,8 @@ export type Verdict = { couleur: 'vert' | 'orange' | 'rouge' | 'gris'; texte: st
 export function categorieDe(s: Seance, prevue: SeancePrevue | undefined, domaine: Intensite): Categorie {
   // Seulement le vélo et la course : la FC d'une séance de renfo ne se juge pas ainsi
   if (s.sport !== 'velo' && s.sport !== 'course') return 'sans'
-  // Séance mise « hors analyse » (faussée, pas celle prévue) : seuls ses kJ comptent, aucun verdict FC (12/11/2026)
-  if (s.horsAnalyse) return 'sans'
+  // Séance « réalisée différente » (vue par l'appli ou indiquée dans Semaine) : seuls ses kJ comptent, aucun verdict FC
+  if (prevue?.realiseDifferent) return 'sans'
   const f = prevue?.velo?.famille
   // VTT sur le terrain : FC gonflée par le stress et les bras (Burr 2012, Stapelfeldt 2004), pas de verdict
   if (f === 'vtt-terrain' || f === 'vtt-speciales' || s.terrainVtt) return 'sans'

@@ -31,9 +31,9 @@ export async function victoiresRecentes(jours = 30, jour = aujourdhui()): Promis
 
   // Séances d'intensité tenues
   const familles = await progressionFamilles()
-  const ignorees = new Set((await db.seances.toArray()).filter((s) => s.horsAnalyse && s.prevueId).map((s) => s.prevueId))
   for (const p of await db.prevues.where('date').between(depuis, jour, true, true).toArray()) {
-    if (p.resultat !== 'reussie' || p.sport !== 'velo' || ignorees.has(p.id)) continue
+    // Séance « réalisée différente » : ce n'est pas la séance prévue qui a été tenue
+    if (p.resultat !== 'reussie' || p.sport !== 'velo' || p.realiseDifferent) continue
     const f = p.velo?.famille as Famille | undefined
     const palier = familles.find((x) => x.famille === f)?.palier
     v.push({

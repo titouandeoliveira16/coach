@@ -13,7 +13,7 @@ export function CalageFc({ zones, cpW, onModifier }: { zones: ZoneVelo[]; cpW?: 
     if (!cpW || actuelles.some((b) => b === undefined)) return null
     const seances = (await db.seances.where('date').above(decalerJour(aujourdhui(), -90)).toArray())
       .filter((s) => s.sport === 'velo' && !s.sansCeinture)
-    const sorties = seances.flatMap((s) => (s.fcMoy && s.puissanceMoyW && !s.horsAnalyse ? [{ fcMoy: s.fcMoy, puissanceMoyW: s.puissanceMoyW, dureeSec: s.dureeSec, decouplage: s.decouplage }] : []))
+    const sorties = seances.flatMap((s) => (s.fcMoy && s.puissanceMoyW ? [{ fcMoy: s.fcMoy, puissanceMoyW: s.puissanceMoyW, dureeSec: s.dureeSec, decouplage: s.decouplage }] : []))
     const blocs = seances.flatMap((s) => (s.blocs?.fcFin ? s.blocs.w.map((w, i) => ({ w, fcFin: s.blocs!.fcFin![i], dureeSec: s.blocs!.dureeSec, seance: s.id })) : []))
     const c = calageFc({ cpW, bornes: actuelles as BornesZones, sorties, blocs })
     if (!c || c.bornes.every((b, i) => Math.abs(b - actuelles[i]!) <= 2)) return null
