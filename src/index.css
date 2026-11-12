@@ -195,3 +195,6 @@ input[type='date']::-webkit-date-and-time-value {
 [data-onglets][data-proche="3"] a:nth-of-type(4),
 [data-onglets][data-proche="4"] a:nth-of-type(5),
 [data-onglets][data-proche="5"] a:nth-of-type(6) { color: var(--color-fond); }
+
+/* Toucher sans délai (12/11/2026) : Safari attend sinon de savoir si c'est un double-tap avant de valider un bouton */
+button, a, [role='button'], label, summary { touch-action: manipulation; }
