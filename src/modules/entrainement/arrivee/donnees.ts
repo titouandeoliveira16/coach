@@ -195,7 +195,7 @@ export async function historiqueRecent(jour: string, cpW: number, semaineType: R
 }
 
 /** Réglage « arrivee » : le questionnaire est fait (sinon il s'affiche à l'ouverture d'un compte créé avec un code). */
-export interface EtatArrivee { fait?: string; montre?: 'reliee' | 'plus-tard' }
+export interface EtatArrivee { fait?: string; montre?: 'reliee' | 'plus-tard'; notifs?: 'activees' | 'plus-tard' }
 
 export async function enregistrerArrivee(r: ReponsesArrivee) {
   const jour = aujourdhui()
