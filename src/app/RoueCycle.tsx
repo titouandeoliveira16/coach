@@ -63,10 +63,14 @@ export function RoueCycle({ taille, onFini }: { taille: number; onFini?: () => v
     return () => { cancelAnimationFrame(id); minuteurs.forEach(clearTimeout) }
   }, [])
 
+  // Première image déjà au point de départ (hors écran à gauche) : sinon le C s'affichait une fraction de seconde à sa
+  // place finale avant que l'animation ne commence (le « flash » à l'ouverture, 12/11/2026)
+  const reduit = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches
+  const depart = reduit ? 0 : 1
   return (
     <svg width={taille} height={taille} viewBox="-50 -50 100 100" className="overflow-visible" aria-label="Cycle" role="img">
-      <g ref={mobile}>
-        <g ref={tourne}>
+      <g ref={mobile} transform={`translate(${DECALAGE - DISTANCE * depart} 0)`}>
+        <g ref={tourne} transform={`rotate(${((-DISTANCE * depart) / (R + EP / 2)) * (180 / Math.PI)})`}>
           <g ref={roue}>
             <g data-rayon stroke="rgba(255,255,255,.55)" strokeWidth="1.6" strokeLinecap="round" style={{ transition: 'opacity .5s ease' }}>
               {RAYONS.map((a) => <line key={a} x1={4 * Math.cos(a)} y1={4 * Math.sin(a)} x2={(R - EP / 2 + 1) * Math.cos(a)} y2={(R - EP / 2 + 1) * Math.sin(a)} />)}
