@@ -1145,6 +1145,22 @@ export function plafondEtNominal(o: {
   return { nominal, plafond: Math.min(plafondJours, plafondHeures), limite: (plafondHeures < plafondJours ? 'heures' : 'jours') as 'heures' | 'jours' }
 }
 
+/**
+ * Quand tes jours et durées bloquent la hausse (12/11/2026) : quel réglage débloque le plus de kJ ? +15 min sur chaque
+ * sortie d'endurance de semaine, +30 min sur la sortie longue, ou un jour de vélo de plus (s'il reste un jour libre).
+ */
+export function meilleurLevier(o: { semaineType: Role[]; cap: { z2: number; long: number }; z2W: number }) {
+  const kjZ2 = (min: number) => construireZ2(min, o.z2W).kj
+  const nZ2 = o.semaineType.filter((x) => x === 'velo-z2').length + Math.max(0, o.semaineType.filter((x) => x === 'velo-dur').length - 1)
+  const libres = o.semaineType.filter((x) => !x.startsWith('velo')).length
+  const leviers = [
+    { levier: 'semaine' as const, gain: nZ2 * (kjZ2(o.cap.z2 + 15) - kjZ2(o.cap.z2)), avant: o.cap.z2, apres: o.cap.z2 + 15 },
+    { levier: 'longue' as const, gain: kjZ2(o.cap.long + 30) - kjZ2(o.cap.long), avant: o.cap.long, apres: o.cap.long + 30 },
+    ...(libres > 1 ? [{ levier: 'jour' as const, gain: kjZ2(o.cap.z2), avant: 0, apres: 0 }] : []),
+  ].filter((l) => l.gain > 0)
+  return leviers.sort((a, b) => b.gain - a.gain)[0]
+}
+
 /** Affûtage / récupération : budget = part fixe du budget de référence d'avant (pas de hausse, pas de −35 % en plus). */
 export function budgetDePhase(prec: BilanSemaine | undefined, nominal: number, coef: number, nomPhase: string) {
   const ref = Math.round(prec?.budgetRef ?? nominal)
