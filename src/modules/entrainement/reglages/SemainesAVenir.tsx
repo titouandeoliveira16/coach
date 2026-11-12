@@ -9,6 +9,7 @@ import { Defileur, EditeurSemaine } from './EditeurSemaine'
 
 const jourLong = (d: string) => depuisJour(d).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
 const nbVelos = (t: SemaineTypeFuture['semaineType']) => t.filter((x) => x.startsWith('velo')).length
+const HEURES = ['Moins de 4 h', '4 à 6 h', '6 à 8 h', '8 à 10 h', '10 à 12 h', 'Plus de 12 h'].map((h) => [h, h] as [string, string])
 const DUREES_SEMAINE = [45, 60, 75, 90, 105, 120, 150].map((m) => [`${m} min`, m] as [string, number])
 const DUREES_LONGUE = [90, 120, 150, 180, 210, 240, 270, 300].map((m) => [`${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60}` : ''}`, m] as [string, number])
 
@@ -23,7 +24,7 @@ export function SemainesAVenir({ prog, onChanger }: { prog: ReglagesProgramme; o
 
   const ouvrir = (index?: number) => {
     const precedente = index === undefined ? futures.at(-1) : undefined
-    setEdition({ index, s: index !== undefined ? futures[index] : { debut: precedente ? decalerJour(precedente.debut, 7) : lundiProchain, semaineType: (precedente ?? prog).semaineType, maxSemaineMin: precedente?.maxSemaineMin ?? prog.maxSemaineMin, maxLongMin: precedente?.maxLongMin ?? prog.maxLongMin } })
+    setEdition({ index, s: index !== undefined ? futures[index] : { debut: precedente ? decalerJour(precedente.debut, 7) : lundiProchain, semaineType: (precedente ?? prog).semaineType, maxSemaineMin: precedente?.maxSemaineMin ?? prog.maxSemaineMin, maxLongMin: precedente?.maxLongMin ?? prog.maxLongMin, heuresSemaine: precedente?.heuresSemaine } })
   }
   const enregistrer = async () => {
     if (!edition) return
@@ -41,7 +42,7 @@ export function SemainesAVenir({ prog, onChanger }: { prog: ReglagesProgramme; o
         <div key={f.debut} className="mt-2 flex items-center justify-between gap-2 rounded-xl bg-surface-2 px-3 py-2.5">
           <span className="min-w-0 text-sm">
             <span className="block font-semibold">À partir du {jourLong(f.debut)}</span>
-            <span className="block text-texte-2">{nbVelos(f.semaineType)} vélos · semaine {f.maxSemaineMin ?? prog.maxSemaineMin} min · longue {Math.round(((f.maxLongMin ?? prog.maxLongMin) / 60) * 10) / 10} h</span>
+            <span className="block text-texte-2">{nbVelos(f.semaineType)} vélos · semaine {f.maxSemaineMin ?? prog.maxSemaineMin} min · longue {Math.round(((f.maxLongMin ?? prog.maxLongMin) / 60) * 10) / 10} h{f.heuresSemaine ? ` · ${f.heuresSemaine.toLowerCase()}/sem.` : ''}</span>
           </span>
           <button type="button" onClick={() => ouvrir(i)} className="shrink-0 text-sm font-semibold text-accent">Modifier</button>
         </div>
@@ -66,6 +67,11 @@ export function SemainesAVenir({ prog, onChanger }: { prog: ReglagesProgramme; o
             <span className="text-texte-2">Sortie longue, au plus</span>
             <Defileur etiquette="Sortie longue" options={DUREES_LONGUE} valeur={edition.s.maxLongMin} onChoisir={(maxLongMin) => setEdition({ ...edition, s: { ...edition.s, maxLongMin } })} />
           </div>
+          <div className="mt-2 flex items-center justify-between">
+            <span className="text-texte-2">Temps par semaine</span>
+            <Defileur etiquette="Temps par semaine" options={HEURES} valeur={edition.s.heuresSemaine} onChoisir={(heuresSemaine) => setEdition({ ...edition, s: { ...edition.s, heuresSemaine } })} />
+          </div>
+          <p className="mt-1 text-xs text-texte-3">Ton profil prendra ce temps à cette date. Sans choix, il garde le sien.</p>
           <Bouton className="mt-4" disabled={!verifierSemaineType(edition.s.semaineType).ok} onClick={enregistrer}>Enregistrer</Bouton>
           {edition.index !== undefined && (
             <button type="button" className="mt-1 w-full py-2 text-sm text-mauvais" onClick={async () => {

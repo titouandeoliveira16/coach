@@ -31,4 +31,9 @@ describe('plafondEtNominal', () => {
     expect(long.nominal).toBeGreaterThan(court.nominal)
     expect(long.nominal).toBe(plafondEtNominal({ ...base, semaineType: semaine(['velo-dur', 'velo-z2', 'velo-long']), longueVisee: 150 }).nominal)
   })
+  it('dit quelle limite bloque : les heures ou les jours', () => {
+    const t = semaine(['velo-dur', 'velo-z2', 'velo-z2', 'velo-z2', 'velo-long'])
+    expect(plafondEtNominal({ ...base, semaineType: t, heuresMax: 4 }).limite).toBe('heures')
+    expect(plafondEtNominal({ ...base, semaineType: t, heuresMax: 16 }).limite).toBe('jours')
+  })
 })
