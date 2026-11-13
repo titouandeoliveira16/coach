@@ -206,6 +206,8 @@ export interface SeanceVelo {
   cibleW?: number
   /** CP utilisée pour construire la séance (version raccourcie d'un jour orange) */
   cpW?: number
+  /** Séries et répétitions vraiment prévues (après réduction pour le créneau ou l'affûtage) : base du jour orange */
+  structure?: Palier
   /** Sortie avec blocs au 1er seuil : watts et nombre de blocs */
   sv1W?: number
   blocsSv1?: number
@@ -265,9 +267,22 @@ export function palierPossible(f: Format, vise: number, maxMin: number) {
 }
 
 /** Version raccourcie (feu orange) : une série de moins, ou un tiers de répétitions en moins. Mêmes watts. */
-export function palierRaccourci(f: Format, palier: number): Palier {
-  const pa = f.paliers[palier]
-  return pa.series > 1 ? { ...pa, series: pa.series - 1 } : { ...pa, reps: Math.max(1, Math.round(pa.reps * 0.66)) }
+export function palierRaccourci(f: Format, palier: number | Palier): Palier {
+  const pa = typeof palier === 'number' ? f.paliers[palier] : palier
+  if (pa.series > 1) return { ...pa, series: pa.series - 1 }
+  if (pa.reps > 1) return { ...pa, reps: Math.max(1, Math.round(pa.reps * 0.66)) }
+  // Un seul bloc continu (ex. 30' au seuil) : un tiers plus court (audit du 13/11/2026)
+  return { ...pa, travailSec: Math.max(60, Math.round(((pa.travailSec ?? f.travailSec) * 0.66) / 60) * 60) }
+}
+
+/**
+ * Le plus petit palier ne tient pas dans ton créneau (ex. créneau d'1 h et 3 × 15' de sweet spot) : séance raccourcie
+ * comme un jour orange, jusqu'à ce qu'elle tienne (audit du 13/11/2026). Mêmes watts.
+ */
+export function tenirDansCreneau(f: Format, palier: number | Palier, maxMin: number): number | Palier {
+  let p = palier
+  for (let k = 0; k < 4 && dureeFormat(f, p).corpsSec + ENCADREMENT_PALIER_SEC > maxMin * 60; k++) p = palierRaccourci(f, p)
+  return p
 }
 
 /** Échauffement détaillé des séances d'intensité. */
@@ -356,7 +371,7 @@ export function construireIntervalles(f: Format, palier: number | Palier, cpW: n
   const detail = `Échauffement ${enMin(echauffementSec(pr))} · ${corps} · Retour au calme ${enMin(retourSec(pr))}${limite ? ` · Watts ramenés de ${wPrevu} à ${wT} W : sinon chaque effort viderait presque toute ta réserve au-dessus de la CP (W')` : ''}`
   return {
     titre, detail, dureeMin: Math.round(totalSec / 60), kj: Math.round(kj),
-    velo: { famille: f.famille, formatId: f.id, palier: typeof palier === 'number' ? palier : undefined, ...(f.aFond ? {} : { cibleW: wT }), cpW, ...(limite ? { wPrimeKj } : {}), etapes },
+    velo: { famille: f.famille, formatId: f.id, palier: typeof palier === 'number' ? palier : undefined, structure: pa, ...(f.aFond ? {} : { cibleW: wT }), cpW, ...(limite ? { wPrimeKj } : {}), etapes },
   }
 }
 
