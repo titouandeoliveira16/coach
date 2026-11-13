@@ -1,5 +1,8 @@
 import { useProfil } from '../../../core/profil'
 import { useState, type ReactNode } from 'react'
+import { db } from '../../../core/db'
+import { enregistrer } from '../../../core/stockage'
+import { FORCE_DEFAUT, type ReglagesForce } from '../muscu/force'
 import { useReglage } from '../../../core/reglages'
 import { ChampNombre } from '../../../core/ui/ChampNombre'
 import { Repliable } from '../../../core/ui/Repliable'
@@ -188,7 +191,13 @@ export function SectionProfilSportif() {
         <p className="mt-1.5 text-xs text-texte-3">Activée : les glucides par heure à prendre sur tes sorties longues et tes courses. Plus tard : un plan pour habituer ton estomac.</p>
       </Ligne>
       <Ligne {...props('muscu')} libelle="Musculation" valeur={ps.muscu ?? ''}>
-        {choixUnique(MUSCU, ps.muscu, (muscu) => modifierPs({ muscu }))}
+        {choixUnique(MUSCU, ps.muscu, async (muscu) => {
+          // Même réglage que Réglages → Muscu (13/11/2026) : activée ou non, 1 ou 2 séances
+          await modifierPs({ muscu })
+          const avant = (await db.reglages.get('force'))?.valeur as Partial<ReglagesForce> | undefined
+          await enregistrer(db.reglages, { id: 'force', valeur: { ...FORCE_DEFAUT, ...avant, actif: !/^Pas/.test(muscu), seances: /2/.test(muscu) ? 2 : 1 } })
+          await recalculerSemainesAVenir()
+        })}
         <p className="mt-1.5 text-xs text-texte-3">{AIDES.profilMuscu}</p>
       </Ligne>
     </Repliable>

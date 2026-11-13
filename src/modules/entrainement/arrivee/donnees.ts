@@ -356,3 +356,15 @@ export async function recalculerSaison(garderTests = false) {
   const { recalculerSemainesAVenir } = await import('../plan/programme')
   await recalculerSemainesAVenir()
 }
+
+/**
+ * Muscu cochée dans Mon profil sportif avant la 13.9 (ancien réglage, il ne pilotait pas la muscu de l'Entraînement) :
+ * la muscu est activée une fois, puis tes semaines se recalculent.
+ */
+export async function migrerMuscu() {
+  if (await db.reglages.get('force')) return
+  const ps = (await db.reglages.get('profil-sportif'))?.valeur as { muscu?: string } | undefined
+  if (!ps?.muscu || /^Pas/.test(ps.muscu)) return
+  await enregistrer(db.reglages, { id: 'force', valeur: { ...FORCE_DEFAUT, actif: true, seances: /2/.test(ps.muscu) ? 2 : 1 } satisfies ReglagesForce })
+  await (await import('../plan/programme')).recalculerSemainesAVenir()
+}

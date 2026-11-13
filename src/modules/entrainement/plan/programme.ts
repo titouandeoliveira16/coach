@@ -784,7 +784,10 @@ export async function saison() {
   // plus ce qui reste prévu (12/11/2026 : avant, Saison montrait le budget et Semaine le prévu, deux chiffres différents)
   for (const [i, x] of semaines.slice(0, 3).entries()) {
     const prevu = (await chargesSemaine(x.lundi)).kjPrevus
-    if ((await lireMeta(x.lundi)) || (i === 0 && prevu > 0)) x.budget = Math.round(prevu)
+    const m = await lireMeta(x.lundi)
+    if (m || (i === 0 && prevu > 0)) x.budget = Math.round(prevu)
+    // Semaine déjà construite allégée : elle ne « bute » pas sur le plafond (13/11/2026)
+    if (m?.allegee) x.bloquee = false
   }
   // Chaque période où la hausse bute (hors semaine en cours, 3 au plus) : quelle limite, jusqu'à quand (une semaine type
   // à venir peut la relever), et le réglage qui débloque le plus (12/11/2026 : avant, seule la 1re période était dite)
@@ -798,6 +801,12 @@ export async function saison() {
     const par = calcul(l).limite
     // Hausse voulue sur la période bloquée : +7,5 % par semaine normale, sur un cycle de 4 semaines au plus (13/11/2026)
     const nBloquees = semaines.slice(i, k > 0 ? k : undefined).filter((x) => x.bloquee).length
+    // Une seule semaine qui bute (13/11/2026) : pas d'alerte, la charge repart la semaine d'après
+    if (nBloquees < 2) {
+      if (k < 0) break
+      i = k - 1
+      continue
+    }
     const besoin = Math.round(p * (Math.pow(1.075, Math.min(4, Math.max(1, nBloquees))) - 1))
     blocages.push({ lundi: l, jusquA: k > 0 ? semaines[k].lundi : undefined, par, heures: heuresAu(prog, ps?.heuresSemaine, l), besoin, ...(() => {
       const pistes = par === 'jours' ? pistesDeblocage({ semaineType: programmeAu(prog, l).semaineType, cap: capDe(l), z2W, besoin }) : []
