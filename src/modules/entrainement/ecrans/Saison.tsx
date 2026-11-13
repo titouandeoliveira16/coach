@@ -6,10 +6,14 @@ import { formatNombre } from '../../../core/format'
 import { Aide } from '../../../core/ui/Aide'
 import { Carte } from '../../../core/ui/Carte'
 import { Repliable } from '../../../core/ui/Repliable'
-import { programmeDe, useReglagesEntrainement } from '../reglagesEntrainement'
+import { programmeAu, programmeDe, useReglagesEntrainement } from '../reglagesEntrainement'
+import { useReglage } from '../../../core/reglages'
+import type { ProfilSportif } from '../reglages/ProfilSportif'
+import type { ReglagesProgramme } from '../types'
+import { appliquerChangement, trancheAuDessus, type Changement } from '../plan/pistes'
 import { NOMS_PHASES, niveauxCourses, type SemaineSaison, type TypePhase } from '../../../metrics/programme'
 import { AIDES } from '../aides'
-import { saison } from '../plan/programme'
+import { recalculerSemainesAVenir, saison } from '../plan/programme'
 
 /** Couleur de chaque phase (rampe validée sur fond sombre). */
 /** Couleur de chaque phase = la zone qu'elle travaille, comme Zwift (Z1 gris → Z6 rouge), 12/11/2026 */
@@ -122,29 +126,119 @@ function HistogrammeKj({ semaines, niveaux, tests }: { semaines: SemaineSaison[]
 }
 
 /** Quand tes choix (temps par semaine, jours, durées) empêchent ta charge de monter : à partir de quand, et quoi changer. */
-function Blocage({ b }: { b: { lundi: string; jusquA?: string; par: 'heures' | 'jours'; heures?: string; levier?: { levier: 'semaine' | 'longue' | 'jour'; gain: number; avant: number; apres: number } } }) {
-  const jour = (d: string) => depuisJour(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })
-  const h = (min: number) => `${Math.floor(min / 60)} h${min % 60 ? ` ${String(min % 60).padStart(2, '0')}` : ''}`
-  const quand = b.jusquA ? `Du ${jour(b.lundi)} au ${jour(b.jusquA)}` : `À partir du ${jour(b.lundi)}`
-  const l = b.levier
-  const gain = l ? ` (≈ +${formatNombre(Math.round(l.gain / 10) * 10)} kJ)` : ''
-  // Le conseil : le réglage qui débloque le plus de kJ (Réglages → Ma semaine type, ou « Plus tard » à une date)
-  const conseil = b.par === 'heures' ? `C’est ton temps par semaine (${b.heures?.toLowerCase() ?? 'profil'}) : passe à la tranche au-dessus.`
-    : l?.levier === 'longue' ? `Le plus efficace : allonger ta sortie longue, ${h(l.avant)} → ${h(l.apres)}${gain}.`
-    : l?.levier === 'semaine' ? `Le plus efficace : allonger tes sorties de semaine, ${l.avant} → ${l.apres} min${gain}.`
-    : l?.levier === 'jour' ? `Le plus efficace : un jour de vélo de plus${gain}.`
-    : 'Ajoute un jour ou allonge tes durées.'
+type Piste = { levier: 'semaine' | 'longue' | 'jour'; gain: number; avant: number; apres: number; jour?: number }
+type BlocageSaison = { lundi: string; jusquA?: string; par: 'heures' | 'jours'; heures?: string; pistes: Piste[] }
+const JOURS_COURTS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
+const JOURS_LONGS = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche']
+const jourMois = (d: string) => depuisJour(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })
+const duree = (min: number) => `${Math.floor(min / 60)} h${min % 60 ? ` ${String(min % 60).padStart(2, '0')}` : ''}`
+
+/**
+ * Conseil quand la charge plafonne (maquettes G1-G3 validées le 13/11/2026) : la piste qui rapporte le plus, appliquée en
+ * un geste (une semaine type « Plus tard » à cette date) ; « Pas possible » montre la suivante ; Annuler après coup.
+ */
+function Blocage({ b, onFait }: { b: BlocageSaison; onFait: (avant: ReglagesProgramme, texte: string) => void }) {
+  const [r, modifier] = useReglagesEntrainement()
+  const [ps] = useReglage<ProfilSportif>('profil-sportif', { sports: [], materiel: [] })
+  const [i, setI] = useState(0)
+  const [jourChoisi, setJourChoisi] = useState<number>()
+  const [occupe, setOccupe] = useState(false)
+  const prog = programmeDe(r.programme)
+  const semaineType = programmeAu(prog, b.lundi).semaineType
+  const quand = b.jusquA ? `Du ${jourMois(b.lundi)} au ${jourMois(b.jusquA)}` : `À partir du ${jourMois(b.lundi)}`
+  const dates = ` dès le ${jourMois(b.lundi)}`
+  const gain = (g: number) => `≈ +${formatNombre(Math.round(g / 10) * 10)} kJ par semaine`
+  const tranche = trancheAuDessus(b.heures)
+  // Pistes dans l'ordre : temps par semaine si c'est lui qui bloque, sinon de la plus rentable à la moins rentable
+  const pistes: (Piste | { levier: 'heures' })[] = b.par === 'heures' ? (tranche ? [{ levier: 'heures' }] : []) : b.pistes
+  const p = pistes[i]
+
+  const appliquer = async (c: Changement, texte: string) => {
+    setOccupe(true)
+    await modifier({ programme: appliquerChangement(prog, ps.heuresSemaine, b.lundi, c) })
+    onFait(prog, texte)
+    await recalculerSemainesAVenir()
+    setOccupe(false)
+  }
+
+  let titre = '', detail = '', bouton = '', c: Changement | undefined, texte = '', jours: number[] = []
+  if (p?.levier === 'jour') {
+    jours = semaineType.map((x, j) => [x, j] as const).filter(([x]) => !x.startsWith('velo')).map(([, j]) => j)
+    const j = jourChoisi !== undefined && jours.includes(jourChoisi) ? jourChoisi : p.jour ?? jours[0]
+    const n = semaineType.filter((x) => x.startsWith('velo')).length + 1
+    titre = `un ${n}e jour de vélo`; detail = gain(p.gain)
+    bouton = `Ajouter le ${JOURS_LONGS[j]}${dates}`; c = { levier: 'jour', jour: j }
+    texte = `${n} jours de vélo à partir du ${jourMois(b.lundi)} (le ${JOURS_LONGS[j]} en plus).`
+  } else if (p?.levier === 'longue') {
+    titre = `allonger ta sortie longue, ${duree(p.avant)} → ${duree(p.apres)}`; detail = gain(p.gain)
+    bouton = `Oui, ${duree(p.apres)}${dates}`; c = { levier: 'longue', minutes: p.apres }
+    texte = `Sortie longue jusqu’à ${duree(p.apres)} à partir du ${jourMois(b.lundi)}.`
+  } else if (p?.levier === 'semaine') {
+    titre = `allonger tes sorties de semaine, ${p.avant} → ${p.apres} min`; detail = gain(p.gain)
+    bouton = `Oui, ${p.apres} min${dates}`; c = { levier: 'semaine', minutes: p.apres }
+    texte = `Sorties de semaine jusqu’à ${p.apres} min à partir du ${jourMois(b.lundi)}.`
+  } else if (p?.levier === 'heures' && tranche) {
+    titre = `plus de temps par semaine (${tranche.toLowerCase()})`; detail = `c’est ton temps par semaine (${b.heures?.toLowerCase() ?? 'profil'}) qui bloque`
+    bouton = `Oui, ${tranche.toLowerCase()}${dates}`; c = { levier: 'heures' }
+    texte = `${tranche} par semaine à partir du ${jourMois(b.lundi)}.`
+  }
+
   return (
-    <p className="mt-3 rounded-xl bg-surface-2 px-3 py-2.5 text-sm">
-      <span className="font-semibold text-attention">{quand}, ta charge ne peut plus monter.</span> <span className="text-texte-2">{conseil}</span>
-    </p>
+    <div className="mt-3 rounded-xl border-[1.5px] border-attention/40 bg-surface-2 px-3 py-3 text-sm">
+      <div className="flex items-baseline gap-2">
+        <span className="font-semibold text-attention">{quand}, ta charge ne peut plus monter.</span>
+        {pistes.length > 1 && p && <span className="ml-auto shrink-0 text-xs text-texte-3">{i + 1} / {pistes.length}</span>}
+      </div>
+      {p && c ? (
+        <>
+          <p className="mt-1 text-texte-2">{i === 0 ? 'Le plus efficace' : 'Autre piste'} : <b className="text-texte">{titre}</b>, {detail}.</p>
+          {jours.length > 1 && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {jours.map((j) => {
+                const actif = j === (c as { jour: number }).jour
+                return (
+                  <button key={j} type="button" onClick={() => setJourChoisi(j)}
+                    className={`rounded-full px-3 py-1.5 text-[13px] font-semibold ${actif ? 'bg-accent text-fond' : 'border border-bordure text-texte-2'}`}>{JOURS_COURTS[j]}</button>
+                )
+              })}
+            </div>
+          )}
+          <button type="button" disabled={occupe} onClick={() => appliquer(c!, texte)}
+            className="mt-3 w-full rounded-xl bg-accent py-3 text-[15px] font-bold text-fond disabled:opacity-60">{bouton}</button>
+          <div className="mt-2 flex justify-between text-[13px]">
+            <button type="button" onClick={() => setI(i + 1)} className="py-1 text-texte-2">{i + 1 < pistes.length ? 'Pas possible pour moi' : 'Pas possible non plus'}</button>
+            {i > 0 && <button type="button" onClick={() => setI(i - 1)} className="py-1 text-texte-3">Revenir</button>}
+          </div>
+        </>
+      ) : (
+        <p className="mt-1 text-texte-2">
+          {pistes.length ? 'Pas d’autre piste : ta charge restera à ce niveau, c’est très bien aussi. ' : 'Tu es déjà au maximum des réglages. '}
+          {i > 0 && <button type="button" onClick={() => setI(0)} className="font-semibold text-accent">Revoir les pistes</button>}
+        </p>
+      )}
+    </div>
+  )
+}
+
+/** Conseil appliqué : ce qui a changé, et Annuler (la semaine type d'avant revient). */
+function ConseilFait({ texte, onAnnuler, onFermer }: { texte: string; onAnnuler: () => void; onFermer: () => void }) {
+  return (
+    <div className="mt-3 rounded-xl border-[1.5px] border-bon/40 bg-surface-2 px-3 py-3 text-sm">
+      <p className="font-semibold text-bon">✓ C’est fait</p>
+      <p className="mt-1 text-texte-2">{texte} Ta saison est recalculée : ta charge peut continuer à monter.</p>
+      <div className="mt-2 flex justify-between text-[13px]">
+        <button type="button" onClick={onAnnuler} className="py-1 font-semibold text-accent">Annuler</button>
+        <button type="button" onClick={onFermer} className="py-1 text-texte-3">OK</button>
+      </div>
+    </div>
   )
 }
 
 /** Saison : où j'en suis (frise avec courses et tests), les 3 prochaines semaines, puis les phases repliées (validé le 7/11/2026). */
 export function Saison() {
   const s = useLiveQuery(saison)
-  const [r] = useReglagesEntrainement()
+  const [r, modifier] = useReglagesEntrainement()
+  const [fait, setFait] = useState<{ avant: ReglagesProgramme; texte: string }>()
   if (!s?.semaines.length) return null
   const prog = programmeDe(r.programme)
   const actuelle = s.semaines[0]
@@ -222,7 +316,12 @@ export function Saison() {
 
       <Carte titre="Ta charge prévue (kJ par semaine)">
         <HistogrammeKj semaines={s.semaines.filter((x) => x.lundi <= (courseA ?? s.fin))} niveaux={niveauxFuturs} tests={tests} />
-        {s.blocages.filter((b) => b.lundi <= (courseA ?? s.fin)).map((b) => <Blocage key={b.lundi} b={b} />)}
+        {fait && <ConseilFait texte={fait.texte} onFermer={() => setFait(undefined)} onAnnuler={async () => {
+          await modifier({ programme: fait.avant })
+          setFait(undefined)
+          await recalculerSemainesAVenir()
+        }} />}
+        {s.blocages.filter((b) => b.lundi <= (courseA ?? s.fin)).map((b) => <Blocage key={b.lundi} b={b} onFait={(avant, texte) => setFait({ avant, texte })} />)}
       </Carte>
 
       <Carte titre="Cette semaine et les 2 suivantes">
