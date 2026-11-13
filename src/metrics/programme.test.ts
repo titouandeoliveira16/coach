@@ -25,20 +25,20 @@ describe('banque de séances', () => {
   it('30/15 au dernier palier : 3 × 13, environ 1 h, 120 % de CP', () => {
     const s = construireIntervalles(formatDe('30-15')!, 3, 260, 0)
     expect(s.titre).toBe('3 × 13 × 30/15')
-    expect(s.dureeMin).toBe(65)
+    expect(s.dureeMin).toBe(50)
     expect(s.velo.cibleW).toBe(310)
     expect(s.kj).toBeGreaterThan(500)
   })
 
-  it('échauffement selon la qualité : 20\' avec accélérations et 5\' de souffle (VO2), 15\' (seuil)', () => {
+  it('échauffement 10\' au plus (13/11/2026) : accélérations et 2\' de souffle (VO2), 1\' au seuil (seuil), retour au calme 5\'', () => {
     const vo2 = construireIntervalles(formatDe('30-15')!, 0, 260, 0)
-    expect(vo2.detail).toMatch(/^Échauffement 20' · .* · Retour au calme 10'$/)
+    expect(vo2.detail).toMatch(/^Échauffement 10' · .* · Retour au calme 5'$/)
     const souffle = vo2.velo.etapes!.find((e) => e.libelle.startsWith('Souffle'))!
-    expect(souffle.dureeSec).toBe(300)
-    expect(souffle.debutSec + souffle.dureeSec).toBe(20 * 60)
+    expect(souffle.dureeSec).toBe(120)
+    expect(souffle.debutSec + souffle.dureeSec).toBe(10 * 60)
     expect(vo2.velo.etapes!.filter((e) => e.w === 285)).toHaveLength(3)
     const seuil = construireIntervalles(formatDe('seuil-8-10')!, 0, 260, 0)
-    expect(seuil.detail).toMatch(/^Échauffement 15' · .* · Retour au calme 7'$/)
+    expect(seuil.detail).toMatch(/^Échauffement 10' · .* · Retour au calme 5'$/)
     // Retour au calme dégressif, sans trou dans le déroulé
     const e = seuil.velo.etapes!
     expect(e.at(-1)!.w!).toBeLessThan(e.at(-2)!.w!)

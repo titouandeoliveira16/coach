@@ -583,7 +583,9 @@ async function genererSemaineVeloBrute(lundi: string) {
   }
   // Cycle 1er seuil : la séance dédiée peut dépasser ton créneau de semaine (jusqu'à 50 min de plus, 2 h 05 au plus)
   // pour que la progression aille jusqu'à 5 × 20′ ou 3 × 30′ (choix d'entraîneur, validé par Titouan le 10/11/2026)
-  const seanceSv1 = jourSv1 ? construireSv1Dediee(nPalier, Math.min(125, maxDuJour(jourSv1) + 50), sv1.w, z2W, fcSv1) : undefined
+  // Séance dédiée au 1er seuil : dans ton créneau, 10 min de plus au plus (13/11/2026) ; les blocs plus longs se font
+  // dans la sortie longue
+  const seanceSv1 = jourSv1 ? construireSv1Dediee(nPalier, maxDuJour(jourSv1) + 10, sv1.w, z2W, fcSv1) : undefined
   placement.z2.forEach((d) => {
     // Séance 1er seuil allongée au-delà de ton créneau : les autres endurances peuvent descendre à 30 min pour compenser
     const minZ2 = seanceSv1 && seanceSv1.dureeMin > maxDuJour(jourSv1!) ? 30 : 45
@@ -628,6 +630,22 @@ async function genererSemaineVeloBrute(lundi: string) {
 /** Blocs tous tenus ou non : fait avancer (ou recule) la progression de la famille. */
 export async function noterResultat(p: SeancePrevue, resultat: SeancePrevue['resultat']) {
   await enregistrer(db.prevues, { ...p, resultat })
+}
+
+/**
+ * Séances clés sautées (13/11/2026) : la séance d'intensité, ou la séance dédiée au 1er seuil, prévue et pas faite (ou
+ * faite autrement) les 2 semaines complètes d'avant. Une alerte, rien ne change dans le plan.
+ */
+export async function seancesClesSautees(lundi: string) {
+  const sautee = async (l: string, cle: (p: SeancePrevue) => boolean) => {
+    const prevues = (await db.prevues.where('date').between(l, decalerJour(l, 6), true, true).toArray()).filter((p) => p.origine === 'auto' && cle(p))
+    return prevues.length > 0 && !prevues.some((p) => p.statut === 'faite' && !p.realiseDifferent)
+  }
+  const deuxFois = async (cle: (p: SeancePrevue) => boolean) => (await sautee(decalerJour(lundi, -7), cle)) && (await sautee(decalerJour(lundi, -14), cle))
+  const res: ('intensite' | 'sv1')[] = []
+  if (await deuxFois(estIntensite)) res.push('intensite')
+  if (await deuxFois((p) => p.velo?.formatId === 'sv1-dedie')) res.push('sv1')
+  return res
 }
 
 /** Dernière séance d'intensité faite sans résultat noté (4 derniers jours). */
