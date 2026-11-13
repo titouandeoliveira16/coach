@@ -1,8 +1,12 @@
+import { useState } from 'react'
+import { aujourdhui, decalerJour, depuisJour } from '../../../core/dates'
+import { db } from '../../../core/db'
 import { useReglage } from '../../../core/reglages'
+import { lundiDe } from '../seances/donnees'
 import { Aide } from '../../../core/ui/Aide'
 import { AIDES } from '../aides'
 import { EXOS, FORCE_DEFAUT, type Lieu, type ReglagesForce } from '../muscu/force'
-import { recalculerSemainesAVenir } from '../plan/programme'
+import { genererSemaineVelo, recalculerSemainesAVenir } from '../plan/programme'
 
 const puce = (actif: boolean) => `rounded-full border px-4 py-1.5 text-sm ${actif ? 'border-muscu bg-muscu font-semibold text-fond' : 'border-bordure text-texte-2'}`
 
@@ -15,7 +19,17 @@ export function SectionMuscu() {
   }
   // Réactivée plus tard : tes charges sont gardées ; le temps passé sans séance est rattrapé (même charge jusqu'à 3
   // semaines, −10 % jusqu'à 8, au-delà −20 % et 2 semaines légères)
-  const activer = () => changer({ actif: !f.actif })
+  const [message, setMessage] = useState<string>()
+  const activer = async () => {
+    await changer({ actif: !f.actif })
+    if (f.actif) return setMessage(undefined)
+    // Plus de jour possible cette semaine : la semaine prochaine est construite tout de suite pour montrer la 1re séance
+    const lundi = lundiDe(aujourdhui())
+    const prochaine = async () => (await db.prevues.where('date').aboveOrEqual(aujourdhui()).toArray()).filter((p) => p.muscu && p.statut === 'prevue').sort((a, b) => a.date.localeCompare(b.date))[0]
+    if (!(await prochaine())) await genererSemaineVelo(decalerJour(lundi, 7)).catch(() => {})
+    const p = await prochaine()
+    setMessage(p ? `1re séance : ${depuisJour(p.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} (dans Aujourd’hui ce jour-là, et dans Semaine).` : 'Pas de jour possible pour l’instant : regarde ta semaine type (un jour sans vélo, pas la veille d’une séance clé).')
+  }
   return (
     <section className={`rounded-2xl border bg-surface p-3.5 ${f.actif ? 'border-muscu' : 'border-bordure'}`}>
       <div className="flex items-center justify-between">
@@ -27,6 +41,7 @@ export function SectionMuscu() {
       </div>
       {f.actif && (
         <>
+          {message && <p className="mt-2 text-sm text-muscu">{message}</p>}
           <p className="mt-3 text-[13px] text-texte-2">Séances par semaine</p>
           <div className="mt-1.5 flex gap-2">
             {([1, 2] as const).map((n) => <button key={n} type="button" onClick={() => changer({ seances: n })} className={puce(f.seances === n)}>{n}</button>)}
