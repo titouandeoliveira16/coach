@@ -138,9 +138,14 @@ export function QuestionnaireArrivee({ montreSeulement = false }: { montreSeulem
             <Question libelle="Ta nutrition à l'effort ?" aide="Les glucides par heure à prendre sur tes sorties longues et tes courses ; plus tard, un plan pour habituer ton estomac.">
               <Choix options={[['Oui', true], ['Non', false]]} valeur={r.nutritionEffort ?? true} onChoisir={(nutritionEffort) => maj({ nutritionEffort })} />
             </Question>
-            <Question libelle="Musculation">
+            <Question libelle="Musculation (force des jambes)" aide="Pourquoi : des charges lourdes aux jambes (squat, presse, soulevé de terre…) te font dépenser moins d'énergie pour les mêmes watts et rendent tes efforts courts plus puissants, sans freiner ton endurance (Rønnestad 2010 ; Llanos-Lagos 2025). L'appli te propose les séances un jour sans vélo, avec les charges et leur progression. Activable plus tard dans Réglages → Muscu.">
               <Choix options={MUSCU.map((x) => [x, x])} valeur={r.muscu} onChoisir={(muscu) => maj({ muscu })} />
             </Question>
+            {r.muscu && !/^Pas/.test(r.muscu) && (
+              <Question libelle="Où ?">
+                <Choix options={[['En salle', 'salle'], ['À la maison (haltères, chaise)', 'maison']]} valeur={r.muscuLieu ?? 'salle'} onChoisir={(muscuLieu) => maj({ muscuLieu })} />
+              </Question>
+            )}
           </div>
         </Carte>
       )}

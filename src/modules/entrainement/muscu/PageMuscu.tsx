@@ -6,7 +6,7 @@ import { db } from '../../../core/db'
 import { useReglage } from '../../../core/reglages'
 import { enregistrer } from '../../../core/stockage'
 import { enregistrerSeance } from '../seances/donnees'
-import { apresSeance, chargeProposee, EXOS, FORCE_DEFAUT, NOMS_PERIODES, type ExoForce, type ReglagesForce, type SeanceForce } from './force'
+import { apresSeance, chargeProposee, EXOS, FORCE_DEFAUT, NOMS_PERIODES, PREVENTION, type ExoForce, type ReglagesForce, type SeanceForce } from './force'
 import { Picto } from './Picto'
 
 /** Ce que tu as changé (le reste suit la proposition) : charge, répétitions et séries cochées. */
@@ -38,7 +38,7 @@ export function PageMuscu() {
   const cible = (e: ExoForce) => s.reps + (e.sansCharge ? force.exos[e.id]?.repsEnPlus ?? 0 : 0)
   const maj = (eid: string, f: (x: Saisie) => Saisie) => setSaisies((a) => ({ ...a, [eid]: f(a[eid] ?? VIDE) }))
   const series = Array.from({ length: s.series }, (_, i) => i)
-  const charge = (e: ExoForce) => saisies[e.id]?.charge ?? chargeProposee(e, force.exos[e.id], s.reps)
+  const charge = (e: ExoForce) => saisies[e.id]?.charge ?? chargeProposee(e, force.exos[e.id], s.reps, s.facteur)
   const fini = (e: ExoForce) => series.every((i) => saisies[e.id]?.faites[i])
   const nFaites = exos.filter(fini).length
 
@@ -70,7 +70,7 @@ export function PageMuscu() {
       </div>
       <p className="rounded-xl border border-attention/40 bg-attention/10 px-3 py-2 text-[13px] text-attention">⌚ Lance ta montre : activité <b>Musculation</b>. Sinon ta séance ne remonte pas dans ta charge.</p>
       <p className="mt-2 text-[13px] text-texte-2">
-        {s.series} séries de {s.reps} répétitions{s.legere ? ' légères : on apprend le geste, garde 2 répétitions en réserve' : ' lourdes'} · descente lente (2-3 s), montée vive · repos 2-3 min entre les séries{s.soir ? ' · 3 h après le vélo au moins' : ''}.
+        {s.facteur ? `Reprise après un arrêt : charges à ${Math.round(s.facteur * 100)} %. ` : ''}{s.series} séries de {s.reps} répétitions{s.legere ? ' légères : garde 2 répétitions en réserve' : ' lourdes'} · descente lente (2-3 s), montée vive · repos 2-3 min entre les séries{s.soir ? ' · 3 h après le vélo au moins' : ''}.
       </p>
 
       <div className="mt-3 space-y-2">
@@ -128,6 +128,13 @@ export function PageMuscu() {
             </div>
           )
         })}
+      </div>
+
+      <div className="mt-2 rounded-2xl bg-surface p-3">
+        <p className="text-[15px] font-semibold">Prévention <span className="text-xs font-normal text-texte-3">· sans suivi de charge</span></p>
+        <ul className="mt-1 space-y-0.5 text-[13px] text-texte-2">
+          {PREVENTION[s.lieu].map((x) => <li key={x.nom}>{x.nom} · {x.dose}</li>)}
+        </ul>
       </div>
 
       {!fin ? (

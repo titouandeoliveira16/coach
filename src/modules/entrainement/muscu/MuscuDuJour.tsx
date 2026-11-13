@@ -15,7 +15,7 @@ export function MuscuDuJour({ p, couleur }: { p: SeancePrevue; couleur: 'vert' |
   const s = p.muscu!
   const exos = EXOS[s.lieu]
   const squat = exos.find((e) => !e.sansCharge)!
-  const charge = chargeProposee(squat, force.exos[squat.id], s.reps)
+  const charge = chargeProposee(squat, force.exos[squat.id], s.reps, s.facteur)
   const changerLieu = async () => {
     const lieu = s.lieu === 'salle' ? 'maison' : 'salle'
     await modifier({ lieu })
@@ -25,7 +25,7 @@ export function MuscuDuJour({ p, couleur }: { p: SeancePrevue; couleur: 'vert' |
     <>
       <p className="mt-0.5 text-[22px] font-bold leading-tight">{p.titre}</p>
       <p className="mt-0.5 text-[13px] text-muscu">
-        {s.periode === 'lourd' ? `Semaine ${s.semaine} sur 12 · ` : s.periode === 'apprentissage' ? `Semaine ${s.semaine} sur 3 · ` : ''}{s.series} × {s.reps}{s.legere ? ' légères' : ''} · ~{p.dureeMin} min{s.soir ? ' · le soir, 3 h après le vélo' : ''}
+        {s.periode === 'lourd' ? `Semaine ${s.semaine} sur 12 · ` : s.periode === 'apprentissage' ? `Semaine ${s.semaine} sur 2 · ` : ''}{s.series} × {s.reps}{s.legere ? ' légères' : ''} + prévention · ~{p.dureeMin} min{s.facteur ? ` · reprise ${Math.round(s.facteur * 100)} %` : ''}{s.soir ? ' · le soir, 3 h après le vélo' : ''}
       </p>
       {couleur !== 'vert' && (
         <p className="mt-1 text-[13px] text-attention">{couleur === 'rouge' ? 'Feu rouge : pas de muscu lourde aujourd’hui, décale-la à un autre jour.' : 'Feu orange : une série de moins par exercice, mêmes charges.'}</p>
