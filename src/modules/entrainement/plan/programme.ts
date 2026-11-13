@@ -1,4 +1,5 @@
 import { db } from '../../../core/db'
+import { dureeForce, EXOS, joursMuscu, NOMS_PERIODES, planForce, type ReglagesForce, type SeanceForce } from '../muscu/force'
 import { signalerErreur } from '../../../core/erreurs'
 import { aujourdhui, decalerJour, depuisJour, ecartJours, NOMS_JOURS } from '../../../core/dates'
 import { enregistrer, supprimer } from '../../../core/stockage'
@@ -608,6 +609,26 @@ async function genererSemaineVeloBrute(lundi: string) {
       id: `auto-${date}-velo`, date, sport: 'velo', titre: s.titre, detail: genoux && s.detail ? `${s.detail}\n${NOTE_GENOUX}` : s.detail, dureeMin: s.dureeMin, kjPrevu: s.kj,
       statut: 'prevue', origine: 'auto', velo: s.velo, ...champsVelo(s),
     } satisfies SeancePrevue)
+  }
+
+  // Muscu reliée à l'Entraînement (13/11/2026) : un jour sans vélo, jamais la veille d'une séance clé
+  const force = (await db.reglages.get('force'))?.valeur as ReglagesForce | undefined
+  if (force?.actif && force.debut) {
+    const plan = planForce({ debut: force.debut, lundi, phase: phase.type, allegee, seancesVoulues: force.seances })
+    const faitesForce = (await db.prevues.where('date').between(lundi, semaine[6], true, true).toArray()).filter((p) => p.sport === 'renfo' && p.muscu && p.statut === 'faite').length
+    const cles = [placement.intensite, intensite2?.date, placement.long, dateTest, ...competitions].filter((d): d is string => !!d)
+    const jours = joursMuscu({
+      roles, dates: semaine, n: plan.seances - faitesForce, cles, durs: [placement.intensite, intensite2?.date].filter((d): d is string => !!d && d !== dateTest),
+      courses: prog.competitions.map((x) => x.date), indispos: [...indispos],
+    }).filter((j) => j.date >= aPartirDe)
+    for (const j of jours) {
+      const sf: SeanceForce = { periode: plan.periode, semaine: plan.semaine, series: plan.series, reps: plan.reps, lieu: force.lieu, legere: plan.legere, soir: j.soir }
+      await enregistrer(db.prevues, {
+        id: `auto-${j.date}-muscu`, date: j.date, sport: 'renfo', titre: `Muscu · ${NOMS_PERIODES[plan.periode]}`,
+        detail: `${plan.series} × ${plan.reps} répétitions${plan.legere ? ' légères' : ' lourdes'} · ${EXOS[force.lieu].length} exercices${j.soir ? ' · le soir, 3 h après le vélo au moins' : ''}`,
+        dureeMin: dureeForce(sf), intensite: 'moyenne', priorite: 'normale', statut: 'prevue', origine: 'auto', muscu: sf,
+      } satisfies SeancePrevue)
+    }
   }
 
   const meta: MetaSemaine = {

@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { Route, Routes } from 'react-router-dom'
+import { PageMuscu } from './muscu/PageMuscu'
 import { aujourdhui } from '../../core/dates'
 import { EnTete } from '../../core/ui/EnTete'
 import { Onglets } from '../../core/ui/Onglets'
@@ -35,6 +36,7 @@ export function EcranEntrainement() {
       {/* Pages pleines (sans onglets) */}
       <Route path="seance/:id" element={<FormulaireSeance />} />
       <Route path="aide-fit" element={<AideFit />} />
+      <Route path="muscu/:id" element={<PageMuscu />} />
       <Route path="*" element={<AvecOnglets />} />
     </Routes>
   )

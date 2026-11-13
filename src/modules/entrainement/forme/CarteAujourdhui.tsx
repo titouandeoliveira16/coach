@@ -11,6 +11,7 @@ import { Carte } from '../../../core/ui/Carte'
 import { AIDES } from '../aides'
 import { analyser } from '../analyse/donnees'
 import { adapterDuJour } from '../plan/adaptation'
+import { MuscuDuJour, MuscuDuSoir } from '../muscu/MuscuDuJour'
 import { JOURS_REPRISE, annulerReport, repriseApresMaladie, reporterIntensite } from '../plan/imprevus'
 import { CP_DEFAUT, estIntensite } from '../plan/programme'
 import { BoutonsEnvoi } from '../plan/BoutonsEnvoi'
@@ -120,7 +121,11 @@ export function CarteAujourdhui({ onModifierMatin, apresForme, remplir = false }
 
   if (!a || !prevues) return null
   const { signal } = a
-  const prevue = prevues.find((p) => p.statut === 'prevue' && p.intensite !== 'basse') ?? prevues.find((p) => p.statut === 'prevue')
+  // Le vélo d'abord ; la muscu du jour (13/11/2026) prend la carte un jour sans vélo, sinon une ligne « ce soir »
+  const aFaire = prevues.filter((p) => p.statut === 'prevue')
+  const muscu = aFaire.find((p) => p.muscu)
+  const autres = aFaire.filter((p) => !p.muscu)
+  const prevue = autres.find((p) => p.intensite !== 'basse') ?? autres[0] ?? muscu
   const adaptation = prevue ? adapterDuJour(prevue, signal.couleur) : undefined
   const malade = indispo?.raison === 'Malade' || indispo?.raison === 'Douleur / blessure'
   const troisJours = [signal, ...a.signauxPrecedents].every((s) => s.couleur !== 'vert' && s.alertes.some((x) => x.code === 'malade'))
@@ -144,7 +149,7 @@ export function CarteAujourdhui({ onModifierMatin, apresForme, remplir = false }
 
   const etapesDuJour = prevue && (decision?.force ? prevue.velo?.etapes : adaptation!.etapes)
   const minutesAdaptees = adaptation?.etapes ? Math.round(adaptation.etapes.reduce((t, e) => t + e.dureeSec, 0) / 60) : undefined
-  const autres = signal.details.filter((x) => !x.cle || x.cle === 'charge')
+  const autresSignaux = signal.details.filter((x) => !x.cle || x.cle === 'charge')
   const ressenti = mesure ? scoreRessenti(mesure) : undefined
   const plages = plagesForme(a.vfc, analyserSommeil(a.mesures.map((m) => ({ date: m.date, h: m.sommeilH })), jour))
   const couleurEtat = (e?: 'ok' | 'alerte' | 'info') => (e === 'alerte' ? COULEUR[signal.couleur === 'vert' ? 'orange' : signal.couleur] : e === 'ok' ? COULEUR.vert : 'var(--color-texte-2)')
@@ -190,9 +195,9 @@ export function CarteAujourdhui({ onModifierMatin, apresForme, remplir = false }
                 {onModifierMatin && <button type="button" onClick={onModifierMatin} className="mt-2 text-[13px] font-semibold text-accent">Modifier mes notes</button>}
               </div>
             )}
-            {autres.length > 0 && (
+            {autresSignaux.length > 0 && (
               <ul className="space-y-0.5 text-[13px]">
-                {autres.map((x) => (
+                {autresSignaux.map((x) => (
                   <li key={x.texte} style={{ color: x.etat === 'alerte' ? couleurEtat('alerte') : undefined }} className={x.etat === 'alerte' ? '' : 'text-texte-3'}>{x.texte}</li>
                 ))}
               </ul>
@@ -237,8 +242,11 @@ export function CarteAujourdhui({ onModifierMatin, apresForme, remplir = false }
         ) : null}
         {faites ? <SeancesFaites jour={jour} /> : null}
         {faites && prevue && <p className="mt-3 text-[13px] font-semibold text-texte-2">Encore prévu</p>}
-        {prevue ? (
+        {prevue?.muscu ? (
+          <MuscuDuJour p={prevue} couleur={signal.couleur} />
+        ) : prevue ? (
           <>
+            {muscu && <MuscuDuSoir p={muscu} />}
             <p className="mt-0.5 text-[22px] font-bold leading-tight">{prevue.titre}{prevue.sport === 'velo' && !/\d+ ?(min|h)/.test(prevue.titre) ? ` · ${prevue.dureeMin} min` : ''}</p>
             {adaptation?.modifiee ? (
               <>

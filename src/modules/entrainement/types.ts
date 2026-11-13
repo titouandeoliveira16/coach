@@ -255,6 +255,10 @@ export interface SeancePrevue {
   compensationMin?: number
   /** Séance d'intensité : blocs tous tenus ou non (fait avancer la progression) */
   resultat?: 'reussie' | 'ratee'
+  /** Muscu reliée à l'Entraînement (13/11/2026) : période, séries, répétitions, lieu */
+  muscu?: import('./muscu/force').SeanceForce
+  /** Muscu faite : charges et répétitions, exercice par exercice */
+  muscuFaite?: { id: string; charge?: number; reps: number[] }[]
 }
 
 /** Un jour d'indisponibilité. */
