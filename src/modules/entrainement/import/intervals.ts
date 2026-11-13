@@ -263,6 +263,9 @@ export async function importerIntervals(surProgression?: (n: number) => void) {
     const { genererSemaineVelo, lireMeta } = await import('../plan/programme')
     const lundi = lundiDe(aujourdhui())
     if (await lireMeta(lundi)) await genererSemaineVelo(lundi).catch(() => {})
+    // Semaine suivante déjà construite (13/11/2026) : son budget dépend de ce que tu fais cette semaine, il suit
+    const suivante = decalerJour(lundi, 7)
+    if (await lireMeta(suivante)) await genererSemaineVelo(suivante).catch(() => {})
   }
   return { seances: n, mesures, viaStrava }
 }
