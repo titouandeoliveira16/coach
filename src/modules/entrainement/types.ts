@@ -96,6 +96,8 @@ export interface ReglagesProgramme {
   coursesReference?: CourseReference[]
   /** Semaines types à venir (ex. 5 vélos dès le déménagement) : chacune remplace la semaine type à partir de son lundi */
   semainesTypesFutures?: SemaineTypeFuture[]
+  /** Choix acceptés depuis les conseils de Saison (13/11/2026) : semaines types d'avant + chaque choix, pour annuler un par un */
+  conseils?: { base: SemaineTypeFuture[]; liste: { id: string; lundi: string; c: import('./plan/pistes').Changement; texte: string }[] }
   /** Budget kJ de la 1re semaine quand tu roulais déjà (médiane de tes 4 semaines d'avant) */
   budgetDepart?: number
   /** Saison calculée avec la prépa hivernale Methodic (10/11/2026) */

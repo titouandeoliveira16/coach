@@ -615,7 +615,8 @@ async function genererSemaineVeloBrute(lundi: string) {
   const force = (await db.reglages.get('force'))?.valeur as ReglagesForce | undefined
   if (force?.actif) {
     // Le programme avance avec les semaines vraiment faites ; un arrêt se rattrape (charges et reprise)
-    const faitesAvant = (await db.prevues.where('date').below(lundi).toArray()).filter((p) => p.muscu && p.statut === 'faite').sort((a, b) => a.date.localeCompare(b.date))
+    // Semaines à venir construites à l'avance : les séances prévues d'ici là comptent comme faites (comme le vélo à 100 %)
+    const faitesAvant = (await db.prevues.where('date').below(lundi).toArray()).filter((p) => p.muscu && (p.statut === 'faite' || (p.statut === 'prevue' && p.date >= jour))).sort((a, b) => a.date.localeCompare(b.date))
     const semainesFaites = new Set(faitesAvant.map((p) => lundiDe(p.date))).size
     const derniere = faitesAvant.at(-1)
     const semainesSans = derniere ? Math.max(0, Math.round(ecartJours(lundiDe(derniere.date), lundi) / 7) - 1) : 0

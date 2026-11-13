@@ -288,7 +288,11 @@ function DetailSeance({ p, jours, prevues, onFermer, onMessage }: {
       <FicheSeance velo={p.velo} />
       {mode === 'actions' ? (
         <div className="mt-4 space-y-2">
-          {p.statut === 'prevue' && (
+          {/* Muscu (13/11/2026) : la séance détaillée, même si ce n'est pas le jour */}
+          {p.muscu && p.statut === 'prevue' && (
+            <Bouton onClick={() => navigate(`/entrainement/muscu/${p.id}`)}>Voir la séance{p.date <= aujourdhui() ? ' et la commencer' : ''}</Bouton>
+          )}
+          {p.statut === 'prevue' && !p.muscu && (
             <Bouton onClick={() => {
               const seance: Seance = { id: nouvelId(), date: p.date <= aujourdhui() ? p.date : aujourdhui(), sport: p.sport, type: p.type, titre: p.titre, dureeSec: p.dureeMin * 60, source: 'manuel', prevueId: p.id, ...(p.velo?.famille?.startsWith('vtt') ? { terrainVtt: true } : {}) }
               navigate('/entrainement/seance/nouvelle', { state: { seance } })

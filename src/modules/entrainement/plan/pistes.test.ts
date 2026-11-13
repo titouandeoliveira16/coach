@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { jourAAjouter, pistesDeblocage, type Role } from '../../../metrics/programme'
-import { appliquerChangement, trancheAuDessus } from './pistes'
+import { accepterConseil, annulerConseil, appliquerChangement, trancheAuDessus } from './pistes'
 import type { ReglagesProgramme } from '../types'
 
 const semaine: Role[] = ['libre', 'velo-dur', 'libre', 'velo-z2', 'libre', 'velo-z2', 'velo-long']
@@ -27,5 +27,20 @@ describe('conseil de Saison appliqué en un geste (13/11/2026)', () => {
     const h = appliquerChangement(prog, '6 à 8 h', '2027-01-04', { levier: 'heures' })
     expect(h.semainesTypesFutures![0].heuresSemaine).toBe('8 à 10 h')
     expect(trancheAuDessus('Plus de 12 h')).toBeUndefined()
+  })
+})
+
+describe('choix acceptés annulables un par un (13/11/2026)', () => {
+  it('accepter deux choix, annuler le premier : le second reste, tout annuler : retour aux semaines types d’avant', () => {
+    const p1 = accepterConseil(prog, '6 à 8 h', '2027-01-04', { levier: 'jour', jour: 4 }, 'jeudi')
+    const p2 = accepterConseil(p1, '6 à 8 h', '2027-02-01', { levier: 'longue', minutes: 210 }, 'longue')
+    expect(p2.conseils!.liste).toHaveLength(2)
+    const p3 = annulerConseil(p2, '6 à 8 h', p2.conseils!.liste[0].id)
+    expect(p3.semainesTypesFutures!.map((f) => f.debut)).toEqual(['2027-02-01'])
+    expect(p3.semainesTypesFutures![0].semaineType[4]).toBe('libre')
+    expect(p3.semainesTypesFutures![0].maxLongMin).toBe(210)
+    const p4 = annulerConseil(p3, '6 à 8 h', p3.conseils!.liste[0].id)
+    expect(p4.semainesTypesFutures).toEqual([])
+    expect(p4.conseils).toBeUndefined()
   })
 })

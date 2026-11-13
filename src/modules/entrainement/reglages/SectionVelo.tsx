@@ -68,7 +68,8 @@ export function SectionVelo() {
         if (verifierSemaineType(semaineType).ok) await recalculerSemainesAVenir()
       }} />
       <SemainesAVenir prog={prog} onChanger={async (semainesTypesFutures) => {
-        await modifier({ programme: { ...prog, semainesTypesFutures } })
+        // Changées à la main : les conseils acceptés ne sont plus annulables un par un (ils font partie de tes semaines types)
+        await modifier({ programme: { ...prog, semainesTypesFutures, conseils: undefined } })
         await recalculerSemainesAVenir()
       }} />
     </section>

@@ -137,7 +137,9 @@ export function PageMuscu() {
         </ul>
       </div>
 
-      {!fin ? (
+      {p.date > aujourdhui() ? (
+        <p className="mt-4 rounded-xl bg-surface px-3 py-3 text-center text-sm text-texte-2">Séance prévue le {new Date(`${p.date}T12:00:00`).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} : tu pourras la commencer ce jour-là.</p>
+      ) : !fin ? (
         <button type="button" onClick={() => setFin(true)} className="mt-4 min-h-12 w-full rounded-xl bg-muscu text-base font-bold text-fond">Terminer la séance</button>
       ) : (
         <div className="mt-4 rounded-2xl bg-surface p-3">

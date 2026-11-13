@@ -41,3 +41,24 @@ export function appliquerChangement(prog: ReglagesProgramme, heuresProfil: strin
   const autres = futures.filter((f) => f.debut !== lundi).map((f) => (f.debut > lundi ? changer(f) : f))
   return { ...prog, semainesTypesFutures: [...autres, changer(depart)].sort((a, b) => a.debut.localeCompare(b.debut)) }
 }
+
+/** Accepte un conseil : il est noté (pour pouvoir l'annuler seul ensuite) puis appliqué. */
+export function accepterConseil(prog: ReglagesProgramme, heuresProfil: string | undefined, lundi: string, c: Changement, texte: string): ReglagesProgramme {
+  const conseils = prog.conseils ?? { base: prog.semainesTypesFutures ?? [], liste: [] }
+  const liste = [...conseils.liste, { id: `${lundi}-${c.levier}-${conseils.liste.length}-${Date.now()}`, lundi, c, texte }]
+  return { ...rejouer(prog, heuresProfil, conseils.base, liste), conseils: { base: conseils.base, liste } }
+}
+
+/** Annule un conseil accepté : les autres sont rejoués sur tes semaines types d'avant. */
+export function annulerConseil(prog: ReglagesProgramme, heuresProfil: string | undefined, id: string): ReglagesProgramme {
+  if (!prog.conseils) return prog
+  const liste = prog.conseils.liste.filter((x) => x.id !== id)
+  const p = rejouer(prog, heuresProfil, prog.conseils.base, liste)
+  return liste.length ? { ...p, conseils: { base: prog.conseils.base, liste } } : { ...p, conseils: undefined }
+}
+
+function rejouer(prog: ReglagesProgramme, heuresProfil: string | undefined, base: SemaineTypeFuture[], liste: { lundi: string; c: Changement }[]) {
+  let p: ReglagesProgramme = { ...prog, semainesTypesFutures: base }
+  for (const x of liste) p = appliquerChangement(p, heuresProfil, x.lundi, x.c)
+  return p
+}

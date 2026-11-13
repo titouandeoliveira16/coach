@@ -14,7 +14,6 @@ import { SectionAgenda } from './SectionAgenda'
 import { SectionIntervals } from './SectionIntervals'
 import { SectionProfil } from './SectionProfil'
 import { SectionVelo } from './SectionVelo'
-import { SectionMuscu } from './SectionMuscu'
 import { ZonesVelo } from './ZonesVelo'
 import { Calculateurs } from '../analyse/Calculateurs'
 import { useProfil } from '../../../core/profil'
@@ -39,7 +38,6 @@ export function SectionReglagesEntrainement() {
       <SectionProfil />
       <SectionProfilSportif />
       <SectionVelo />
-      <SectionMuscu />
       <SectionIntervals />
       <div className="flex flex-col gap-2">
         <Tuile titre="Google Agenda" ouvert={agenda} onClick={() => setAgenda(!agenda)} />

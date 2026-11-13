@@ -9,8 +9,7 @@ import { Repliable } from '../../../core/ui/Repliable'
 import { programmeAu, programmeDe, useReglagesEntrainement } from '../reglagesEntrainement'
 import { useReglage } from '../../../core/reglages'
 import type { ProfilSportif } from '../reglages/ProfilSportif'
-import type { ReglagesProgramme } from '../types'
-import { appliquerChangement, trancheAuDessus, type Changement } from '../plan/pistes'
+import { accepterConseil, annulerConseil, trancheAuDessus, type Changement } from '../plan/pistes'
 import { NOMS_PHASES, niveauxCourses, type SemaineSaison, type TypePhase } from '../../../metrics/programme'
 import { AIDES } from '../aides'
 import { recalculerSemainesAVenir, saison } from '../plan/programme'
@@ -139,11 +138,12 @@ const kj = (g: number) => formatNombre(Math.round(g / 10) * 10)
  * voulue (avec ses kJ) ; la meilleure en premier (un jour de plus, puis les sorties de semaine, puis la sortie longue),
  * chacune s'applique en un geste (une semaine type « Plus tard » à cette date) ; Annuler après coup.
  */
-function Blocage({ b, onFait }: { b: BlocageSaison; onFait: (avant: ReglagesProgramme, texte: string) => void }) {
+function Blocage({ b }: { b: BlocageSaison }) {
   const [r, modifier] = useReglagesEntrainement()
   const [ps] = useReglage<ProfilSportif>('profil-sportif', { sports: [], materiel: [] })
   const [jourChoisi, setJourChoisi] = useState<number>()
   const [occupe, setOccupe] = useState(false)
+  const [autres, setAutres] = useState(false)
   const prog = programmeDe(r.programme)
   const semaineType = programmeAu(prog, b.lundi).semaineType
   const quand = b.jusquA ? `Du ${jourMois(b.lundi)} au ${jourMois(b.jusquA)}` : `À partir du ${jourMois(b.lundi)}`
@@ -151,8 +151,7 @@ function Blocage({ b, onFait }: { b: BlocageSaison; onFait: (avant: ReglagesProg
   const tranche = trancheAuDessus(b.heures)
   const appliquer = async (c: Changement, texte: string) => {
     setOccupe(true)
-    await modifier({ programme: appliquerChangement(prog, ps.heuresSemaine, b.lundi, c) })
-    onFait(prog, texte)
+    await modifier({ programme: accepterConseil(prog, ps.heuresSemaine, b.lundi, c, texte) })
     await recalculerSemainesAVenir()
     setOccupe(false)
   }
@@ -176,7 +175,7 @@ function Blocage({ b, onFait }: { b: BlocageSaison; onFait: (avant: ReglagesProg
       {b.besoin ? <p className="mt-0.5 text-xs text-texte-3">Pour continuer à monter sur les 4 prochaines semaines : environ +{kj(b.besoin)} kJ par semaine.</p> : null}
       {!options.length && <p className="mt-1 text-texte-2">Tu es déjà au maximum des réglages : ta charge restera à ce niveau, c’est très bien aussi.</p>}
       <div className="mt-2 space-y-2">
-        {options.map((o, i) => (
+        {options.filter((_, i) => i === 0 || autres).map((o, i) => (
           <div key={o.cle} className={`rounded-xl p-2.5 ${i === 0 ? 'bg-surface' : 'border border-bordure'}`}>
             <p className="text-xs font-semibold text-texte-3">{i === 0 ? 'Le plus efficace' : `Option ${i + 1}`}</p>
             <p className="mt-0.5 font-semibold">{o.titre}</p>
@@ -196,20 +195,34 @@ function Blocage({ b, onFait }: { b: BlocageSaison; onFait: (avant: ReglagesProg
           </div>
         ))}
       </div>
+      {options.length > 1 && (
+        <button type="button" onClick={() => setAutres(!autres)} className="mt-2 w-full py-1 text-left text-[13px] font-semibold text-texte-2">
+          {autres ? 'Masquer les autres options ▴' : `Pas possible ? Voir les ${options.length - 1} autres options ▾`}
+        </button>
+      )}
     </div>
   )
 }
 
-/** Conseil appliqué : ce qui a changé, et Annuler (la semaine type d'avant revient). */
-function ConseilFait({ texte, onAnnuler, onFermer }: { texte: string; onAnnuler: () => void; onFermer: () => void }) {
+/** Tes choix acceptés depuis les conseils (13/11/2026) : chacun s'annule en rouge, le conseil revient alors. */
+function ChoixAcceptes() {
+  const [r, modifier] = useReglagesEntrainement()
+  const [ps] = useReglage<ProfilSportif>('profil-sportif', { sports: [], materiel: [] })
+  const prog = programmeDe(r.programme)
+  const liste = prog.conseils?.liste ?? []
+  if (!liste.length) return null
   return (
     <div className="mt-3 rounded-xl border-[1.5px] border-bon/40 bg-surface-2 px-3 py-3 text-sm">
-      <p className="font-semibold text-bon">✓ C’est fait</p>
-      <p className="mt-1 text-texte-2">{texte} Ta saison est recalculée : ta charge peut continuer à monter.</p>
-      <div className="mt-2 flex justify-between text-[13px]">
-        <button type="button" onClick={onAnnuler} className="py-1 font-semibold text-accent">Annuler</button>
-        <button type="button" onClick={onFermer} className="py-1 text-texte-3">OK</button>
-      </div>
+      <p className="font-semibold text-bon">Tes choix pour faire monter ta charge</p>
+      <ul className="mt-2 space-y-2">
+        {liste.map((x) => (
+          <li key={x.id} className="flex items-center justify-between gap-2">
+            <span className="min-w-0 text-texte-2">{x.texte}</span>
+            <button type="button" onClick={async () => { await modifier({ programme: annulerConseil(prog, ps.heuresSemaine, x.id) }); await recalculerSemainesAVenir() }}
+              className="shrink-0 rounded-lg border border-mauvais/60 px-2.5 py-1.5 text-[13px] font-semibold text-mauvais">✕ Annuler</button>
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }
@@ -217,8 +230,7 @@ function ConseilFait({ texte, onAnnuler, onFermer }: { texte: string; onAnnuler:
 /** Saison : où j'en suis (frise avec courses et tests), les 3 prochaines semaines, puis les phases repliées (validé le 7/11/2026). */
 export function Saison() {
   const s = useLiveQuery(saison)
-  const [r, modifier] = useReglagesEntrainement()
-  const [fait, setFait] = useState<{ avant: ReglagesProgramme; texte: string }>()
+  const [r] = useReglagesEntrainement()
   if (!s?.semaines.length) return null
   const prog = programmeDe(r.programme)
   const actuelle = s.semaines[0]
@@ -296,12 +308,8 @@ export function Saison() {
 
       <Carte titre="Ta charge prévue (kJ par semaine)">
         <HistogrammeKj semaines={s.semaines.filter((x) => x.lundi <= (courseA ?? s.fin))} niveaux={niveauxFuturs} tests={tests} />
-        {fait && <ConseilFait texte={fait.texte} onFermer={() => setFait(undefined)} onAnnuler={async () => {
-          await modifier({ programme: fait.avant })
-          setFait(undefined)
-          await recalculerSemainesAVenir()
-        }} />}
-        {s.blocages.filter((b) => b.lundi <= (courseA ?? s.fin)).map((b) => <Blocage key={b.lundi} b={b} onFait={(avant, texte) => setFait({ avant, texte })} />)}
+        <ChoixAcceptes />
+        {s.blocages.filter((b) => b.lundi <= (courseA ?? s.fin)).map((b) => <Blocage key={b.lundi} b={b} />)}
       </Carte>
 
       <Carte titre="Cette semaine et les 2 suivantes">
