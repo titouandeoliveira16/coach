@@ -13,8 +13,13 @@ const puce = (actif: boolean) => `rounded-full border px-4 py-1.5 text-sm ${acti
 /** Muscu reliée à l'Entraînement (maquette M4 validée le 13/11/2026) : au choix, 1 ou 2 séances, salle ou maison. */
 export function SectionMuscu() {
   const [f, modifier] = useReglage<ReglagesForce>('force', FORCE_DEFAUT)
+  const [, modifierPs] = useReglage<{ muscu?: string }>('profil-sportif', {})
   const changer = async (m: Partial<ReglagesForce>) => {
     await modifier(m)
+    // Même réglage que Mon profil sportif → Musculation
+    const actif = m.actif ?? f.actif
+    const seances = m.seances ?? f.seances
+    await modifierPs({ muscu: !actif ? 'Pas pour l’instant' : seances === 2 ? '2 séances par semaine' : '1 séance par semaine' })
     await recalculerSemainesAVenir()
   }
   // Réactivée plus tard : tes charges sont gardées ; le temps passé sans séance est rattrapé (même charge jusqu'à 3
