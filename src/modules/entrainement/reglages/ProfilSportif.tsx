@@ -1,8 +1,6 @@
 import { useProfil } from '../../../core/profil'
 import { useState, type ReactNode } from 'react'
-import { db } from '../../../core/db'
-import { enregistrer } from '../../../core/stockage'
-import { FORCE_DEFAUT, type ReglagesForce } from '../muscu/force'
+import { DetailMuscu } from './SectionMuscu'
 import { useReglage } from '../../../core/reglages'
 import { ChampNombre } from '../../../core/ui/ChampNombre'
 import { Repliable } from '../../../core/ui/Repliable'
@@ -49,7 +47,6 @@ const SPORTS = ['Vélo route', 'VTT', 'Musculation']
 const HEURES = ['Moins de 4 h', '4 à 6 h', '6 à 8 h', '8 à 10 h', '10 à 12 h', 'Plus de 12 h']
 const MATERIEL = ['Home trainer connecté', 'Capteur de puissance', 'Ceinture cardio', 'Montre GPS']
 const NOMS_NIVEAUX = { debutant: 'débutant', intermediaire: 'intermédiaire', confirme: 'confirmé', expert: 'expert' }
-const MUSCU = ['Pas pour l’instant', '1 séance par semaine', '2 séances par semaine']
 
 const heures = (min: number) => (min >= 60 ? `${Math.floor(min / 60)} h${min % 60 ? ` ${String(min % 60).padStart(2, '0')}` : ''}` : `${min} min`)
 const puce = (actif: boolean) => `rounded-full border px-3 py-1.5 text-sm ${actif ? 'border-accent bg-accent text-fond font-semibold' : 'border-bordure text-texte-2'}`
@@ -191,14 +188,7 @@ export function SectionProfilSportif() {
         <p className="mt-1.5 text-xs text-texte-3">Activée : les glucides par heure à prendre sur tes sorties longues et tes courses. Plus tard : un plan pour habituer ton estomac.</p>
       </Ligne>
       <Ligne {...props('muscu')} libelle="Musculation" valeur={ps.muscu ?? ''}>
-        {choixUnique(MUSCU, ps.muscu, async (muscu) => {
-          // Même réglage que Réglages → Muscu (13/11/2026) : activée ou non, 1 ou 2 séances
-          await modifierPs({ muscu })
-          const avant = (await db.reglages.get('force'))?.valeur as Partial<ReglagesForce> | undefined
-          await enregistrer(db.reglages, { id: 'force', valeur: { ...FORCE_DEFAUT, ...avant, actif: !/^Pas/.test(muscu), seances: /2/.test(muscu) ? 2 : 1 } })
-          await recalculerSemainesAVenir()
-        })}
-        <p className="mt-1.5 text-xs text-texte-3">{AIDES.profilMuscu}</p>
+        <DetailMuscu />
       </Ligne>
     </Repliable>
   )
