@@ -1184,16 +1184,30 @@ export const MAX_LONGUE_MIN = 300
  * s'applique en un geste, « Pas possible » montre la suivante). Un jour en plus seulement s'il reste au moins 1 jour sans
  * vélo ; durées bornées aux choix des réglages.
  */
-export function pistesDeblocage(o: { semaineType: Role[]; cap: { z2: number; long: number }; z2W: number }) {
+export function pistesDeblocage(o: { semaineType: Role[]; cap: { z2: number; long: number }; z2W: number; besoin?: number }) {
   const kjZ2 = (min: number) => construireZ2(min, o.z2W).kj
   const nZ2 = o.semaineType.filter((x) => x === 'velo-z2').length + Math.max(0, o.semaineType.filter((x) => x === 'velo-dur').length - 1)
   const libres = o.semaineType.filter((x) => !x.startsWith('velo')).length
+  // 13/11/2026 (demande de Titouan) : chaque piste est dimensionnée pour couvrir la hausse voulue (`besoin`, kJ par
+  // semaine) quand c'est possible : minutes ajoutées à chaque sortie de semaine, ou à la sortie longue
+  const besoin = o.besoin ?? 0
+  const allonger = (pas: number, max: number, gain: (plus: number) => number) => {
+    let plus = pas
+    while (besoin > 0 && gain(plus) < besoin && max - plus >= pas) plus += pas
+    return Math.min(plus, max)
+  }
+  // Allongements raisonnables : +30 min au plus par sortie de semaine, +1 h au plus sur la sortie longue
+  const pSemaine = nZ2 ? allonger(5, Math.min(30, MAX_SEMAINE_MIN - o.cap.z2), (m) => nZ2 * (kjZ2(o.cap.z2 + m) - kjZ2(o.cap.z2))) : 0
+  const pLongue = allonger(15, Math.min(60, MAX_LONGUE_MIN - o.cap.long), (m) => kjZ2(o.cap.long + m) - kjZ2(o.cap.long))
   const leviers = [
-    ...(o.cap.z2 + 15 <= MAX_SEMAINE_MIN ? [{ levier: 'semaine' as const, gain: nZ2 * (kjZ2(o.cap.z2 + 15) - kjZ2(o.cap.z2)), avant: o.cap.z2, apres: o.cap.z2 + 15 }] : []),
-    ...(o.cap.long + 30 <= MAX_LONGUE_MIN ? [{ levier: 'longue' as const, gain: kjZ2(o.cap.long + 30) - kjZ2(o.cap.long), avant: o.cap.long, apres: o.cap.long + 30 }] : []),
-    ...(libres > 1 ? [{ levier: 'jour' as const, gain: kjZ2(o.cap.z2), avant: 0, apres: 0, jour: jourAAjouter(o.semaineType) }] : []),
-  ].filter((l) => l.gain > 0)
-  return leviers.sort((a, b) => b.gain - a.gain)
+    ...(libres > 1 ? [{ levier: 'jour' as const, gain: kjZ2(o.cap.z2), avant: 0, apres: 0, minutes: o.cap.z2, jour: jourAAjouter(o.semaineType) }] : []),
+    ...(pSemaine > 0 ? [{ levier: 'semaine' as const, gain: nZ2 * (kjZ2(o.cap.z2 + pSemaine) - kjZ2(o.cap.z2)), avant: o.cap.z2, apres: o.cap.z2 + pSemaine, minutes: nZ2 * pSemaine }] : []),
+    ...(pLongue > 0 ? [{ levier: 'longue' as const, gain: kjZ2(o.cap.long + pLongue) - kjZ2(o.cap.long), avant: o.cap.long, apres: o.cap.long + pLongue, minutes: pLongue }] : []),
+  ].filter((l) => l.gain > 0).map((l) => ({ ...l, couvre: l.gain >= besoin }))
+  // Ordre (demande de Titouan) : un jour en plus d'abord (la fréquence compte le plus, Chauvin), puis un peu plus sur
+  // chaque sortie de semaine, puis la sortie longue ; sans besoin connu (projection), la plus rentable
+  const ordre = { jour: 0, semaine: 1, longue: 2 }
+  return leviers.sort((a, b) => besoin > 0 ? ordre[a.levier] - ordre[b.levier] : b.gain - a.gain)
 }
 
 /** Jour de vélo à ajouter : un jour sans vélo, de préférence ni la veille ni le lendemain d'une séance dure ou de la sortie longue. */

@@ -26,9 +26,12 @@ export function SectionMuscu() {
     // Plus de jour possible cette semaine : la semaine prochaine est construite tout de suite pour montrer la 1re séance
     const lundi = lundiDe(aujourdhui())
     const prochaine = async () => (await db.prevues.where('date').aboveOrEqual(aujourdhui()).toArray()).filter((p) => p.muscu && p.statut === 'prevue').sort((a, b) => a.date.localeCompare(b.date))[0]
-    if (!(await prochaine())) await genererSemaineVelo(decalerJour(lundi, 7)).catch(() => {})
+    let erreur = ''
+    if (!(await prochaine())) await genererSemaineVelo(decalerJour(lundi, 7)).catch((e: Error) => { erreur = e.message })
     const p = await prochaine()
-    setMessage(p ? `1re séance : ${depuisJour(p.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} (dans Aujourd’hui ce jour-là, et dans Semaine).` : 'Pas de jour possible pour l’instant : regarde ta semaine type (un jour sans vélo, pas la veille d’une séance clé).')
+    setMessage(p ? `1re séance : ${depuisJour(p.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} (dans Aujourd’hui ce jour-là, et dans Semaine).`
+      : erreur ? `La semaine prochaine n’a pas pu être construite : ${erreur}`
+      : 'Pas de jour possible : ta semaine type n’a aucun jour sans vélo. Mets un jour sur « muscu » dans Ma semaine type.')
   }
   return (
     <section className={`rounded-2xl border bg-surface p-3.5 ${f.actif ? 'border-muscu' : 'border-bordure'}`}>

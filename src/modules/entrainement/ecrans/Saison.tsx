@@ -126,33 +126,29 @@ function HistogrammeKj({ semaines, niveaux, tests }: { semaines: SemaineSaison[]
 }
 
 /** Quand tes choix (temps par semaine, jours, durées) empêchent ta charge de monter : à partir de quand, et quoi changer. */
-type Piste = { levier: 'semaine' | 'longue' | 'jour'; gain: number; avant: number; apres: number; jour?: number }
-type BlocageSaison = { lundi: string; jusquA?: string; par: 'heures' | 'jours'; heures?: string; pistes: Piste[] }
+type Piste = { levier: 'semaine' | 'longue' | 'jour'; gain: number; avant: number; apres: number; jour?: number; couvre?: boolean; minutes?: number }
+type BlocageSaison = { lundi: string; jusquA?: string; par: 'heures' | 'jours'; heures?: string; besoin?: number; pistes: Piste[] }
 const JOURS_COURTS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
 const JOURS_LONGS = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche']
 const jourMois = (d: string) => depuisJour(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })
 const duree = (min: number) => `${Math.floor(min / 60)} h${min % 60 ? ` ${String(min % 60).padStart(2, '0')}` : ''}`
+const kj = (g: number) => formatNombre(Math.round(g / 10) * 10)
 
 /**
- * Conseil quand la charge plafonne (maquettes G1-G3 validées le 13/11/2026) : la piste qui rapporte le plus, appliquée en
- * un geste (une semaine type « Plus tard » à cette date) ; « Pas possible » montre la suivante ; Annuler après coup.
+ * Conseil quand la charge plafonne (13/11/2026) : les 3 pistes d'un coup, chacune dimensionnée pour couvrir la hausse
+ * voulue (avec ses kJ) ; la meilleure en premier (un jour de plus, puis les sorties de semaine, puis la sortie longue),
+ * chacune s'applique en un geste (une semaine type « Plus tard » à cette date) ; Annuler après coup.
  */
 function Blocage({ b, onFait }: { b: BlocageSaison; onFait: (avant: ReglagesProgramme, texte: string) => void }) {
   const [r, modifier] = useReglagesEntrainement()
   const [ps] = useReglage<ProfilSportif>('profil-sportif', { sports: [], materiel: [] })
-  const [i, setI] = useState(0)
   const [jourChoisi, setJourChoisi] = useState<number>()
   const [occupe, setOccupe] = useState(false)
   const prog = programmeDe(r.programme)
   const semaineType = programmeAu(prog, b.lundi).semaineType
   const quand = b.jusquA ? `Du ${jourMois(b.lundi)} au ${jourMois(b.jusquA)}` : `À partir du ${jourMois(b.lundi)}`
   const dates = ` dès le ${jourMois(b.lundi)}`
-  const gain = (g: number) => `≈ +${formatNombre(Math.round(g / 10) * 10)} kJ par semaine`
   const tranche = trancheAuDessus(b.heures)
-  // Pistes dans l'ordre : temps par semaine si c'est lui qui bloque, sinon de la plus rentable à la moins rentable
-  const pistes: (Piste | { levier: 'heures' })[] = b.par === 'heures' ? (tranche ? [{ levier: 'heures' }] : []) : b.pistes
-  const p = pistes[i]
-
   const appliquer = async (c: Changement, texte: string) => {
     setOccupe(true)
     await modifier({ programme: appliquerChangement(prog, ps.heuresSemaine, b.lundi, c) })
@@ -160,62 +156,46 @@ function Blocage({ b, onFait }: { b: BlocageSaison; onFait: (avant: ReglagesProg
     await recalculerSemainesAVenir()
     setOccupe(false)
   }
+  const jours = semaineType.map((x, j) => [x, j] as const).filter(([x]) => !x.startsWith('velo')).map(([, j]) => j)
 
-  let titre = '', detail = '', bouton = '', c: Changement | undefined, texte = '', jours: number[] = []
-  if (p?.levier === 'jour') {
-    jours = semaineType.map((x, j) => [x, j] as const).filter(([x]) => !x.startsWith('velo')).map(([, j]) => j)
-    const j = jourChoisi !== undefined && jours.includes(jourChoisi) ? jourChoisi : p.jour ?? jours[0]
-    const n = semaineType.filter((x) => x.startsWith('velo')).length + 1
-    titre = `un ${n}e jour de vélo`; detail = gain(p.gain)
-    bouton = `Ajouter le ${JOURS_LONGS[j]}${dates}`; c = { levier: 'jour', jour: j }
-    texte = `${n} jours de vélo à partir du ${jourMois(b.lundi)} (le ${JOURS_LONGS[j]} en plus).`
-  } else if (p?.levier === 'longue') {
-    titre = `allonger ta sortie longue, ${duree(p.avant)} → ${duree(p.apres)}`; detail = gain(p.gain)
-    bouton = `Oui, ${duree(p.apres)}${dates}`; c = { levier: 'longue', minutes: p.apres }
-    texte = `Sortie longue jusqu’à ${duree(p.apres)} à partir du ${jourMois(b.lundi)}.`
-  } else if (p?.levier === 'semaine') {
-    titre = `allonger tes sorties de semaine, ${p.avant} → ${p.apres} min`; detail = gain(p.gain)
-    bouton = `Oui, ${p.apres} min${dates}`; c = { levier: 'semaine', minutes: p.apres }
-    texte = `Sorties de semaine jusqu’à ${p.apres} min à partir du ${jourMois(b.lundi)}.`
-  } else if (p?.levier === 'heures' && tranche) {
-    titre = `plus de temps par semaine (${tranche.toLowerCase()})`; detail = `c’est ton temps par semaine (${b.heures?.toLowerCase() ?? 'profil'}) qui bloque`
-    bouton = `Oui, ${tranche.toLowerCase()}${dates}`; c = { levier: 'heures' }
-    texte = `${tranche} par semaine à partir du ${jourMois(b.lundi)}.`
-  }
+  const options = b.par === 'heures'
+    ? (tranche ? [{ cle: 'heures', titre: `Plus de temps par semaine : ${tranche.toLowerCase()}`, detail: `c’est ton temps par semaine (${b.heures?.toLowerCase() ?? 'profil'}) qui bloque`, bouton: `Oui, ${tranche.toLowerCase()}${dates}`, c: { levier: 'heures' } as Changement, texte: `${tranche} par semaine à partir du ${jourMois(b.lundi)}.`, piste: undefined as Piste | undefined }] : [])
+    : b.pistes.map((p) => {
+      if (p.levier === 'jour') {
+        const j = jourChoisi !== undefined && jours.includes(jourChoisi) ? jourChoisi : p.jour ?? jours[0]
+        const n = semaineType.filter((x) => x.startsWith('velo')).length + 1
+        return { cle: 'jour', titre: `Un ${n}e jour de vélo (${duree(p.minutes ?? 0)})`, detail: '', bouton: `Ajouter le ${JOURS_LONGS[j]}${dates}`, c: { levier: 'jour', jour: j } as Changement, texte: `${n} jours de vélo à partir du ${jourMois(b.lundi)} (le ${JOURS_LONGS[j]} en plus).`, piste: p }
+      }
+      if (p.levier === 'semaine') return { cle: 'semaine', titre: `Sorties de semaine plus longues : ${p.avant} → ${p.apres} min`, detail: '', bouton: `Oui, ${p.apres} min${dates}`, c: { levier: 'semaine', minutes: p.apres } as Changement, texte: `Sorties de semaine jusqu’à ${p.apres} min à partir du ${jourMois(b.lundi)}.`, piste: p }
+      return { cle: 'longue', titre: `Sortie longue plus longue : ${duree(p.avant)} → ${duree(p.apres)}`, detail: '', bouton: `Oui, ${duree(p.apres)}${dates}`, c: { levier: 'longue', minutes: p.apres } as Changement, texte: `Sortie longue jusqu’à ${duree(p.apres)} à partir du ${jourMois(b.lundi)}.`, piste: p }
+    })
 
   return (
     <div className="mt-3 rounded-xl border-[1.5px] border-attention/40 bg-surface-2 px-3 py-3 text-sm">
-      <div className="flex items-baseline gap-2">
-        <span className="font-semibold text-attention">{quand}, ta charge ne peut plus monter.</span>
-        {pistes.length > 1 && p && <span className="ml-auto shrink-0 text-xs text-texte-3">{i + 1} / {pistes.length}</span>}
-      </div>
-      {p && c ? (
-        <>
-          <p className="mt-1 text-texte-2">{i === 0 ? 'Le plus efficace' : 'Autre piste'} : <b className="text-texte">{titre}</b>, {detail}.</p>
-          {jours.length > 1 && (
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {jours.map((j) => {
-                const actif = j === (c as { jour: number }).jour
-                return (
-                  <button key={j} type="button" onClick={() => setJourChoisi(j)}
-                    className={`rounded-full px-3 py-1.5 text-[13px] font-semibold ${actif ? 'bg-accent text-fond' : 'border border-bordure text-texte-2'}`}>{JOURS_COURTS[j]}</button>
-                )
-              })}
-            </div>
-          )}
-          <button type="button" disabled={occupe} onClick={() => appliquer(c!, texte)}
-            className="mt-3 w-full rounded-xl bg-accent py-3 text-[15px] font-bold text-fond disabled:opacity-60">{bouton}</button>
-          <div className="mt-2 flex justify-between text-[13px]">
-            <button type="button" onClick={() => setI(i + 1)} className="py-1 text-texte-2">{i + 1 < pistes.length ? 'Pas possible pour moi' : 'Pas possible non plus'}</button>
-            {i > 0 && <button type="button" onClick={() => setI(i - 1)} className="py-1 text-texte-3">Revenir</button>}
+      <p className="font-semibold text-attention">{quand}, ta charge ne peut plus monter.</p>
+      {b.besoin ? <p className="mt-0.5 text-xs text-texte-3">Pour continuer à monter sur les 4 prochaines semaines : environ +{kj(b.besoin)} kJ par semaine.</p> : null}
+      {!options.length && <p className="mt-1 text-texte-2">Tu es déjà au maximum des réglages : ta charge restera à ce niveau, c’est très bien aussi.</p>}
+      <div className="mt-2 space-y-2">
+        {options.map((o, i) => (
+          <div key={o.cle} className={`rounded-xl p-2.5 ${i === 0 ? 'bg-surface' : 'border border-bordure'}`}>
+            <p className="text-xs font-semibold text-texte-3">{i === 0 ? 'Le plus efficace' : `Option ${i + 1}`}</p>
+            <p className="mt-0.5 font-semibold">{o.titre}</p>
+            <p className="text-xs text-texte-2">
+              {o.piste ? <>≈ +{kj(o.piste.gain)} kJ par semaine · {o.piste.couvre ? <span className="text-bon">couvre la hausse</span> : <span className="text-attention">en partie</span>}</> : o.detail}
+            </p>
+            {o.cle === 'jour' && jours.length > 1 && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {jours.map((j) => {
+                  const actif = j === (o.c as { jour: number }).jour
+                  return <button key={j} type="button" onClick={() => setJourChoisi(j)} className={`rounded-full px-3 py-1 text-[13px] font-semibold ${actif ? 'bg-accent text-fond' : 'border border-bordure text-texte-2'}`}>{JOURS_COURTS[j]}</button>
+                })}
+              </div>
+            )}
+            <button type="button" disabled={occupe} onClick={() => appliquer(o.c, o.texte)}
+              className={`mt-2 w-full rounded-xl py-2.5 text-[14px] font-bold disabled:opacity-60 ${i === 0 ? 'bg-accent text-fond' : 'border border-accent text-accent'}`}>{o.bouton}</button>
           </div>
-        </>
-      ) : (
-        <p className="mt-1 text-texte-2">
-          {pistes.length ? 'Pas d’autre piste : ta charge restera à ce niveau, c’est très bien aussi. ' : 'Tu es déjà au maximum des réglages. '}
-          {i > 0 && <button type="button" onClick={() => setI(0)} className="font-semibold text-accent">Revoir les pistes</button>}
-        </p>
-      )}
+        ))}
+      </div>
     </div>
   )
 }
