@@ -10,7 +10,6 @@ import type { MesureMatin } from '../types'
 import { meilleursEfforts, reechantillonner1Hz } from '../../../metrics/puissance'
 import { blocsDeLaSeance, tempsFc90, tousTenus } from '../plan/blocs'
 import { controlerSeance, controleTenu, type Tour } from '../../../metrics/controle'
-import { regrouperEnchainements } from '../seances/enchainements'
 import { analyserFlux } from './flux'
 import { CLE_PESEES_EFFACEES, nettoyerPeseesEffacees } from '../forme/pesees'
 import { kjEstime, sansDoublons } from '../../../metrics/saison'
@@ -254,7 +253,6 @@ export async function importerIntervals(surProgression?: (n: number) => void) {
   const mesures = await importerWellness(depuis)
   const { n, viaStrava } = await importerActivites(depuis, surProgression)
   await nettoyerDoublons()
-  await regrouperEnchainements()
   await nettoyerPeseesEffacees()
   await ecrireEtat({ ...(await lireEtat()), relie: true, depuis: decalerJour(aujourdhui(), -MARGE_JOURS), dernierImport: new Date().toISOString() })
   await completerCourbe().catch(() => {})

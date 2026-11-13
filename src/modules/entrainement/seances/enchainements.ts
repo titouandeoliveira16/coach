@@ -1,7 +1,7 @@
 import { db } from '../../../core/db'
 import { enregistrer, supprimer } from '../../../core/stockage'
 import type { Seance } from '../types'
-import { chargerContexte, completerMetriques } from './donnees'
+import { chargerContexte, completerMetriques, domaineDe, estRealiseDifferent } from './donnees'
 
 /** Écart maximal entre deux activités pour les regrouper (ex. échauffement, test, retour au calme). */
 export const ECART_MAX_MIN = 30
@@ -59,27 +59,49 @@ export function fusionnerEnchainement(a: Seance, b: Seance): Seance {
   }
 }
 
-/** Regroupe les activités enchaînées déjà enregistrées. Renvoie le nombre de regroupements. */
-export async function regrouperEnchainements() {
+/**
+ * Deux activités qui se suivent (13/11/2026, demande de Titouan) : l'appli ne les met plus bout à bout toute seule, elle
+ * te le demande (carte sur Aujourd'hui). Paires refusées gardées dans le réglage « enchainements-refuses ».
+ */
+export const clePaire = (a: Seance, b: Seance) => [a.id, b.id].sort().join('|')
+
+/** Première paire d'activités enchaînées (14 derniers jours) pas encore refusée. */
+export async function paireAConfirmer(depuis: string, refusees: string[] = []): Promise<[Seance, Seance] | undefined> {
+  const toutes = (await db.seances.where('date').aboveOrEqual(depuis).toArray()).filter((s) => s.debut).sort((x, y) => x.debut!.localeCompare(y.debut!))
+  for (let i = 0; i < toutes.length; i++)
+    for (let j = i + 1; j < toutes.length && toutes[j].date === toutes[i].date; j++)
+      if (sontEnchainees(toutes[i], toutes[j]) && !refusees.includes(clePaire(toutes[i], toutes[j]))) return [toutes[i], toutes[j]]
+  return undefined
+}
+
+/** Met deux activités bout à bout : une seule séance ; la séance prévue est rejugée sur l'ensemble. */
+export async function fusionnerPaire(a: Seance, b: Seance) {
   const c = await chargerContexte()
+  const fusion = completerMetriques(fusionnerEnchainement(a, b), c)
+  const retiree = fusion.id === a.id ? b : a
+  // La séance prévue rattachée à l'activité retirée (si différente) redevient à faire
+  if (retiree.prevueId && retiree.prevueId !== fusion.prevueId) {
+    const p = await db.prevues.get(retiree.prevueId)
+    if (p?.statut === 'faite') await enregistrer(db.prevues, { ...p, statut: 'prevue' })
+  }
+  // Une partie seule pouvait sembler « différente du prévu » (trop courte) : l'ensemble est rejugé
+  const prevue = fusion.prevueId ? await db.prevues.get(fusion.prevueId) : undefined
+  if (prevue?.realiseDifferent && !estRealiseDifferent(prevue, fusion, domaineDe(fusion, c.bornes))) {
+    await enregistrer(db.prevues, { ...prevue, realiseDifferent: false, titreRealise: undefined })
+    fusion.titre = prevue.titre
+  }
+  await enregistrer(db.seances, fusion)
+  await supprimer(db.seances, retiree.id)
+  return fusion
+}
+
+/** Regroupe toutes les activités enchaînées (sans demander). Renvoie le nombre de regroupements. */
+export async function regrouperEnchainements() {
   let n = 0
   for (;;) {
-    const toutes = (await db.seances.toArray()).filter((s) => s.debut).sort((x, y) => x.debut!.localeCompare(y.debut!))
-    let paire: [Seance, Seance] | undefined
-    for (let i = 0; i < toutes.length && !paire; i++)
-      for (let j = i + 1; j < toutes.length && toutes[j].date === toutes[i].date; j++)
-        if (sontEnchainees(toutes[i], toutes[j])) { paire = [toutes[i], toutes[j]]; break }
+    const paire = await paireAConfirmer('0000-00-00')
     if (!paire) return n
-    const [a, b] = paire
-    const fusion = completerMetriques(fusionnerEnchainement(a, b), c)
-    const retiree = fusion.id === a.id ? b : a
-    await enregistrer(db.seances, fusion)
-    await supprimer(db.seances, retiree.id)
-    // La séance prévue rattachée à l'activité retirée (si différente) redevient à faire
-    if (retiree.prevueId && retiree.prevueId !== fusion.prevueId) {
-      const p = await db.prevues.get(retiree.prevueId)
-      if (p?.statut === 'faite') await enregistrer(db.prevues, { ...p, statut: 'prevue' })
-    }
+    await fusionnerPaire(...paire)
     n++
   }
 }

@@ -43,6 +43,8 @@ export interface MetaSemaine {
   semaineDansPhase: number
   z2W: number
   genereeLe: string
+  /** Construite avant la fin de la semaine d'avant (comptée à 100 %) : recalculée une fois celle-ci finie */
+  bilanProvisoire?: boolean
 }
 
 const cleSemaine = (lundi: string) => `semaine-${lundi}`
@@ -146,8 +148,8 @@ export async function longueDeLaSemaine(lundi: string, prog: ReglagesProgramme, 
 }
 
 /** Bilan de la semaine précédente (si elle a été générée). */
-async function bilanPrecedent(lundi: string): Promise<BilanSemaine | undefined> {
-  return bilanDe(decalerJour(lundi, -7))
+async function bilanPrecedent(lundi: string, reel = false): Promise<BilanSemaine | undefined> {
+  return bilanDe(decalerJour(lundi, -7), reel)
 }
 
 /** Part du budget kJ réalisée, semaine par semaine, en remontant depuis la semaine d'avant `lundi` (6 au plus). */
@@ -161,13 +163,19 @@ export async function partsRealisees(lundi: string) {
   return parts
 }
 
-async function bilanDe(precedent: string): Promise<BilanSemaine | undefined> {
+async function bilanDe(precedent: string, reel = false): Promise<BilanSemaine | undefined> {
   const meta = await lireMeta(precedent)
   if (!meta) return undefined
   const fin = decalerJour(precedent, 6)
   const prevues = (await db.prevues.where('date').between(precedent, fin, true, true).toArray()).filter((p) => p.origine === 'auto' && p.statut !== 'abandonnee')
   const seances = await db.seances.where('date').between(precedent, fin, true, true).toArray()
   const decisions = await db.decisions.where('date').between(precedent, fin, true, true).toArray()
+  // Semaine pas encore finie (13/11/2026) : comptée comme si elle se passait à 100 %, sans jour rouge ni orange ; la
+  // semaine d'après se recalcule avec le vrai bilan une fois celle-ci finie
+  if (!reel && fin >= aujourdhui()) {
+    const kjPrevus = prevues.reduce((a, p) => a + (p.kjPrevu ?? 0), 0)
+    return { budgetRef: meta.budgetRef, kjPrevus, kjRealises: kjPrevus, rouges: 0, oranges: 0, allegee: meta.allegee, chargee: !!(await lireSemaineChargee(precedent)), provisoire: true }
+  }
   return {
     budgetRef: meta.budgetRef,
     kjPrevus: prevues.reduce((a, p) => a + (p.kjPrevu ?? 0), 0),
@@ -602,7 +610,7 @@ async function genererSemaineVeloBrute(lundi: string) {
 
   const meta: MetaSemaine = {
     budgetRef: b.budgetRef, budget: b.budget, raison: b.raison, allegee, phase: NOMS_PHASES[phase.type],
-    semaineDansPhase: nSemaine + 1, z2W, genereeLe: new Date().toISOString(),
+    semaineDansPhase: nSemaine + 1, z2W, genereeLe: new Date().toISOString(), ...(prec?.provisoire ? { bilanProvisoire: true } : {}),
   }
   await enregistrer(db.reglages, { id: cleSemaine(lundi), valeur: meta })
   // Semaine chargée déjà déclarée : on garde le minimum, même après un recalcul
@@ -783,6 +791,15 @@ export async function mettreAJourFormatSeances() {
   for (const l of aRefaire) if (await lireMeta(l)) await genererSemaineVelo(l).catch(() => {}) // erreur déjà journalisée, semaine d'avant gardée
 }
 
+/**
+ * À l'ouverture (13/11/2026) : la semaine en cours construite avant la fin de la précédente (comptée à 100 %) est
+ * recalculée une fois avec le vrai bilan.
+ */
+export async function actualiserSemaineEnCours() {
+  const lundi = lundiDe(aujourdhui())
+  if ((await lireMeta(lundi))?.bilanProvisoire) await genererSemaineVelo(lundi).catch(() => {})
+}
+
 export const recalculerApresTest = () => recalculerSemainesAVenir()
 
 /** Recalcule la semaine en cours et les 2 suivantes déjà générées (après un test, ou un changement de semaine type / durées). */
@@ -849,7 +866,8 @@ export async function bilanDimanche(lundi: string) {
   const meta = await lireMeta(lundi)
   const ps = (await db.reglages.get('profil-sportif'))?.valeur as Partial<ProfilSportif> | undefined
   const { nominal, plafond } = plafondEtNominal({ semaineType: progS.semaineType, kjIntensite, cap, z2W, longueVisee: longue.visee, heuresMax: (() => { const h = heuresAu(prog, ps?.heuresSemaine, suivant); return h ? heuresDe(h)[1] : undefined })() })
-  const precSuivant = await bilanPrecedent(suivant)
+  // Bilan du dimanche : la vraie semaine, même pas tout à fait finie
+  const precSuivant = await bilanPrecedent(suivant, true)
   const b = coefSuivant !== undefined
     ? budgetDePhase(precSuivant, nominal, coefSuivant, NOMS_PHASES[phase.type])
     : await avecGardeFou(avecPlancher(budgetSemaine(precSuivant, nominal, plafond, allegee, course ? `semaine de ta course (${course.nom})` : 'semaine allégée (1 sur 4)', hausseSous(depart, precSuivant, hausseBudget(niveauDuProfil(ps)))), depart, precSuivant, plafond, allegee), suivant)

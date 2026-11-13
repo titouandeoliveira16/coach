@@ -1077,6 +1077,8 @@ export interface BilanSemaine {
   allegee: boolean
   /** Semaine passée en « semaine chargée » : on ne rattrape pas, le budget reste stable */
   chargee?: boolean
+  /** Semaine pas encore finie : comptée comme faite à 100 % (13/11/2026), recalculée quand elle se termine */
+  provisoire?: boolean
 }
 
 /**
@@ -1095,21 +1097,23 @@ export function budgetSemaine(prec: BilanSemaine | undefined, nominal: number, p
     raison = 'Retour au budget d’avant la semaine allégée'
   } else {
     const part = prec.kjPrevus ? prec.kjRealises / prec.kjPrevus : 0
-    if (prec.rouges >= 2) {
-      ref = prec.budgetRef * 0.85
-      raison = `−15 % : ${prec.rouges} jours rouges la semaine dernière`
-    } else if (prec.chargee) {
+    // 13/11/2026 (demande de Titouan) : le feu adapte la séance du jour ; la semaine d'après suit ce qui a été fait.
+    // Des jours rouges ne baissent le budget que si la semaine n'a pas été faite (séances maintenues = semaine validée).
+    if (prec.chargee) {
       ref = prec.budgetRef
       raison = 'Stable : semaine chargée la semaine dernière, on ne rattrape pas'
+    } else if (prec.provisoire) {
+      ref = prec.budgetRef * (1 + hausse)
+      raison = `+${(hausse * 100).toLocaleString('fr-FR')} % si ta semaine en cours se passe comme prévu`
+    } else if (prec.rouges >= 2 && part < 0.9) {
+      ref = prec.budgetRef * 0.85
+      raison = `−15 % : ${prec.rouges} jours rouges et budget de la semaine dernière réalisé à ${Math.round(part * 100)} %`
     } else if (part < 0.9) {
       ref = prec.budgetRef
       raison = `Stable : budget de la semaine dernière réalisé à ${Math.round(part * 100)} % (validé à partir de 90 %)`
-    } else if (prec.rouges === 0 && prec.oranges <= 1) {
-      ref = prec.budgetRef * (1 + hausse)
-      raison = `+${(hausse * 100).toLocaleString('fr-FR')} % : budget validé et signaux au vert`
     } else {
-      ref = prec.budgetRef
-      raison = `Stable : budget validé mais ${prec.rouges ? `${prec.rouges} jour rouge, ` : ''}${prec.oranges} jour(s) orange`
+      ref = prec.budgetRef * (1 + hausse)
+      raison = `+${(hausse * 100).toLocaleString('fr-FR')} % : budget de la semaine dernière validé`
     }
   }
   const borne = Math.min(plafond, Math.max(nominal * 0.6, ref))
