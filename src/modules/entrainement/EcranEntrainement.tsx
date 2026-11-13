@@ -13,7 +13,6 @@ import { importerIntervalsSiBesoin } from './import/intervals'
 import { nettoyerPeseesEffacees } from './forme/pesees'
 import { retirerCourseAVenir } from './plan/donnees'
 import { nettoyerDoublons } from './seances/donnees'
-import { regrouperEnchainements } from './seances/enchainements'
 import { FormulaireSeance } from './seances/FormulaireSeance'
 
 const ONGLETS = [
@@ -28,7 +27,7 @@ export function EcranEntrainement() {
   // Nouvelles données Intervals.icu à l'ouverture (au plus une fois par heure)
   // (et fusion des éventuels doublons déjà enregistrés)
   useEffect(() => {
-    nettoyerDoublons().then(regrouperEnchainements).then(nettoyerPeseesEffacees).then(retirerCourseAVenir).then(importerIntervalsSiBesoin)
+    nettoyerDoublons().then(nettoyerPeseesEffacees).then(retirerCourseAVenir).then(importerIntervalsSiBesoin)
   }, [])
 
   return (

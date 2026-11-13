@@ -147,7 +147,9 @@ describe('budget kJ', () => {
 
   it('validé et au vert : +7,5 %', () => expect(budgetSemaine(prec, 2000, 4000, false).budgetRef).toBe(2150))
   it('pas réalisé à 90 % : stable', () => expect(budgetSemaine({ ...prec, kjRealises: 1500 }, 2000, 4000, false).budgetRef).toBe(2000))
-  it('2 jours rouges : −15 %', () => expect(budgetSemaine({ ...prec, rouges: 2 }, 2000, 4000, false).budgetRef).toBe(1700))
+  it('2 jours rouges et semaine pas faite : −15 %', () => expect(budgetSemaine({ ...prec, rouges: 2, kjRealises: 1500 }, 2000, 4000, false).budgetRef).toBe(1700))
+  it('jours rouges mais séances faites : la semaine est validée (13/11/2026)', () => expect(budgetSemaine({ ...prec, rouges: 2, oranges: 2 }, 2000, 4000, false).budgetRef).toBe(2150))
+  it('semaine en cours pas finie : comptée comme faite à 100 %', () => expect(budgetSemaine({ ...prec, kjRealises: 0, provisoire: true }, 2000, 4000, false).budgetRef).toBe(2150))
   it('semaine allégée : −35 %, la référence est gardée', () => {
     const b = budgetSemaine(prec, 2000, 4000, true)
     expect(b.budget).toBe(Math.round(2150 * 0.65))

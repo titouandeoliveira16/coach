@@ -44,6 +44,8 @@ export function SectionVelo() {
           </button>
           {calculateur && (
             <CalculateurCP
+              cpActuelle={reglages.cpW}
+              onRefaire={() => { setCalculateur(false); setMessage('D’accord : ta CP ne change pas. Refais le test frais (après un jour facile), à fond sur chaque effort.') }}
               onUtiliser={async (cpW, wPrimeKj, wPrimeComplet) => {
                 // Zones de puissance recalculées en % de la nouvelle CP ; les bornes de FC restent
                 const zonesVelo = zonesDepuisCp(cpW, reglages.zonesVelo)

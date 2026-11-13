@@ -12,6 +12,7 @@ import { CarteCpEnHausse } from '../forme/CarteCpEnHausse'
 import { CarteHorsPlan } from '../forme/CarteHorsPlan'
 import { CarteBilanNutrition } from '../forme/CarteBilanNutrition'
 import { CarteFcMax } from '../forme/CarteFcMax'
+import { CarteEnchainement } from '../forme/CarteEnchainement'
 import { CartePanne } from '../forme/CartePanne'
 import { CartePesee, FeuillePesee } from '../forme/CartePesee'
 import { CarteResultat } from '../forme/CarteResultat'
@@ -49,6 +50,7 @@ export function Aujourdhui() {
       <BandeauAVoir>
         <CarteVictoire />
         <CarteResultat />
+        <CarteEnchainement />
         <CarteFcMax />
         <CarteCpEnHausse />
         <CarteHorsPlan />
