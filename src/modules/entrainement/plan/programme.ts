@@ -927,7 +927,9 @@ function hausseSous(depart: Awaited<ReturnType<typeof chargeDeDepart>>, prec: Bi
 function avecPlancher<B extends { budgetRef: number; budget: number; raison: string }>(b: B, depart: Awaited<ReturnType<typeof chargeDeDepart>>, prec: BilanSemaine | undefined, plafond: number, allegee: boolean): B {
   if (!depart || b.budgetRef >= depart.plancher) return b
   if (prec && (prec.rouges >= 2 || (prec.kjPrevus > 0 && prec.kjRealises / prec.kjPrevus < 0.75))) return b
-  const ref = Math.round(Math.min(plafond, depart.plancher))
+  // Audit « vraie vie » du 13/11/2026 : en cours de saison, le plancher ne fait pas remonter de plus de 10 % d'un coup
+  // (sinon +15 à +22 % après une semaine ratée) ; il s'applique en entier seulement au départ
+  const ref = Math.round(Math.min(plafond, depart.plancher, prec ? prec.budgetRef * 1.1 : Infinity))
   if (ref <= b.budgetRef) return b
   const coupure = depart.coupure ? `${depart.coupure} semaine${depart.coupure > 1 ? 's' : ''} de coupure` : 'pas de coupure'
   return {
