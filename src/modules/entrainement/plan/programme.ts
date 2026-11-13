@@ -3,7 +3,7 @@ import { signalerErreur } from '../../../core/erreurs'
 import { aujourdhui, decalerJour, depuisJour, ecartJours, NOMS_JOURS } from '../../../core/dates'
 import { enregistrer, supprimer } from '../../../core/stockage'
 import {
-  ajustementZ2, meilleurLevier, pistesDeblocage, BLOCS_SV1, signalSv1, signalFcSv1, plageFcSv1, sprintsDeLaPhase, SV1_DEPART_PCT, SV1_MAX_PCT, budgetDePhase, budgetSemaine, plafondEtNominal, formatDe, gardeFouCourse, NOMS_FAMILLES, plafondsReprise, projeterSaison, choisirFormat, construireIntervalles, construireTest, construireZ2, coefficientPhase, estSemaineAllegee, etatProgression, palierRaccourci,
+  ajustementZ2, meilleurLevier, pistesDeblocage, BLOCS_SV1, signalSv1, signalFcSv1, plageFcSv1, sprintsDeLaPhase, SV1_DEPART_PCT, SV1_MAX_PCT, budgetDePhase, budgetSemaine, plafondEtNominal, formatDe, gardeFouCourse, NOMS_FAMILLES, plafondsReprise, projeterSaison, choisirFormat, construireIntervalles, construireTest, construireZ2, coefficientPhase, estSemaineAllegee, etatProgression, palierRaccourci, tenirDansCreneau,
   construireCycloMontees, construireLongueCotes, construireSimulationLigne, construireSimulationXco, construireSpeciales, construireTerrain, cotesDe, minutesPourKj, NOMS_DISCIPLINES, NOMS_PHASES, deuxIntensitesPossibles, formatsPour, hausseBudget, heuresDe, jourDeuxiemeIntensite, niveauDuProfil, palierPossible, phaseDe, placer, retourDeCoupure, semainesChamboulees, type BilanSemaine, type Famille, type HistoIntensite,
   cibleSortieLongue, dureeLongueVisee, type SeanceConstruite, type TypePhase,
   construireCourse, construireOuverture, construireSv1Dediee, specifiqueCols, testProcheCourse, delaiApresCourse, dureeDeCourse, epreuveDe, facteursVitesse, type CourseReference, niveauxCourses, procheCourse,
@@ -411,7 +411,7 @@ async function genererSemaineVeloBrute(lundi: string) {
       const palierBrut = palierPossible(choix.format, vise, maxDuJour(placement.intensite))
       // Affûtage : mêmes watts, environ moitié moins de répétitions (Bosquet 2007 : intensité gardée)
       const affutage = phase.type === 'affutage'
-      const palier = affutage ? palierRaccourci(choix.format, palierBrut) : palierBrut
+      const palier = tenirDansCreneau(choix.format, affutage ? palierRaccourci(choix.format, palierBrut) : palierBrut, maxDuJour(placement.intensite))
       // Enduro : une semaine sur deux (hors reprise), les spéciales sur le terrain remplacent les intervalles
       const speciales = discipline === 'enduro' && phase.type !== 'reprise' && nSemaine % 2 === 1
       intensite = speciales ? construireSpeciales(nSemaine >> 1, r.cpW) : construireIntervalles(choix.format, palier, r.cpW, etat.bonus, r.wPrimeKj)
@@ -470,7 +470,7 @@ async function genererSemaineVeloBrute(lundi: string) {
       const choix2 = choisirFormat(lundi, prog.phases, histo2, discipline, 1, prog.typeCourse)
       const etat2 = etatProgression(histo, datesTests(r.tests))[choix2.famille]
       const palier2 = palierPossible(choix2.format, etat2.palier, maxDuJour(jour2))
-      const s2 = construireIntervalles(choix2.format, palier2, r.cpW, etat2.bonus, r.wPrimeKj)
+      const s2 = construireIntervalles(choix2.format, tenirDansCreneau(choix2.format, palier2, maxDuJour(jour2)), r.cpW, etat2.bonus, r.wPrimeKj)
       s2.velo.pourquoi = `2e séance intensive de la semaine (${joursVelo} jours de vélo, pas de séance dure de course ; au moins 48 h après l'autre) · palier ${palier2 + 1}/4`
       intensite2 = { date: jour2, s: s2 }
       placement.z2 = placement.z2.filter((d) => d !== jour2)

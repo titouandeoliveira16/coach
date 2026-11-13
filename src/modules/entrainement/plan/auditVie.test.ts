@@ -2,11 +2,13 @@ import 'fake-indexeddb/auto'
 import { describe, expect, it, vi } from 'vitest'
 import { db } from '../../../core/db'
 import { decalerJour } from '../../../core/dates'
-import { heuresDe, phaseDe } from '../../../metrics/programme'
+import { deplier, heuresDe, phaseDe } from '../../../metrics/programme'
 import { enregistrerArrivee, semaineDepuisJours, type ReponsesArrivee } from '../arrivee/donnees'
 import { genererSemaineVelo, lireMeta, seancesClesSautees } from './programme'
 import { declarerPanneVelo } from './imprevus'
-import type { ReglagesEntrainement } from '../types'
+import type { ReglagesEntrainement, SemaineTypeFuture } from '../types'
+import { heuresAu, programmeAu } from '../reglagesEntrainement'
+import { adapterDuJour } from './adaptation'
 
 /**
  * Audit « vraie vie » (13/11/2026) : une saison entière semaine par semaine, avec des séances ratées, raccourcies,
@@ -21,7 +23,12 @@ const INTENSES = ['vo2-courts', 'vo2-longs', 'seuil-plus', 'seuil', 'seuil-varia
 // Hasard reproductible
 const hasard = (graine: number) => () => { graine = (graine * 16807) % 2147483647; return graine / 2147483647 }
 
-const profils: [string, Partial<ReponsesArrivee>, number][] = [
+const futures: SemaineTypeFuture[] = [
+  { debut: '2027-01-04', semaineType: semaineDepuisJours(5), maxSemaineMin: 75, maxLongMin: 240, heuresSemaine: '8 à 10 h' },
+  { debut: '2027-02-01', semaineType: semaineDepuisJours(5), maxSemaineMin: 90, maxLongMin: 270 },
+  { debut: '2027-03-15', semaineType: semaineDepuisJours(3), maxSemaineMin: 60, maxLongMin: 180, heuresSemaine: '4 à 6 h' },
+]
+const profils: [string, Partial<ReponsesArrivee>, number, SemaineTypeFuture[]?][] = [
   ['route 4 j, tout fait', {}, 0],
   ['route 4 j, vraie vie', {}, 1],
   ['route 5 j, 8-10 h, vraie vie', { semaineType: semaineDepuisJours(5), heuresSemaine: '8 à 10 h' }, 2],
@@ -31,19 +38,24 @@ const profils: [string, Partial<ReponsesArrivee>, number][] = [
   ['marathon VTT 5 j, 8-10 h, vraie vie', { discipline: 'xcm', typeCourse: undefined, semaineType: semaineDepuisJours(5), heuresSemaine: '8 à 10 h' }, 6],
   ['route 4 j, 2 courses A (6 semaines d’écart), vraie vie', { course: { nom: 'A1', date: '2027-04-11', distanceKm: 120, deniveleM: 1500 }, autresCourses: [{ date: '2027-05-23', nom: 'A2', niveau: 'A', epreuve: 'cyclo', distanceKm: 150, deniveleM: 2500 }] }, 7],
   ['route en ligne 5 j, vraie vie', { typeCourse: 'en-ligne', semaineType: semaineDepuisJours(5), heuresSemaine: '8 à 10 h' }, 8],
+  ['semaine type qui change : 4 j → 5 j (4 janv.), plus long (1er févr.), 3 j (15 mars), vraie vie', {}, 9, futures],
 ]
 /** Semaines de panne de vélo (du mercredi au samedi) et semaines où la séance d'intensité saute exprès. */
 const PANNES = ['2026-12-16', '2027-02-24']
 const SAUTS = ['2027-01-18', '2027-01-25']
 
 describe('audit vraie vie', () => {
-  for (const [nom, p, graine] of profils)
+  for (const [nom, p, graine, aVenir] of profils)
     it(nom, async () => {
       await db.delete(); await db.open()
       vi.useFakeTimers({ toFake: ['Date'] })
       vi.setSystemTime(new Date('2026-11-09T07:00:00'))
       const r = { ...base, ...p }
       await enregistrerArrivee(r)
+      if (aVenir) {
+        const e0 = (await db.reglages.get('entrainement'))!.valeur as ReglagesEntrainement
+        await db.reglages.put({ id: 'entrainement', valeur: { ...e0, programme: { ...e0.programme!, semainesTypesFutures: aVenir } } } as never)
+      }
       const alea = hasard(graine * 7919 + 1)
       const vraieVie = graine > 0
       const problemes: string[] = []
@@ -54,7 +66,8 @@ describe('audit vraie vie', () => {
         vi.setSystemTime(new Date(`${l}T06:00:00`))
         await genererSemaineVelo(l)
         const e = (await db.reglages.get('entrainement'))!.valeur as ReglagesEntrainement
-        const prog = e.programme!
+        const prog = programmeAu(e.programme!, l)
+        const tranche = heuresAu(e.programme!, r.heuresSemaine, l) ?? r.heuresSemaine
         const meta = (await lireMeta(l))!
         const { phase } = phaseDe(l, prog.phases)
         const semaine = (await db.prevues.where('date').between(l, decalerJour(l, 6), true, true).toArray()).filter((x) => x.sport === 'velo' && x.origine === 'auto')
@@ -74,7 +87,23 @@ describe('audit vraie vie', () => {
         // 4. Heures de la semaine dans ta tranche
         // (la course elle-même n'entre pas dans tes créneaux)
         const heures = semaine.filter((x) => x.velo?.famille !== 'course').reduce((a, s) => a + s.dureeMin, 0) / 60
-        if (heures > heuresDe(r.heuresSemaine)[1] + 0.25) problemes.push(`${l} : ${heures.toFixed(1)} h prévues pour une tranche « ${r.heuresSemaine} »`)
+        if (heures > heuresDe(tranche)[1] + 0.25) problemes.push(`${l} : ${heures.toFixed(1)} h prévues pour une tranche « ${tranche} »`)
+        // 10. Semaine type qui change : autant de séances de vélo que de jours de vélo de la semaine type du moment (hors course)
+        if (aVenir && !semaine.some((x) => x.velo?.famille === 'course')) {
+          const jours = prog.semaineType.filter((x) => x.startsWith('velo')).length
+          if (semaine.length !== jours) problemes.push(`${l} : ${semaine.length} séances de vélo pour ${jours} jours de vélo dans la semaine type`)
+        }
+        // 11. Feu orange : séance d'intensité raccourcie aux mêmes watts, séance au 1er seuil en endurance
+        for (const x of semaine) {
+          const a = adapterDuJour(x, 'orange')
+          if (!a.modifiee || !a.etapes || !x.velo?.etapes) continue
+          const avant = deplier(x.velo.etapes), apres = deplier(a.etapes)
+          const duree = (l2: typeof avant) => l2.reduce((t, e2) => t + e2.dureeSec, 0)
+          const wMax = (l2: typeof avant) => Math.max(0, ...l2.map((e2) => e2.w ?? 0))
+          if (duree(apres) >= duree(avant)) problemes.push(`${l} : feu orange, ${x.titre} pas raccourcie`)
+          if (INTENSES.includes(x.velo.famille) && Math.abs(wMax(apres) - wMax(avant)) > 5) problemes.push(`${l} : feu orange, ${x.titre} à ${wMax(apres)} W au lieu de ${wMax(avant)} W`)
+          if (x.velo.formatId === 'sv1-dedie' && wMax(apres) >= (x.velo.sv1W ?? Infinity)) problemes.push(`${l} : feu orange, séance 1er seuil gardée au 1er seuil`)
+        }
         // 5. Jamais de test en affûtage
         if (phase.type === 'affutage' && semaine.some((s) => s.velo?.famille === 'test')) problemes.push(`${l} : test CP en affûtage`)
         // 6. Une séance de vélo par jour au plus, jamais deux jours durs d'affilée

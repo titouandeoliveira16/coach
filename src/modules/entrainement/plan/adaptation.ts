@@ -48,7 +48,10 @@ export function adapterDuJour(p: SeancePrevue, couleur: Couleur): Adaptation {
     return { texte: `Feu orange : endurance sans les blocs au 1er seuil (${min} min en Z2).`, etapes: [{ debutSec: 0, dureeSec: min * 60, libelle: 'Endurance Z2, sans les blocs au 1er seuil', w }], modifiee: true }
   }
   if (intensiteVelo && f && cpEff) {
-    const court = construireIntervalles(f, palierRaccourci(f, p.velo!.palier ?? 0), cpEff, 0, p.velo!.wPrimeKj)
+    // Audit du 13/11/2026 : on part de la séance vraiment prévue (déjà réduite pour le créneau ou l'affûtage) et de ses
+    // watts (progression, −5 % après un raté), pas du palier et de la CP seuls
+    const bonus = p.velo!.cibleW && !f.aFond ? p.velo!.cibleW / (cpEff * (f.pct / 100)) - 1 : 0
+    const court = construireIntervalles(f, palierRaccourci(f, p.velo!.structure ?? p.velo!.palier ?? 0), cpEff, bonus, p.velo!.wPrimeKj)
     return { texte: `Feu orange : version raccourcie, mêmes watts (${court.titre}, ${court.dureeMin} min).`, etapes: court.velo.etapes, modifiee: true }
   }
   if (p.sport === 'course' && p.intensite === 'haute') return { texte: 'Feu orange : un tiers des fractions en moins, mêmes allures.', modifiee: true }
