@@ -1150,15 +1150,35 @@ export function plafondEtNominal(o: {
  * sortie d'endurance de semaine, +30 min sur la sortie longue, ou un jour de vélo de plus (s'il reste un jour libre).
  */
 export function meilleurLevier(o: { semaineType: Role[]; cap: { z2: number; long: number }; z2W: number }) {
+  return pistesDeblocage(o)[0]
+}
+
+/** Durées au plus proposées dans les réglages (sorties de semaine, sortie longue). */
+export const MAX_SEMAINE_MIN = 150
+export const MAX_LONGUE_MIN = 300
+
+/**
+ * Toutes les pistes qui débloquent la hausse, de la plus rentable à la moins rentable (13/11/2026 : le conseil de Saison
+ * s'applique en un geste, « Pas possible » montre la suivante). Un jour en plus seulement s'il reste au moins 1 jour sans
+ * vélo ; durées bornées aux choix des réglages.
+ */
+export function pistesDeblocage(o: { semaineType: Role[]; cap: { z2: number; long: number }; z2W: number }) {
   const kjZ2 = (min: number) => construireZ2(min, o.z2W).kj
   const nZ2 = o.semaineType.filter((x) => x === 'velo-z2').length + Math.max(0, o.semaineType.filter((x) => x === 'velo-dur').length - 1)
   const libres = o.semaineType.filter((x) => !x.startsWith('velo')).length
   const leviers = [
-    { levier: 'semaine' as const, gain: nZ2 * (kjZ2(o.cap.z2 + 15) - kjZ2(o.cap.z2)), avant: o.cap.z2, apres: o.cap.z2 + 15 },
-    { levier: 'longue' as const, gain: kjZ2(o.cap.long + 30) - kjZ2(o.cap.long), avant: o.cap.long, apres: o.cap.long + 30 },
-    ...(libres > 1 ? [{ levier: 'jour' as const, gain: kjZ2(o.cap.z2), avant: 0, apres: 0 }] : []),
+    ...(o.cap.z2 + 15 <= MAX_SEMAINE_MIN ? [{ levier: 'semaine' as const, gain: nZ2 * (kjZ2(o.cap.z2 + 15) - kjZ2(o.cap.z2)), avant: o.cap.z2, apres: o.cap.z2 + 15 }] : []),
+    ...(o.cap.long + 30 <= MAX_LONGUE_MIN ? [{ levier: 'longue' as const, gain: kjZ2(o.cap.long + 30) - kjZ2(o.cap.long), avant: o.cap.long, apres: o.cap.long + 30 }] : []),
+    ...(libres > 1 ? [{ levier: 'jour' as const, gain: kjZ2(o.cap.z2), avant: 0, apres: 0, jour: jourAAjouter(o.semaineType) }] : []),
   ].filter((l) => l.gain > 0)
-  return leviers.sort((a, b) => b.gain - a.gain)[0]
+  return leviers.sort((a, b) => b.gain - a.gain)
+}
+
+/** Jour de vélo à ajouter : un jour sans vélo, de préférence ni la veille ni le lendemain d'une séance dure ou de la sortie longue. */
+export function jourAAjouter(semaineType: Role[]): number | undefined {
+  const dur = (i: number) => semaineType[(i + 7) % 7] === 'velo-dur' || semaineType[(i + 7) % 7] === 'velo-long'
+  const cout = (i: number) => (dur(i - 1) ? 1 : 0) + (dur(i + 1) ? 1 : 0) + (semaineType[i] === 'renfo' || semaineType[i] === 'course' ? 0.5 : 0)
+  return semaineType.map((r, i) => [r, i] as const).filter(([r]) => !r.startsWith('velo')).map(([, i]) => i).sort((a, b) => cout(a) - cout(b) || a - b)[0]
 }
 
 /** Affûtage / récupération : budget = part fixe du budget de référence d'avant (pas de hausse, pas de −35 % en plus). */

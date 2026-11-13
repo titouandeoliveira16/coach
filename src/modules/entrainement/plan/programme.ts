@@ -3,7 +3,7 @@ import { signalerErreur } from '../../../core/erreurs'
 import { aujourdhui, decalerJour, depuisJour, ecartJours, NOMS_JOURS } from '../../../core/dates'
 import { enregistrer, supprimer } from '../../../core/stockage'
 import {
-  ajustementZ2, meilleurLevier, BLOCS_SV1, signalSv1, signalFcSv1, plageFcSv1, sprintsDeLaPhase, SV1_DEPART_PCT, SV1_MAX_PCT, budgetDePhase, budgetSemaine, plafondEtNominal, formatDe, gardeFouCourse, NOMS_FAMILLES, plafondsReprise, projeterSaison, choisirFormat, construireIntervalles, construireTest, construireZ2, coefficientPhase, estSemaineAllegee, etatProgression, palierRaccourci,
+  ajustementZ2, meilleurLevier, pistesDeblocage, BLOCS_SV1, signalSv1, signalFcSv1, plageFcSv1, sprintsDeLaPhase, SV1_DEPART_PCT, SV1_MAX_PCT, budgetDePhase, budgetSemaine, plafondEtNominal, formatDe, gardeFouCourse, NOMS_FAMILLES, plafondsReprise, projeterSaison, choisirFormat, construireIntervalles, construireTest, construireZ2, coefficientPhase, estSemaineAllegee, etatProgression, palierRaccourci,
   construireCycloMontees, construireLongueCotes, construireSimulationLigne, construireSimulationXco, construireSpeciales, construireTerrain, cotesDe, minutesPourKj, NOMS_DISCIPLINES, NOMS_PHASES, deuxIntensitesPossibles, formatsPour, hausseBudget, heuresDe, jourDeuxiemeIntensite, niveauDuProfil, palierPossible, phaseDe, placer, retourDeCoupure, semainesChamboulees, type BilanSemaine, type Famille, type HistoIntensite,
   cibleSortieLongue, dureeLongueVisee, type SeanceConstruite, type TypePhase,
   construireCourse, construireOuverture, construireSv1Dediee, specifiqueCols, testProcheCourse, delaiApresCourse, dureeDeCourse, epreuveDe, facteursVitesse, type CourseReference, niveauxCourses, procheCourse,
@@ -736,7 +736,7 @@ export async function saison() {
   }
   // Chaque période où la hausse bute (hors semaine en cours, 3 au plus) : quelle limite, jusqu'à quand (une semaine type
   // à venir peut la relever), et le réglage qui débloque le plus (12/11/2026 : avant, seule la 1re période était dite)
-  type Blocage = { lundi: string; jusquA?: string; par: 'heures' | 'jours'; heures?: string; levier?: ReturnType<typeof meilleurLevier> }
+  type Blocage = { lundi: string; jusquA?: string; par: 'heures' | 'jours'; heures?: string; levier?: ReturnType<typeof meilleurLevier>; pistes: ReturnType<typeof pistesDeblocage> }
   const blocages: Blocage[] = []
   for (let i = 1; i < semaines.length && blocages.length < 3; i++) {
     if (!semaines[i].bloquee) continue
@@ -744,7 +744,10 @@ export async function saison() {
     const p = calcul(l).plafond
     const k = semaines.findIndex((x, j) => j > i && calcul(x.lundi).plafond > p * 1.02)
     const par = calcul(l).limite
-    blocages.push({ lundi: l, jusquA: k > 0 ? semaines[k].lundi : undefined, par, heures: heuresAu(prog, ps?.heuresSemaine, l), ...(par === 'jours' ? { levier: meilleurLevier({ semaineType: programmeAu(prog, l).semaineType, cap: capDe(l), z2W }) } : {}) })
+    blocages.push({ lundi: l, jusquA: k > 0 ? semaines[k].lundi : undefined, par, heures: heuresAu(prog, ps?.heuresSemaine, l), ...(() => {
+      const pistes = par === 'jours' ? pistesDeblocage({ semaineType: programmeAu(prog, l).semaineType, cap: capDe(l), z2W }) : []
+      return { pistes, levier: pistes[0] }
+    })() })
     if (k < 0) break
     i = k - 1
   }
