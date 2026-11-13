@@ -32,8 +32,10 @@ function SeanceFaite({ s }: { s: Seance }) {
   const info = useLiveQuery(async () => {
     const prevue = s.prevueId ? await db.prevues.get(s.prevueId) : undefined
     const c = await chargerContexte()
-    return { categorie: categorieDe(s, prevue, domaineDe(s, c.bornes)), fcMax: c.fcMax, famille: prevue?.velo?.famille ?? '' }
+    return { categorie: categorieDe(s, prevue, domaineDe(s, c.bornes)), fcMax: c.fcMax, famille: prevue?.velo?.famille ?? '', differente: !!prevue?.realiseDifferent }
   }, [s.id, s.prevueId, s.fcMoy, s.tempsZones?.join()])
+  // Réalisé différent du prévu (13/11/2026) : seuls les kJ comptent, ni RPE ni question « en réserve »
+  const differente = !!info?.differente
   const categorie = info?.categorie
   const verdict = info ? controleFc(s, info.categorie, info.fcMax) : undefined
   // Question « en réserve » seulement pour les séances faciles : elle sert au bilan de la semaine (sorties faciles
@@ -47,7 +49,9 @@ function SeanceFaite({ s }: { s: Seance }) {
       <p className="text-sm text-texte-2">{resume}</p>
       {s.controle ? <ControleSeance s={{ ...s, controle: s.controle }} famille={info?.famille ?? ''} /> : s.blocs && <Blocs b={s.blocs} />}
       {verdict && <p className="mt-1 text-sm" style={{ color: COULEURS[verdict.couleur] }}><span className="mr-1.5 inline-block h-2 w-2 rounded-full align-middle" style={{ background: COULEURS[verdict.couleur] }} />{verdict.texte}<Aide titre="Contrôle FC" texte={AIDES.controleFc} /></p>}
-      {s.rpe === undefined || edition ? (
+      {differente ? (
+        <p className="mt-1 text-sm text-texte-3">Différente du prévu : seuls tes kJ comptent, pas besoin de ressenti.</p>
+      ) : s.rpe === undefined || edition ? (
         <div className="mt-2">
           <p className="text-sm">Ton ressenti (RPE) ?</p>
           <div className="mt-1 grid grid-cols-11 gap-1">
@@ -65,7 +69,7 @@ function SeanceFaite({ s }: { s: Seance }) {
         </p>
       )}
       {s.fcMoy !== undefined && (s.sport === 'velo' || s.sport === 'course') && <CaseCeinture s={s} />}
-      {reserve && s.rpe !== undefined && !edition && (
+      {reserve && !differente && s.rpe !== undefined && !edition && (
         <div className="mt-2">
           <p className="text-sm">{reserve.question}</p>
           <div className="mt-1 grid grid-cols-3 gap-1.5">
