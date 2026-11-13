@@ -197,7 +197,7 @@ function CarteVelo({ lundi, deps, onMessage, onPrecedente, onSuivante }: { lundi
             <div className="h-full rounded-full bg-accent" style={{ width: `${Math.min(100, kj.kjPrevus ? (kj.kjRealises / kj.kjPrevus) * 100 : 0)}%` }} />
           </div>
           <BarresSemaine lundi={lundi} />
-          {meta && <p className="mt-1.5 text-xs text-texte-3">Budget {formatNombre(meta.budget)} kJ · {meta.phase}{meta.allegee ? ' · semaine allégée' : ''} · {meta.raison}<Aide titre="Budget kJ" texte={AIDES.budgetAuto} /></p>}
+          {meta && <p className="mt-1.5 text-xs text-texte-3">Budget {formatNombre(meta.budget)} kJ · {meta.phase}{meta.allegee ? ' · semaine allégée' : ''} · {meta.raison}{lundi > lundiDe(aujourdhui()) ? ' · provisoire : il se recalcule avec ce que tu fais d’ici la fin de cette semaine' : ''}<Aide titre="Budget kJ" texte={AIDES.budgetAuto} /></p>}
         </>
       ) : (
         <>
