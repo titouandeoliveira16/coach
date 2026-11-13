@@ -1,13 +1,13 @@
 import { verifierSemaineType, type Role } from '../../../metrics/programme'
 
 const JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
-/** Ordre des flèches et couleur de chaque choix (dur orange, long bleu, Z2 vert, renfo violet). */
+/** Ordre des flèches et couleur de chaque choix (dur orange, long bleu, Z2 vert, muscu violet). */
 const ROLES: { role: Role; nom: string; couleur: string }[] = [
   { role: 'libre', nom: 'repos', couleur: 'text-texte-3' },
   { role: 'velo-z2', nom: 'endurance', couleur: 'text-z2' },
   { role: 'velo-dur', nom: 'intensité', couleur: 'text-accent' },
   { role: 'velo-long', nom: 'sortie longue', couleur: 'text-z3' },
-  { role: 'renfo', nom: 'renfo', couleur: 'text-sommeil' },
+  { role: 'renfo', nom: 'muscu', couleur: 'text-muscu' },
 ]
 const fleche = 'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-2 text-xl text-texte disabled:opacity-30'
 

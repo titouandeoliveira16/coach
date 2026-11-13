@@ -6,7 +6,7 @@ import type { Role, TypePhase } from '../../../metrics/programme'
  *    l'endurance (Rønnestad 2010 ; Aagaard 2011 ; Llanos-Lagos 2025 ; Schumann 2022) ;
  *  - exercices du protocole Rønnestad, la flexion de hanche remplacée par le leg curl lourd (Aagaard 2011) et le
  *    soulevé de terre roumain (plausible, pas testé chez le cycliste) ; version maison à une jambe avec haltères ;
- *  - apprentissage 3 semaines, force lourde 12 semaines (3 séries, 10 → 6 → 5 répétitions), puis entretien 1 fois par
+ *  - apprentissage 2 semaines, force lourde 12 semaines (3 séries, 10 → 6 → 5 répétitions), puis entretien 1 fois par
  *    semaine (garde les gains, Rønnestad 2010b) ; semaine allégée : mêmes charges, 2 séries (Coleman 2024 : ne pas
  *    arrêter) ; affûtage : 2 séries, jamais dans les 4 jours avant la course (Pritchard 2015) ;
  *  - placée un jour sans vélo, sinon le soir d'une séance dure à 3 h au moins (Schumann 2022), jamais la veille d'une
@@ -87,11 +87,17 @@ export const EXOS: Record<Lieu, ExoForce[]> = {
   ],
 }
 
-export type PeriodeForce = 'apprentissage' | 'lourd' | 'entretien' | 'affutage' | 'repos'
-export const NOMS_PERIODES: Record<PeriodeForce, string> = {
-  apprentissage: 'apprentissage', lourd: 'force lourde', entretien: 'entretien', affutage: 'avant ta course', repos: 'repos',
+/** Prévention en fin de séance (sans suivi de charge) : léger, pour les genoux et le tronc. */
+export const PREVENTION: Record<Lieu, { nom: string; dose: string }[]> = {
+  salle: [{ nom: 'Leg extension', dose: '2 × 15, léger' }, { nom: 'Gainage (planche)', dose: '3 × 40 s' }],
+  maison: [{ nom: 'Extension de jambe assis sur une chaise, lente', dose: '2 × 15 par jambe' }, { nom: 'Gainage (planche)', dose: '3 × 40 s' }],
 }
-export const SEMAINES_APPRENTISSAGE = 3
+
+export type PeriodeForce = 'apprentissage' | 'lourd' | 'entretien' | 'affutage' | 'repos' | 'reprise'
+export const NOMS_PERIODES: Record<PeriodeForce, string> = {
+  apprentissage: 'apprentissage', lourd: 'force lourde', entretien: 'entretien', affutage: 'avant ta course', repos: 'repos', reprise: 'reprise',
+}
+export const SEMAINES_APPRENTISSAGE = 2
 export const SEMAINES_LOURD = 12
 
 export interface PlanForce {
@@ -104,23 +110,36 @@ export interface PlanForce {
   seances: number
   /** Charge légère, on apprend le geste */
   legere?: boolean
+  /** Après un arrêt : part de la charge habituelle (0,9 ou 0,8) */
+  facteur?: number
+  /** 1re semaine d'une reprise après plus de 8 semaines (la suivante est aussi légère) */
+  longue?: boolean
 }
 
-const semainesEntre = (a: string, b: string) => Math.floor((Date.parse(`${b}T12:00:00`) - Date.parse(`${a}T12:00:00`)) / (7 * 86_400_000))
-
-/** Ce que prévoit la muscu la semaine de ce lundi. */
-export function planForce(o: { debut: string; lundi: string; phase: TypePhase; allegee: boolean; seancesVoulues: 1 | 2 }): PlanForce {
-  const n = Math.max(0, semainesEntre(o.debut, o.lundi))
+/**
+ * Ce que prévoit la muscu la semaine de ce lundi (13/11/2026). Le programme avance avec les semaines vraiment faites
+ * (`semainesFaites`), pas avec le calendrier : une semaine manquée ne fait pas sauter de palier. Arrêt (relu :
+ * McMaster 2013, Mujika & Padilla 2001, Blocquiaux 2020) : jusqu'à 3 semaines sans séance, même charge ; 4 à 8 semaines,
+ * −10 % et une semaine de reprise à 2 séries ; au-delà, −20 % et 2 semaines légères.
+ */
+export function planForce(o: { semainesFaites: number; semainesSans?: number; repriseEnCours?: boolean; phase: TypePhase; allegee: boolean; seancesVoulues: 1 | 2 }): PlanForce {
+  const n = o.semainesFaites
+  const sans = o.semainesSans ?? 0
   let p: PlanForce
-  if (o.phase === 'recuperation') p = { periode: 'repos', semaine: 1, series: 0, reps: 0, seances: 0 }
-  else if (o.phase === 'affutage') p = { periode: 'affutage', semaine: 1, series: 2, reps: 5, seances: 1 }
+  if (o.phase === 'recuperation') return { periode: 'repos', semaine: 1, series: 0, reps: 0, seances: 0 }
+  if (o.phase === 'affutage') p = { periode: 'affutage', semaine: 1, series: 2, reps: 5, seances: 1 }
   else if (n < SEMAINES_APPRENTISSAGE) p = { periode: 'apprentissage', semaine: n + 1, series: n === 0 ? 2 : 3, reps: 12, seances: o.seancesVoulues, legere: true }
+  else if (sans > 8 || o.repriseEnCours) p = { periode: 'reprise', semaine: o.repriseEnCours ? 2 : 1, series: o.repriseEnCours ? 3 : 2, reps: 12, seances: o.seancesVoulues, legere: true, facteur: sans > 8 ? 0.8 : undefined, longue: !o.repriseEnCours }
   else if (o.phase === 'fin-prepa' || o.phase === 'specifique' || o.phase === 'entretien' || n >= SEMAINES_APPRENTISSAGE + SEMAINES_LOURD)
-    p = { periode: 'entretien', semaine: n - SEMAINES_APPRENTISSAGE - SEMAINES_LOURD + 1, series: 3, reps: 5, seances: 1 }
+    p = { periode: 'entretien', semaine: Math.max(1, n - SEMAINES_APPRENTISSAGE - SEMAINES_LOURD + 1), series: 3, reps: 5, seances: 1 }
   else {
     const k = n - SEMAINES_APPRENTISSAGE
     p = { periode: 'lourd', semaine: k + 1, series: 3, reps: k < 4 ? 10 : k < 8 ? 6 : 5, seances: o.seancesVoulues }
   }
+  // 4 à 8 semaines sans séance : −10 % et 2 séries cette semaine
+  if (sans >= 4 && sans <= 8 && p.periode !== 'apprentissage' && p.periode !== 'reprise') p = { ...p, series: 2, facteur: 0.9 }
+  // Proche de la course (VO2, spécifique) et en entretien : une séance par semaine au plus, même en (ré)apprentissage
+  if (o.phase === 'fin-prepa' || o.phase === 'specifique' || o.phase === 'entretien') p = { ...p, seances: Math.min(1, p.seances) }
   // Semaine allégée du vélo : mêmes charges, 2 séries (on n'arrête pas)
   if (o.allegee && p.series > 2) p = { ...p, series: 2 }
   return p
@@ -170,12 +189,11 @@ const arrondi = (kg: number, pas: number) => (pas > 0 ? Math.round(kg / pas) * p
  * Charge proposée : la tienne, adaptée si le nombre de répétitions visé change (équivalence d'Epley : 1RM = charge ×
  * (1 + reps / 30)), arrondie au pas de l'exercice (vers le bas). Sans charge connue : à trouver à la 1re séance.
  */
-export function chargeProposee(exo: ExoForce, e: EtatExo | undefined, reps: number): number | undefined {
+export function chargeProposee(exo: ExoForce, e: EtatExo | undefined, reps: number, facteur = 1): number | undefined {
   if (exo.sansCharge || !e?.charge) return undefined
-  if (!e.repsRef || e.repsRef === reps) return e.charge
-  const ratio = (1 + e.repsRef / 30) / (1 + reps / 30)
+  const ratio = !e.repsRef || e.repsRef === reps ? 1 : (1 + e.repsRef / 30) / (1 + reps / 30)
   const pas = exo.pas || 1
-  return Math.floor((e.charge * ratio) / pas) * pas
+  return Math.max(pas, Math.floor((e.charge * ratio * facteur) / pas) * pas)
 }
 
 /**
@@ -219,7 +237,9 @@ export interface SeanceForce {
   lieu: Lieu
   legere?: boolean
   soir?: boolean
+  facteur?: number
+  longue?: boolean
 }
 
-/** Durée estimée (min) : 10 min de mise en route, puis par série ~1 min d'effort + 2-3 min de repos. */
-export const dureeForce = (s: SeanceForce) => Math.round(10 + EXOS[s.lieu].length * s.series * (s.legere ? 2.5 : 3.2))
+/** Durée estimée (min) : 10 min de mise en route, par série ~1 min d'effort + 2-3 min de repos, 8 min de prévention. */
+export const dureeForce = (s: SeanceForce) => Math.round(10 + EXOS[s.lieu].length * s.series * (s.legere ? 2.5 : 3.2) + 8)

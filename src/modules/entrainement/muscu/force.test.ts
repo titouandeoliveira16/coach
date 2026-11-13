@@ -6,17 +6,27 @@ const squat = EXOS.salle.find((e) => e.id === 'squat')!
 const curlSol = EXOS.maison.find((e) => e.id === 'curlsol')!
 
 describe('muscu du cycliste (13/11/2026)', () => {
-  it('périodes : apprentissage 3 semaines, force lourde 10 → 6 → 5, entretien 1 fois, allégée 2 séries, repos après la course', () => {
-    const p = (lundi: string, phase = 'base' as const, allegee = false) => planForce({ debut: '2026-11-16', lundi, phase, allegee, seancesVoulues: 2 })
-    expect(p('2026-11-16')).toMatchObject({ periode: 'apprentissage', series: 2, reps: 12, legere: true, seances: 2 })
-    expect(p('2026-12-07')).toMatchObject({ periode: 'lourd', semaine: 1, series: 3, reps: 10 })
-    expect(p('2027-01-04')).toMatchObject({ periode: 'lourd', reps: 6 })
-    expect(p('2027-02-01')).toMatchObject({ periode: 'lourd', reps: 5 })
-    expect(p('2027-03-01')).toMatchObject({ periode: 'entretien', seances: 1 })
-    expect(planForce({ debut: '2026-11-16', lundi: '2027-01-04', phase: 'base', allegee: true, seancesVoulues: 2 }).series).toBe(2)
-    expect(planForce({ debut: '2026-11-16', lundi: '2027-02-08', phase: 'fin-prepa', allegee: false, seancesVoulues: 2 }).periode).toBe('entretien')
-    expect(planForce({ debut: '2026-11-16', lundi: '2027-04-12', phase: 'affutage', allegee: false, seancesVoulues: 2 })).toMatchObject({ periode: 'affutage', series: 2, seances: 1 })
-    expect(planForce({ debut: '2026-11-16', lundi: '2027-04-26', phase: 'recuperation', allegee: false, seancesVoulues: 2 }).seances).toBe(0)
+  it('périodes : apprentissage 2 semaines, force lourde 10 → 6 → 5, entretien 1 fois, allégée 2 séries, repos après la course', () => {
+    const p = (semainesFaites: number, phase = 'base' as const, allegee = false) => planForce({ semainesFaites, phase, allegee, seancesVoulues: 2 })
+    expect(p(0)).toMatchObject({ periode: 'apprentissage', series: 2, reps: 12, legere: true, seances: 2 })
+    expect(p(2)).toMatchObject({ periode: 'lourd', semaine: 1, series: 3, reps: 10 })
+    expect(p(6)).toMatchObject({ periode: 'lourd', reps: 6 })
+    expect(p(10)).toMatchObject({ periode: 'lourd', reps: 5 })
+    expect(p(14)).toMatchObject({ periode: 'entretien', seances: 1 })
+    expect(p(6, 'base', true).series).toBe(2)
+    expect(p(6, 'fin-prepa' as never).periode).toBe('entretien')
+    expect(p(8, 'affutage' as never)).toMatchObject({ periode: 'affutage', series: 2, seances: 1 })
+    expect(p(8, 'recuperation' as never).seances).toBe(0)
+  })
+  it('arrêt : jusqu’à 3 semaines même charge, 4 à 8 semaines −10 % et 2 séries, au-delà −20 % et 2 semaines légères', () => {
+    const p = (semainesSans: number, repriseEnCours = false) => planForce({ semainesFaites: 6, semainesSans, repriseEnCours, phase: 'base', allegee: false, seancesVoulues: 1 })
+    expect(p(3)).toMatchObject({ periode: 'lourd', series: 3 })
+    expect(p(3).facteur).toBeUndefined()
+    expect(p(5)).toMatchObject({ periode: 'lourd', series: 2, facteur: 0.9 })
+    expect(p(10)).toMatchObject({ periode: 'reprise', series: 2, legere: true, facteur: 0.8, longue: true })
+    expect(p(0, true)).toMatchObject({ periode: 'reprise', series: 3, legere: true })
+    expect(p(0)).toMatchObject({ periode: 'lourd' })
+    expect(chargeProposee(squat, { charge: 60, repsRef: 6 }, 6, 0.9)).toBe(50)
   })
   it('jours : sans vélo, jamais la veille d’une séance clé ni dans les 4 jours avant une course, 2 jours d’écart', () => {
     const roles: Role[] = ['libre', 'velo-dur', 'libre', 'velo-z2', 'libre', 'velo-z2', 'velo-long']
@@ -44,5 +54,5 @@ describe('muscu du cycliste (13/11/2026)', () => {
     expect(chargeProposee(squat, { charge: 60, repsRef: 10 }, 10)).toBe(60)
     expect(chargeProposee(squat, undefined, 10)).toBeUndefined()
   })
-  it('environ 1 h en force lourde', () => expect(dureeForce({ periode: 'lourd', semaine: 1, series: 3, reps: 6, lieu: 'salle' })).toBeLessThanOrEqual(60))
+  it('environ 1 h en force lourde, prévention comprise', () => expect(dureeForce({ periode: 'lourd', semaine: 1, series: 3, reps: 6, lieu: 'salle' })).toBeLessThanOrEqual(70))
 })

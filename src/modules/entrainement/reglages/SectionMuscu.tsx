@@ -1,10 +1,8 @@
-import { aujourdhui, decalerJour } from '../../../core/dates'
 import { useReglage } from '../../../core/reglages'
 import { Aide } from '../../../core/ui/Aide'
 import { AIDES } from '../aides'
 import { EXOS, FORCE_DEFAUT, type Lieu, type ReglagesForce } from '../muscu/force'
 import { recalculerSemainesAVenir } from '../plan/programme'
-import { lundiDe } from '../seances/donnees'
 
 const puce = (actif: boolean) => `rounded-full border px-4 py-1.5 text-sm ${actif ? 'border-muscu bg-muscu font-semibold text-fond' : 'border-bordure text-texte-2'}`
 
@@ -15,12 +13,9 @@ export function SectionMuscu() {
     await modifier(m)
     await recalculerSemainesAVenir()
   }
-  const activer = () => {
-    // On commence cette semaine jusqu'au mercredi, sinon lundi prochain
-    const j = new Date(`${aujourdhui()}T12:00:00`).getDay()
-    const debut = j >= 1 && j <= 3 ? lundiDe(aujourdhui()) : decalerJour(lundiDe(aujourdhui()), 7)
-    return changer({ actif: !f.actif, ...(!f.actif && !f.debut ? { debut } : {}) })
-  }
+  // Réactivée plus tard : tes charges sont gardées ; le temps passé sans séance est rattrapé (même charge jusqu'à 3
+  // semaines, −10 % jusqu'à 8, au-delà −20 % et 2 semaines légères)
+  const activer = () => changer({ actif: !f.actif })
   return (
     <section className={`rounded-2xl border bg-surface p-3.5 ${f.actif ? 'border-muscu' : 'border-bordure'}`}>
       <div className="flex items-center justify-between">
@@ -42,7 +37,8 @@ export function SectionMuscu() {
           </div>
           <p className="mt-2 text-xs text-texte-3">{EXOS[f.lieu].map((e) => e.nom).join(' · ')}</p>
           <p className="mt-3 text-[13px] text-texte-2">Placée sur un jour sans vélo ; sinon le soir d’une séance dure, 3 h après au moins. Jamais la veille d’une séance clé.</p>
-          <p className="mt-1 text-xs text-texte-3">Apprentissage 3 semaines → force lourde 12 semaines → entretien 1 fois par semaine → rien dans les 4 jours avant ta course. Semaine allégée du vélo : mêmes charges, 2 séries.</p>
+          <p className="mt-1 text-xs text-texte-3">Apprentissage 2 semaines → force lourde 12 semaines → entretien 1 fois par semaine → rien dans les 4 jours avant ta course. Le programme avance avec les semaines faites. Semaine allégée du vélo : mêmes charges, 2 séries.</p>
+          <p className="mt-1 text-xs text-texte-3">Séance ou semaine manquée : on reprend à la même charge. Arrêt plus long : jusqu’à 3 semaines, même charge ; 4 à 8 semaines, −10 % ; au-delà, −20 % et 2 semaines légères. Tes charges restent gardées si tu désactives la muscu.</p>
         </>
       )}
     </section>

@@ -151,6 +151,8 @@ describe('audit vraie vie', () => {
         // La semaine vécue
         const semaineVecue = (await db.prevues.where('date').between(l, decalerJour(l, 6), true, true).toArray()).filter((x) => x.sport === 'velo' && x.origine === 'auto' && x.statut === 'prevue')
         const malade = vraieVie && alea() < 0.06
+        // Muscu faite (sauf semaine malade, et une fois sur 6 en vraie vie)
+        for (const m of muscus) if (!malade && !(vraieVie && alea() < 0.17)) await db.prevues.put({ ...m, statut: 'faite' })
         const rouges = vraieVie && alea() < 0.2 ? 2 : 0
         for (const [i, s] of semaineVecue.sort((a, b) => a.date.localeCompare(b.date)).entries()) {
           if (i < rouges) await db.decisions.put({ date: s.date, couleur: 'rouge', force: true } as never)

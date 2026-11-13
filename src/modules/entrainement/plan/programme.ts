@@ -613,8 +613,13 @@ async function genererSemaineVeloBrute(lundi: string) {
 
   // Muscu reliée à l'Entraînement (13/11/2026) : un jour sans vélo, jamais la veille d'une séance clé
   const force = (await db.reglages.get('force'))?.valeur as ReglagesForce | undefined
-  if (force?.actif && force.debut) {
-    const plan = planForce({ debut: force.debut, lundi, phase: phase.type, allegee, seancesVoulues: force.seances })
+  if (force?.actif) {
+    // Le programme avance avec les semaines vraiment faites ; un arrêt se rattrape (charges et reprise)
+    const faitesAvant = (await db.prevues.where('date').below(lundi).toArray()).filter((p) => p.muscu && p.statut === 'faite').sort((a, b) => a.date.localeCompare(b.date))
+    const semainesFaites = new Set(faitesAvant.map((p) => lundiDe(p.date))).size
+    const derniere = faitesAvant.at(-1)
+    const semainesSans = derniere ? Math.max(0, Math.round(ecartJours(lundiDe(derniere.date), lundi) / 7) - 1) : 0
+    const plan = planForce({ semainesFaites, semainesSans, repriseEnCours: !!derniere?.muscu?.longue && semainesSans === 0, phase: phase.type, allegee, seancesVoulues: force.seances })
     const faitesForce = (await db.prevues.where('date').between(lundi, semaine[6], true, true).toArray()).filter((p) => p.sport === 'renfo' && p.muscu && p.statut === 'faite').length
     const cles = [placement.intensite, intensite2?.date, placement.long, dateTest, ...competitions].filter((d): d is string => !!d)
     const jours = joursMuscu({
@@ -622,10 +627,10 @@ async function genererSemaineVeloBrute(lundi: string) {
       courses: prog.competitions.map((x) => x.date), indispos: [...indispos],
     }).filter((j) => j.date >= aPartirDe)
     for (const j of jours) {
-      const sf: SeanceForce = { periode: plan.periode, semaine: plan.semaine, series: plan.series, reps: plan.reps, lieu: force.lieu, legere: plan.legere, soir: j.soir }
+      const sf: SeanceForce = { periode: plan.periode, semaine: plan.semaine, series: plan.series, reps: plan.reps, lieu: force.lieu, legere: plan.legere, soir: j.soir, ...(plan.facteur ? { facteur: plan.facteur } : {}), ...(plan.longue ? { longue: true } : {}) }
       await enregistrer(db.prevues, {
         id: `auto-${j.date}-muscu`, date: j.date, sport: 'renfo', titre: `Muscu · ${NOMS_PERIODES[plan.periode]}`,
-        detail: `${plan.series} × ${plan.reps} répétitions${plan.legere ? ' légères' : ' lourdes'} · ${EXOS[force.lieu].length} exercices${j.soir ? ' · le soir, 3 h après le vélo au moins' : ''}`,
+        detail: `${plan.series} × ${plan.reps} répétitions${plan.legere ? ' légères' : ' lourdes'} · ${EXOS[force.lieu].length} exercices + prévention${plan.facteur ? ` · reprise : charges à ${Math.round(plan.facteur * 100)} %` : ''}${j.soir ? ' · le soir, 3 h après le vélo au moins' : ''}`,
         dureeMin: dureeForce(sf), intensite: 'moyenne', priorite: 'normale', statut: 'prevue', origine: 'auto', muscu: sf,
       } satisfies SeancePrevue)
     }

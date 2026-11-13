@@ -6,7 +6,7 @@ de conversation quand il faut s'en servir. Ici ne restent que les chantiers tech
 
 ## Audit du 11/11/2026 (voir AUDIT.md)
 - Plan de correction en 9 étapes, suivi dans AUDIT.md.
-- Supabase : exécuter `sql/05-synchro-seq.sql` et `sql/06-rappels-secret.sql`, puis redéployer la fonction `rappels`.
+- Supabase : exécuter `sql/05-synchro-seq.sql` si ce n'est pas déjà fait (`sql/06-rappels-secret.sql` : fait le 13/11/2026, rappels vérifiés).
 
 ## Chantiers techniques en attente
 - Mode sans capteur de puissance (FC / RPE, charge en sRPE) pour les comptes invités.
