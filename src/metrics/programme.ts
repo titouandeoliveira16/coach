@@ -93,11 +93,11 @@ export const FORMATS: Format[] = (catalogue.seances as { id: string; disciplines
 export const formatDe = (id: string) => FORMATS.find((f) => f.id === id)
 
 /**
- * Échauffement et retour au calme des séances d'intensité, selon la qualité travaillée :
- *  - seuil, sweet spot, tempo : 15' progressives avec 1' à 95 % (Burnley 2005) ;
- *  - VO2 : 20', dont 3 × 30" à 110 % puis 5' faciles avant la 1re répétition (Bailey 2009 : le « priming »
- *    aide si l'on récupère assez, il gêne avec 3' seulement) ;
- *  - retour au calme dégressif de 55 à 45 % (Van Hooren & Peake 2018 : confort, peu d'effet sur le lendemain).
+ * Échauffement et retour au calme des séances d'intensité (relu le 13/11/2026, demande de Titouan : temps compté) :
+ *  - 10' au plus : quelques minutes progressives, puis 1' au seuil (seuil, sweet spot) ou 3 accélérations de 20"
+ *    (VO2), puis 2' souples. Rien ne montre qu'un échauffement plus long fait mieux (Fradkin 2010 ; Bunn 2017 : 3 ou
+ *    10' pareil sur un 5 km ; un échauffement long et dur fatigue, Tomaras & MacIntosh 2011) ;
+ *  - retour au calme 5' : confort seulement (Van Hooren & Peake 2018).
  */
 export type Preparation = 'seuil' | 'vo2'
 /** Repère de cadence (Hansen & Rønnestad 2017, Lucía 2004 : plus haute sur les efforts durs, jamais imposée). */
@@ -105,26 +105,25 @@ export const CADENCE_VO2 = '90-105'
 export const CADENCE_SEUIL = '85-95'
 export const preparationDe = (f: Format): Preparation => (f.famille.startsWith('vo2') || f.famille === 'relances' || f.famille === 'sprints' ? 'vo2' : 'seuil')
 type Morceau = [dureeSec: number, pctCp: number, libelle: string]
-const BASE: Morceau[] = [[300, 0.5, 'Échauffement, très facile'], [240, 0.65, 'Échauffement, facile'], [180, 0.8, 'Échauffement, modéré']]
+const BASE: Morceau[] = [[180, 0.5, 'Échauffement, très facile'], [120, 0.65, 'Échauffement, facile'], [120, 0.8, 'Échauffement, modéré']]
 const CADENCES_ECHAUFFEMENT: Record<number, string> = { 0.95: CADENCE_SEUIL, 1.1: CADENCE_VO2 }
 const ECHAUFFEMENTS: Record<Preparation, Morceau[]> = {
   seuil: [...BASE, [60, 0.95, "Échauffement : 1' au rythme du seuil"], [120, 0.55, 'Souffle, pédale souple avant le premier bloc']],
   vo2: [
-    ...BASE,
-    ...[1, 2, 3].flatMap((i): Morceau[] => [[30, 1.1, `Échauffement : accélération ${i}/3 (30")`], [30, 0.55, '30" facile']]),
-    [300, 0.55, 'Souffle cinq minutes, pédale souple avant la première répétition'],
+    [180, 0.5, 'Échauffement, très facile'], [120, 0.65, 'Échauffement, facile'], [60, 0.8, 'Échauffement, modéré'],
+    ...[1, 2, 3].flatMap((i): Morceau[] => [[20, 1.1, `Échauffement : accélération ${i}/3 (20")`], [20, 0.55, '20" facile']]),
+    [120, 0.55, 'Souffle deux minutes, pédale souple avant la première répétition'],
   ],
 }
 const RETOURS: Record<Preparation, Morceau[]> = {
-  seuil: [[180, 0.55, 'Retour au calme, en relâchant peu à peu'], [240, 0.45, 'Retour au calme, très facile']],
-  vo2: [[180, 0.55, 'Retour au calme, en relâchant peu à peu'], [180, 0.5, 'Retour au calme, facile'], [240, 0.45, 'Retour au calme, très facile']],
+  seuil: [[120, 0.55, 'Retour au calme, en relâchant peu à peu'], [180, 0.45, 'Retour au calme, très facile']],
+  vo2: [[120, 0.55, 'Retour au calme, en relâchant peu à peu'], [180, 0.45, 'Retour au calme, très facile']],
 }
 const somme = (l: Morceau[]) => l.reduce((t, [d]) => t + d, 0)
 export const echauffementSec = (pr: Preparation) => somme(ECHAUFFEMENTS[pr])
 export const retourSec = (pr: Preparation) => somme(RETOURS[pr])
-/** Ancien échauffement + retour au calme (25') : sert à choisir le palier, pour qu'un échauffement plus long
- *  ne retire pas de répétition. */
-const ENCADREMENT_PALIER_SEC = 25 * 60
+/** Échauffement + retour au calme (15') : sert à choisir le palier qui tient dans ton créneau. */
+const ENCADREMENT_PALIER_SEC = 15 * 60
 
 const arrondi5 = (w: number) => Math.round(w / 5) * 5
 const enMin = (sec: number) => (sec % 60 ? `${Math.floor(sec / 60)}'${String(sec % 60).padStart(2, '0')}` : `${sec / 60}'`)
@@ -429,12 +428,12 @@ export function construireEquivalentCourse(c: { intensite: string; typeCourse?: 
   const w = arrondi5(cpW * pct)
   const plageFamille = famille === 'vo2-courts' ? 'vo2-courts' : famille === 'seuil' ? 'seuil' : 'seuil-plus'
   const { etapes, dureeMin, kj } = enchainer([
-    { dureeSec: 900, libelle: 'Échauffement progressif, 2 accélérations de 30" à la fin', w: wEch },
+    { dureeSec: 600, libelle: 'Échauffement progressif, 2 accélérations de 20" à la fin', w: wEch },
     {
       dureeSec: reps * min * 60 + (reps - 1) * recup, w, libelle: `${reps} × ${min}' à ${w} W, ${Math.round(recup / 60)}' faciles entre`,
       repetition: { fois: reps, derniere: 1, etapes: [{ dureeSec: min * 60, libelle: 'Effort', w, ...plage(w, plageFamille), cadence: '90-105' }, { dureeSec: recup, libelle: 'Facile', w: facile }] },
     },
-    { dureeSec: 600, libelle: 'Retour au calme', w: wEch },
+    { dureeSec: 300, libelle: 'Retour au calme', w: wEch },
   ], z2W)
   const titre = `${reps} × ${min}' à ${w} W (à la place de la course)`
   return {
@@ -1057,7 +1056,9 @@ export function etatProgression(histo: HistoIntensite[], datesTestsCp: string[] 
         e.palier = 1
       } else e.palier = Math.max(e.palier, h.palier + 1)
     } else {
+      // Raté (13/11/2026) : on ne remonte pas au-dessus du palier raté (il avait pu être réduit pour tenir dans le créneau)
       e.bonus -= 0.05
+      e.palier = Math.min(e.palier, h.palier)
     }
   }
   // Test passé après la dernière séance
@@ -1116,7 +1117,9 @@ export function budgetSemaine(prec: BilanSemaine | undefined, nominal: number, p
       raison = `+${(hausse * 100).toLocaleString('fr-FR')} % : budget de la semaine dernière validé`
     }
   }
-  const borne = Math.min(plafond, Math.max(nominal * 0.6, ref))
+  // Jamais sous 60 % de la semaine type, mais sans remonter de plus de 10 % d'un coup (audit « vraie vie » du 13/11/2026 :
+  // un changement de phase faisait sauter le budget de +12 %)
+  const borne = Math.min(plafond, Math.max(prec ? Math.min(nominal * 0.6, prec.budgetRef * 1.1) : nominal * 0.6, ref))
   if (borne < ref) raison += ' (plafonné par tes créneaux)'
   ref = Math.round(borne)
   return { budgetRef: ref, budget: Math.round(allegee ? ref * 0.65 : ref), raison: allegee ? `${raison} · ${raisonAllegee} : −35 %` : raison }
@@ -1868,7 +1871,7 @@ export const PALIERS_SV1_DEDIE: { reps: number; min: number }[] = [
   { reps: 4, min: 10 }, { reps: 3, min: 15 }, { reps: 4, min: 15 }, { reps: 3, min: 20 }, { reps: 5, min: 20 }, { reps: 3, min: 30 },
 ]
 const recupSv1Dedie = (min: number) => (min >= 20 ? 4 : 3)
-export const dureeSv1Dediee = (p: { reps: number; min: number }) => 15 + p.reps * p.min + (p.reps - 1) * recupSv1Dedie(p.min) + 10
+export const dureeSv1Dediee = (p: { reps: number; min: number }) => 10 + p.reps * p.min + (p.reps - 1) * recupSv1Dedie(p.min) + 5
 
 export function construireSv1Dediee(palier: number, maxMin: number, sv1W: number, z2W: number, fc?: [number, number]): SeanceConstruite {
   // Le palier visé, sinon le plus grand qui tient dans ton créneau
@@ -1879,7 +1882,7 @@ export function construireSv1Dediee(palier: number, maxMin: number, sv1W: number
   const wEch = arrondi5(z2W * 0.85)
   const pl = plage(sv1W, 'tempo')
   const { etapes, kj } = enchainer([
-    { dureeSec: 900, libelle: 'Mise en route progressive', w: wEch },
+    { dureeSec: 600, libelle: 'Mise en route en Z2 basse', w: wEch },
     {
       dureeSec: (p.reps * p.min + (p.reps - 1) * recup) * 60, w: sv1W, libelle: `${p.reps} × ${p.min}′ au 1er seuil, ${recup}′ faciles entre`,
       repetition: {
@@ -1890,7 +1893,7 @@ export function construireSv1Dediee(palier: number, maxMin: number, sv1W: number
         ],
       },
     },
-    { dureeSec: 600, libelle: 'Retour au calme', w: wEch },
+    { dureeSec: 300, libelle: 'Retour au calme', w: wEch },
   ], z2W)
   const dureeMin = dureeSv1Dediee(p)
   return {
