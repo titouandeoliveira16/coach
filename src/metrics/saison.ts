@@ -9,10 +9,10 @@ import { decaler } from './vfc'
  * récupération (1 sem.) → entretien.
  *  - Reprise (sans intensité) : selon la coupure, 0 (1 semaine ou moins), 1 (2-3), 2 (4-6) ou 4 (plus) ; 4 pour un
  *    débutant, 2 si tu ne roulais pas encore régulièrement.
- *  - Base (relecture du 10/11/2026) : quand la course est loin, 4 à 10 semaines d'endurance avec 1 rappel d'intensité
- *    par semaine (la VO2max s'entretient avec l'intensité : Hickson 1985, Rønnestad 2014) au lieu d'une longue reprise.
- *  - Tirer le seuil : 40 % du temps restant, 4 semaines au plus ; allonger le seuil : le reste, 8 semaines au plus ;
- *    au-delà, de l'entretien juste après la reprise.
+ *  - Cycle 1er seuil (relu le 13/11/2026) : autant de semaines que le 2e seuil (4 à 10), 2 séances au 1er seuil par
+ *    semaine (dédiée + blocs dans la sortie longue) et 1 rappel VO2 court (Rønnestad 2014 ; Spiering 2021).
+ *  - 2e seuil : tirer (2 à 4 semaines) puis allonger le maintien, 10 semaines au plus ; au-delà, de l'entretien au début.
+ *  - Reprise seulement après un vrai arrêt, moins les semaines déjà roulées depuis (13/11/2026).
  *  - Tests CP : 1re semaine, puis au début des blocs, 5 à 8 semaines d'écart ; test court au début de « allonger le
  *    seuil » (il donne la nouvelle CP) ; jamais en affûtage.
  * Les durées exactes sont des choix d'entraîneur.
@@ -26,6 +26,8 @@ export interface EntreeSaison {
   entraine?: boolean
   /** Semaines sans vélo juste avant (0 si aucune) */
   arretSemaines?: number
+  /** Semaines déjà roulées régulièrement depuis la fin de l'arrêt : retirées de la reprise (13/11/2026) */
+  repriseFaite?: number
   debutant?: boolean
   /** Jour de la sortie longue (tests complets) et de la séance dure (tests courts) : 0 = lundi … 6 = dimanche */
   jourLong?: number
@@ -56,14 +58,16 @@ export function dureesPhases(n: number, repriseLongue = false, entraine = false,
   reste -= d['fin-prepa']
   d.reprise = Math.min(reste, semainesReprise ?? (repriseLongue ? 4 : entraine ? 0 : 2))
   reste -= d.reprise
-  // Cycle 1er seuil : la base de tout, dès qu'il reste plus de 4 semaines (4 à 10, en cycles de 4 quand c'est possible)
-  d.base = reste <= 4 ? 0 : Math.min(10, Math.max(4, Math.round((reste - 4) / 2 / 4) * 4))
-  const seuil = Math.min(12, reste - d.base)
-  d['seuil-tirage'] = seuil <= 2 ? seuil : seuil <= 4 ? 2 : 4
+  // Cycle 1er seuil : la base de tout, dès qu'il reste plus de 4 semaines. Autant de 1er seuil que de 2e seuil (13/11/2026,
+  // la semaine en plus au 1er seuil), 4 à 10 semaines chacun (Filipas 2022 : 8 + 8 ; durées = choix d'entraîneur)
+  d.base = reste <= 4 ? 0 : Math.min(10, Math.max(4, Math.ceil(reste / 2)))
+  const seuil = Math.min(10, reste - d.base)
+  // 2e seuil : tirer (2 à 4 semaines) puis allonger le maintien
+  d['seuil-tirage'] = seuil <= 2 ? seuil : seuil <= 4 ? 2 : Math.min(4, Math.ceil(seuil / 2))
   d['seuil-maintien'] = seuil - d['seuil-tirage']
   d.entretien = reste - d.base - seuil
-  // Quelques semaines de trop : elles vont au cycle 1er seuil (jusqu'à 10) plutôt qu'à de l'entretien
-  const vers1erSeuil = Math.min(d.entretien, 10 - d.base)
+  // Quelques semaines de trop : elles vont au cycle 1er seuil (jusqu'à 12) plutôt qu'à de l'entretien
+  const vers1erSeuil = Math.min(d.entretien, 12 - d.base)
   d.base += vers1erSeuil
   d.entretien -= vers1erSeuil
   return d
@@ -75,7 +79,9 @@ export function calculerSaison(e: EntreeSaison) {
   const n = semainesEntre(l0, lc) + 1
   // Reprise selon la coupure (12/11/2026) : 0, 1, 2 ou 4 semaines ; 4 pour un débutant, 2 si tu ne roulais pas encore régulièrement
   const arret = e.arretSemaines ?? 0
-  const reprise = e.debutant ? 4 : e.entraine || arret >= 2 ? repriseSelonCoupure(arret) : 2
+  // Semaines déjà roulées depuis l'arrêt : retirées (pas de reprise faite deux fois, 13/11/2026)
+  const brute = e.debutant ? 4 : e.entraine || arret >= 2 ? repriseSelonCoupure(arret) : 2
+  const reprise = Math.max(0, brute - (e.repriseFaite ?? 0))
   const d = dureesPhases(n, arret >= 4 || !!e.debutant, !!e.entraine && !e.debutant && arret < 2, reprise)
   const phases: Phase[] = []
   let l = l0
@@ -227,9 +233,16 @@ export function chargeHabituelle(semaines: SemaineVecue[]) {
   }
   if (!meilleur || meilleur.moyenne < 300) return undefined
   const habituelle = Math.round(meilleur.moyenne / 10) * 10
-  const coupure = semaines.slice(meilleur.fin + 1).filter((s) => !s.legere && s.kj < habituelle * 0.5).length
+  const apres = semaines.slice(meilleur.fin + 1).filter((s) => !s.legere)
+  const coupure = apres.filter((s) => s.kj < habituelle * 0.5).length
   const facteur = facteurCoupure(coupure)
-  return { habituelle, coupure, facteur, plancher: Math.round((habituelle * facteur) / 10) * 10 }
+  // Reprise (13/11/2026, choix d'entraîneur relu) : une semaine d'arrêt = presque pas de vélo (moins de 20 % de ta charge
+  // habituelle) ; les semaines roulées depuis le dernier arrêt (40 % ou plus) comptent comme reprise déjà faite
+  const arretee = (s: SemaineVecue) => s.kj < habituelle * 0.2
+  const arret = apres.filter(arretee).length
+  const dernier = apres.map(arretee).lastIndexOf(true)
+  const repriseFaite = dernier < 0 ? 0 : apres.slice(dernier + 1).filter((s) => s.kj >= habituelle * 0.4).length
+  return { habituelle, coupure, facteur, plancher: Math.round((habituelle * facteur) / 10) * 10, arret, repriseFaite }
 }
 
 /**

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { calculerSaison, datesCoursesA, dureesPhases, lireHistorique, migrerBase, phasesAvecCoursesA } from './saison'
+import { calculerSaison, chargeHabituelle, datesCoursesA, dureesPhases, lireHistorique, migrerBase, phasesAvecCoursesA } from './saison'
 import { estSemaineAllegee, coefficientPhase, phaseDe } from './programme'
 import { decalerJour } from '../core/dates'
 
@@ -7,16 +7,27 @@ describe('saison calculée depuis la course', () => {
   it('durées selon les semaines disponibles', () => {
     const vide = { reprise: 0, base: 0, entretien: 0, 'seuil-tirage': 0, 'seuil-maintien': 0, 'fin-prepa': 0, specifique: 0, affutage: 0 }
     // Prépa hivernale Methodic (relecture du 10/11/2026) : VO2 3, spécifique 3, affûtage 2 ; 2e seuil tirée puis poussée ;
-    // cycle 1er seuil 4-10 ; reprise 0 si tu roulais déjà, 2 sinon
+    // cycle 1er seuil autant que le 2e seuil (13/11/2026), 4-10 chacun, jusqu'à 12 au 1er seuil avant de l'entretien ; reprise 0 si tu roulais déjà, 2 sinon
     expect(dureesPhases(12, false, true)).toEqual({ ...vide, 'seuil-tirage': 2, 'seuil-maintien': 2, 'fin-prepa': 3, specifique: 3, affutage: 2 })
-    expect(dureesPhases(20, false, true)).toEqual({ ...vide, base: 4, 'seuil-tirage': 4, 'seuil-maintien': 4, 'fin-prepa': 3, specifique: 3, affutage: 2 })
-    expect(dureesPhases(28, false, true)).toEqual({ ...vide, base: 8, 'seuil-tirage': 4, 'seuil-maintien': 8, 'fin-prepa': 3, specifique: 3, affutage: 2 })
-    expect(dureesPhases(40, false, true)).toMatchObject({ reprise: 0, base: 10, entretien: 10 })
-    expect(dureesPhases(30, false, true)).toMatchObject({ reprise: 0, base: 10, entretien: 0 })
-    expect(dureesPhases(28)).toMatchObject({ reprise: 2, base: 8 })
+    expect(dureesPhases(20, false, true)).toEqual({ ...vide, base: 6, 'seuil-tirage': 3, 'seuil-maintien': 3, 'fin-prepa': 3, specifique: 3, affutage: 2 })
+    expect(dureesPhases(24, false, true)).toEqual({ ...vide, base: 8, 'seuil-tirage': 4, 'seuil-maintien': 4, 'fin-prepa': 3, specifique: 3, affutage: 2 })
+    expect(dureesPhases(28, false, true)).toEqual({ ...vide, base: 10, 'seuil-tirage': 4, 'seuil-maintien': 6, 'fin-prepa': 3, specifique: 3, affutage: 2 })
+    expect(dureesPhases(40, false, true)).toMatchObject({ reprise: 0, base: 12, entretien: 10 })
+    expect(dureesPhases(30, false, true)).toMatchObject({ reprise: 0, base: 12, 'seuil-tirage': 4, 'seuil-maintien': 6, entretien: 0 })
+    expect(dureesPhases(28)).toMatchObject({ reprise: 2, base: 9, 'seuil-tirage': 4, 'seuil-maintien': 5 })
     expect(dureesPhases(6)).toMatchObject({ reprise: 0, 'fin-prepa': 1, specifique: 3, affutage: 2 })
     expect(dureesPhases(20, true).reprise).toBe(4)
     expect(dureesPhases(2)).toMatchObject({ affutage: 2, specifique: 0 })
+  })
+  it('reprise : seulement après un vrai arrêt, moins les semaines déjà roulées (13/11/2026)', () => {
+    // 2,5 semaines d'arrêt (→ 1 semaine de reprise), puis 3 semaines roulées : plus de reprise
+    const s = calculerSaison({ debut: '2026-11-09', course: '2027-04-25', entraine: true, arretSemaines: 3, repriseFaite: 3 })
+    expect(s.phases.map((p) => p.type).slice(0, 3)).toEqual(['base', 'seuil-tirage', 'seuil-maintien'])
+    // Arrêt de 2 mois sans avoir repris : 4 semaines
+    expect(calculerSaison({ debut: '2026-11-09', course: '2027-04-25', arretSemaines: 8 }).phases[1].debut).toBe('2026-12-07')
+    // Charge habituelle : semaines d'arrêt (< 20 %) et semaines déjà roulées depuis (≥ 40 %)
+    const h = chargeHabituelle([...Array(4).fill({ kj: 4000 }), ...Array(3).fill({ kj: 300 }), ...Array(3).fill({ kj: 1800 })])!
+    expect(h).toMatchObject({ habituelle: 4000, arret: 3, repriseFaite: 3, coupure: 6 })
   })
   it('phases dans l’ordre, affûtage jusqu’à la course, récupération après', () => {
     // Inscription lundi 9/11/2026, course dimanche 14/02/2027 (lundi 8/02) : 14 semaines

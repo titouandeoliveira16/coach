@@ -76,7 +76,7 @@ function zonesFc(fcMax: number): { fcMin?: number; fcMax?: number }[] {
 }
 
 /** Tout ce que le questionnaire enregistre (pur : testé). */
-export function preparerArrivee(r: ReponsesArrivee, jour: string, testsFaits: ReglagesEntrainement['tests'] = [], historique?: { entraine: boolean; budgetDepart?: number; coupure?: number }) {
+export function preparerArrivee(r: ReponsesArrivee, jour: string, testsFaits: ReglagesEntrainement['tests'] = [], historique?: { entraine: boolean; budgetDepart?: number; coupure?: number; arret?: number; repriseFaite?: number }) {
   const age = ageAu(r.naissance, jour)
   const fcMax = r.fcMax ?? fcMaxTanaka(age)
   const cpW = r.cpW ?? cpProvisoire(r.poidsKg)
@@ -99,7 +99,7 @@ export function preparerArrivee(r: ReponsesArrivee, jour: string, testsFaits: Re
   // Deux courses A ou plus : la préparation vise la 1re, puis récupération et bloc jusqu'à la suivante
   const premiereA = datesCoursesA([...(r.sansCourse ? [] : [principale]), ...(r.autresCourses ?? [])])[0] ?? r.course.date
   const saison = calculerSaison({
-    debut: jour, course: premiereA, arretSemaines: Math.max(r.arretSemaines, historique?.coupure ?? 0), debutant: niveauDuProfil(ps) === 'debutant', entraine: historique?.entraine,
+    debut: jour, course: premiereA, arretSemaines: Math.max(r.arretSemaines, historique?.arret ?? 0), repriseFaite: historique?.repriseFaite, debutant: niveauDuProfil(ps) === 'debutant', entraine: historique?.entraine,
     jourLong: jourLong >= 0 ? jourLong : 6, jourDur: jourDur >= 0 ? jourDur : 1, aujourdhui: jour,
   })
   // CP déjà testée ces 4 dernières semaines (compte déjà utilisé) : pas de nouveau test dans les 2 premières semaines
@@ -175,7 +175,7 @@ export async function reponsesExistantes() {
  * (12/11/2026, 4 meilleures semaines d'affilée sur 12) : budget de départ au moins à la part qui va avec ta coupure,
  * et la coupure vue dans tes séances règle la reprise.
  */
-export async function historiqueRecent(jour: string, cpW: number, semaineType: Role[], phases: Phase[] = []): Promise<{ entraine: boolean; budgetDepart?: number; coupure?: number }> {
+export async function historiqueRecent(jour: string, cpW: number, semaineType: Role[], phases: Phase[] = []): Promise<{ entraine: boolean; budgetDepart?: number; coupure?: number; arret?: number; repriseFaite?: number }> {
   const lundi = decalerJour(jour, -((new Date(`${jour}T12:00:00`).getDay() + 6) % 7))
   const debut = decalerJour(lundi, -28)
   const seances = (await db.seances.where('date').between(debut, decalerJour(lundi, -1), true, true).toArray()).filter((s) => s.sport === 'velo')
@@ -188,10 +188,13 @@ export async function historiqueRecent(jour: string, cpW: number, semaineType: R
   const nZ2 = semaineType.filter((x) => x === 'velo-z2').length
   const nominal = (0.62 * cpW * 60 * (60 * nZ2 + 100) + 0.8 * cpW * 60 * 45) / 1000
   const h = lireHistorique(semaines, nominal)
+  // Reprise déjà faite (13/11/2026) : dernières semaines d'affilée avec 3 sorties ou plus
+  let regulieres = 0
+  for (const sem of [...semaines].reverse()) { if (sem.sorties < 3) break; regulieres++ }
   const dep = await chargeDeDepart(lundi, phases)
-  if (!dep) return h
+  if (!dep) return { ...h, repriseFaite: regulieres }
   const budgetDepart = Math.max(h.budgetDepart ?? 0, dep.plancher)
-  return { entraine: h.entraine, budgetDepart, coupure: dep.coupure }
+  return { entraine: h.entraine, budgetDepart, coupure: dep.coupure, arret: dep.arret, repriseFaite: Math.max(regulieres, dep.repriseFaite) }
 }
 
 /** Réglage « arrivee » : le questionnaire est fait (sinon il s'affiche à l'ouverture d'un compte créé avec un code). */
@@ -272,6 +275,22 @@ export async function migrerSaisonV4() {
 }
 
 /**
+ * Cycle 1er seuil aussi long que le 2e seuil, reprise seulement après un vrai arrêt (13/11/2026) : une saison qui n'a pas
+ * encore commencé le 2e seuil est recalculée une fois depuis cette semaine. Courses et tests gardés.
+ */
+export async function migrerSaisonV5() {
+  const e = (await db.reglages.get('entrainement'))?.valeur as ReglagesEntrainement | undefined
+  const prog = e?.programme
+  if (!e || !prog || prog.modele !== 'chauvin' || prog.saisonV5 || !prog.saisonV4 || !prog.phases?.length) return
+  const lundi = decalerJour(aujourdhui(), -((new Date(`${aujourdhui()}T12:00:00`).getDay() + 6) % 7))
+  const { phase } = phaseDe(lundi, prog.phases)
+  const avantLe2eSeuil = phase.type === 'reprise' || phase.type === 'base' || (phase.type === 'entretien' && !prog.phases.some((p) => p.debut < lundi && p.type !== 'entretien' && p.type !== 'reprise'))
+  if (avantLe2eSeuil) await recalculerSaison(true)
+  const apres = (await db.reglages.get('entrainement'))?.valeur as ReglagesEntrainement | undefined
+  if (apres?.programme && !apres.programme.saisonV5) await enregistrer(db.reglages, { id: 'entrainement', valeur: { ...apres, programme: { ...apres.programme, saisonV5: true } } })
+}
+
+/**
  * Sorties venues de Strava absentes de l'historique (Intervals ne les transmet pas) : relu une fois par jour pendant
  * 30 jours. Dès que l'historique est nettement plus complet (montre reliée directement à Intervals), la saison en
  * reprise (ou commencée cette semaine) est recalculée. Courses et tests gardés.
@@ -314,7 +333,7 @@ export async function recalculerSaison(garderTests = false) {
   const jourLong = prog.semaineType.indexOf('velo-long')
   const jourDur = prog.semaineType.indexOf('velo-dur')
   const saison = calculerSaison({
-    debut: jour, course: a.date, arretSemaines: historique.coupure, debutant: niveauDuProfil(ps) === 'debutant', entraine: historique.entraine,
+    debut: jour, course: a.date, arretSemaines: historique.arret, repriseFaite: historique.repriseFaite, debutant: niveauDuProfil(ps) === 'debutant', entraine: historique.entraine,
     jourLong: jourLong >= 0 ? jourLong : 6, jourDur: jourDur >= 0 ? jourDur : 1, aujourdhui: jour,
   })
   if ((e.tests ?? []).some((t) => t.type === 'cp' && t.date <= jour && ecartJours(t.date, jour) <= 28)) {
@@ -326,7 +345,7 @@ export async function recalculerSaison(garderTests = false) {
   const lundi = decalerJour(jour, -((new Date(`${jour}T12:00:00`).getDay() + 6) % 7))
   const passees = prog.phases.filter((p) => p.debut < lundi)
   const phases = [...passees, ...phasesAvecCoursesA(saison.phases, datesCoursesA(prog.competitions.map((c) => ({ ...c, niveau: niveaux.get(c.date) }))))]
-  await enregistrer(db.reglages, { id: 'entrainement', valeur: { ...e, programme: { ...prog, phases, ...(garderTests ? {} : { testsCp: [...prog.testsCp.filter((d) => d < lundi), ...saison.testsCp], testsCourts: [...(prog.testsCourts ?? []).filter((d) => d < lundi), ...saison.testsCourts] }), saisonV2: true, saisonV3: true, saisonV4: true } } })
+  await enregistrer(db.reglages, { id: 'entrainement', valeur: { ...e, programme: { ...prog, phases, ...(garderTests ? {} : { testsCp: [...prog.testsCp.filter((d) => d < lundi), ...saison.testsCp], testsCourts: [...(prog.testsCourts ?? []).filter((d) => d < lundi), ...saison.testsCourts] }), saisonV2: true, saisonV3: true, saisonV4: true, saisonV5: true } } })
   const { recalculerSemainesAVenir } = await import('../plan/programme')
   await recalculerSemainesAVenir()
 }

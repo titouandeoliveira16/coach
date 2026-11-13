@@ -1872,6 +1872,6 @@ export function construireSv1Dediee(palier: number, maxMin: number, sv1W: number
   return {
     titre: `Cycle 1er seuil : ${p.reps} × ${p.min}′ à ${sv1W} W`, dureeMin, kj,
     detail: `${p.reps} × ${p.min}′ à ${sv1W} W${fc ? ` · FC ${fc[0]}-${fc[1]}` : ''} · ${recup}′ faciles entre · effort linéaire, sans dérive du cœur (RPE 4-6)`,
-    velo: { famille: 'z2', formatId: 'sv1-dedie', cibleW: sv1W, sv1W, blocsSv1: p.reps, ...(fc ? { fcSv1: fc } : {}), etapes, pourquoi: 'Cycle 1er seuil (prépa hivernale) : la base de tout, une séance dédiée par semaine en plus de ta sortie longue.' },
+    velo: { famille: 'z2', formatId: 'sv1-dedie', cibleW: sv1W, sv1W, blocsSv1: p.reps, ...(fc ? { fcSv1: fc } : {}), etapes, pourquoi: 'Cycle 1er seuil (prépa hivernale) : la base de tout, une séance dédiée par semaine en plus des blocs de ta sortie longue.' },
   }
 }
