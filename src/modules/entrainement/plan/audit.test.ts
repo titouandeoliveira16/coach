@@ -64,6 +64,33 @@ describe('audit du moteur sur une saison entière', () => {
       expect(problemes).toEqual([])
     }, 60_000)
 
+  it('cycle 1er seuil à 4 jours : séance dédiée + blocs dans la sortie longue + rappel VO2, à 48 h l’une de l’autre (13/11/2026)', async () => {
+    await db.delete(); await db.open()
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-11-09T07:00:00'))
+    await enregistrerArrivee({ ...base, semaineType: semaineDepuisJours(4), course: { nom: 'A', date: '2027-04-25' } })
+    let semainesSv1 = 0
+    for (let l = '2026-11-09'; l <= '2027-01-04'; l = decalerJour(l, 7)) {
+      vi.setSystemTime(new Date(`${l}T06:00:00`))
+      await genererSemaineVelo(l)
+      const semaine = (await db.prevues.where('date').between(l, decalerJour(l, 6), true, true).toArray()).filter((x) => x.sport === 'velo')
+      // Semaine faite comme prévue (sinon le budget croit à une coupure)
+      for (const x of semaine) {
+        await db.prevues.put({ ...x, statut: 'faite' })
+        await db.seances.put({ id: `s-${x.id}`, date: x.date, sport: 'velo', dureeMin: x.dureeMin, kj: x.kjPrevu, prevueId: x.id } as never)
+      }
+      const dediee = semaine.find((x) => x.velo?.formatId === 'sv1-dedie')
+      const longue = semaine.find((x) => x.velo?.famille === 'z2-long')
+      const vo2 = semaine.find((x) => x.velo?.famille.startsWith('vo2'))
+      if (!dediee) continue
+      semainesSv1++
+      expect(longue?.velo?.blocsSv1).toBeGreaterThan(0)
+      if (vo2) expect(Math.abs(Date.parse(dediee.date) - Date.parse(vo2.date))).toBeGreaterThanOrEqual(2 * 86_400_000)
+    }
+    vi.useRealTimers()
+    expect(semainesSv1).toBeGreaterThanOrEqual(4)
+  }, 60_000)
+
   it('les 2 jours durs choisis portent les 2 intensités (hors reprise)', async () => {
     await db.delete(); await db.open()
     vi.useFakeTimers({ toFake: ['Date'] })

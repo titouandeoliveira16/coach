@@ -523,9 +523,11 @@ async function genererSemaineVeloBrute(lundi: string) {
   const intensifs = [placement.intensite, intensite2?.date].filter((d): d is string => !!d)
   const lendemains = new Set(intensifs.map((d) => decalerJour(d, 1)))
   const terrain = discipline !== 'route' ? placement.z2[0] : undefined
-  // Cycle 1er seuil : une séance dédiée au 1er seuil par semaine, sur un jour d'endurance (pas le lendemain d'une intensité)
+  // Cycle 1er seuil : une séance dédiée au 1er seuil par semaine, sur un jour d'endurance, à 48 h au moins du rappel VO2
+  // si possible (relu le 13/11/2026), sinon pas le lendemain d'une intensité
+  const loinDesIntensifs = (d: string) => intensifs.every((i) => Math.abs(ecartJours(d, i)) >= 2)
   const jourSv1 = phase.type === 'base' && !allegee && !sansBlocs
-    ? [...placement.z2].reverse().find((d) => d !== terrain && !lendemains.has(d)) ?? placement.z2.find((d) => d !== terrain)
+    ? [...placement.z2].reverse().find((d) => d !== terrain && loinDesIntensifs(d)) ?? [...placement.z2].reverse().find((d) => d !== terrain && !lendemains.has(d)) ?? placement.z2.find((d) => d !== terrain)
     : undefined
   const jourSprints = placement.z2.find((d) => d !== terrain && d !== jourSv1 && !lendemains.has(d)) ?? placement.z2.find((d) => d !== terrain && d !== jourSv1)
   const rappel = niveau === 'confirme' || niveau === 'expert'
@@ -533,7 +535,8 @@ async function genererSemaineVeloBrute(lundi: string) {
   let extraSv1 = 0
   if (placement.long) {
     const kjLong = reste * partLong
-    const blocs = !sansBlocs && !cotes && !longueCourse && !(jourSv1 && joursVelo < 5) ? { w: sv1.w, ...palierSv1 } : undefined
+    // Cycle 1er seuil : blocs dans la sortie longue en plus de la séance dédiée, même à 4 jours (13/11/2026 : 2 séances au 1er seuil par semaine)
+    const blocs = !sansBlocs && !cotes && !longueCourse ? { w: sv1.w, ...palierSv1 } : undefined
     // Les blocs au 1er seuil coûtent plus de kJ par minute : ce surplus est pris sur les Z2 de semaine, pas sur la
     // durée de la sortie longue (sinon plus le palier monte, plus la sortie raccourcit et les blocs ne rentrent plus)
     // Semaine allégée, affûtage, récupération : la sortie longue peut descendre sous son minimum habituel

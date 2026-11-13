@@ -41,6 +41,12 @@ export function adapterDuJour(p: SeancePrevue, couleur: Couleur): Adaptation {
   if (p.velo?.famille === 'test') return { texte: 'Feu orange : reporte le test (il faut être frais pour qu’il soit juste). Fais 45 min de Z2 à la place.', modifiee: true }
   // Spéciales d'enduro : très intenses et engagées techniquement, jamais un jour orange
   if (p.velo?.famille === 'vtt-speciales') return { texte: 'Feu orange : pas de spéciales aujourd’hui (effort très intense et engagé). 45 min de VTT technique tranquille ou de Z2 à la place.', modifiee: true }
+  // Séance dédiée au 1er seuil (13/11/2026) : un jour orange, de l'endurance sans les blocs, un quart plus courte
+  if (p.velo?.formatId === 'sv1-dedie') {
+    const min = arrondi5(p.dureeMin * 0.75)
+    const w = etapes?.[0]?.w ? arrondi5(etapes[0].w / 0.85) : undefined
+    return { texte: `Feu orange : endurance sans les blocs au 1er seuil (${min} min en Z2).`, etapes: [{ debutSec: 0, dureeSec: min * 60, libelle: 'Endurance Z2, sans les blocs au 1er seuil', w }], modifiee: true }
+  }
   if (intensiteVelo && f && cpEff) {
     const court = construireIntervalles(f, palierRaccourci(f, p.velo!.palier ?? 0), cpEff, 0, p.velo!.wPrimeKj)
     return { texte: `Feu orange : version raccourcie, mêmes watts (${court.titre}, ${court.dureeMin} min).`, etapes: court.velo.etapes, modifiee: true }
