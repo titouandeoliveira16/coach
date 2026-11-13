@@ -3,8 +3,9 @@
 PWA en français (iPhone d'abord, thème sombre) : un accueil, puis des modules. **Entraînement** est construit
 (vélo seul depuis 11/2026 : la course à pied et le plan Campus sont retirés ; système kJ, CP, feu du jour par VFC) ; **Budget** est construit (saisie manuelle, plafonds, patrimoine) ;
 **Révision CAPEPS** est construit (41 notions, rappels J+1…J+90 en feuille blanche, sujets ; concours le 2/03/2027) ;
-**Muscu** est construit (développé couché 5/3/1 adapté, pas encore relié à l'Entraînement ni à la nutrition ; mis de côté,
-plus sur l'accueil) ;
+**Muscu** (ancien module, développé couché 5/3/1) est mis de côté, plus sur l'accueil ; la muscu du cycliste est désormais
+dans l'Entraînement (`modules/entrainement/muscu/` : force lourde, réglage `force`, séances `renfo` avec `muscu`, page
+`/entrainement/muscu/:id`) ;
 **Catalogue** affiche le catalogue scientifique de séances (`catalogue/` : route, VTT par discipline, course (plus affichée), renfo, méthodes ;
 l'Entraînement y pioche ses formats d'intensité vélo ; plus sur l'accueil : encart dépliable dans Entraînement → Réglages,
 limité aux sports du profil sportif, `catalogue/ListeCatalogue.tsx`).

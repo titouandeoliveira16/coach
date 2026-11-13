@@ -52,6 +52,8 @@ describe('audit vraie vie', () => {
       vi.setSystemTime(new Date('2026-11-09T07:00:00'))
       const r = { ...base, ...p }
       await enregistrerArrivee(r)
+      // Muscu reliée (13/11/2026), 2 séances par semaine
+      await db.reglages.put({ id: 'force', valeur: { actif: true, lieu: 'salle', seances: 2, debut: '2026-11-09', exos: {} } } as never)
       if (aVenir) {
         const e0 = (await db.reglages.get('entrainement'))!.valeur as ReglagesEntrainement
         await db.reglages.put({ id: 'entrainement', valeur: { ...e0, programme: { ...e0.programme!, semainesTypesFutures: aVenir } } } as never)
@@ -130,6 +132,21 @@ describe('audit vraie vie', () => {
         if (vraieVie && l === decalerJour(SAUTS[1], 7) && !(await seancesClesSautees(l)).includes('intensite')
           && (await db.prevues.where('date').between(SAUTS[0], decalerJour(SAUTS[1], 6), true, true).toArray()).filter((x) => x.origine === 'auto' && INTENSES.includes(x.velo?.famille ?? '')).length >= 2)
           problemes.push(`${l} : intensité sautée 2 semaines de suite sans alerte`)
+
+        // 12. Muscu : jamais le même jour qu'un vélo sauf le soir d'une séance dure, jamais la veille d'une séance clé ni
+        // dans les 4 jours avant une course, 2 au plus (1 en entretien et avant la course), rien en récupération
+        const toutes = (await db.prevues.where('date').between(l, decalerJour(l, 7), true, true).toArray()).filter((x) => x.statut === 'prevue')
+        const muscus = toutes.filter((x) => x.muscu && x.date <= decalerJour(l, 6))
+        const max = phase.type === 'recuperation' ? 0 : ['fin-prepa', 'specifique', 'affutage', 'entretien'].includes(phase.type) ? 1 : 2
+        if (muscus.length > max) problemes.push(`${l} : ${muscus.length} séances de muscu en ${phase.type}`)
+        const courses = [...prog.competitions.map((c) => c.date)]
+        for (const m of muscus) {
+          const velo = toutes.find((x) => x.sport === 'velo' && x.date === m.date)
+          if (velo && !(m.muscu!.soir && velo.intensite !== 'basse' && velo.velo?.famille !== 'test')) problemes.push(`${l} : muscu le ${m.date} avec ${velo.titre}`)
+          const lendemain = toutes.find((x) => x.sport === 'velo' && x.date === decalerJour(m.date, 1) && (x.intensite === 'haute' || x.longue || x.velo?.famille === 'test' || x.velo?.famille === 'course'))
+          if (lendemain) problemes.push(`${l} : muscu le ${m.date}, veille de ${lendemain.titre}`)
+          if (courses.some((c) => c >= m.date && c <= decalerJour(m.date, 4))) problemes.push(`${l} : muscu le ${m.date}, moins de 4 jours avant une course`)
+        }
 
         // La semaine vécue
         const semaineVecue = (await db.prevues.where('date').between(l, decalerJour(l, 6), true, true).toArray()).filter((x) => x.sport === 'velo' && x.origine === 'auto' && x.statut === 'prevue')
