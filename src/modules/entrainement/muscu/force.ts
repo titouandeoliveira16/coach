@@ -149,26 +149,31 @@ export function planForce(o: { semainesFaites: number; semainesSans?: number; re
  * Jours de muscu dans la semaine (`roles` du lundi au dimanche, `dates` correspondantes) : d'abord les jours « renfo »,
  * puis les jours sans vélo, jamais la veille d'une séance clé (`cles` : intensité, sortie longue, test, course) ni dans
  * les 4 jours avant une course (`courses`) ; deux séances à 2 jours d'écart au moins. Sans jour possible : le soir de la
- * séance dure (3 h après le vélo au moins).
+ * séance dure (3 h après le vélo au moins) ; sinon, hors semaine de course, un jour sans vélo même la veille d'une
+ * séance clé (mieux qu'aucune séance).
  */
-export function joursMuscu(o: { roles: Role[]; dates: string[]; n: number; cles: string[]; durs: string[]; courses: string[]; indispos?: string[] }) {
+export function joursMuscu(o: { roles: Role[]; dates: string[]; n: number; cles: string[]; durs: string[]; courses: string[]; indispos?: string[]; velo?: string[] }) {
   if (o.n <= 0) return []
   const ecart = (a: string, b: string) => Math.round((Date.parse(`${b}T12:00:00`) - Date.parse(`${a}T12:00:00`)) / 86_400_000)
   const veille = (d: string) => o.cles.some((c) => ecart(d, c) === 1)
   const avantCourse = (d: string) => o.courses.some((c) => ecart(d, c) >= 0 && ecart(d, c) <= 4)
-  const libres = o.dates.filter((d, i) => !o.roles[i].startsWith('velo') && o.roles[i] !== 'course' && !veille(d) && !avantCourse(d) && !o.indispos?.includes(d) && !o.cles.includes(d))
+  // Jours sans vélo : rôle sans vélo (les anciens jours « course » comptent comme libres) et aucune séance de vélo prévue
+  const sansVelo = (d: string, i: number) => !o.roles[i].startsWith('velo') && !(o.velo ?? []).includes(d) && !o.indispos?.includes(d) && !o.cles.includes(d) && !avantCourse(d)
   const rang = (d: string) => (o.roles[o.dates.indexOf(d)] === 'renfo' ? 0 : 1)
-  const tries = [...libres].sort((a, b) => rang(a) - rang(b) || a.localeCompare(b))
   const choisis: { date: string; soir: boolean }[] = []
-  for (const d of tries) {
-    if (choisis.length >= o.n) break
-    if (choisis.every((c) => Math.abs(ecart(c.date, d)) >= 2)) choisis.push({ date: d, soir: false })
+  const ajouter = (l: string[], soir: boolean) => {
+    for (const d of l) {
+      if (choisis.length >= o.n) return
+      if (choisis.every((c) => Math.abs(ecart(c.date, d)) >= 2)) choisis.push({ date: d, soir })
+    }
   }
-  // Pas assez de jours sans vélo : le soir d'une séance dure (pas la veille d'une autre séance clé)
-  for (const d of o.durs) {
-    if (choisis.length >= o.n) break
-    if (!veille(d) && !avantCourse(d) && choisis.every((c) => Math.abs(ecart(c.date, d)) >= 2)) choisis.push({ date: d, soir: true })
-  }
+  const libres = o.dates.filter((d, i) => sansVelo(d, i)).sort((a, b) => rang(a) - rang(b) || a.localeCompare(b))
+  // 1. Un jour sans vélo qui n'est pas la veille d'une séance clé
+  ajouter(libres.filter((d) => !veille(d)), false)
+  // 2. Le soir d'une séance dure (pas la veille d'une autre séance clé)
+  ajouter(o.durs.filter((d) => !veille(d) && !avantCourse(d)), true)
+  // 3. En dernier recours : un jour sans vélo, même la veille d'une séance clé (mieux qu'aucune séance ; charge du lendemain à surveiller)
+  if (!choisis.length && !o.courses.some((c) => c >= o.dates[0] && c <= o.dates[6])) ajouter(libres, false)
   return choisis.sort((a, b) => a.date.localeCompare(b.date))
 }
 

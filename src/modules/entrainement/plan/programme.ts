@@ -624,7 +624,7 @@ async function genererSemaineVeloBrute(lundi: string) {
     const cles = [placement.intensite, intensite2?.date, placement.long, dateTest, ...competitions].filter((d): d is string => !!d)
     const jours = joursMuscu({
       roles, dates: semaine, n: plan.seances - faitesForce, cles, durs: [placement.intensite, intensite2?.date].filter((d): d is string => !!d && d !== dateTest),
-      courses: prog.competitions.map((x) => x.date), indispos: [...indispos],
+      courses: prog.competitions.map((x) => x.date), indispos: [...indispos], velo: aCreer.map(([d]) => d),
     }).filter((j) => j.date >= aPartirDe)
     for (const j of jours) {
       const sf: SeanceForce = { periode: plan.periode, semaine: plan.semaine, series: plan.series, reps: plan.reps, lieu: force.lieu, legere: plan.legere, soir: j.soir, ...(plan.facteur ? { facteur: plan.facteur } : {}), ...(plan.longue ? { longue: true } : {}) }
@@ -788,7 +788,7 @@ export async function saison() {
   }
   // Chaque période où la hausse bute (hors semaine en cours, 3 au plus) : quelle limite, jusqu'à quand (une semaine type
   // à venir peut la relever), et le réglage qui débloque le plus (12/11/2026 : avant, seule la 1re période était dite)
-  type Blocage = { lundi: string; jusquA?: string; par: 'heures' | 'jours'; heures?: string; levier?: ReturnType<typeof meilleurLevier>; pistes: ReturnType<typeof pistesDeblocage> }
+  type Blocage = { lundi: string; jusquA?: string; par: 'heures' | 'jours'; heures?: string; besoin: number; levier?: ReturnType<typeof meilleurLevier>; pistes: ReturnType<typeof pistesDeblocage> }
   const blocages: Blocage[] = []
   for (let i = 1; i < semaines.length && blocages.length < 3; i++) {
     if (!semaines[i].bloquee) continue
@@ -796,8 +796,11 @@ export async function saison() {
     const p = calcul(l).plafond
     const k = semaines.findIndex((x, j) => j > i && calcul(x.lundi).plafond > p * 1.02)
     const par = calcul(l).limite
-    blocages.push({ lundi: l, jusquA: k > 0 ? semaines[k].lundi : undefined, par, heures: heuresAu(prog, ps?.heuresSemaine, l), ...(() => {
-      const pistes = par === 'jours' ? pistesDeblocage({ semaineType: programmeAu(prog, l).semaineType, cap: capDe(l), z2W }) : []
+    // Hausse voulue sur la période bloquée : +7,5 % par semaine normale, sur un cycle de 4 semaines au plus (13/11/2026)
+    const nBloquees = semaines.slice(i, k > 0 ? k : undefined).filter((x) => x.bloquee).length
+    const besoin = Math.round(p * (Math.pow(1.075, Math.min(4, Math.max(1, nBloquees))) - 1))
+    blocages.push({ lundi: l, jusquA: k > 0 ? semaines[k].lundi : undefined, par, heures: heuresAu(prog, ps?.heuresSemaine, l), besoin, ...(() => {
+      const pistes = par === 'jours' ? pistesDeblocage({ semaineType: programmeAu(prog, l).semaineType, cap: capDe(l), z2W, besoin }) : []
       return { pistes, levier: pistes[0] }
     })() })
     if (k < 0) break
