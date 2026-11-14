@@ -25,7 +25,7 @@ async function appeler<T>(route: string, corps: unknown, avecSession = false): P
 
 /** Crée le compte avec le code reçu, connecte, puis note que c'est un compte invité. */
 export async function creerCompteAvecCode(code: string, email: string, motDePasse: string) {
-  await appeler('creer', { code, email, motDePasse })
+  await appeler('creer', { code, email, motDePasse, consentement: true })
   await seConnecter(email, motDePasse)
   await enregistrer(db.reglages, { id: 'compte', valeur: { invite: true } satisfies ReglageCompte })
 }

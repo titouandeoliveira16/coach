@@ -7,12 +7,27 @@ import { VitePWA } from 'vite-plugin-pwa'
 // d'où le préfixe "/coach/" pour tous les fichiers.
 const BASE = '/coach/'
 
+// Règles de sécurité de la page (CSP, audit du 14/11/2026) : seuls l'appli elle-même et le serveur Supabase sont
+// autorisés. Ajoutées seulement à la construction (le serveur de développement a besoin de scripts en ligne).
+const SUPABASE = 'vjjuopkiwfyqjolxmnho.supabase.co'
+const CSP = [
+  "default-src 'self'", "script-src 'self'", "style-src 'self' 'unsafe-inline'", "img-src 'self' data: blob:",
+  "font-src 'self' data:", `connect-src 'self' https://${SUPABASE} wss://${SUPABASE}`, "worker-src 'self'",
+  "manifest-src 'self'", "object-src 'none'", "base-uri 'self'", "form-action 'self'",
+].join('; ')
+const securite = {
+  name: 'csp',
+  apply: 'build' as const,
+  transformIndexHtml: (html: string) => html.replace('<head>', `<head>\n    <meta http-equiv="Content-Security-Policy" content="${CSP}" />`),
+}
+
 export default defineConfig({
   base: BASE,
   // Numéro de version affiché dans Réglages
   define: { __VERSION__: JSON.stringify(process.env.npm_package_version) },
   plugins: [
     react(),
+    securite,
     tailwindcss(),
     VitePWA({
       // Met à jour l'appli automatiquement dès qu'une nouvelle version est en ligne

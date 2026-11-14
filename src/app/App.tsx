@@ -27,7 +27,7 @@ const LUEURS = { vert: 'rgba(48,209,88,.14)', orange: 'rgba(255,159,10,.14)', ro
  */
 function Coquille() {
   const { pathname } = useLocation()
-  const { session, pret, derniereSynchro } = useSynchro()
+  const { session, pret, derniereSynchro, local } = useSynchro()
   const [compte] = useReglage<ReglageCompte>('compte', {})
   const [arrivee] = useReglage<EtatArrivee>('arrivee', {})
   const moduleActif = MODULES.find((m) => pathname.startsWith(m.chemin))
@@ -42,7 +42,8 @@ function Coquille() {
   // iPhone dans Safari : on installe d'abord l'appli sur l'écran d'accueil (notifications, et pas de 2e connexion)
   if (doitInstaller()) return <EcranInstallation />
   if (!pret) return null
-  if (!session) return <Entree />
+  // Hors ligne avec une session enregistrée (jeton pas encore renouvelé) : on ouvre l'appli sur les données de l'appareil
+  if (!session && !local) return <Entree />
   // Compte créé avec un code : les notifications tout de suite après la connexion
   if (compte.invite && derniereSynchro && !arrivee.notifs) return <EtapeNotifications />
   // Questionnaire d'arrivée (après la 1re synchro, pour ne pas le reposer sur un 2e appareil) : tout compte qui ne l'a

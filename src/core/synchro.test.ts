@@ -9,6 +9,8 @@ interface Ligne { user_id: string; table_nom: string; cle: string; valeur: unkno
 const serveur = {
   lignes: new Map<string, Ligne>(),
   seq: 0,
+  /** Coupure réseau simulée (Safari : « Load failed », sans code d'erreur du serveur) */
+  coupure: false,
   /** Toutes les lignes d'un même envoi ont la même date (comme now() en SQL) */
   horloge: '2026-11-11T10:00:00.000Z',
   refuser: (_l: Partial<Ligne>) => false,
@@ -44,8 +46,9 @@ vi.mock('./supabase', () => ({
       select: () => requete(),
       upsert: async (lignes: Partial<Ligne> | Partial<Ligne>[]) => {
         await serveur.pendantEnvoi()
+        if (serveur.coupure) return { error: { message: 'TypeError: Load failed' } }
         const liste = Array.isArray(lignes) ? lignes : [lignes]
-        if (liste.some((l) => serveur.refuser(l))) return { error: { message: 'violates check constraint' } }
+        if (liste.some((l) => serveur.refuser(l))) return { error: { message: 'violates check constraint', code: '23514' } }
         for (const l of liste) {
           serveur.seq++
           serveur.lignes.set(`${l.user_id}|${l.table_nom}|${l.cle}`, { ...(l as Ligne), synchro_le: serveur.horloge, seq: serveur.seq })
@@ -71,7 +74,7 @@ beforeEach(async () => {
   vi.stubGlobal('navigator', { onLine: true })
   vi.stubGlobal('window', { addEventListener: () => {} })
   vi.stubGlobal('document', { addEventListener: () => {}, visibilityState: 'visible' })
-  Object.assign(serveur, { lignes: new Map(), seq: 0, refuser: () => false, pendantEnvoi: async () => {}, sansSeq: false })
+  Object.assign(serveur, { lignes: new Map(), seq: 0, refuser: () => false, pendantEnvoi: async () => {}, sansSeq: false, coupure: false })
   const { db, TABLES_DONNEES } = await import('./db')
   for (const t of [...TABLES_DONNEES(), db.suppressions]) await t.clear()
 })
@@ -155,4 +158,26 @@ it('un autre compte qui se connecte sur l’appareil ne récupère pas les donn�
   await enregistrer(db.reglages, { id: 'a-u1', valeur: 1 })
   rappelSession!('SIGNED_IN', { user: { id: 'u2' } })
   await vi.waitFor(async () => expect(await db.reglages.get('a-u1')).toBeUndefined())
+})
+
+it('coupure réseau sur iPhone (« Load failed ») : hors ligne, rien n’est marqué refusé, tout part ensuite (14/11/2026)', async () => {
+  const { synchroniser, db, enregistrer } = await demarrer()
+  serveur.coupure = true
+  for (let i = 0; i < 5; i++) await enregistrer(db.reglages, { id: `r${i}`, valeur: i })
+  await synchroniser()
+  serveur.coupure = false
+  await synchroniser()
+  expect([...serveur.lignes.keys()].filter((k) => k.startsWith('u1|reglages|r'))).toHaveLength(5)
+})
+
+it('une écriture faite pendant l’envoi part à la synchro suivante (coupure prise avant la lecture, 14/11/2026)', async () => {
+  const { synchroniser, db, enregistrer } = await demarrer()
+  await enregistrer(db.reglages, { id: 'avant', valeur: 1 })
+  serveur.pendantEnvoi = async () => {
+    serveur.pendantEnvoi = async () => {}
+    await enregistrer(db.reglages, { id: 'pendant', valeur: 2 })
+  }
+  await synchroniser()
+  await synchroniser()
+  expect(serveur.lignes.has('u1|reglages|pendant')).toBe(true)
 })

@@ -46,17 +46,33 @@ Deno.serve(async (req) => {
   const corps = await req.json().catch(() => ({}))
   try {
     if (route === 'creer') {
+      // Trop d'essais ratés depuis cette adresse (10 par heure) : on freine (audit du 14/11/2026, sql/08)
+      const ip = (req.headers.get('x-forwarded-for') ?? '').split(',')[0].trim() || 'inconnue'
+      const { count } = await admin.from('tentatives_inscription').select('id', { count: 'exact', head: true }).eq('ip', ip).gt('le', new Date(Date.now() - 3600_000).toISOString())
+      if ((count ?? 0) >= 10) return json({ erreur: 'Trop d’essais : réessaie dans une heure.' }, 429)
+      const rate = async (erreur: string) => {
+        await admin.from('tentatives_inscription').insert({ ip })
+        return json({ erreur }, 400)
+      }
       const code = normaliser(String(corps.code ?? ''))
       const email = String(corps.email ?? '').trim().toLowerCase()
       const motDePasse = String(corps.motDePasse ?? '')
-      if (!email.includes('@') || motDePasse.length < 6) return json({ erreur: 'Email ou mot de passe (6 caractères min.) incorrect.' }, 400)
-      const { data: ligne } = await admin.from('codes_invitation').select('code, utilise_par').eq('code', code).maybeSingle()
-      if (!ligne) return json({ erreur: 'Code inconnu : vérifie-le avec Titouan.' }, 400)
-      if (ligne.utilise_par) return json({ erreur: 'Ce code a déjà servi : demande-en un nouveau.' }, 400)
-      const { data: cree, error } = await admin.auth.admin.createUser({ email, password: motDePasse, email_confirm: true })
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || motDePasse.length < 8) return json({ erreur: 'Email incorrect, ou mot de passe trop court (8 caractères min.).' }, 400)
+      // Consentement explicite pour les données de santé (RGPD, art. 9) et âge (art. 8 : moins de 15 ans, accord d'un parent)
+      if (corps.consentement !== true) return json({ erreur: 'Coche la case sur tes données de santé pour créer ton compte.' }, 400)
+      const { data: ligne } = await admin.from('codes_invitation').select('code, utilise_par, cree_le').eq('code', code).maybeSingle()
+      if (!ligne) return rate('Code inconnu : vérifie-le avec la personne qui te l’a donné.')
+      if (ligne.utilise_par) return rate('Ce code a déjà servi : demande-en un nouveau.')
+      // Un code vaut 30 jours (un code oublié dans une conversation ne reste pas valable des mois)
+      if (Date.now() - Date.parse(ligne.cree_le) > 30 * 86_400_000) return rate('Ce code a expiré (30 jours) : demande-en un nouveau.')
+      const { data: cree, error } = await admin.auth.admin.createUser({
+        email, password: motDePasse, email_confirm: true,
+        user_metadata: { consentement_sante_le: new Date().toISOString(), mentions_version: 1 },
+      })
       if (error || !cree.user) {
         const deja = /already|registered|exists/i.test(error?.message ?? '')
-        return json({ erreur: deja ? 'Un compte existe déjà avec cet email : utilise « Me connecter ».' : (error?.message ?? 'Compte non créé.') }, 400)
+        if (!deja) console.error('inscription : création refusée', error?.message)
+        return json({ erreur: deja ? 'Un compte existe déjà avec cet email : utilise « Me connecter ».' : 'Compte non créé : réessaie, ou choisis un autre mot de passe.' }, 400)
       }
       // Le code ne sert qu'une fois (si deux personnes l'utilisent en même temps, la 2e est retirée)
       const { data: pris } = await admin.from('codes_invitation')
@@ -107,6 +123,8 @@ Deno.serve(async (req) => {
     }
         return json({ erreur: 'Route inconnue.' }, 404)
   } catch (e) {
-    return json({ erreur: (e as Error).message }, 500)
+    // Détail dans les journaux du serveur, message simple pour l'appli (audit du 14/11/2026)
+    console.error('inscription', route, (e as Error).message)
+    return json({ erreur: 'Une erreur est survenue sur le serveur : réessaie dans un moment.' }, 500)
   }
 })

@@ -4,7 +4,7 @@ import './index.css'
 import App from './app/App.tsx'
 import { demanderStockagePersistant } from './core/db'
 import { registerSW } from 'virtual:pwa-register'
-import { demarrerSynchro } from './core/synchro'
+import { apresPremiereSynchro, demarrerSynchro } from './core/synchro'
 import { synchroniserRappels } from './core/notifications'
 import { signalerErreur, surveillerErreurs } from './core/erreurs'
 
@@ -14,12 +14,26 @@ demarrerSynchro()
 // Laisse le temps à la session du compte de se restaurer
 setTimeout(() => synchroniserRappels(), 5000)
 
-// Après la première synchro : séances à venir remises au format avec répétitions (v0.62)
-setTimeout(() => import('./modules/entrainement/plan/programme').then((m) => m.mettreAJourFormatSeances()).catch((e) => signalerErreur(e, 'Démarrage (format des séances)')), 8000)
-// Contrôle des séances récentes recalculé avec les règles du moment (ex. arrêts exclus des moyennes, v0.71)
-setTimeout(() => import('./modules/entrainement/import/intervals').then((m) => m.recontrolerRecentes()).catch((e) => signalerErreur(e, 'Démarrage (contrôle des séances)')), 12000)
-// Saison recalculée une fois avec la prépa hivernale Methodic (v10.5)
-setTimeout(() => import('./modules/entrainement/arrivee/donnees').then((m) => m.migrerSaisonV2().then(m.migrerSaisonV3).then(m.migrerSaisonV4).then(m.migrerSaisonV5).then(m.migrerMuscu).then(m.completerHistorique).then(() => import('./modules/entrainement/plan/programme')).then((p) => p.actualiserSemaineEnCours())).catch((e) => signalerErreur(e, 'Démarrage (saison)')), 9000)
+// Tâches de démarrage (audit du 14/11/2026) : seulement après la première synchro réussie, pour ne jamais recalculer
+// sur une vieille copie de l'appareil (elle écraserait ensuite la version du serveur). Chacune a son propre filet :
+// une erreur n'empêche plus les suivantes.
+apresPremiereSynchro().then(async () => {
+  const etapes: [string, () => Promise<unknown>][] = [
+    // Séances à venir remises au format avec répétitions (v0.62)
+    ['format des séances', () => import('./modules/entrainement/plan/programme').then((m) => m.mettreAJourFormatSeances())],
+    // Saison recalculée une fois par changement de règles (v10.5 → v13.9)
+    ['saison V2', () => import('./modules/entrainement/arrivee/donnees').then((m) => m.migrerSaisonV2())],
+    ['saison V3', () => import('./modules/entrainement/arrivee/donnees').then((m) => m.migrerSaisonV3())],
+    ['saison V4', () => import('./modules/entrainement/arrivee/donnees').then((m) => m.migrerSaisonV4())],
+    ['saison V5', () => import('./modules/entrainement/arrivee/donnees').then((m) => m.migrerSaisonV5())],
+    ['muscu', () => import('./modules/entrainement/arrivee/donnees').then((m) => m.migrerMuscu())],
+    ['historique', () => import('./modules/entrainement/arrivee/donnees').then((m) => m.completerHistorique())],
+    ['semaine en cours', () => import('./modules/entrainement/plan/programme').then((m) => m.actualiserSemaineEnCours())],
+    // Contrôle des séances récentes recalculé avec les règles du moment (ex. arrêts exclus des moyennes, v0.71)
+    ['contrôle des séances', () => import('./modules/entrainement/import/intervals').then((m) => m.recontrolerRecentes())],
+  ]
+  for (const [nom, etape] of etapes) await etape().catch((e) => signalerErreur(e, `Démarrage (${nom})`))
+})
 // Au retour dans l'appli : l'historique de 6 mois est relu (au plus une fois par heure) tant qu'il est incomplet
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') import('./modules/entrainement/arrivee/donnees').then((m) => m.completerHistorique()).catch(() => {})

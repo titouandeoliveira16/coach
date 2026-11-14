@@ -55,7 +55,8 @@ async function lireReglages() {
   const r = (await db.reglages.get('entrainement'))?.valeur as Partial<ReglagesEntrainement> | undefined
   // W' utilisé seulement s'il vient d'un test complet 12-7-3 et pas du tout premier test CP (Triska 2017, Karsten 2014)
   const wPrimeKj = r?.wPrimeComplet && (r.tests ?? []).filter((t) => t.type === 'cp').length >= 2 ? r.wPrimeKj : undefined
-  return { cpW: r?.cpW ?? CP_DEFAUT, wPrimeKj, zones: r?.zonesVelo, tests: r?.tests ?? [], programme: programmeDe(r?.programme) }
+  // CP absente ou absurde (0, effacée) : valeur par défaut, sinon des séances de « NaN min » (audit du 14/11/2026)
+  return { cpW: r?.cpW && r.cpW >= 50 ? r.cpW : CP_DEFAUT, wPrimeKj, zones: r?.zonesVelo, tests: r?.tests ?? [], programme: programmeDe(r?.programme) }
 }
 
 /** Dates des tests CP réalisés (résultats saisis). */

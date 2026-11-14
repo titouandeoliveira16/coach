@@ -238,6 +238,12 @@ export async function enregistrerSeance(s: Seance) {
 export async function supprimerSeance(id: string) {
   const s = await db.seances.get(id)
   await supprimer(db.seances, id)
+  // Séance importée : elle ne revient pas au prochain import (200 dernières gardées)
+  const ids = [s?.idExterne, ...(s?.autresIds ?? [])].filter((x): x is string => !!x)
+  if (ids.length) {
+    const avant = ((await db.reglages.get('seances-ignorees'))?.valeur as { ids?: string[] } | undefined)?.ids ?? []
+    await enregistrer(db.reglages, { id: 'seances-ignorees', valeur: { ids: [...new Set([...avant, ...ids])].slice(-200) } })
+  }
   if (s?.prevueId) {
     const p = await db.prevues.get(s.prevueId)
     if (p?.statut === 'faite') await enregistrer(db.prevues, { ...p, statut: 'prevue' })

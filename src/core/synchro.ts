@@ -27,6 +27,11 @@ export interface EtatSynchro {
   erreur?: string
   /** La session enregistrée a été relue (avant : on ne sait pas encore si quelqu'un est connecté) */
   pret?: boolean
+  /**
+   * Hors ligne avec une session enregistrée mais pas encore renouvelée (jeton expiré, audit du 14/11/2026) : l'appli
+   * s'ouvre sur les données de l'appareil ; la synchro reprend dès que le réseau revient.
+   */
+  local?: boolean
 }
 
 let etat: EtatSynchro = { session: null, statut: 'deconnecte' }
@@ -55,6 +60,8 @@ interface Curseurs {
   recu?: string
   /** Dernière date de modification locale (_modifie) déjà envoyée */
   envoye?: string
+  /** Version de la base locale à la dernière réception : une nouvelle version (nouvelle table) relit tout */
+  schema?: number
 }
 const cleCurseurs = (userId: string) => `coach-synchro-${userId}`
 function lireCurseurs(userId: string): Curseurs {
@@ -93,6 +100,13 @@ let colonneSeq = true
 
 async function recevoir(userId: string, curseurs: Curseurs) {
   const PAGE = 500
+  // Nouvelle version de la base (ex. une table ajoutée) : on relit tout depuis le début, sinon les lignes de cette
+  // table reçues par l'ancienne version (ignorées) ne reviendraient jamais. Sans risque : la plus récente gagne.
+  if (curseurs.schema !== db.verno) {
+    curseurs.recuSeq = 0
+    curseurs.recu = undefined
+    curseurs.schema = db.verno
+  }
   for (;;) {
     // Curseur sur « seq » (numéro donné par le serveur à chaque écriture, unique et croissant) : avec la date
     // d'arrivée, toutes les lignes d'un même envoi groupé avaient la même date et la page suivante en sautait.
@@ -162,6 +176,9 @@ let refusesDernierEnvoi = 0
 async function envoyer(userId: string, curseurs: Curseurs, tout: boolean) {
   const aEnvoyer: Omit<LigneServeur, 'synchro_le'>[] = []
   const depuis = curseurs.envoye ?? ''
+  // Date de coupure prise AVANT de lire (audit du 14/11/2026) : une écriture faite pendant la lecture des tables sera
+  // plus récente que la coupure et partira la fois suivante (avant, elle pouvait passer pour « déjà envoyée »)
+  const coupure = new Date().toISOString()
   // Lignes refusées la dernière fois : on les renvoie quelle que soit leur date
   const refusAvant = new Set(lireRefus(userId))
 
@@ -169,7 +186,7 @@ async function envoyer(userId: string, curseurs: Curseurs, tout: boolean) {
     for (const ligne of (await table.toArray()) as (Horodate & Record<string, unknown>)[]) {
       // Une ligne sans date (créée avant la synchro) est envoyée, datée de maintenant
       if (!ligne._modifie) {
-        ligne._modifie = new Date().toISOString()
+        ligne._modifie = coupure
         await table.put(ligne)
       }
       if (!tout && !refusAvant.has(`${table.name}|${cleDe(table, ligne)}`) && (ligne._recu || ligne._modifie <= depuis)) continue
@@ -199,7 +216,8 @@ async function envoyer(userId: string, curseurs: Curseurs, tout: boolean) {
   const refus: string[] = []
   const { error } = await supabase.from('donnees').upsert(lignes, { onConflict: 'user_id,table_nom,cle' })
   if (error) {
-    if (estErreurReseau(error.message)) throw error
+    // Pas de code d'erreur du serveur : c'est le réseau (ex. « Load failed » de Safari), pas un refus
+    if (estErreurReseau(error.message) || !(error as { code?: string }).code) throw error
     // Envoi groupé refusé : ligne par ligne ; une ligne refusée est mise de côté (retentée plus tard) sans bloquer les autres
     for (const l of lignes) {
       const r = await supabase.from('donnees').upsert(l, { onConflict: 'user_id,table_nom,cle' })
@@ -219,11 +237,12 @@ async function envoyer(userId: string, curseurs: Curseurs, tout: boolean) {
   })
   ecrireRefus(userId, refus)
   refusesDernierEnvoi = refus.length
-  curseurs.envoye = aEnvoyer.reduce((max, l) => (l.modifie_le > max ? l.modifie_le : max), depuis)
+  curseurs.envoye = coupure > depuis ? coupure : depuis
   ecrireCurseurs(userId, curseurs)
 }
 
-const estErreurReseau = (message?: string) => !navigator.onLine || /fetch|network|réseau/i.test(message ?? '')
+// Safari dit « Load failed », Chrome « Failed to fetch » ; un délai dépassé donne « timeout » ou « aborted »
+const estErreurReseau = (message?: string) => !navigator.onLine || /fetch|network|réseau|load failed|typeerror|timeout|abort/i.test(message ?? '')
 
 /** Reste-t-il sur cet appareil des modifications pas encore acceptées par le serveur ? */
 export async function resteAEnvoyer(): Promise<boolean> {
@@ -238,6 +257,12 @@ export async function resteAEnvoyer(): Promise<boolean> {
   return false
 }
 
+// Première synchro réussie depuis l'ouverture : les tâches de démarrage (migrations) l'attendent, pour ne jamais
+// recalculer sur une vieille copie de l'appareil qui écraserait ensuite la version du serveur (audit du 14/11/2026)
+let premiereFaite: () => void = () => {}
+const premiere = new Promise<void>((ok) => { premiereFaite = ok })
+export const apresPremiereSynchro = () => premiere
+
 let enCours: Promise<void> | null = null
 let aRefaire = false
 
@@ -245,6 +270,11 @@ let aRefaire = false
 export async function synchroniser(): Promise<void> {
   const userId = etat.session?.user.id
   if (!userId) return
+  // Les données de l'appareil sont-elles bien à ce compte ? (changement de compte en cours : on attend)
+  try {
+    const proprio = localStorage.getItem(CLE_PROPRIETAIRE)
+    if (proprio && proprio !== userId) return
+  } catch { /* stockage indisponible */ }
   if (enCours) {
     aRefaire = true // une écriture est arrivée pendant la synchro : on repassera
     return enCours
@@ -259,11 +289,12 @@ export async function synchroniser(): Promise<void> {
     try {
       const curseurs = lireCurseurs(userId)
       // Première synchro de ce compte sur cet appareil : on envoie tout ce qu'il contient
-      const premiere = !curseurs.recu && !curseurs.envoye
+      const toutEnvoyer = !curseurs.recu && !curseurs.envoye
       await recevoir(userId, curseurs)
-      await envoyer(userId, curseurs, premiere)
+      await envoyer(userId, curseurs, toutEnvoyer)
       if (refusesDernierEnvoi) majEtat({ statut: 'erreur', erreur: `${refusesDernierEnvoi} donnée${refusesDernierEnvoi > 1 ? 's' : ''} refusée${refusesDernierEnvoi > 1 ? 's' : ''} par le serveur (nouvel essai à la prochaine synchro)`, derniereSynchro: new Date().toISOString() })
       else majEtat({ statut: 'ok', derniereSynchro: new Date().toISOString() })
+      premiereFaite()
     } catch (e) {
       const message = (e as Error).message ?? String(e)
       const reseau = estErreurReseau(message)
@@ -303,17 +334,18 @@ async function verifierProprietaire(userId: string) {
   let avant: string | null = null
   try {
     avant = localStorage.getItem(CLE_PROPRIETAIRE)
-    localStorage.setItem(CLE_PROPRIETAIRE, userId)
   } catch {
     return
   }
   // Un autre compte se connecte sur un appareil qui garde encore les données du précédent : on repart d'une base vide
-  // (sinon elles partiraient sur le mauvais compte)
+  // (sinon elles partiraient sur le mauvais compte). Le nouveau propriétaire n'est noté qu'après : d'ici là, aucune
+  // synchro ne part pour lui (audit du 14/11/2026)
   if (avant && avant !== userId) {
     await db.transaction('rw', [...TABLES_DONNEES(), db.suppressions], async () => {
       for (const t of [...TABLES_DONNEES(), db.suppressions]) await t.clear()
     })
   }
+  try { localStorage.setItem(CLE_PROPRIETAIRE, userId) } catch { /* stockage indisponible */ }
 }
 
 /**
@@ -342,7 +374,7 @@ export async function seDeconnecter() {
 function traduire(message: string) {
   if (/invalid login credentials/i.test(message)) return 'Email ou mot de passe incorrect.'
   if (/already registered|already exists/i.test(message)) return 'Un compte existe déjà avec cet email : utilise « Se connecter ».'
-  if (/at least|password should/i.test(message)) return 'Mot de passe trop court (6 caractères minimum).'
+  if (/at least|password should/i.test(message)) return 'Mot de passe trop court (8 caractères minimum).'
   if (/email not confirmed/i.test(message)) return 'Email non confirmé : désactive « Confirm email » dans Supabase.'
   if (/rate limit|security purposes/i.test(message)) return 'Trop de tentatives : patiente quelques minutes.'
   if (/fetch|network/i.test(message)) return 'Pas de connexion internet.'
@@ -350,15 +382,35 @@ function traduire(message: string) {
 }
 
 /** À appeler une fois au démarrage de l'appli. */
+/** Une session est-elle enregistrée sur cet appareil, pour le compte à qui appartiennent ses données ? */
+function sessionEnregistree() {
+  try {
+    if (!localStorage.getItem(CLE_PROPRIETAIRE)) return false
+    for (let i = 0; i < localStorage.length; i++) if (/^sb-.*-auth-token$/.test(localStorage.key(i) ?? '')) return true
+  } catch { /* stockage indisponible */ }
+  return false
+}
+
 export function demarrerSynchro() {
+  // Hors ligne avec un jeton expiré, Supabase réessaie ~25 s puis répond « pas de session » (écran noir, puis écran de
+  // connexion) : si une session est enregistrée, l'appli s'ouvre tout de suite sur les données de l'appareil
+  if (sessionEnregistree()) majEtat({ pret: true, local: true, statut: navigator.onLine ? etat.statut : 'hors-ligne' })
   supabase.auth.onAuthStateChange((evenement, session) => {
-    majEtat({ session, statut: session ? etat.statut : 'deconnecte', pret: true })
-    // Synchro à l'ouverture de session (sans bloquer le rappel de Supabase)
-    if (session && (evenement === 'INITIAL_SESSION' || evenement === 'SIGNED_IN'))
+    // Pas de session mais toujours enregistrée (renouvellement impossible hors ligne) : on reste en mode local
+    const local = !session && sessionEnregistree()
+    const retourEnLigne = etat.local && !!session
+    majEtat({ session, local, statut: session ? etat.statut : local ? 'hors-ligne' : 'deconnecte', pret: true })
+    // Synchro à l'ouverture de session (sans bloquer le rappel de Supabase), et quand le jeton est enfin renouvelé
+    // après un passage en mode local
+    if (session && (evenement === 'INITIAL_SESSION' || evenement === 'SIGNED_IN' || retourEnLigne))
       setTimeout(() => verifierProprietaire(session.user.id).then(() => synchroniser()), 0)
   })
   surEcriture(planifier)
-  window.addEventListener('online', () => synchroniser())
+  window.addEventListener('online', () => {
+    // De retour en ligne en mode local : on relance le renouvellement de la session
+    if (!etat.session && etat.local) supabase.auth.refreshSession().catch(() => {})
+    synchroniser()
+  })
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
       synchroniser()
@@ -387,20 +439,4 @@ async function verifierSessionActive() {
     try { sessionStorage.setItem(CLE_SESSION_FERMEE, '1') } catch { /* stockage indisponible */ }
     await supabase.auth.signOut({ scope: 'local' }).catch(() => {})
   }
-}
-
-/**
- * Supprime TOUTES les données : sur le serveur (si connecté) puis sur cet appareil.
- * Le compte lui-même reste (pour le supprimer : Supabase → Authentication → Users).
- */
-export async function supprimerToutesMesDonnees() {
-  const userId = etat.session?.user.id
-  if (userId) {
-    const { error } = await supabase.from('donnees').delete().eq('user_id', userId)
-    if (error) throw new Error(`Suppression sur le serveur impossible : ${error.message}`)
-    localStorage.removeItem(cleCurseurs(userId))
-  }
-  await db.transaction('rw', [...TABLES_DONNEES(), db.suppressions], async () => {
-    for (const t of [...TABLES_DONNEES(), db.suppressions]) await t.clear()
-  })
 }

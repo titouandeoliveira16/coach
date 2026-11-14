@@ -26,4 +26,11 @@ export function ageAu(naissance: string, jour: string) {
   return an2 - an - (mois2 < mois || (mois2 === mois && j2 < j) ? 1 : 0)
 }
 
+/**
+ * Mineur (moins de 18 ans) : pas de perte de gras, l'objectif reste le maintien (audit du 14/11/2026 : un déficit
+ * pendant la croissance relève d'un médecin, pas d'une appli ; consensus CIO RED-S 2023).
+ */
+export const estMineur = (profil: Profil, jour: string) => !!profil.naissance && ageAu(profil.naissance, jour) < 18
+export const objectifPermis = (profil: Profil, jour: string) => (estMineur(profil, jour) ? 'maintien' : profil.objectif ?? 'maintien')
+
 export const useProfil = () => useReglage<Profil>('profil', PROFIL_DEFAUT)
