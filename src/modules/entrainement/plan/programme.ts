@@ -399,8 +399,10 @@ async function genererSemaineVeloBrute(lundi: string) {
     if (placement.intensite === dateTest) {
       intensite = construireTest(r.cpW, prog.testsCourts?.includes(dateTest))
       intensite.velo.pourquoi = 'Test prévu : il recale toutes tes cibles en watts.'
-    } else if (discipline === 'xco' && phase.type === 'specifique' && nSemaine === 1 && !allegee) {
-      intensite = construireSimulationXco(r.cpW, z2W, 4)
+    } else if (discipline === 'xco' && phase.type === 'specifique' && nSemaine === 1 && !allegee
+      && [4, 3, 2].some((t) => construireSimulationXco(r.cpW, z2W, t).dureeMin <= maxDuJour(placement.intensite!) + 5)) {
+      // Simulation de course XCO : autant de tours que ton créneau le permet (audit du 14/11/2026)
+      intensite = [4, 3, 2].map((t) => construireSimulationXco(r.cpW, z2W, t)).find((x) => x.dureeMin <= maxDuJour(placement.intensite!) + 5)!
       intensite.velo.pourquoi = 'Proche de ta course · simulation de course XCO (7-10 jours avant)'
     } else {
       let choix = choisirFormat(lundi, prog.phases, histo, discipline, 0, prog.typeCourse)
@@ -414,8 +416,10 @@ async function genererSemaineVeloBrute(lundi: string) {
       const affutage = phase.type === 'affutage'
       const palier = tenirDansCreneau(choix.format, affutage ? palierRaccourci(choix.format, palierBrut) : palierBrut, maxDuJour(placement.intensite))
       // Enduro : une semaine sur deux (hors reprise), les spéciales sur le terrain remplacent les intervalles
-      const speciales = discipline === 'enduro' && phase.type !== 'reprise' && nSemaine % 2 === 1
-      intensite = speciales ? construireSpeciales(nSemaine >> 1, r.cpW) : construireIntervalles(choix.format, palier, r.cpW, etat.bonus, r.wPrimeKj)
+      // (le plus haut palier de spéciales qui tient dans ton créneau ; aucun : intervalles, audit du 14/11/2026)
+      const palierSp = [3, 2, 1, 0].find((x) => x <= nSemaine >> 1 && construireSpeciales(x, r.cpW).dureeMin <= maxDuJour(placement.intensite!) + 5)
+      const speciales = discipline === 'enduro' && phase.type !== 'reprise' && nSemaine % 2 === 1 && palierSp !== undefined
+      intensite = speciales ? construireSpeciales(palierSp!, r.cpW) : construireIntervalles(choix.format, palier, r.cpW, etat.bonus, r.wPrimeKj)
       if (speciales) intensite.velo.pourquoi = `${NOMS_PHASES[phase.type]} · enduro : spéciales une semaine sur deux${allegee ? ` · ${raisonAllegee}` : ''}`
       else {
         const bonus = etat.bonus && !choix.format.aFond ? ` · ${etat.bonus > 0 ? '+' : ''}${(etat.bonus * 100).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} % de watts (progression)` : ''
@@ -437,21 +441,29 @@ async function genererSemaineVeloBrute(lundi: string) {
   // Route en ligne : simulation de course semaines 1 et 3 du « proche de la course » ; cyclosportive : sortie longue +
   // montées en fin de sortie une semaine sur deux en fin de prépa, semaines 1 et 2 du « proche de la course ».
   const typeCourse = prog.typeCourse ?? 'cyclo'
-  const longueCourse = discipline === 'route' && placement.long && !allegee
+  let longueCourse = discipline === 'route' && placement.long && !allegee
     ? typeCourse === 'en-ligne'
       ? phase.type === 'specifique' && nSemaine % 2 === 0 ? 'simulation-ligne' : undefined
       : phase.type === 'specifique' && nSemaine < 2 ? 'cyclo-montees' : undefined
     : undefined
   // Marathon VTT : la sortie longue en côtes compte comme une séance dure (48 h avant et après sans autre intensité)
   // Semaine de test CP : sortie longue normale (pas deux jours durs collés)
-  const cotes = discipline === 'xcm' && phase.type !== 'reprise' && !allegee && !dateTest
-  // La sortie en côtes est une séance dure : l'intensité ne la touche pas (48 h), on la déplace sur une autre endurance
-  if (cotes && placement.intensite && placement.long && Math.abs(ecartJours(placement.intensite, placement.long)) < 2 && placement.intensite !== dateTest) {
-    const loin = placement.z2.find((d) => Math.abs(ecartJours(d, placement.long!)) >= 2 && !procheCourse(d, competitions, delaiCourse))
-    if (loin) {
-      placement.z2 = [...placement.z2.filter((d) => d !== loin), placement.intensite].sort()
-      placement.intensite = loin
+  let cotes = discipline === 'xcm' && phase.type !== 'reprise' && !allegee && !dateTest
+  // Sortie longue dure (côtes, simulation, montées) : 48 h sans autre séance dure. L'intensité est déplacée sur une autre
+  // endurance ; un test ou une course à côté, ou pas de jour pour déplacer : sortie longue normale (audit du 14/11/2026)
+  if ((cotes || longueCourse) && placement.long) {
+    const long = placement.long
+    const colle = (d?: string) => !!d && Math.abs(ecartJours(d, long)) < 2 && d !== long
+    if (placement.intensite && colle(placement.intensite) && placement.intensite !== dateTest) {
+      const loin = placement.z2.find((d) => Math.abs(ecartJours(d, long)) >= 2 && !procheCourse(d, competitions, delaiCourse))
+      if (loin) {
+        placement.z2 = [...placement.z2.filter((d) => d !== loin), placement.intensite].sort()
+        placement.intensite = loin
+      }
     }
+    const durAcote = colle(placement.intensite) || colle(dateTest) || coursesSemaine.some((x) => colle(x.date))
+      || occupations.some((o) => o.dure && colle(o.date))
+    if (durAcote) { cotes = false; longueCourse = undefined }
   }
 
   // 2e intensité vélo (forme Chauvin) : 4 jours de vélo ou plus, sauf débutant, hors reprise et semaine allégée, et
@@ -541,11 +553,24 @@ async function genererSemaineVeloBrute(lundi: string) {
   const jourSprints = placement.z2.find((d) => d !== terrain && d !== jourSv1 && !lendemains.has(d)) ?? placement.z2.find((d) => d !== terrain && d !== jourSv1)
   const rappel = niveau === 'confirme' || niveau === 'expert'
 
+  // Cycle 1er seuil : la séance dédiée peut dépasser ton créneau de semaine (jusqu'à 50 min de plus, 2 h 05 au plus)
+  // pour que la progression aille jusqu'à 5 × 20′ ou 3 × 30′ (choix d'entraîneur, validé par Titouan le 10/11/2026)
+  // Séance dédiée au 1er seuil : dans ton créneau, 10 min de plus au plus (13/11/2026) ; les blocs plus longs se font
+  // dans la sortie longue
+  let seanceSv1 = jourSv1 ? construireSv1Dediee(nPalier, maxDuJour(jourSv1) + 10, sv1.w, z2W, fcSv1) : undefined
+  // Tranche d'heures (audit du 14/11/2026) : tests, séances dures et 1er seuil d'abord, puis la sortie longue et les
+  // endurances se partagent ce qui reste (30 min au moins par endurance, 1 h au moins pour la sortie longue)
+  // Semaine trop courte pour tout (ex. semaine de test avec moins de 4 h) : pas de séance dédiée au 1er seuil cette fois
+  const fixesSansSv1 = aCreer.filter(([, x]) => x.velo.famille !== 'course').reduce((t, [, x]) => t + x.dureeMin, 0)
+  if (seanceSv1 && heuresSemaine && fixesSansSv1 + seanceSv1.dureeMin + 30 * placement.z2.filter((d) => d !== jourSv1).length + (placement.long ? 60 : 0) > heures[1] * 60) seanceSv1 = undefined
+  const nZ2Restants = placement.z2.filter((d) => !(d === jourSv1 && seanceSv1)).length
+  const minutesFixes = fixesSansSv1 + (seanceSv1?.dureeMin ?? 0)
+  let minutesDispo = heuresSemaine ? heures[1] * 60 - minutesFixes : Infinity
   let extraSv1 = 0
   if (placement.long) {
     const kjLong = reste * partLong
     // Cycle 1er seuil : blocs dans la sortie longue en plus de la séance dédiée, même à 4 jours (13/11/2026 : 2 séances au 1er seuil par semaine)
-    const blocs = !sansBlocs && !cotes && !longueCourse ? { w: sv1.w, ...palierSv1 } : undefined
+    let blocs = !sansBlocs && !cotes && !longueCourse ? { w: sv1.w, ...palierSv1 } : undefined
     // Les blocs au 1er seuil coûtent plus de kJ par minute : ce surplus est pris sur les Z2 de semaine, pas sur la
     // durée de la sortie longue (sinon plus le palier monte, plus la sortie raccourcit et les blocs ne rentrent plus)
     // Semaine allégée, affûtage, récupération : la sortie longue peut descendre sous son minimum habituel
@@ -554,7 +579,12 @@ async function genererSemaineVeloBrute(lundi: string) {
     // (relecture du 9/11/2026 : volume en baisse, intensité gardée, Bosquet 2007 ; durées = choix d'entraîneur)
     const semaineCourse = prog.competitions.some((x) => x.date >= lundi && x.date <= semaine[6])
     const affutage = phase.type === 'affutage' && longue.cible ? (semaineCourse ? Math.min(90, longue.cible) : arrondi5(longue.cible * 0.55)) : undefined
-    const capLong = Math.min(affutage ?? Infinity, phase.type === 'specifique' && discipline === 'xco' ? Math.min(cap.long, 150) : phase.type === 'specifique' && discipline === 'xcc' ? Math.min(cap.long, 120) : cap.long)
+    const capLong = Math.max(Math.min(60, cap.long), Math.min(affutage ?? Infinity, minutesDispo - 30 * nZ2Restants, phase.type === 'specifique' && discipline === 'xco' ? Math.min(cap.long, 150) : phase.type === 'specifique' && discipline === 'xcc' ? Math.min(cap.long, 120) : cap.long))
+    // Simulation de course plus longue que ta sortie longue possible : sortie longue normale (audit du 14/11/2026)
+    if (longueCourse === 'simulation-ligne' && construireSimulationLigne(r.cpW, z2W, capLong).dureeMin > capLong + 5) {
+      longueCourse = undefined
+      blocs = !sansBlocs && !cotes ? { w: sv1.w, ...palierSv1 } : undefined
+    }
     const minLong = Math.min(capLong, Math.max(longueCourse === 'cyclo-montees' ? 180 : prog.minLongMin, longue.visee ?? 0))
     const min = affutage
       ? borner(Math.min(affutage, capLong), capLong, minutesPourKj(kjLong, z2W))
@@ -579,18 +609,15 @@ async function genererSemaineVeloBrute(lundi: string) {
       ? construireLongueCotes(min, z2W, r.cpW, cotesDe(nLongs, courseProche))
       : construireZ2(min, z2W, jourSprints || blocs ? undefined : sprints, { longue: true, sv1: blocs, espacementSec: sprints.espacementSec })])
     const sl = aCreer[aCreer.length - 1][1]
+    minutesDispo -= sl.dureeMin
     // Ce que la sortie longue prend au-delà de sa part (blocs au 1er seuil, allongement) est pris sur les Z2 de semaine
     extraSv1 = Math.max(0, sl.kj - kjLong)
   }
-  // Cycle 1er seuil : la séance dédiée peut dépasser ton créneau de semaine (jusqu'à 50 min de plus, 2 h 05 au plus)
-  // pour que la progression aille jusqu'à 5 × 20′ ou 3 × 30′ (choix d'entraîneur, validé par Titouan le 10/11/2026)
-  // Séance dédiée au 1er seuil : dans ton créneau, 10 min de plus au plus (13/11/2026) ; les blocs plus longs se font
-  // dans la sortie longue
-  const seanceSv1 = jourSv1 ? construireSv1Dediee(nPalier, maxDuJour(jourSv1) + 10, sv1.w, z2W, fcSv1) : undefined
   placement.z2.forEach((d) => {
     // Séance 1er seuil allongée au-delà de ton créneau : les autres endurances peuvent descendre à 30 min pour compenser
     const minZ2 = seanceSv1 && seanceSv1.dureeMin > maxDuJour(jourSv1!) ? 30 : 45
-    const min = borner(Math.min(minZ2, cap.z2), Math.min(maxDuJour(d), cap.z2), minutesPourKj((reste * (1 - partLong) - extraSv1) / placement.z2.length, z2W))
+    const maxZ2 = Math.max(30, Math.min(maxDuJour(d), cap.z2, nZ2Restants ? Math.floor(minutesDispo / nZ2Restants / 5) * 5 : Infinity))
+    const min = borner(Math.min(minZ2, cap.z2, maxZ2), maxZ2, minutesPourKj((reste * (1 - partLong) - extraSv1) / placement.z2.length, z2W))
     // VTT : la première Z2 de la semaine se fait sur le terrain (technique), jamais la sortie longue
     if (d === jourSv1 && seanceSv1) aCreer.push([d, seanceSv1])
     else if (d === terrain && discipline !== 'route') aCreer.push([d, construireTerrain(discipline, min, z2W)])
