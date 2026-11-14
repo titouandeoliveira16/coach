@@ -99,7 +99,7 @@ export function scenarioDe(graine: number): Scenario {
 }
 
 /** Simule la saison et renvoie les règles cassées (vide = tout va bien). */
-export async function simuler(sc: Scenario, detail = false): Promise<string[]> {
+export async function simuler(sc: Scenario, detail = false, journal?: string[]): Promise<string[]> {
   const { r, vie } = sc
   const a = hasard(sc.graine + 999)
   await db.delete(); await db.open()
@@ -232,6 +232,7 @@ export async function simuler(sc: Scenario, detail = false): Promise<string[]> {
         p(`intensité sautée 2 semaines de suite sans alerte · ${(await db.prevues.where('date').between(sc.sauts[0], decalerJour(sc.sauts[1], 6), true, true).toArray()).filter((x) => x.sport === 'velo').map((x) => `${x.date.slice(5)} ${x.titre} ${x.statut} ${x.origine}`).join(' | ')}`)
     }
 
+    if (journal) journal.push(`${l} · ${phase.type}${meta.allegee ? ' (allégée)' : ''} · budget ${meta.budget} kJ · ${meta.raison}\n    ${toutes.filter((x) => x.date <= decalerJour(l, 6)).sort((x, y) => x.date.localeCompare(y.date)).map((x) => `${x.date.slice(5)} ${x.titre} (${x.dureeMin}′${x.kjPrevu ? `, ${x.kjPrevu} kJ` : ''})`).join(' | ')}`)
     if (detail && problemes.some((x) => x.startsWith(l))) problemes.push(`   semaine : ${toutes.filter((x) => x.date <= decalerJour(l, 6)).sort((x, y) => x.date.localeCompare(y.date)).map((x) => `${x.date.slice(5)} ${x.sport} ${x.titre} (${x.dureeMin}′, ${x.intensite})`).join(' | ')} · roles ${prog.semaineType.join(',')} · courses ${courses.filter(ici).join(',')}`)
     // La semaine vécue
     const malade = a() < vie.malade
