@@ -1,6 +1,6 @@
 import { db } from '../../../core/db'
 import { lundiDe } from '../seances/donnees'
-import { aujourdhui, decalerJour } from '../../../core/dates'
+import { aujourdhui, decalerJour, versJour } from '../../../core/dates'
 import type { Profil } from '../../../core/profil'
 import { enregistrer } from '../../../core/stockage'
 import { CLE_PUBLIQUE, URL_SUPABASE, supabase } from '../../../core/supabase'
@@ -41,6 +41,8 @@ export async function appeler<T>(route: string, corps?: unknown): Promise<T> {
   const { data } = await supabase.auth.getSession()
   if (!data.session) throw new Error('Connecte-toi d’abord à ton compte (Accueil → ⚙️).')
   const r = await fetch(`${URL_SUPABASE}/functions/v1/intervals/${route}`, {
+    // Délai maximum (audit du 14/11/2026) : une réponse qui ne vient pas ne bloque plus l'import
+    ...(typeof AbortSignal.timeout === 'function' ? { signal: AbortSignal.timeout(60_000) } : {}),
     method: 'POST',
     headers: { Authorization: `Bearer ${data.session.access_token}`, apikey: CLE_PUBLIQUE, 'Content-Type': 'application/json' },
     body: JSON.stringify(corps ?? {}),
@@ -128,7 +130,9 @@ async function importerWellness(depuis: string) {
 /** Séances Intervals.icu → séances de l'appli (métriques calculées sur les flux). */
 async function importerActivites(depuis: string, surProgression?: (n: number) => void) {
   const { activites, viaStrava } = await appeler<{ activites: Activite[]; viaStrava: number }>('activites', { oldest: depuis })
-  const connues = new Set((await db.seances.toArray()).flatMap((s) => [s.idExterne, ...(s.autresIds ?? [])]).filter(Boolean))
+  // Déjà connues, ou supprimées à la main (audit du 14/11/2026 : avant, elles revenaient au prochain import)
+  const ignorees = ((await db.reglages.get('seances-ignorees'))?.valeur as { ids?: string[] } | undefined)?.ids ?? []
+  const connues = new Set([...(await db.seances.toArray()).flatMap((s) => [s.idExterne, ...(s.autresIds ?? [])]), ...ignorees].filter(Boolean))
   const nouvelles = activites.filter((a) => !connues.has(a.id)).sort((a, b) => a.start_date.localeCompare(b.start_date))
   const c = await chargerContexte()
   let n = 0
@@ -234,7 +238,8 @@ export async function importerHistoriqueKj(relire = false) {
       : kjEstime({ dureeSec: a.moving_time!, fcMoy: a.average_heartrate, fcRepos: c.fcRepos, fcMax: c.fcMax, cpW: c.cpW ?? 220 }),
   }))
   for (const s of sansDoublons(sorties)) {
-    const l = lundiDe(s.debut.slice(0, 10))
+    // Jour en heure locale (une sortie lundi 0 h 30 compte bien dans ta semaine)
+    const l = lundiDe(versJour(new Date(s.debut)))
     semaines[l] = (semaines[l] ?? 0) + s.kj
   }
   for (const l of Object.keys(semaines)) semaines[l] = Math.round(semaines[l])
@@ -247,7 +252,14 @@ export async function importerHistoriqueKj(relire = false) {
 }
 
 /** Import complet (séances + données Garmin). Première fois : 90 derniers jours. */
-export async function importerIntervals(surProgression?: (n: number) => void) {
+/** Un seul import à la fois (audit du 14/11/2026) : un 2e appel attend la fin du premier au lieu de doubler les séances. */
+let importEnCours: Promise<{ seances: number; mesures: number; viaStrava: number }> | null = null
+export function importerIntervals(surProgression?: (n: number) => void) {
+  importEnCours ??= importerIntervalsBrut(surProgression).finally(() => { importEnCours = null })
+  return importEnCours
+}
+
+async function importerIntervalsBrut(surProgression?: (n: number) => void) {
   const etat = await lireEtat()
   const depuis = etat.depuis ?? decalerJour(aujourdhui(), -JOURS_HISTORIQUE)
   const mesures = await importerWellness(depuis)

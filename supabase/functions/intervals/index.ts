@@ -87,6 +87,12 @@ const SPORTS = new Set(['Ride', 'VirtualRide', 'GravelRide', 'MountainBikeRide',
   'WeightTraining', 'Workout', 'Crossfit', 'Pilates', 'Yoga'])
 const aujourdhui = () => new Date().toISOString().slice(0, 10)
 
+// Valeurs venues de l'appli contrôlées avant d'aller dans une adresse d'Intervals (audit du 14/11/2026)
+const DATE = /^\d{4}-\d{2}-\d{2}$/
+const ID = /^[A-Za-z0-9_-]{1,40}$/
+const date = (v: unknown) => { if (typeof v !== 'string' || !DATE.test(v)) throw new Error('Date invalide.'); return v }
+const ident = (v: unknown) => { const x = String(v ?? ''); if (!ID.test(x)) throw new Error('Identifiant invalide.'); return encodeURIComponent(x) }
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
   const route = new URL(req.url).pathname.split('/').pop()
@@ -102,7 +108,7 @@ Deno.serve(async (req) => {
       const cleApi = String(corps.cle ?? '').trim()
       if (!cleApi) return json({ erreur: 'Clé manquante.' }, 400)
       // « 0 » = l'athlète propriétaire de la clé
-      const profil = await intervals(`/athlete/${corps.athlete || '0'}`, cleApi)
+      const profil = await intervals(`/athlete/${corps.athlete ? ident(corps.athlete) : '0'}`, cleApi)
       const { error } = await admin.from('intervals_cles').upsert({
         user_id: user.id, athlete_id: String(profil.id), cle_chiffre: await chiffrer(cleApi), maj_le: new Date().toISOString(),
       })
@@ -124,7 +130,7 @@ Deno.serve(async (req) => {
     if (!c) return json({ erreur: 'Intervals.icu n’est pas relié.' }, 409)
 
     if (route === 'activites') {
-      const liste = (await intervals(`/athlete/${c.athlete}/activities?oldest=${corps.oldest}&newest=${aujourdhui()}`, c.cle)) as Record<string, unknown>[]
+      const liste = (await intervals(`/athlete/${c.athlete}/activities?oldest=${date(corps.oldest)}&newest=${aujourdhui()}`, c.cle)) as Record<string, unknown>[]
       const viaStrava = liste.filter((a) => a.source === 'STRAVA').length
       const activites = liste
         .filter((a) => a.source !== 'STRAVA' && SPORTS.has(String(a.type)))
@@ -138,7 +144,7 @@ Deno.serve(async (req) => {
     }
 
     if (route === 'flux') {
-      const ids = (corps.ids as string[] ?? []).slice(0, MAX_FLUX)
+      const ids = (Array.isArray(corps.ids) ? corps.ids : []).slice(0, MAX_FLUX).map((x: unknown) => String(x)).filter((x: string) => ID.test(x))
       const flux: Record<string, Record<string, unknown[]>> = {}
       for (const id of ids) {
         const series = (await intervals(`/activity/${id}/streams.json?types=time,heartrate,watts,velocity_smooth`, c.cle).catch(() => [])) as { type: string; data: unknown[] }[]
@@ -154,7 +160,7 @@ Deno.serve(async (req) => {
     }
 
     if (route === 'wellness') {
-      const jours = (await intervals(`/athlete/${c.athlete}/wellness?oldest=${corps.oldest}&newest=${aujourdhui()}`, c.cle)) as Record<string, unknown>[]
+      const jours = (await intervals(`/athlete/${c.athlete}/wellness?oldest=${date(corps.oldest)}&newest=${aujourdhui()}`, c.cle)) as Record<string, unknown>[]
       return json({
         jours: jours.map((j) => ({ date: j.id, hrv: j.hrv, restingHR: j.restingHR, sleepSecs: j.sleepSecs, weight: j.weight, steps: j.steps })),
       })
@@ -163,17 +169,17 @@ Deno.serve(async (req) => {
     if (route === 'planifier') {
       // Séance structurée (texte au format du « workout builder » d'Intervals), sans ERG côté Zwift
       const evenement = {
-        category: 'WORKOUT', type: 'Ride', start_date_local: `${corps.date}T00:00:00`, name: corps.nom,
+        category: 'WORKOUT', type: 'Ride', start_date_local: `${date(corps.date)}T00:00:00`, name: corps.nom,
         description: corps.description, moving_time: corps.dureeSec, indoor: !!corps.indoor,
       }
       const e = (corps.id
-        ? await intervalsEcrire(`/athlete/${c.athlete}/events/${corps.id}`, c.cle, 'PUT', evenement)
+        ? await intervalsEcrire(`/athlete/${c.athlete}/events/${ident(corps.id)}`, c.cle, 'PUT', evenement)
         : await intervalsEcrire(`/athlete/${c.athlete}/events`, c.cle, 'POST', evenement)) as { id?: number | string }
       return json({ id: e.id !== undefined ? String(e.id) : corps.id })
     }
 
     if (route === 'retirer') {
-      await intervalsEcrire(`/athlete/${c.athlete}/events/${corps.id}`, c.cle, 'DELETE')
+      await intervalsEcrire(`/athlete/${c.athlete}/events/${ident(corps.id)}`, c.cle, 'DELETE')
       return json({ ok: true })
     }
 

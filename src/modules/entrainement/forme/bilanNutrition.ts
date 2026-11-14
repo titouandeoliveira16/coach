@@ -1,6 +1,6 @@
 import { aujourdhui, decalerJour, ecartJours } from '../../../core/dates'
 import { db } from '../../../core/db'
-import { PROFIL_DEFAUT, type Profil } from '../../../core/profil'
+import { objectifPermis, PROFIL_DEFAUT, type Profil } from '../../../core/profil'
 import { DEFICIT_BASE, DUREE_PAUSE, propositionNutrition, tendancePoids, type BilanNutrition, type Proposition } from '../../../metrics/nutrition'
 import { lireReglagesNutrition, modifierReglagesNutrition } from './besoins'
 import { peseesValides, poidsAu } from './pesees'
@@ -21,7 +21,7 @@ export async function enregistrerBilan(b: BilanNutrition) {
 /** Proposition du bilan d'un dimanche (perte de gras seulement) : tendance du poids sur 14 et 21 jours, faim, énergie. */
 export async function propositionDuBilan(dimanche: string): Promise<Proposition | undefined> {
   const profil = { ...PROFIL_DEFAUT, ...((await db.reglages.get('profil'))?.valeur as Profil | undefined) }
-  if (profil.objectif !== 'perte') return undefined
+  if (objectifPermis(profil, dimanche) !== 'perte') return undefined
   const n = await lireReglagesNutrition()
   const pesees = await peseesValides()
   const kg = (await poidsAu(dimanche)) ?? profil.poidsKg ?? PROFIL_DEFAUT.poidsKg!

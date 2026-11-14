@@ -1,6 +1,6 @@
 import { X } from 'lucide-react'
 import { useState } from 'react'
-import { depuisJour } from '../../../core/dates'
+import { aujourdhui, depuisJour } from '../../../core/dates'
 import { Feuille } from '../../../core/ui/Feuille'
 import { Aide } from '../../../core/ui/Aide'
 import { AIDES } from '../aides'
@@ -240,7 +240,7 @@ export function CalageVitesse({ refs, auto, facteurs, onChanger }: {
           </div>
           <button type="button" disabled={!distanceKm || dureeMin < 15} className="mt-2 w-full rounded-xl bg-accent py-2.5 font-bold text-fond disabled:opacity-40"
             onClick={() => {
-              onChanger([...refs, { epreuve: f.epreuve, distanceKm: distanceKm!, deniveleM: Math.round(nombre(f.denivele) ?? 0), dureeMin: Math.round(dureeMin), date: new Date().toISOString().slice(0, 10) }])
+              onChanger([...refs, { epreuve: f.epreuve, distanceKm: distanceKm!, deniveleM: Math.round(nombre(f.denivele) ?? 0), dureeMin: Math.round(dureeMin), date: aujourdhui() }])
               setF({ epreuve: f.epreuve, distance: '', denivele: '', h: '', min: '' })
               setOuvert(false)
             }}>Caler</button>

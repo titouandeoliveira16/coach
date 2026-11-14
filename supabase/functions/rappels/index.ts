@@ -254,7 +254,8 @@ async function prevenirCoachs(abonnements: any[], c: ClesVapid) {
   const { data: coachs } = await admin.from('coachs').select('user_id')
   const ids = new Set((coachs ?? []).map((x: { user_id: string }) => x.user_id))
   let n = 0
-  const texte = nouvelles.length === 1 ? nouvelles[0].message.slice(0, 120) : `${nouvelles.length} nouvelles erreurs, dont : ${nouvelles[0].message.slice(0, 90)}`
+  // Juste le nombre : le texte d'une erreur peut contenir une donnée d'un élève, il reste dans Réglages (audit du 14/11/2026)
+  const texte = nouvelles.length === 1 ? '1 nouvelle erreur : détail dans Réglages.' : `${nouvelles.length} nouvelles erreurs : détail dans Réglages.`
   for (const a of abonnements.filter((x) => ids.has(x.user_id))) {
     const statut = await envoyerPush(a.abonnement, { titre: '⚠️ Erreur dans Cycle', texte, tag: 'erreurs', url: './#/reglages' }, c).catch(() => 0)
     if (statut >= 200 && statut < 300) n++
@@ -375,7 +376,12 @@ async function appelDuCron(req: Request) {
   const recu = req.headers.get('x-coach-cron')
   if (!recu) return false
   const { data } = await admin.from('secret_cron').select('valeur').eq('id', 1).maybeSingle()
-  return !!data?.valeur && data.valeur === recu
+  if (!data?.valeur) return false
+  // Comparaison à durée constante : le temps de réponse ne révèle pas le début du secret (audit du 14/11/2026)
+  const x = new TextEncoder().encode(String(data.valeur)), y = new TextEncoder().encode(recu)
+  let diff = x.length ^ y.length
+  for (let i = 0; i < x.length; i++) diff |= x[i] ^ (y[i % (y.length || 1)] ?? 0)
+  return diff === 0
 }
 
 Deno.serve(async (req) => {

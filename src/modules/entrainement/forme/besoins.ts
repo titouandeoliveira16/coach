@@ -1,6 +1,6 @@
 import { db } from '../../../core/db'
 import { enregistrer } from '../../../core/stockage'
-import { AGE_DEFAUT, ageAu, PROFIL_DEFAUT, type Profil } from '../../../core/profil'
+import { AGE_DEFAUT, ageAu, objectifPermis, PROFIL_DEFAUT, type Profil } from '../../../core/profil'
 import { decalerJour } from '../../../core/dates'
 import { besoinsDuJour, DEFICIT_BASE, kcalActivite, partGlucides, reductionsEtalement, tendancePoids, type ActiviteJour, type BilanNutrition } from '../../../metrics/nutrition'
 import { chargerContexte, domaineDe } from '../seances/donnees'
@@ -74,15 +74,16 @@ export async function besoinsDe(jour: string, o: { sansCorrection?: boolean; san
     ...pasFaites.map((p, i) => ({ titre: p.titre, kcal: Math.round(kcalActivite(aFaire[i], kg)), faite: false })),
   ]
   // Pause au maintien (bilan du dimanche) : pas de déficit jusqu'à la fin de la pause
-  const pause = profil.objectif === 'perte' && !!n.pauseJusquau && jour <= n.pauseJusquau
+  const objectif = objectifPermis(profil, jour)
+  const pause = objectif === 'perte' && !!n.pauseJusquau && jour <= n.pauseJusquau
   const b = besoinsDuJour({
     kg, cm: profil.tailleCm ?? PROFIL_DEFAUT.tailleCm!, age: profil.naissance ? ageAu(profil.naissance, jour) : AGE_DEFAUT, activites: [...faites, ...aFaire], sexe: profil.sexe,
-    objectif: pause ? 'maintien' : profil.objectif, deficitBase: n.deficitBase ?? DEFICIT_BASE,
+    objectif: pause ? 'maintien' : objectif, deficitBase: n.deficitBase ?? DEFICIT_BASE,
     correction: o.sansCorrection ? 0 : n.correction,
     reduction: o.sansEtalement ? 0 : await reductionDuJour(jour, n),
   })
   const tendance = tendancePoids(await peseesValides(), jour)
-  return { ...b, detailSeances, correction: o.sansCorrection ? undefined : n.correction, etalementDu: b.reduction ? n.etalements?.filter((e) => e.date < jour).at(-1)?.date : undefined, kg, objectif: profil.objectif ?? 'maintien', pauseJusquau: pause ? n.pauseJusquau : undefined, tendance, nbFaites: faites.length, nbAFaire: aFaire.length }
+  return { ...b, detailSeances, correction: o.sansCorrection ? undefined : n.correction, etalementDu: b.reduction ? n.etalements?.filter((e) => e.date < jour).at(-1)?.date : undefined, kg, objectif, pauseJusquau: pause ? n.pauseJusquau : undefined, tendance, nbFaites: faites.length, nbAFaire: aFaire.length }
 }
 
 /** kcal retirées ce jour-là pour étaler les excès des 7 jours précédents (jours faciles seulement). */

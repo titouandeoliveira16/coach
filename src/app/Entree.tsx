@@ -14,6 +14,7 @@ export function FormulaireCompte() {
   const [occupe, setOccupe] = useState(false)
   const [message, setMessage] = useState<string>()
   const [oubli, setOubli] = useState(false)
+  const [accord, setAccord] = useState(false)
   // Session fermée parce que le compte s'est connecté sur un autre appareil
   const [fermee] = useState(() => {
     try { return !!sessionStorage.getItem(CLE_SESSION_FERMEE) } catch { return false }
@@ -22,7 +23,7 @@ export function FormulaireCompte() {
     try { sessionStorage.removeItem(CLE_SESSION_FERMEE) } catch { /* stockage indisponible */ }
   }, [])
   const avecCode = mode === 'code'
-  const pret = email.includes('@') && motDePasse.length >= 6 && (!avecCode || code.replace(/[^a-z0-9]/gi, '').length === 6) && !occupe
+  const pret = email.includes('@') && motDePasse.length >= (avecCode ? 8 : 6) && (!avecCode || (accord && code.replace(/[^a-z0-9]/gi, '').length === 6)) && !occupe
 
   const valider = async () => {
     setOccupe(true)
@@ -45,8 +46,15 @@ export function FormulaireCompte() {
       )}
       <input type="email" inputMode="email" autoComplete="username" placeholder="ton@email.fr" value={email}
         onChange={(e) => setEmail(e.target.value)} className={champ} />
-      <input type="password" autoComplete={avecCode ? 'new-password' : 'current-password'} placeholder="Mot de passe (6 caractères min.)" value={motDePasse}
+      <input type="password" autoComplete={avecCode ? 'new-password' : 'current-password'} placeholder={avecCode ? 'Mot de passe (8 caractères min.)' : 'Mot de passe'} value={motDePasse}
         onChange={(e) => setMotDePasse(e.target.value)} className={champ} />
+      {/* Consentement explicite aux données de santé (RGPD, art. 9), enregistré avec le compte (audit du 14/11/2026) */}
+      {avecCode && (
+        <label className="flex items-start gap-2.5 px-1 text-[13px] leading-snug text-texte-2">
+          <input type="checkbox" checked={accord} onChange={(e) => setAccord(e.target.checked)} className="mt-0.5 size-5 shrink-0 accent-white" />
+          <span>J’accepte que Cycle utilise mes données de santé (sommeil, VFC, poids, FC) pour calculer mon plan. Moins de 15 ans : avec l’accord d’un parent.</span>
+        </label>
+      )}
       <button type="submit" disabled={!pret} className="presse w-full rounded-xl bg-white py-3.5 text-[17px] font-bold text-black disabled:opacity-40">{occupe ? 'Un instant…' : avecCode ? 'Créer mon compte' : 'Me connecter'}</button>
       {message && <p className="text-sm text-mauvais">{message}</p>}
       {fermee && <p className="text-sm text-attention">Ton compte s’est connecté sur un autre appareil : cette session a été fermée (une seule à la fois).</p>}

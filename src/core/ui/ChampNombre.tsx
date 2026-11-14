@@ -8,13 +8,16 @@ interface Props {
   decimales?: number
   /** Appelé quand on quitte le champ (valeur vide → undefined) */
   onValider: (v: number | undefined) => void
+  /** Bornes : une valeur en dehors (ou vide) est refusée, l'ancienne revient (audit du 14/11/2026) */
+  min?: number
+  max?: number
 }
 
 /**
  * Ligne « libellé ……… [ valeur ] unité ».
  * Ouvre le pavé numérique sur iPhone, accepte la virgule, enregistre en quittant le champ.
  */
-export function ChampNombre({ libelle, valeur, unite, decimales = 1, onValider }: Props) {
+export function ChampNombre({ libelle, valeur, unite, decimales = 1, onValider, min, max }: Props) {
   const [texte, setTexte] = useState(formatNombre(valeur, decimales))
   const [enSaisie, setEnSaisie] = useState(false)
 
@@ -35,6 +38,11 @@ export function ChampNombre({ libelle, valeur, unite, decimales = 1, onValider }
           onBlur={() => {
             setEnSaisie(false)
             const n = lireNombre(texte)
+            const borne = min !== undefined || max !== undefined
+            if (borne && (n === undefined || (min !== undefined && n < min) || (max !== undefined && n > max))) {
+              setTexte(formatNombre(valeur, decimales))
+              return
+            }
             if (n !== valeur) onValider(n)
           }}
           className="w-24 rounded-lg border border-bordure bg-surface-2 px-3 py-2 text-right text-lg font-semibold outline-none focus:border-accent"

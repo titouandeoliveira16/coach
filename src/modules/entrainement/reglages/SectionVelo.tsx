@@ -37,7 +37,7 @@ export function SectionVelo() {
       </div>
       {cpOuvert && (
         <div className="mt-2">
-          <ChampNombre libelle="CP" unite="W" decimales={0} valeur={reglages.cpW} onValider={(v) => modifier({ cpW: v })} />
+          <ChampNombre libelle="CP" unite="W" decimales={0} min={80} max={600} valeur={reglages.cpW} onValider={(v) => modifier({ cpW: v })} />
           <p className="text-xs text-texte-3">Elle se met à jour toute seule après chaque test CP.</p>
           <button type="button" onClick={() => setCalculateur(!calculateur)} className="mt-1 w-full py-2 text-left text-sm font-semibold text-accent">
             {calculateur ? '× Fermer le calculateur' : '+ Calculer depuis mon test'}

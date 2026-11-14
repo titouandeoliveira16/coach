@@ -1,4 +1,5 @@
-import { useProfil } from '../../../core/profil'
+import { estMineur, useProfil } from '../../../core/profil'
+import { aujourdhui } from '../../../core/dates'
 import { useState, type ReactNode } from 'react'
 import { DetailMuscu } from './SectionMuscu'
 import { useReglage } from '../../../core/reglages'
@@ -178,7 +179,9 @@ export function SectionProfilSportif() {
         {ps.nutrition !== false && (
           <>
             <p className="mt-3 mb-1.5 text-[13px] font-semibold text-texte-2">Ton objectif</p>
-            {choixUnique(['Garder mon poids', 'Perte de gras légère'], profil.objectif === 'perte' ? 'Perte de gras légère' : 'Garder mon poids', (v) => modifierProfil({ objectif: v === 'Perte de gras légère' ? 'perte' : 'maintien' }))}
+            {estMineur(profil, aujourdhui())
+              ? <p className="text-sm text-texte-2">Garder ton poids : avant 18 ans, pas de perte de gras avec l’appli (tu grandis encore : parles-en à un médecin si besoin).</p>
+              : choixUnique(['Garder mon poids', 'Perte de gras légère'], profil.objectif === 'perte' ? 'Perte de gras légère' : 'Garder mon poids', (v) => modifierProfil({ objectif: v === 'Perte de gras légère' ? 'perte' : 'maintien' }))}
           </>
         )}
         <p className="mt-1.5 text-xs text-texte-3">Activé : tes besoins du jour selon ta séance, ce que tu as mangé et l'écart, et le bilan nutrition du dimanche.</p>

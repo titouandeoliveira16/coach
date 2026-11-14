@@ -10,7 +10,7 @@ let compte = 0
 
 export function signalerErreur(e: unknown, contexte?: string) {
   try {
-    const err = e instanceof Error ? e : new Error(typeof e === 'string' ? e : JSON.stringify(e)?.slice(0, 200) ?? 'Erreur inconnue')
+    const err = e instanceof Error ? e : new Error(typeof e === 'string' ? e : typeof (e as { message?: unknown })?.message === 'string' ? (e as { message: string }).message : `Erreur sans message (${typeof e})`)
     // Coupures réseau : normales hors ligne, pas des bugs
     if (/fetch|network|réseau|Load failed/i.test(err.message) && !navigator.onLine) return
     const message = `${contexte ? `${contexte} : ` : ''}${err.message}`.slice(0, 500)
