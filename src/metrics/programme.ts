@@ -1887,7 +1887,8 @@ export function ciblesCols(o: { cols: Col[]; distanceKm?: number; dureeMin: numb
  * 48 h après une course) : pas dans les 2 jours avant, ni dans les 3 jours après (5 après une course de plus de 3 h).
  */
 export function testProcheCourse(d: string, courses: { date: string; dureeMin: number }[]) {
-  return courses.some((c) => (d >= decaler(c.date, -2) && d < c.date) || (d >= c.date && d <= decaler(c.date, c.dureeMin > 180 ? 5 : 3)))
+  // Pas de test dans les 4 jours avant une course (audit du 14/11/2026 : 2 avant), ni juste après
+  return courses.some((c) => (d >= decaler(c.date, -4) && d < c.date) || (d >= c.date && d <= decaler(c.date, c.dureeMin > 180 ? 5 : 3)))
 }
 
 /**
@@ -1903,10 +1904,13 @@ const recupSv1Dedie = (min: number) => (min >= 20 ? 4 : 3)
 export const dureeSv1Dediee = (p: { reps: number; min: number }) => 10 + p.reps * p.min + (p.reps - 1) * recupSv1Dedie(p.min) + 5
 
 export function construireSv1Dediee(palier: number, maxMin: number, sv1W: number, z2W: number, fc?: [number, number]): SeanceConstruite {
-  // Le palier visé, sinon le plus grand qui tient dans ton créneau
+  // Le palier visé, sinon le plus grand qui tient dans ton créneau ; si même le premier ne tient pas, moins de blocs
+  // puis des blocs plus courts (8 min au moins, 2 blocs au moins ; audit du 14/11/2026)
   let i = Math.min(palier, PALIERS_SV1_DEDIE.length - 1)
   while (i > 0 && dureeSv1Dediee(PALIERS_SV1_DEDIE[i]) > maxMin) i--
-  const p = PALIERS_SV1_DEDIE[i]
+  let p = PALIERS_SV1_DEDIE[i]
+  while (dureeSv1Dediee(p) > maxMin && p.reps > 2) p = { ...p, reps: p.reps - 1 }
+  while (dureeSv1Dediee(p) > maxMin && p.min > 8) p = { ...p, min: p.min - 1 }
   const recup = recupSv1Dedie(p.min)
   const wEch = arrondi5(z2W * 0.85)
   const pl = plage(sv1W, 'tempo')

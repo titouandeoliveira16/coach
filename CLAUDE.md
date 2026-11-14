@@ -39,6 +39,8 @@ En ligne : https://titouandeoliveira16.github.io/coach/ (GitHub Pages, déployé
 
 ## Commandes
 - `npm run dev` · `npm test` (Vitest) · `npx tsc -b` · `npm run lint` (oxlint) · `npm run build`
+- `npm run audit` : audit complet du moteur, 500 saisons tirées au hasard (~1 min 30 ; `AUDIT_DECALAGE=500` pour 500 autres),
+  `plan/audit/simulation.ts` ; à lancer après toute modification du moteur (pas dans `npm test`, trop long)
 - Publier une version : skill **`publier`** (version, vérifications, commit, push, déploiement, contrôle).
 - Contrôle visuel : sous-agent **`testeur-mobile`**.
 - Un hook bloque `git push` si les types ou les tests échouent.
