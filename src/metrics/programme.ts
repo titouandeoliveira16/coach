@@ -736,7 +736,10 @@ export function construireZ2(duree: number, z2W: number, sprints?: { n: number; 
   }
   // Sortie longue : premier sprint à la 20e minute ; Z2 de semaine (plus courte) : dès la 15e
   const premier = longue ? 20 : 15
-  const minutes = sprints && !sv1 ? Array.from({ length: sprints.n }, (_, i) => premier + i * Math.round((o.espacementSec ?? 600) / 60)).filter((m) => m <= dureeMin - 10) : []
+  // Chaque sprint et sa récupération très facile finissent avant le retour au calme (audit du 15/11/2026 : 6 sprints de
+  // 30″ dans une sortie courte donnaient une étape de durée négative)
+  const facileSprint = sprints ? Math.min(Math.round((o.espacementSec ?? 600) / 60) * 60 - sprints.sec - 60, sprints.sec >= 30 ? 300 : 120) : 0
+  const minutes = sprints && !sv1 ? Array.from({ length: sprints.n }, (_, i) => premier + i * Math.round((o.espacementSec ?? 600) / 60)).filter((m) => m <= dureeMin - 10 && m * 60 + sprints.sec + facileSprint <= corpsFin) : []
 
   if (sv1) {
     const total = (sv1.reps * sv1.min + (sv1.reps - 1) * RECUP_SV1_MIN) * 60
@@ -860,27 +863,35 @@ export function phaseDe(lundi: string, phases: Phase[]) {
 }
 
 /**
- * Semaine allégée, comptée en continu sur toute la saison (relecteur, 10/11/2026) : au plus 3 semaines chargées d'affilée,
+ * Semaine allégée, comptée en continu sur toute la saison (relecteur, 10/11/2026 et 15/11/2026) : au plus 3 semaines
+ * chargées d'affilée (4 en saison courte, 5 en phase spécifique ; une semaine faite à moins de 80 % ne compte pas),
  * puis une allégée (cycle 3 + 1 : choix d'entraîneur, aussi utilisé par Rønnestad 2014), quelle que soit la phase. Le
  * compteur repart à zéro après une semaine basse : allégée, récupération, affûtage, ou semaine d'une course B
  * (`semaineB`). Jamais d'allégée juste avant l'affûtage (4 semaines chargées au plus) ni en affûtage ou en récupération.
  */
-export function estSemaineAllegee(lundi: string, phases: Phase[], semaineB?: (lundi: string) => boolean) {
+export function estSemaineAllegee(lundi: string, phases: Phase[], semaineB?: (lundi: string) => boolean, peuFaite?: (lundi: string) => boolean) {
   const triees = [...phases].sort((a, b) => a.debut.localeCompare(b.debut))
   // Tout est ramené au lundi (une phase saisie un mercredi faisait sauter toutes les semaines allégées)
   const auLundi = (d: string) => decaler(d, -((new Date(`${d}T12:00:00Z`).getUTCDay() + 6) % 7))
   lundi = auLundi(lundi)
   const premier = auLundi(triees[0]?.debut ?? lundi)
   if (!triees.length || lundi < premier) return false
+  // Saison courte (moins de 12 semaines avant l'affûtage) : allégée après 4 semaines chargées, pas 3 (relecture du
+  // 15/11/2026 : sur 9 semaines, chaque semaine chargée compte ; 3 + 1 ou 4 + 1 : aucune étude ne départage)
+  const affutage = triees.find((p) => p.type === 'affutage')?.debut
+  const maxChargees = affutage && (Date.parse(affutage) - Date.parse(premier)) / (7 * 86_400_000) < 12 ? 4 : 3
   let chargees = 0
   for (let l = premier; l <= lundi; l = decaler(l, 7)) {
     const type = phaseDe(l, triees).phase.type
     let allegee = false
     if (type === 'affutage' || type === 'recuperation' || semaineB?.(l)) chargees = 0
-    else if (chargees >= 3 && phaseDe(decaler(l, 7), triees).phase.type !== 'affutage') {
+    // Phase spécifique : pas d'allégée (l'affûtage en tient lieu), sauf après 5 semaines chargées d'affilée
+    else if (chargees >= (type === 'specifique' ? 5 : maxChargees) && phaseDe(decaler(l, 7), triees).phase.type !== 'affutage') {
       allegee = true
       chargees = 0
-    } else chargees++
+    }
+    // Semaine faite à moins de 80 % : elle ne compte pas comme chargée, l'allégée est repoussée (relecture du 15/11/2026)
+    else if (!peuFaite?.(l)) chargees++
     if (l === lundi) return allegee
   }
   return false
@@ -1099,6 +1110,8 @@ export interface BilanSemaine {
   provisoire?: boolean
   /** Bilan du dimanche : kJ des séances encore prévues aujourd'hui, comptés comme faits (15/11/2026) */
   kjAVenir?: number
+  /** Semaine avec une course C : la semaine d'après ne monte pas (15/11/2026) */
+  courseC?: boolean
 }
 
 /**
@@ -1122,6 +1135,10 @@ export function budgetSemaine(prec: BilanSemaine | undefined, nominal: number, p
     if (prec.chargee) {
       ref = prec.budgetRef
       raison = 'Stable : semaine chargée la semaine dernière, on ne rattrape pas'
+    } else if (prec.courseC && part >= 0.9) {
+      // Une course n'est pas une semaine « validée » : grosse fatigue, la semaine d'après reste stable (relecture du 15/11/2026)
+      ref = prec.budgetRef
+      raison = 'Stable : course la semaine dernière, on ne monte pas juste après'
     } else if (prec.provisoire) {
       ref = prec.budgetRef * (1 + hausse)
       raison = `+${(hausse * 100).toLocaleString('fr-FR')} % si ta semaine en cours se passe comme prévu`
@@ -1390,6 +1407,16 @@ export function heuresDe(texte?: string): [number, number] {
     'Moins de 4 h': [2, 4], '4 à 6 h': [4, 6], '6 à 8 h': [6, 8], '8 à 10 h': [8, 10], '10 à 12 h': [10, 12], 'Plus de 12 h': [12, 16],
   }
   return (texte && t[texte]) || [4, 6]
+}
+/**
+ * Budget de départ plafonné par ce que tu roulais (relecture du 15/11/2026, choix d'entraîneur) : le haut de ta tranche
+ * d'heures des 3 derniers mois × 1,2, en kJ à ta puissance d'endurance. Évite de doubler le volume en semaine 1.
+ * Undefined si tu n'as pas répondu (ou plus de 10 h : pas de plafond).
+ */
+export function departSelonHeures(heuresRecentes: string | undefined, z2W: number) {
+  const haut: Record<string, number> = { 'Moins de 3 h': 3, '3 à 6 h': 6, '6 à 10 h': 10 }
+  const h = heuresRecentes ? haut[heuresRecentes] : undefined
+  return h ? Math.round((h * 1.2 * 3600 * z2W) / 1000) : undefined
 }
 /** Hausse du budget kJ quand la semaine est validée et les signaux au vert. */
 export const hausseBudget = (niveau: Niveau) => (niveau === 'debutant' ? 0.05 : 0.075)
@@ -1909,8 +1936,13 @@ export function testProcheCourse(d: string, courses: { date: string; dureeMin: n
  * dérive (même plage de FC que les blocs de la sortie longue). Le travail au 1er seuil ne remplace pas l'intensité
  * (Neal 2013, Stöggl 2014) : le rappel VO2 reste. Progression = choix d'entraîneur.
  */
+/**
+ * Paliers (relecture du 15/11/2026) : les blocs s'allongent (4 × 10 → 3 × 15 → 2 × 25 → 3 × 20 → 2 × 30 → 1 × 60) et
+ * les premiers tiennent dans un créneau d'environ 1 h 10 : avant, 4 × 15 ne rentrait pas dans 1 h et la séance restait
+ * à 4 × 10 des semaines durant. Les watts suivent la FC (±5 W après 2 sorties de suite). Choix d'entraîneur.
+ */
 export const PALIERS_SV1_DEDIE: { reps: number; min: number }[] = [
-  { reps: 4, min: 10 }, { reps: 3, min: 15 }, { reps: 4, min: 15 }, { reps: 3, min: 20 }, { reps: 5, min: 20 }, { reps: 3, min: 30 },
+  { reps: 4, min: 10 }, { reps: 3, min: 15 }, { reps: 2, min: 25 }, { reps: 3, min: 20 }, { reps: 2, min: 30 }, { reps: 1, min: 60 },
 ]
 const recupSv1Dedie = (min: number) => (min >= 20 ? 4 : 3)
 export const dureeSv1Dediee = (p: { reps: number; min: number }) => 10 + p.reps * p.min + (p.reps - 1) * recupSv1Dedie(p.min) + 5

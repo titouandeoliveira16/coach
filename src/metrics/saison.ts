@@ -35,6 +35,8 @@ export interface EntreeSaison {
   jourDur?: number
   /** Aujourd'hui (un test déjà passé glisse d'une semaine) */
   aujourdhui?: string
+  /** Débutant ou intermédiaire : en saison courte (< 12 semaines), le seuil à la place du bloc VO2 (15/11/2026) */
+  prioriteSeuil?: boolean
 }
 
 const lundiDe = (d: string) => decaler(d, -((new Date(`${d}T12:00:00`).getDay() + 6) % 7))
@@ -51,7 +53,8 @@ export function dureesPhases(n: number, repriseLongue = false, entraine = false,
   const d = { reprise: 0, entretien: 0, base: 0, 'seuil-tirage': 0, 'seuil-maintien': 0, 'fin-prepa': 0, specifique: 0, affutage: 0 }
   if (n <= 0) return d
   if (n < 3) return { ...d, affutage: n }
-  d.affutage = n >= 6 ? 2 : 1
+  // Saison de moins de 12 semaines : 1 semaine d'affûtage (relecture du 15/11/2026 : efficace dès 7 jours, Wang 2023)
+  d.affutage = n >= 12 ? 2 : 1
   let reste = n - d.affutage
   d.specifique = Math.min(3, reste)
   reste -= d.specifique
@@ -86,8 +89,11 @@ export function calculerSaison(e: EntreeSaison) {
   const d = dureesPhases(n, arret >= 4 || !!e.debutant, !!e.entraine && !e.debutant && arret < 2, reprise)
   const phases: Phase[] = []
   let l = l0
+  // Saison courte, moins d'expérience : le bloc VO2 devient du seuil (meilleur rapport gain/fatigue sur une cyclo ;
+  // l'ordre des blocs change peu les progrès à charge égale, Sylta 2016 : choix d'entraîneur, relu le 15/11/2026)
+  const seuilAuLieuDeVo2 = !!e.prioriteSeuil && n < 12 && d['seuil-tirage'] === 0
   for (const type of ['reprise', 'entretien', 'base', 'seuil-tirage', 'seuil-maintien', 'fin-prepa', 'specifique', 'affutage'] as const) {
-    if (d[type] > 0) phases.push({ debut: l, type })
+    if (d[type] > 0) phases.push({ debut: l, type: type === 'fin-prepa' && seuilAuLieuDeVo2 ? 'seuil-tirage' : type })
     l = decaler(l, 7 * d[type])
   }
   phases.push({ debut: decaler(lc, 7), type: 'recuperation' }, { debut: decaler(lc, 14), type: 'entretien' })

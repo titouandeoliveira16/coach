@@ -102,7 +102,7 @@ export function preparerArrivee(r: ReponsesArrivee, jour: string, testsFaits: Re
   // Deux courses A ou plus : la préparation vise la 1re, puis récupération et bloc jusqu'à la suivante
   const premiereA = datesCoursesA([...(r.sansCourse ? [] : [principale]), ...(r.autresCourses ?? [])])[0] ?? r.course.date
   const saison = calculerSaison({
-    debut: jour, course: premiereA, arretSemaines: Math.max(r.arretSemaines, historique?.arret ?? 0), repriseFaite: historique?.repriseFaite, debutant: niveauDuProfil(ps) === 'debutant', entraine: historique?.entraine,
+    debut: jour, course: premiereA, arretSemaines: Math.max(r.arretSemaines, historique?.arret ?? 0), repriseFaite: historique?.repriseFaite, debutant: niveauDuProfil(ps) === 'debutant', prioriteSeuil: ['debutant', 'intermediaire'].includes(niveauDuProfil(ps)), entraine: historique?.entraine,
     jourLong: jourLong >= 0 ? jourLong : 6, jourDur: jourDur >= 0 ? jourDur : 1, aujourdhui: jour,
   })
   // CP déjà testée ces 4 dernières semaines (compte déjà utilisé) : pas de nouveau test dans les 2 premières semaines
@@ -340,7 +340,7 @@ export async function recalculerSaison(garderTests = false) {
   const jourLong = prog.semaineType.indexOf('velo-long')
   const jourDur = prog.semaineType.indexOf('velo-dur')
   const saison = calculerSaison({
-    debut: jour, course: a.date, arretSemaines: historique.arret, repriseFaite: historique.repriseFaite, debutant: niveauDuProfil(ps) === 'debutant', entraine: historique.entraine,
+    debut: jour, course: a.date, arretSemaines: historique.arret, repriseFaite: historique.repriseFaite, debutant: niveauDuProfil(ps) === 'debutant', prioriteSeuil: ['debutant', 'intermediaire'].includes(niveauDuProfil(ps)), entraine: historique.entraine,
     jourLong: jourLong >= 0 ? jourLong : 6, jourDur: jourDur >= 0 ? jourDur : 1, aujourdhui: jour,
   })
   if ((e.tests ?? []).some((t) => t.type === 'cp' && t.date <= jour && ecartJours(t.date, jour) <= 28)) {
