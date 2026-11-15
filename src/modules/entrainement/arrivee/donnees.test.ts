@@ -18,7 +18,7 @@ describe('questionnaire d’arrivée', () => {
     expect(p.profilSportif.sports).toEqual(['VTT'])
     // Rien de la saison de Titouan
     expect(p.entrainement.programme.phases[0].debut).toBe('2026-11-09')
-    expect(p.entrainement.programme.testsCp[0]).toBe('2026-11-14') // samedi, jour de la sortie longue
+    expect(p.entrainement.programme.testsCp[0]).toBe('2026-11-21') // samedi, jour de la sortie longue, à la fin de la reprise (15/11/2026)
   })
   it('CP connue gardée, zones calées dessus', () => {
     const p = preparerArrivee({ ...base, cpW: 220, fcMax: 195 }, '2026-11-09')

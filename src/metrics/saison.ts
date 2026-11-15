@@ -13,8 +13,9 @@ import { decaler } from './vfc'
  *    semaine (dédiée + blocs dans la sortie longue) et 1 rappel VO2 court (Rønnestad 2014 ; Spiering 2021).
  *  - 2e seuil : tirer (2 à 4 semaines) puis allonger le maintien, 10 semaines au plus ; au-delà, de l'entretien au début.
  *  - Reprise seulement après un vrai arrêt, moins les semaines déjà roulées depuis (13/11/2026).
- *  - Tests CP : 1re semaine, puis au début des blocs, 5 à 8 semaines d'écart ; test court au début de « allonger le
- *    seuil » (il donne la nouvelle CP) ; jamais en affûtage.
+ *  - Tests CP (relus le 15/11/2026) : à la fin de la reprise (jamais en 1re semaine après un arrêt), puis à la fin du
+ *    bloc qui précède chaque phase, 5 à 8 semaines d'écart ; test court avant « allonger le seuil » (il donne la nouvelle
+ *    CP) ; jamais en spécifique ni en affûtage ; le test complet prend la place de la sortie longue de sa semaine.
  * Les durées exactes sont des choix d'entraîneur.
  */
 export interface EntreeSaison {
@@ -103,9 +104,13 @@ export function calculerSaison(e: EntreeSaison) {
     testsCp.push(date)
     if (court) testsCourts.push(date)
   }
-  if (n >= 3) ajouter(l0, false)
-  let dernier = l0
-  for (const ph of phases.filter((p) => p.type === 'seuil-tirage' || p.type === 'seuil-maintien' || p.type === 'fin-prepa' || p.type === 'specifique' || p.type === 'entretien' || p.type === 'base')) {
+  // 1er test (relecture du 15/11/2026) : jamais en 1re semaine de reprise après un arrêt (CP sous-estimée) ; à la fin
+  // de la reprise (2e semaine au moins), sinon dès la 1re semaine si tu roulais déjà
+  const premier = d.reprise > 0 ? decaler(l0, 7 * Math.max(1, d.reprise - 1)) : l0
+  if (n >= 3) ajouter(premier, false)
+  let dernier = premier
+  // Pas de test en phase spécifique (la séance « course » de la semaine compte plus), ni en affûtage
+  for (const ph of phases.filter((p) => p.type === 'seuil-tirage' || p.type === 'seuil-maintien' || p.type === 'fin-prepa' || p.type === 'entretien' || p.type === 'base')) {
     if (ph.debut >= lc) break
     // Phase longue sans test depuis plus de 8 semaines : un test au milieu
     while (semainesEntre(dernier, ph.debut) > 8) {
@@ -113,9 +118,12 @@ export function calculerSaison(e: EntreeSaison) {
       ajouter(dernier, false)
     }
     if (ph.type !== 'entretien' && ph.type !== 'base' && semainesEntre(dernier, ph.debut) >= 5) {
-      // Test court au début de « allonger le seuil » (nouvelle CP) ou quand la phase dure moins de 4 semaines
-      ajouter(ph.debut, ph.type === 'seuil-maintien' || d[ph.type as 'seuil-tirage' | 'fin-prepa' | 'specifique'] < 4)
-      dernier = ph.debut
+      // Test à la fin du bloc d'avant (sa dernière semaine, souvent la semaine allégée : on y est frais), pas en tête de
+      // la phase, qui garde ainsi sa 1re semaine de travail. Court avant « allonger le seuil » (nouvelle CP) ou quand la
+      // phase dure moins de 4 semaines
+      const fin = decaler(ph.debut, -7)
+      ajouter(fin, ph.type === 'seuil-maintien' || d[ph.type as 'seuil-tirage' | 'fin-prepa'] < 4)
+      dernier = fin
     }
   }
   return { phases, testsCp: [...new Set(testsCp)].sort(), testsCourts, semaines: n }

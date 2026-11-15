@@ -4,7 +4,7 @@ import { aujourdhui, depuisJour } from '../../../core/dates'
 import { Feuille } from '../../../core/ui/Feuille'
 import { Aide } from '../../../core/ui/Aide'
 import { AIDES } from '../aides'
-import { ciblesCols, dureeDeCourse, type Col, epreuveDe, estimerDureeCourse, NOMS_EPREUVES, type Competition, type CourseReference, type Discipline, type Epreuve, type FamilleVitesse, type NiveauCourse } from '../../../metrics/programme'
+import { BORNES_DUREE_COURSE, ciblesCols, dureeDeCourse, dureeInhabituelle, type Col, epreuveDe, estimerDureeCourse, NOMS_EPREUVES, type Competition, type CourseReference, type Discipline, type Epreuve, type FamilleVitesse, type NiveauCourse } from '../../../metrics/programme'
 
 const COULEURS: Record<NiveauCourse, string> = { A: 'bg-accent', B: 'bg-yellow-400', C: 'bg-sky-400' }
 const NOTES: Record<NiveauCourse, string> = {
@@ -54,6 +54,14 @@ export function ChampsParcours({ epreuve, valeur: depart, onChanger: remonter, c
         </div>
       )}
       {!estimee && !modifier && <button type="button" className="mt-2 text-sm font-semibold text-accent" onClick={() => setModifier(true)}>Je connais ma durée</button>}
+      {(() => {
+        // Durée hors des bornes de la discipline : sans doute une erreur de saisie (15/11/2026)
+        const d = nombre(valeur.duree) ?? estimee
+        const [bas, haut] = BORNES_DUREE_COURSE[epreuve]
+        return d && dureeInhabituelle(epreuve, d)
+          ? <p className="mt-1.5 text-xs text-attention">≈ {heures(d)} : inhabituel pour un {NOMS_EPREUVES[epreuve]} (en général {heures(bas)} à {heures(haut)}). Vérifie la distance, le dénivelé ou la discipline : cette durée règle ta sortie longue et ta fin de saison.</p>
+          : null
+      })()}
     </div>
   )
 }
@@ -193,7 +201,12 @@ function FormulaireCourse({ course, min, contexte, dateDejaPrise, onValider, onR
       <p className="mt-1.5 text-xs text-texte-3">A : à fond, avec affûtage avant et récupération après ; entre deux A, l’appli adapte le bloc à l’écart (3 semaines au moins, 4 A au plus). B : semaine allégée d’un tiers, la course est ta séance dure. C : semaine normale, la course remplace ta séance dure (ou ta sortie longue au-delà de 2 h).</p>
       <button type="button" disabled={!f.date || !f.nom.trim() || dateDejaPrise(f.date)}
         className="mt-3 w-full rounded-xl bg-accent py-3 font-bold text-fond disabled:opacity-40"
-        onClick={() => onValider({ date: f.date, nom: f.nom.trim(), niveau: f.niveau, epreuve: f.epreuve, ...champsParcours(f.parcours), ...(f.cols.length ? { cols: f.cols } : {}) })}>
+        onClick={() => {
+          const c: Competition = { date: f.date, nom: f.nom.trim(), niveau: f.niveau, epreuve: f.epreuve, ...champsParcours(f.parcours), ...(f.cols.length ? { cols: f.cols } : {}) }
+          const d = dureeDeCourse(c, contexte)
+          if (dureeInhabituelle(f.epreuve, d) && !confirm(`Durée ≈ ${heures(d)} : inhabituelle pour un ${NOMS_EPREUVES[f.epreuve]}. La garder quand même ?`)) return
+          onValider(c)
+        }}>
         {course ? 'Enregistrer' : 'Ajouter'}
       </button>
       {onRetirer && <button type="button" className="mt-1 w-full py-2.5 text-sm text-mauvais" onClick={onRetirer}>Retirer cette course</button>}

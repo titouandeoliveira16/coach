@@ -24,6 +24,7 @@ describe('bilan du dimanche', () => {
     expect(b.change).toMatch(/budget vélo \d+ kJ/)
     expect(b.change).toMatch(/Reprise & endurance, semaine 2/)
     expect(b.change).toMatch(/sortie longue jusqu'à 85 min/)
-    expect(b.pourquoi).toMatch(/Stable : budget de la semaine dernière réalisé/)
+    // La sortie longue du dimanche n'est pas encore faite : comptée comme faite tant que le dimanche n'est pas fini (15/11/2026)
+    expect(b.pourquoi).toMatch(/en comptant ta séance d’aujourd’hui/)
   })
 })

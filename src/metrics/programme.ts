@@ -683,11 +683,13 @@ export function cibleSortieLongue(discipline: Discipline, typeCourse?: 'en-ligne
 }
 
 /**
- * Durée minimale de la sortie longue cette semaine : la plus longue faite ces 3 dernières semaines (une semaine allégée
- * ne fait pas reculer) + 10 min, sans dépasser la cible ni descendre sous ton minimum habituel.
+ * Durée minimale de la sortie longue cette semaine : la plus longue faite ces 4 dernières semaines (une semaine allégée
+ * ou une sortie raccourcie ne fait pas reculer) + 10 min, au plus +10 % (relecture du 15/11/2026, Frandsen 2025), sans
+ * dépasser la cible ni descendre sous ton minimum habituel.
  */
 export function dureeLongueVisee(cible: number, minLong: number, plusLongueRecente?: number) {
-  return Math.min(Math.max(cible, minLong), Math.max(minLong, (plusLongueRecente ?? minLong - PAS_LONGUE_MIN) + PAS_LONGUE_MIN))
+  const recente = plusLongueRecente ?? minLong - PAS_LONGUE_MIN
+  return Math.min(Math.max(cible, minLong), Math.max(minLong, recente + Math.min(PAS_LONGUE_MIN, Math.max(5, Math.round(recente * 0.1)))))
 }
 const RECUP_SV1_MIN = 5
 
@@ -1095,6 +1097,8 @@ export interface BilanSemaine {
   chargee?: boolean
   /** Semaine pas encore finie : comptée comme faite à 100 % (13/11/2026), recalculée quand elle se termine */
   provisoire?: boolean
+  /** Bilan du dimanche : kJ des séances encore prévues aujourd'hui, comptés comme faits (15/11/2026) */
+  kjAVenir?: number
 }
 
 /**
@@ -1136,6 +1140,7 @@ export function budgetSemaine(prec: BilanSemaine | undefined, nominal: number, p
   // un changement de phase faisait sauter le budget de +12 %)
   const borne = Math.min(plafond, Math.max(prec ? Math.min(nominal * 0.6, prec.budgetRef * 1.1) : nominal * 0.6, ref))
   if (borne < ref) raison += ' (plafonné par tes créneaux)'
+  if (prec?.kjAVenir) raison += ' (en comptant ta séance d’aujourd’hui)'
   ref = Math.round(borne)
   return { budgetRef: ref, budget: Math.round(allegee ? ref * 0.65 : ref), raison: allegee ? `${raison} · ${raisonAllegee} : −35 %` : raison }
 }
@@ -1761,6 +1766,13 @@ export function estimerDureeCourse(epreuve: Epreuve, distanceKm: number, denivel
 }
 
 /** Parcours de montagne : 15 m de dénivelé par km ou plus (moins : roulant ou vallonné). Choix d'entraîneur. */
+/**
+ * Durées de course plausibles par discipline (min), pour repérer une erreur de saisie (relecture du 15/11/2026 :
+ * XCC 20-25 min aux États-Unis, jusqu'à 60 selon l'UCI ; XCO élite 80-90 min ; autres bornes = choix d'entraîneur).
+ */
+export const BORNES_DUREE_COURSE: Record<Epreuve, [number, number]> = { xcc: [15, 60], xco: [45, 120], 'en-ligne': [60, 300], cyclo: [120, 480], xcm: [120, 420] }
+export const dureeInhabituelle = (epreuve: Epreuve, dureeMin: number) => dureeMin < BORNES_DUREE_COURSE[epreuve][0] || dureeMin > BORNES_DUREE_COURSE[epreuve][1]
+
 export const SEUIL_MONTAGNE_M_PAR_KM = 15
 export const estMontagne = (distanceKm: number, deniveleM = 0) => deniveleM / Math.max(distanceKm, 0.1) >= SEUIL_MONTAGNE_M_PAR_KM
 

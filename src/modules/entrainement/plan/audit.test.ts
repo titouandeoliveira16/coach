@@ -82,7 +82,8 @@ describe('audit du moteur sur une saison entière', () => {
       const dediee = semaine.find((x) => x.velo?.formatId === 'sv1-dedie')
       const longue = semaine.find((x) => x.velo?.famille === 'z2-long')
       const vo2 = semaine.find((x) => x.velo?.famille.startsWith('vo2'))
-      if (!dediee) continue
+      // Semaine du test complet : il remplace la sortie longue (15/11/2026)
+      if (!dediee || semaine.some((x) => x.velo?.famille === 'test')) continue
       semainesSv1++
       expect(longue?.velo?.blocsSv1).toBeGreaterThan(0)
       if (vo2) expect(Math.abs(Date.parse(dediee.date) - Date.parse(vo2.date))).toBeGreaterThanOrEqual(2 * 86_400_000)

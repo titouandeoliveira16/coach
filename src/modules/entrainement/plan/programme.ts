@@ -144,7 +144,9 @@ const heuresMin = (min: number) => `${Math.floor(min / 60)} h${min % 60 ? ` ${St
 export async function longueDeLaSemaine(lundi: string, prog: ReglagesProgramme, phase: TypePhase) {
   const cible = cibleSortieLongue(prog.discipline ?? 'route', prog.typeCourse, prog.dureeCourseMin)
   if (!cible || phase === 'reprise' || phase === 'affutage' || phase === 'recuperation') return { cible, visee: undefined }
-  const recentes = (await db.prevues.where('date').between(decalerJour(lundi, -21), lundi, true, false).toArray())
+  // Référence : la plus longue des 4 dernières semaines (relecture du 15/11/2026 : le risque monte quand une séance dépasse
+  // de plus de 10 % la plus longue des 30 derniers jours, Frandsen 2025, course à pied)
+  const recentes = (await db.prevues.where('date').between(decalerJour(lundi, -28), lundi, true, false).toArray())
     .filter((p) => p.velo?.famille === 'z2-long' && p.statut === 'faite').map((p) => p.dureeMin)
   return { cible, visee: dureeLongueVisee(cible, prog.minLongMin, recentes.length ? Math.max(...recentes) : undefined) }
 }
@@ -178,11 +180,16 @@ async function bilanDe(precedent: string, reel = false): Promise<BilanSemaine | 
     const kjPrevus = prevues.reduce((a, p) => a + (p.kjPrevu ?? 0), 0)
     return { budgetRef: meta.budgetRef, kjPrevus, kjRealises: kjPrevus, rouges: 0, oranges: 0, allegee: meta.allegee, chargee: !!(await lireSemaineChargee(precedent)), provisoire: true }
   }
+  // Bilan du dimanche (15/11/2026, demande de Titouan) : une séance encore prévue aujourd'hui (ou plus tard) compte
+  // comme faite tant que la semaine n'est pas finie : pas de « semaine pas validée » avant ta séance du dimanche
+  const restantes = fin >= aujourdhui() ? prevues.filter((p) => p.date >= aujourdhui() && p.statut === 'prevue') : []
   return {
     budgetRef: meta.budgetRef,
     kjPrevus: prevues.reduce((a, p) => a + (p.kjPrevu ?? 0), 0),
     // Sortie dehors sans capteur de puissance : on compte les kJ prévus de la séance qu'elle a remplie
-    kjRealises: seances.filter((s) => s.sport === 'velo').reduce((a, s) => a + (s.kj ?? prevues.find((p) => p.id === s.prevueId)?.kjPrevu ?? 0), 0),
+    kjRealises: seances.filter((s) => s.sport === 'velo').reduce((a, s) => a + (s.kj ?? prevues.find((p) => p.id === s.prevueId)?.kjPrevu ?? 0), 0)
+      + restantes.reduce((a, p) => a + (p.kjPrevu ?? 0), 0),
+    ...(restantes.length ? { kjAVenir: restantes.reduce((a, p) => a + (p.kjPrevu ?? 0), 0) } : {}),
     rouges: decisions.filter((d) => d.couleur === 'rouge').length,
     oranges: decisions.filter((d) => d.couleur === 'orange').length,
     allegee: meta.allegee,
@@ -356,10 +363,19 @@ async function genererSemaineVeloBrute(lundi: string) {
     dateTest = undefined
   }
 
+  // Test complet (relecture du 15/11/2026) : il prend le jour et la place de la sortie longue de la semaine (jamais le
+  // lendemain d'une longue : un test fait fatigué donne une CP fausse ; ~2 h avec l'échauffement, il fait le volume)
+  const testComplet = !!dateTest && !prog.testsCourts?.includes(dateTest)
+  if (testComplet) {
+    const jourLong = semaine.find((d, i) => roles[i] === 'velo-long' && d >= aPartirDe && !indispos.has(d) && !occupations.some((o) => o.date === d))
+    if (jourLong && !procheCourse(jourLong, competitions, delaiCourse)) dateTest = jourLong
+  }
   // Course B ou C : elle est la séance dure de la semaine ; en B, ou si elle dure plus de 2 h, aussi la sortie longue
-  const courseRemplaceLong = !!courseSecondaire && (courseSecondaire.niveau === 'B' || dureeDe(courseSecondaire.date) > 120)
+  const courseRemplaceLong = (!!courseSecondaire && (courseSecondaire.niveau === 'B' || dureeDe(courseSecondaire.date) > 120)) || testComplet
   const placement = placer(semaine, roles, occupations, indispos, aPartirDe, {
-    competitions, delaiApresCourse: delaiCourse, dateTest, intensite: !intensiteFaite && (!courseSecondaire || dateTest !== undefined), long: !longFaite && !courseRemplaceLong, nZ2,
+    competitions, delaiApresCourse: delaiCourse, dateTest, intensite: !intensiteFaite && (!courseSecondaire || dateTest !== undefined), long: !longFaite && !courseRemplaceLong,
+    // Semaine du test complet : il est la séance dure et la sortie longue ; le jour « dur » devient une endurance
+    nZ2: nZ2 + (testComplet && !longFaite ? 1 : 0),
   })
   // Pas de sortie longue la veille ou l'avant-veille d'une course : elle devient une Z2
   if (placement.long && procheCourse(placement.long, competitions, 0)) {
@@ -592,6 +608,15 @@ async function genererSemaineVeloBrute(lundi: string) {
       : borner(minLong * (coefPhase ?? (allegee ? 0.7 : 1)), capLong, minutesPourKj(kjLong, z2W))
     if (longue.visee && longue.cible && longue.cible > prog.maxLongMin && !allegee)
       phrases.push(`Ta course demande une sortie longue d'environ ${heuresMin(longue.cible)} ; ton maximum est ${heuresMin(prog.maxLongMin)} : allonge-le dans Réglages (Ma semaine type) si tu peux.`)
+    // Conseil (pas une règle, relecture du 15/11/2026) : entre 8 et 3 semaines avant la course A, 2 sorties d'au moins 75 %
+    // de la durée de course quand ta sortie longue habituelle n'y arrive pas
+    const coursA = prog.competitions.filter((x) => x.date > lundi && niveaux.get(x.date) === 'A').sort((x, y) => x.date.localeCompare(y.date))[0]
+    if (coursA && !allegee) {
+      const avant = ecartJours(lundi, coursA.date)
+      const visee75 = arrondi5(0.75 * dureeDe(coursA.date))
+      if (avant >= 21 && avant <= 56 && visee75 > capLong && visee75 > 120)
+        phrases.push(`D'ici 3 semaines avant ta course, prévois 2 sorties d'au moins ${heuresMin(visee75)} (75 % de ta course) un jour où tu as le temps : ta sortie longue habituelle n'y arrive pas.`)
+    }
     if (longueCourse === 'cyclo-montees' && capLong < 180) phrases.push('Ta sortie longue maximale est sous 3 h : la sortie avec montées en fin de sortie sera plus courte que conseillé pour une cyclosportive.')
     // Marathon VTT (hors reprise et semaine allégée) : sortie longue en côtes
     const courseProche = prog.competitions.some((x) => x.date >= lundi && x.date <= decalerJour(lundi, 20))

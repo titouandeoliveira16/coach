@@ -38,11 +38,13 @@ describe('saison calculée depuis la course', () => {
     expect(s.phases.find((p) => p.type === 'affutage')!.debut).toBe('2027-02-01')
     expect(s.phases.find((p) => p.type === 'recuperation')!.debut).toBe('2027-02-15')
   })
-  it('tests CP : 1re semaine, puis au moins 5 semaines d’écart, jamais en affûtage', () => {
+  it('tests CP : fin de reprise (1re semaine si déjà entraîné), au moins 5 semaines d’écart, jamais en spécifique ni en affûtage', () => {
     const s = calculerSaison({ debut: '2026-11-09', course: '2027-06-13', jourLong: 6, jourDur: 1 })
-    expect(s.testsCp[0]).toBe('2026-11-15')
-    const aff = s.phases.find((p) => p.type === 'affutage')!.debut
-    expect(s.testsCp.every((t) => t < aff)).toBe(true)
+    // Reprise de 2 semaines : pas de test en 1re semaine, il arrive à la fin de la reprise (15/11/2026)
+    expect(s.testsCp[0]).toBe('2026-11-22')
+    expect(calculerSaison({ debut: '2026-11-09', course: '2027-06-13', jourLong: 6, jourDur: 1, entraine: true }).testsCp[0]).toBe('2026-11-15')
+    const spe = s.phases.find((p) => p.type === 'specifique')!.debut
+    expect(s.testsCp.every((t) => t < spe)).toBe(true)
     for (let i = 1; i < s.testsCp.length; i++) expect(Date.parse(s.testsCp[i]) - Date.parse(s.testsCp[i - 1])).toBeGreaterThanOrEqual(5 * 7 * 86_400_000 - 6 * 86_400_000)
   })
   it('semaine allégée : au plus 3 semaines chargées d’affilée, jamais en affûtage', () => {
