@@ -29,8 +29,8 @@ export function EcranEntrainement() {
   // (et fusion des éventuels doublons déjà enregistrés)
   useEffect(() => {
     nettoyerDoublons().then(nettoyerPeseesEffacees).then(retirerCourseAVenir).then(importerIntervalsSiBesoin)
-      // Séances de la semaine sur le compteur iGPSPORT (si relié), après l'import qui peut recalculer la semaine
-      .then(() => import('./import/igpsport')).then((m) => m.envoyerSeancesIgpsport()).catch(() => {})
+      // Compteur iGPSPORT relié ? (bouton « Envoyer à mon compteur »), demandé une fois par appareil
+      .then(() => import('./import/igpsport')).then((m) => m.verifierRelie()).catch(() => {})
   }, [])
 
   return (

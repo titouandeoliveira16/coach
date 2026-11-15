@@ -2,12 +2,16 @@ import { useState } from 'react'
 import type { Etape } from '../../../metrics/programme'
 import { envoyerSeance, retirerSeance, useEnvoi, type Cible } from '../import/envoi'
 import type { SeancePrevue } from '../types'
+import { useReglage } from '../../../core/reglages'
+import { envoyerSeanceIgpsport, type EnvoiIgpsport } from '../import/igpsport'
 
 const NOMS: Record<Cible, string> = { garmin: 'ta montre (Garmin)', zwift: 'Zwift' }
 
 /** « Envoyer à Garmin » / « Envoyer à Zwift » : la séance part dans ton calendrier Intervals.icu, qui la transmet. */
 export function BoutonsEnvoi({ p, etapes }: { p: SeancePrevue; etapes: Etape[] }) {
   const envoi = useEnvoi(p.id)
+  const [igp] = useReglage<EnvoiIgpsport>('igpsport-envoi', {})
+  const envoyeCompteur = igp.envois?.[p.id]
   const [occupe, setOccupe] = useState(false)
   const [message, setMessage] = useState<string>()
   if (envoi === undefined) return null
@@ -43,6 +47,13 @@ export function BoutonsEnvoi({ p, etapes }: { p: SeancePrevue; etapes: Etape[] }
           <button type="button" disabled={occupe} className={bouton} onClick={() => agir(() => envoyerSeance(p, etapes, 'garmin'), 'Envoyée ✓ Elle arrive sur ta montre après la synchro Garmin Connect.')}>Envoyer à Garmin</button>
           <button type="button" disabled={occupe} className={bouton} onClick={() => agir(() => envoyerSeance(p, etapes, 'zwift'), 'Envoyée ✓ Zwift → Workouts → Custom → Intervals.icu.')}>Envoyer à Zwift</button>
         </div>
+      )}
+      {/* Compteur iGPSPORT (16/11/2026) : seulement quand tu le demandes */}
+      {igp.relie && (
+        <button type="button" disabled={occupe} className={`${bouton} mt-2 w-full`}
+          onClick={() => agir(() => envoyerSeanceIgpsport(p, etapes), 'Envoyée ✓ Ouvre l’appli iGPSPORT (compteur appairé) : elle est dans tes entraînements, au nom de son jour.')}>
+          {envoyeCompteur ? `↻ Renvoyer à mon compteur (envoyée le ${new Date(envoyeCompteur).toLocaleDateString('fr-FR', { day: 'numeric', month: 'numeric' })})` : 'Envoyer à mon compteur (iGPSPORT)'}
+        </button>
       )}
       {occupe && <p className="mt-1 text-xs text-texte-3">Envoi…</p>}
       {message && <p className="mt-1 text-xs text-texte-3">{message}</p>}

@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react'
-import { useReglage } from '../../../core/reglages'
 import { depuis } from '../../../core/format'
 import { useSynchro } from '../../../core/synchro'
 import { Bouton } from '../../../core/ui/Bouton'
 import { Repliable } from '../../../core/ui/Repliable'
-import { delierIgpsport, envoyerSeancesIgpsport, etatIgpsport, relierIgpsport, synchroIgpsport, type EnvoiIgpsport, type EtatIgpsport } from '../import/igpsport'
+import { delierIgpsport, etatIgpsport, relierIgpsport, synchroIgpsport, type EtatIgpsport } from '../import/igpsport'
 
 const champ = 'w-full rounded-xl border border-bordure bg-surface-2 px-4 py-3 outline-none focus:border-accent'
 
@@ -16,7 +15,6 @@ export function SectionIgpsport() {
   const [motDePasse, setMotDePasse] = useState('')
   const [occupe, setOccupe] = useState(false)
   const [message, setMessage] = useState<string>()
-  const [envoi, modifierEnvoi] = useReglage<EnvoiIgpsport>('igpsport-envoi', {})
 
   const rafraichir = () => etatIgpsport().then(setEtat).catch((e) => setMessage((e as Error).message))
   useEffect(() => { if (session) rafraichir() }, [session])
@@ -54,29 +52,7 @@ export function SectionIgpsport() {
           </p>
           {etat.erreur && <p className="text-sm text-attention">{etat.erreur}</p>}
           <Bouton disabled={occupe} onClick={() => agir(async () => bilan(await synchroIgpsport()))}>{occupe ? 'Récupération…' : 'Récupérer maintenant'}</Bouton>
-          {/* Séances de la semaine sur le compteur (16/11/2026) */}
-          <div className="mt-3 border-t border-bordure pt-3">
-            <label className="flex items-center justify-between gap-3 text-sm">
-              <span>Envoyer mes séances sur mon compteur</span>
-              <input type="checkbox" checked={!!envoi.actif} className="size-5 accent-[var(--color-accent)]"
-                onChange={(e) => modifierEnvoi({ actif: e.target.checked, signatures: {} })} />
-            </label>
-            {envoi.actif && (
-              <>
-                <p className="mt-1.5 text-xs text-texte-3">
-                  Tes séances vélo des 7 prochains jours, avec leurs watts bloc par bloc, dans « Entraînements » de l'appli iGPSPORT
-                  (nommées par jour, ex. « Mar 17/11 · … »). Ouvre l'appli iGPSPORT, compteur appairé, pour qu'il les reçoive.
-                  Une séance recalculée est renvoyée toute seule.
-                </p>
-                {envoi.erreur ? <p className="mt-1 text-xs text-attention">{envoi.erreur}</p>
-                  : envoi.dernier && <p className="mt-1 text-xs text-texte-3">Dernier envoi {depuis(envoi.dernier)}.</p>}
-                <button type="button" disabled={occupe} className="mt-2 w-full rounded-xl border border-bordure py-2.5 text-sm font-semibold text-texte-2"
-                  onClick={() => agir(async () => { await envoyerSeancesIgpsport(true); return '✓ Séances envoyées sur ton compteur (via l’appli iGPSPORT).' })}>
-                  Renvoyer mes séances maintenant
-                </button>
-              </>
-            )}
-          </div>
+          <p className="mt-2 text-xs text-texte-3">Pour mettre une séance sur ton compteur : ouvre-la (Aujourd'hui ou Semaine) et touche « Envoyer à mon compteur ».</p>
           <button type="button" className="w-full py-2 text-sm text-texte-3" disabled={occupe}
             onClick={() => confirm('Délier ton compteur iGPSPORT ? Les sorties déjà envoyées restent.') && agir(async () => { await delierIgpsport() })}>
             Délier iGPSPORT

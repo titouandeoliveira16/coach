@@ -1,5 +1,7 @@
 import { db } from '../../../core/db'
-import { aujourdhui, decalerJour, depuisJour } from '../../../core/dates'
+import { depuisJour } from '../../../core/dates'
+import type { Etape } from '../../../metrics/programme'
+import type { SeancePrevue } from '../types'
 import { dureeIgpsport, versIgpsport } from './igpsportSeances'
 import { enregistrer } from '../../../core/stockage'
 import { CLE_PUBLIQUE, URL_SUPABASE, supabase } from '../../../core/supabase'
@@ -26,8 +28,17 @@ async function appeler<T>(route: string, corps?: unknown): Promise<T> {
   return json as T
 }
 
-export const etatIgpsport = () => appeler<EtatIgpsport>('etat')
-export const delierIgpsport = async () => { await appeler('delier'); await ecrireEnvoi({ actif: false, signatures: {} }) }
+/** Une seule fois par appareil (comptes reliés avant la 14.4) : on demande au serveur si le compteur est relié. */
+export async function verifierRelie() {
+  if ((await lireEnvoi()).relie === undefined) await etatIgpsport().catch(() => {})
+}
+
+export async function etatIgpsport() {
+  const e = await appeler<EtatIgpsport>('etat')
+  if (e.relie !== (await lireEnvoi()).relie) await ecrireEnvoi({ relie: e.relie })
+  return e
+}
+export const delierIgpsport = async () => { await appeler('delier'); await ecrireEnvoi({ relie: false }) }
 
 /** Une fois l'historique iGPSPORT entièrement envoyé : réimport des 90 derniers jours et des kJ sur 6 mois. */
 async function apresEnvoi(r: { envoyees?: number; reste?: number }) {
@@ -39,51 +50,35 @@ async function apresEnvoi(r: { envoyees?: number; reste?: number }) {
   }
 }
 
-/** Envoi des séances sur le compteur : actif (par défaut une fois relié) et ce qui a déjà été envoyé, par jour. */
-export interface EnvoiIgpsport { actif?: boolean; signatures?: Record<string, string>; dernier?: string; erreur?: string }
+/** Compteur relié (pour montrer le bouton d'envoi) et séances déjà envoyées (id → date). */
+export interface EnvoiIgpsport { relie?: boolean; envois?: Record<string, string> }
 const lireEnvoi = async () => ((await db.reglages.get('igpsport-envoi'))?.valeur as EnvoiIgpsport | undefined) ?? {}
-export const ecrireEnvoi = async (e: EnvoiIgpsport) => enregistrer(db.reglages, { id: 'igpsport-envoi', valeur: { ...(await lireEnvoi()), ...e } })
+const ecrireEnvoi = async (e: EnvoiIgpsport) => enregistrer(db.reglages, { id: 'igpsport-envoi', valeur: { ...(await lireEnvoi()), ...e } })
 
 const JOURS = ['dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam'] as const
 const NOMS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
 
 /**
- * Séances vélo des 7 prochains jours envoyées sur le compteur iGPSPORT (16/11/2026) : seulement celles qui ont changé
- * depuis le dernier envoi (recalcul, feu orange, changement de jour). Un emplacement par jour de la semaine.
+ * « Envoyer à mon compteur » (16/11/2026, à la demande seulement) : la séance part dans les entraînements de l'appli
+ * iGPSPORT, nommée par son jour (« Mar 17/11 · … ») ; un emplacement par jour de la semaine, réécrit d'une semaine à
+ * l'autre pour ne pas remplir ta liste.
  */
-export async function envoyerSeancesIgpsport(forcer = false) {
-  const envoi = await lireEnvoi()
-  if (!envoi.actif) return
-  const jour = aujourdhui()
-  const prevues = (await db.prevues.where('date').between(jour, decalerJour(jour, 6), true, true).toArray())
-    .filter((p) => p.sport === 'velo' && p.statut === 'prevue' && p.velo?.etapes?.length)
-    .sort((a, b) => a.date.localeCompare(b.date))
-  const signatures = { ...(forcer ? {} : envoi.signatures) }
-  const seances: { jour: string; titre: string; description: string; structure: ReturnType<typeof versIgpsport>; totalTime: number; signature: string }[] = []
-  for (const p of prevues) {
-    const d = depuisJour(p.date)
-    const cle = JOURS[d.getDay()]
-    if (seances.some((x) => x.jour === cle)) continue // une seule séance par jour (la première)
-    const titre = `${NOMS[d.getDay()]} ${p.date.slice(8, 10)}/${p.date.slice(5, 7)} · ${p.titre}`.slice(0, 64)
-    const structure = versIgpsport(p.velo!.etapes!)
-    const signature = JSON.stringify([titre, p.velo!.etapes])
-    if (signatures[cle] === signature) continue
-    seances.push({ jour: cle, titre, description: (p.detail ?? '').slice(0, 500), structure, totalTime: dureeIgpsport(structure), signature })
-  }
-  if (!seances.length) return
-  try {
-    await appeler('seances', { seances: seances.map(({ signature: _s, ...x }) => x) })
-    for (const x of seances) signatures[x.jour] = x.signature
-    await ecrireEnvoi({ signatures, dernier: new Date().toISOString(), erreur: undefined })
-  } catch (e) {
-    await ecrireEnvoi({ erreur: (e as Error).message })
-  }
+export async function envoyerSeanceIgpsport(p: SeancePrevue, etapes: Etape[]) {
+  const d = depuisJour(p.date)
+  const titre = `${NOMS[d.getDay()]} ${p.date.slice(8, 10)}/${p.date.slice(5, 7)} · ${p.titre}`.slice(0, 64)
+  const structure = versIgpsport(etapes)
+  if (!structure.length) throw new Error('Séance sans étapes : rien à envoyer.')
+  const r = await appeler<{ envoyees: number }>('seances', {
+    seances: [{ jour: JOURS[d.getDay()], titre, description: (p.detail ?? '').slice(0, 500), structure, totalTime: dureeIgpsport(structure) }],
+  })
+  if (!r.envoyees) throw new Error('iGPSPORT n’a pas accepté la séance.')
+  const avant = await lireEnvoi()
+  await ecrireEnvoi({ envois: { ...avant.envois, [p.id]: new Date().toISOString() } })
 }
 
 export async function relierIgpsport(identifiant: string, motDePasse: string) {
   const r = await appeler<{ envoyees: number; reste: number; erreur?: string }>('relier', { identifiant, motDePasse })
-  await ecrireEnvoi({ actif: true, signatures: {} })
-  await envoyerSeancesIgpsport().catch(() => {})
+  await ecrireEnvoi({ relie: true })
   await apresEnvoi(r)
   return r
 }
