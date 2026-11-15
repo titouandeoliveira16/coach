@@ -9,6 +9,9 @@
 //   /igpsport/etat     → { relie, identifiant, derniereSynchro, importees, reste, erreur }
 //   /igpsport/synchro  → récupère tout de suite les nouvelles sorties (et la suite de l'historique)
 //   /igpsport/delier   → efface le lien (les sorties déjà envoyées restent dans Intervals)
+//   /igpsport/seances  { seances: [{ jour, titre, description, structure, totalTime }] } → séances de la semaine dans
+//                      les entraînements personnalisés d'iGPSPORT (le compteur les reçoit par l'appli iGPSPORT) ; une
+//                      séance par jour de la semaine, réécrite chaque semaine (iGPSPORT n'offre pas d'effacement)
 //   /igpsport/cron     → tâche planifiée (en-tête secret « x-coach-cron », sql/09) : tous les comptes reliés
 //
 // Aucun secret à ajouter : la clé de chiffrement est dérivée de la clé « service role » du projet.
@@ -157,6 +160,42 @@ async function synchroniser(userId: string, finAvant: number) {
   }
 }
 
+// ---------- Séances vers le compteur ----------
+const JOURS = new Set(['lun', 'mar', 'mer', 'jeu', 'ven', 'sam', 'dim'])
+
+async function ecrireSeance(entetes: Record<string, string>, data: Record<string, unknown>) {
+  const r = await fetch(`${IGP}/mobile/api/WorkOut/EditCustomWorkOut`, {
+    method: 'POST', headers: { ...entetes, 'Content-Type': 'application/json' }, body: JSON.stringify({ data }), signal: delai(20_000),
+  })
+  const corps = await r.json().catch(() => ({}))
+  const id = corps?.code === 0 ? corps?.data?.workoutId : undefined
+  return id !== undefined && id !== null ? String(id) : undefined
+}
+
+async function envoyerSeances(userId: string, seances: unknown) {
+  if (!Array.isArray(seances) || seances.length > 7 || JSON.stringify(seances).length > 200_000) throw new Error('Séances invalides.')
+  const { data: compte } = await admin.from('igpsport_comptes').select('identifiant, mdp_chiffre, seances_ids').eq('user_id', userId).maybeSingle()
+  if (!compte) throw new Error('Relie d’abord ton compteur iGPSPORT.')
+  const entetes = await connexionIgp(compte.identifiant, await dechiffrer(compte.mdp_chiffre))
+  const ids: Record<string, string> = { ...(compte.seances_ids ?? {}) }
+  let envoyees = 0
+  for (const x of seances as Record<string, unknown>[]) {
+    const jour = String(x.jour ?? '')
+    if (!JOURS.has(jour) || !Array.isArray(x.structure) || !x.structure.length) continue
+    const data: Record<string, unknown> = {
+      title: String(x.titre ?? 'Séance Cycle').slice(0, 64), description: String(x.description ?? '').slice(0, 500),
+      totalTime: Math.max(60, Math.min(36_000, Number(x.totalTime) || 0)), workoutType: 'bike', sportBigType: 1, allowDeletion: true,
+      structure: x.structure,
+    }
+    // Même emplacement que la semaine d'avant (mis à jour) ; s'il a été supprimé dans l'appli iGPSPORT : un nouveau
+    let id = ids[jour] ? await ecrireSeance(entetes, { ...data, id: ids[jour] }) : undefined
+    if (!id) id = await ecrireSeance(entetes, data)
+    if (id) { ids[jour] = id; envoyees++ }
+  }
+  await admin.from('igpsport_comptes').update({ seances_ids: ids }).eq('user_id', userId)
+  return { envoyees }
+}
+
 /** Secret partagé avec la tâche pg_cron (table secret_cron, sql/06), comparé à durée constante. */
 async function appelDuCron(req: Request) {
   const recu = req.headers.get('x-coach-cron')
@@ -215,6 +254,14 @@ Deno.serve(async (req) => {
     }
 
     if (route === 'synchro') return json(await synchroniser(user.id, debut + 60_000))
+
+    if (route === 'seances') {
+      try {
+        return json(await envoyerSeances(user.id, corps.seances))
+      } catch (e) {
+        return json({ erreur: e instanceof RefusIgp ? e.message : (e as Error).message }, 400)
+      }
+    }
 
     if (route === 'delier') {
       await admin.from('igpsport_comptes').delete().eq('user_id', user.id)

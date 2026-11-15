@@ -38,6 +38,8 @@ apresPremiereSynchro().then(async () => {
 // Au retour dans l'appli : l'historique de 6 mois est relu (au plus une fois par heure) tant qu'il est incomplet
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') import('./modules/entrainement/arrivee/donnees').then((m) => m.completerHistorique()).catch(() => {})
+  // Séances changées depuis le dernier envoi (recalcul, feu du jour) : renvoyées au compteur iGPSPORT si relié
+  if (document.visibilityState === 'visible') import('./modules/entrainement/import/igpsport').then((m) => m.envoyerSeancesIgpsport()).catch(() => {})
 })
 
 // Mises à jour : on vérifie s'il existe une nouvelle version à chaque retour sur l'appli (iPhone : l'appli est souvent

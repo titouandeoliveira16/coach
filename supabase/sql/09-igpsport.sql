@@ -12,6 +12,8 @@ create table if not exists public.igpsport_comptes (
   reste             int not null default 0,
   erreur            text
 );
+-- Séances envoyées sur le compteur : un emplacement par jour de la semaine (identifiants iGPSPORT)
+alter table public.igpsport_comptes add column if not exists seances_ids jsonb not null default '{}'::jsonb;
 alter table public.igpsport_comptes enable row level security;
 revoke all on public.igpsport_comptes from anon, authenticated;
 grant select, insert, update, delete on public.igpsport_comptes to service_role;
