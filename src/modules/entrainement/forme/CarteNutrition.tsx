@@ -72,7 +72,8 @@ export function CarteNutrition({ ouverte: ouverteParent, onBasculer }: {
 
   // Excès d'hier (ou d'aujourd'hui une fois noté) à étaler sur les jours faciles
   const exces = [[jour, m?.kcal, b.kcal], [hier, assietteHier && !assietteHier.nonRenseigne ? assietteHier.kcal : undefined, besoinsHier?.kcal]] as const
-  const aEtaler = nutrition && exces.find(([d, kcal, besoin]) => kcal !== undefined && besoin !== undefined && kcal - besoin >= SEUIL_EXCES
+  // Seulement en perte de gras (relecture du 15/11/2026 : au maintien, l'appétit et la moyenne de la semaine corrigent seuls)
+  const aEtaler = b.objectif === 'perte' && nutrition && exces.find(([d, kcal, besoin]) => kcal !== undefined && besoin !== undefined && kcal - besoin >= SEUIL_EXCES
     && !nutrition.etalements?.some((e) => e.date === d) && !nutrition.etalementsRefuses?.includes(d))
 
   return (

@@ -8,14 +8,17 @@
  *    déjà compté dans le métabolisme × 1,4 → ~1,0-1,1 ; Moseley 2004, Almquist 2019) ; course ~1 kcal × kg × km ;
  *    sinon par équivalent métabolique (MET, Compendium d'Ainsworth), hors repos. Jamais les calories de la montre.
  *  - Glucides brûlés en séance : part glucidique de la dépense selon l'intensité, zone par zone, pondérée par
- *    l'énergie dépensée dans chaque zone (Z1-Z2 50 %, Z3 70 %, Z4-Z5 90 % ; Romijn 1993, van Loon 2001).
- *    Glucides du jour = 3 g/kg + 1,5 × glucides brûlés (le facteur couvre la recharge du glycogène),
+ *    l'énergie dépensée dans chaque zone (Z1 40 %, Z2 50 %, Z3 70 %, Z4 80 %, Z5 90 % : choix d'entraîneur calé sur
+ *    Romijn 1993 et van Loon 2001, un peu plus haut car on roule nourri ; relecture du 15/11/2026).
+ *    Glucides du jour = 3 g/kg + 1,5 × glucides brûlés (le facteur 1,5, choix d'entraîneur, couvre la recharge du glycogène),
  *    entre 3 et 12 g/kg : on retombe dans les fourchettes du consensus ACSM / AND / DC (Thomas 2016).
- *    Protéines 1,6 g/kg (Morton 2018), lipides le reste, jamais sous 20 % de l'énergie.
- *  - Objectif « perte de gras légère » : déficit continu, −500 kcal moins 0,6 kcal par kcal de glucides brûlée
- *    en séance, jamais moins de −100 (manger selon le travail fait, Impey 2018 ; pente : choix d'entraîneur), visée ~0,5 % du poids
- *    par semaine (Garthe 2011), protéines 1,8 g/kg, et jamais sous 30 kcal par kg de masse maigre une fois
- *    le sport déduit (disponibilité énergétique, consensus CIO sur le RED-S 2023).
+ *    Protéines 1,6 g/kg (Thomas 2016 : 1,2-2,0 g/kg), lipides le reste, jamais sous 20 % de l'énergie.
+ *  - Objectif « perte de gras légère » : déficit continu, −350 kcal (relecture du 15/11/2026) moins 0,6 kcal par kcal de glucides brûlée
+ *    en séance, jamais moins de −100 (manger selon le travail fait, Impey 2018 ; pente : choix d'entraîneur), visée ~0,5-0,7 % du poids
+ *    par semaine (Garthe 2011 : 0,7 % mieux que 1,4 %), protéines 1,8 g/kg ; le déficit ne fait jamais descendre sous
+ *    35 kcal par kg de masse maigre une fois le sport déduit, et l'étalement d'un excès jamais sous 30 (disponibilité
+ *    énergétique : Loucks 2003 ; pas de seuil universel, consensus CIO sur le REDs, Mountjoy 2023 ; marge prudente car
+ *    la masse maigre et la dépense sont estimées).
  */
 export type Objectif = 'maintien' | 'perte'
 
@@ -23,6 +26,8 @@ export type Objectif = 'maintien' | 'perte'
 export const PART_MASSE_MAIGRE = 0.85
 /** Disponibilité énergétique minimale (kcal par kg de masse maigre et par jour). */
 export const DISPONIBILITE_MIN = 30
+/** Plancher habituel du déficit (marge au-dessus de la limite absolue) */
+export const DISPONIBILITE_HABITUELLE = 35
 export type Intensite = 'basse' | 'moyenne' | 'haute'
 
 export interface ActiviteJour {
@@ -38,7 +43,7 @@ export interface ActiviteJour {
 }
 
 /** Part glucidique de la dépense par zone (Z1 à Z5) et coût relatif d'une minute dans chaque zone. */
-const GLUCIDES_ZONE = [0.5, 0.5, 0.7, 0.9, 0.9]
+const GLUCIDES_ZONE = [0.4, 0.5, 0.7, 0.8, 0.9]
 const COUT_ZONE = [0.55, 0.7, 0.85, 1, 1.15]
 /** Séance prévue (sans zones) : échauffement et récupération compris. */
 const GLUCIDES_PREVUE: Record<Intensite, number> = { basse: 0.5, moyenne: 0.7, haute: 0.8 }
@@ -102,7 +107,7 @@ export interface Besoins {
 }
 
 /** Déficit de base en perte de gras (kcal), et ses bornes une fois ajusté par le bilan du dimanche */
-export const DEFICIT_BASE = 500
+export const DEFICIT_BASE = 350
 export const DEFICIT_MIN = 200
 export const DEFICIT_MAX = 600
 
@@ -116,7 +121,7 @@ export function besoinsDuJour(o: {
   correction?: number
   /** Excès d'un jour récent étalé sur ce jour (kcal en moins) */
   reduction?: number
-  /** Déficit de base en perte de gras (500 par défaut, ajusté par le bilan du dimanche, 200 à 600) */
+  /** Déficit de base en perte de gras (350 par défaut, ajusté par le bilan du dimanche, 200 à 600) */
   deficitBase?: number
 }): Besoins {
   const base = metabolismeBase(o.kg, o.cm, o.age, o.sexe)
@@ -130,9 +135,11 @@ export function besoinsDuJour(o: {
   // Les jours de grosse séance restent bien alimentés : le déficit y descend à 100 kcal, quel que soit le réglage
   const deficitVise = perte ? Math.min(deficitBase, Math.max(100, deficitBase - 0.6 * kcalGlucides)) : 0
   const plancherKcal = DISPONIBILITE_MIN * o.kg * PART_MASSE_MAIGRE + seances
-  // Le plancher de disponibilité énergétique protège aussi de l'étalement d'un excès
-  const energie = Math.max(maintien - deficitVise - (o.reduction ?? 0), perte || o.reduction ? plancherKcal : 0)
-  const reduction = Math.max(0, Math.min(o.reduction ?? 0, maintien - deficitVise - energie))
+  const plancherHabituel = DISPONIBILITE_HABITUELLE * o.kg * PART_MASSE_MAIGRE + seances
+  // Le déficit s'arrête à 35 kcal/kg de masse maigre ; l'étalement d'un excès peut descendre jusqu'à 30, jamais en dessous
+  const apresDeficit = perte ? Math.max(maintien - deficitVise, Math.min(maintien, plancherHabituel)) : maintien
+  const energie = Math.max(apresDeficit - (o.reduction ?? 0), perte || o.reduction ? Math.min(apresDeficit, plancherKcal) : 0)
+  const reduction = Math.max(0, Math.min(o.reduction ?? 0, apresDeficit - energie))
 
   const proteinesParKg = perte ? 1.8 : 1.6
   const proteines = proteinesParKg * o.kg
@@ -147,7 +154,7 @@ export function besoinsDuJour(o: {
   const r = (n: number) => Math.round(n)
   return {
     kcal: Math.round(kcal / 50) * 50, maintien: Math.round(maintien / 50) * 50, deficit: r(Math.max(0, maintien - energie)), journee,
-    plancher: perte && plancherKcal > maintien - deficitVise, reduction: r(reduction), base: r(base), quotidien: r(quotidien), seances: r(seances),
+    plancher: perte && plancherHabituel > maintien - deficitVise, reduction: r(reduction), base: r(base), quotidien: r(quotidien), seances: r(seances),
     glucides: r(glucides), glucidesParKg: gkg, kcalGlucides: r(kcalGlucides), proteines: r(proteines), proteinesParKg, lipides: r(lipides),
   }
 }
@@ -172,7 +179,7 @@ export function tendancePoids(pesees: { date: string; poidsKg: number }[], jour:
 /** Étalement d'un excès : au plus 250 kcal en moins par jour facile, sur les 7 jours qui suivent. */
 export const ETALEMENT_MAX_JOUR = 250
 /** Excès qui compte (kcal au-dessus du besoin) : proposition d'étalement */
-export const SEUIL_EXCES = 500
+export const SEUIL_EXCES = 800
 
 /**
  * Réduction de chaque jour pour étaler des excès : on prend jusqu'à 250 kcal par jour facile

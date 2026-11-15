@@ -39,14 +39,16 @@ describe('perte de gras légère', () => {
     const repos = besoinsDuJour({ ...p, activites: [], objectif: 'perte' })
     expect(repos.journee).toBe('facile')
     expect(repos.proteinesParKg).toBe(1.8)
-    expect(repos.maintien - repos.kcal).toBeGreaterThanOrEqual(400)
+    // Plancher habituel à 35 kcal/kg de masse maigre (15/11/2026) : un jour de repos, ≈ −260 pour 70 kg
+    expect(repos.maintien - repos.kcal).toBeGreaterThanOrEqual(250)
+    expect(repos.plancher).toBe(true)
     const z2 = besoinsDuJour({ ...p, activites: [{ sport: 'velo', dureeMin: 60, intensite: 'basse', kj: 600, partGlucides: 0.5 }], objectif: 'perte' })
-    expect(z2.deficit).toBe(320)
+    expect(z2.deficit).toBe(170)
     const inter = besoinsDuJour({ ...p, activites: [{ sport: 'velo', dureeMin: 60, intensite: 'haute', kj: 700, partGlucides: 0.8 }], objectif: 'perte' })
     expect(inter.journee).toBe('dure')
-    expect(inter.deficit).toBe(164)
+    expect(inter.deficit).toBe(100)
     const long = besoinsDuJour({ ...p, activites: [{ sport: 'velo', dureeMin: 120, intensite: 'basse', kj: 1300, partGlucides: 0.5 }], objectif: 'perte' })
-    expect(long.deficit).toBe(110)
+    expect(long.deficit).toBe(100)
   })
   it('jamais sous 30 kcal par kg de masse maigre une fois le sport déduit', () => {
     const b = besoinsDuJour({ kg: 60, cm: 175, age: 25, activites: [], objectif: 'perte' })
@@ -104,7 +106,7 @@ describe('bilan du dimanche', () => {
   })
   it('déficit de base ajusté, mais les jours de grosse séance restent à −100', () => {
     const p = { kg: 70, cm: 175, age: 25, objectif: 'perte' as const }
-    expect(besoinsDuJour({ ...p, activites: [], deficitBase: 300 }).deficit).toBe(300)
+    expect(besoinsDuJour({ ...p, activites: [], deficitBase: 200 }).deficit).toBe(200)
     const dure = { sport: 'velo' as const, dureeMin: 120, intensite: 'haute' as const, kj: 1500 }
     expect(besoinsDuJour({ ...p, activites: [dure], deficitBase: 600 }).deficit).toBe(100)
   })

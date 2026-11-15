@@ -43,7 +43,7 @@ export function CarteRepas() {
             </p>
           </>
         )}
-        {besoins && nutrition && !r.nonRenseigne && r.kcal !== undefined && r.kcal - besoins.kcal >= SEUIL_EXCES &&
+        {besoins?.objectif === 'perte' && nutrition && !r.nonRenseigne && r.kcal !== undefined && r.kcal - besoins.kcal >= SEUIL_EXCES &&
           !nutrition.etalements?.some((e) => e.date === cible.jour) && !nutrition.etalementsRefuses?.includes(cible.jour) && (
           <div className="mt-3 rounded-xl bg-surface-2 p-3 text-sm">
             <p>
@@ -75,7 +75,7 @@ export function Formulaire({ jour, titre, existante, onFini }: { jour: string; t
 
   return (
     <Carte titre={titre}>
-      <p className="mb-2 text-sm text-texte-2">Recopie le total de la journée (depuis ton appli de suivi). Les macros suffisent : les calories se calculent.</p>
+      <p className="mb-2 text-sm text-texte-2">Recopie le total de la journée (depuis ton appli de suivi), gels et boissons d’effort compris. Les macros suffisent : les calories se calculent.</p>
       <div className="grid grid-cols-2 gap-2">
         {CHAMPS.map((c) => (
           <label key={c.cle} className="rounded-xl bg-surface-2 px-3 py-2">

@@ -2,6 +2,9 @@ import { conseilsSeance, palierVentre, SEMAINES_VENTRE } from '../../../metrics/
 import { dureeDeCourse, epreuveDe, niveauxCourses } from '../../../metrics/programme'
 import { decalerJour, ecartJours } from '../../../core/dates'
 import { useReglage } from '../../../core/reglages'
+import { useProfil } from '../../../core/profil'
+import { useLiveQuery } from 'dexie-react-hooks'
+import { db } from '../../../core/db'
 import { Aide } from '../../../core/ui/Aide'
 import { AIDES } from '../aides'
 import { programmeDe, useReglagesEntrainement } from '../reglagesEntrainement'
@@ -30,7 +33,10 @@ function fenetreVentre(date: string, prog: ReturnType<typeof programmeDe>, notes
     const i = Math.floor(ecartJours(debut, d) / 7)
     if (i >= 0 && i < SEMAINES_VENTRE) parSemaine[i] = n
   }
-  return { semaine, palier: palierVentre({ semaine, notes: parSemaine, dureeCourseMin: duree }) }
+  const palierDe = (i: number) => palierVentre({ semaine: i, notes: parSemaine, dureeCourseMin: duree })
+  // Toléré : le plus haut palier d'une semaine où le ventre a été noté sous 5 (relecture du 15/11/2026)
+  const tolere = parSemaine.reduce<number | undefined>((m, n, i) => (n !== undefined && n < 5 ? Math.max(m ?? 0, palierDe(i)) : m), undefined)
+  return { semaine, palier: palierDe(semaine), tolere }
 }
 
 /** Repères de nutrition d'une séance : avant, pendant (selon la discipline de la course), boire, après ; ventre à noter. */
@@ -44,7 +50,14 @@ export function NutritionSeance({ p }: { p: SeancePrevue }) {
     : undefined
   const longue = p.velo?.famille === 'z2-long' || p.velo?.famille === 'cyclo-montees'
   const ventre = longue ? fenetreVentre(p.date, prog, notes, r.cpW) : undefined
-  const c = conseilsSeance({ sport: p.sport, dureeMin: p.dureeMin, intensite: p.intensite, test: p.velo?.famille === 'test', epreuve, palierVentre: ventre?.palier })
+  const [profil] = useProfil()
+  // Une autre séance dure (ou une course) le même jour : recharge rapide (moins de 8 h entre les deux)
+  const memeJour = useLiveQuery(() => db.prevues.where('date').equals(p.date).toArray(), [p.date])
+  const rechargeRapide = !!memeJour?.some((x) => x.id !== p.id && (x.statut === 'prevue' || x.statut === 'faite') && (x.intensite !== 'basse' || x.velo?.famille === 'course'))
+  const c = conseilsSeance({
+    sport: p.sport, dureeMin: p.dureeMin, intensite: p.intensite, test: p.velo?.famille === 'test', epreuve, palierVentre: ventre?.palier,
+    palierTolere: epreuve && course ? fenetreVentre(p.date, prog, notes, r.cpW)?.tolere : undefined, kg: profil.poidsKg, rechargeRapide,
+  })
   const lignes = [
     ...(c.avant ? [['Avant', c.avant]] : []),
     ['Pendant', c.pendant],

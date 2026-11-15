@@ -188,7 +188,7 @@ export function SectionProfilSportif() {
       </Ligne>
       <Ligne {...props('nutritionEffort')} libelle="Nutrition à l'effort" valeur={ps.nutritionEffort === false ? 'Désactivée' : 'Activée'}>
         {choixUnique(['Activée', 'Désactivée'], ps.nutritionEffort === false ? 'Désactivée' : 'Activée', (v) => modifierPs({ nutritionEffort: v === 'Activée' }))}
-        <p className="mt-1.5 text-xs text-texte-3">Activée : les glucides par heure à prendre sur tes sorties longues et tes courses. Plus tard : un plan pour habituer ton estomac.</p>
+        <p className="mt-1.5 text-xs text-texte-3">Activée : les glucides par heure à prendre sur tes sorties longues et tes courses. Et, avant une course A de plus de 2 h 30, 6 semaines pour habituer ton ventre.</p>
       </Ligne>
       <Ligne {...props('muscu')} libelle="Musculation" valeur={ps.muscu ?? ''}>
         <DetailMuscu />
