@@ -14,6 +14,18 @@ demarrerSynchro()
 // Laisse le temps à la session du compte de se restaurer
 setTimeout(() => synchroniserRappels(), 5000)
 
+// Nouvelle version publiée pendant que l'appli était ouverte (16/11/2026) : un morceau chargé à la demande n'existe plus
+// sur le serveur. On recharge une fois (Vite prévient avec « vite:preloadError ») ; le drapeau est retiré après 10 s.
+window.addEventListener('vite:preloadError', (ev) => {
+  try {
+    if (sessionStorage.getItem('coach-recharge-version') === '1') return
+    sessionStorage.setItem('coach-recharge-version', '1')
+  } catch { return }
+  ev.preventDefault()
+  location.reload()
+})
+setTimeout(() => { try { sessionStorage.removeItem('coach-recharge-version') } catch { /* stockage indisponible */ } }, 10_000)
+
 // Tâches de démarrage (audit du 14/11/2026) : seulement après la première synchro réussie, pour ne jamais recalculer
 // sur une vieille copie de l'appareil (elle écraserait ensuite la version du serveur). Chacune a son propre filet :
 // une erreur n'empêche plus les suivantes.

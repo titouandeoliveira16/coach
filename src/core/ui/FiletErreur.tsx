@@ -1,6 +1,10 @@
 import { Component, type ReactNode } from 'react'
 import { signalerErreur } from '../erreurs'
 
+/** Morceau d'appli introuvable : l'appli ouverte date d'avant la dernière publication. */
+export const estVersionPerimee = (e: unknown) =>
+  /Importing a module script failed|Failed to fetch dynamically imported module|error loading dynamically imported module|Unable to preload CSS/i.test(String((e as Error)?.message ?? e))
+
 /**
  * Filet de sécurité (11/11/2026) : si un écran plante, on affiche un message et un bouton pour recharger au lieu d'un
  * écran noir, et l'erreur est envoyée au coach.
@@ -11,6 +15,13 @@ export class FiletErreur extends Component<{ children: ReactNode }, { erreur?: E
     return { erreur }
   }
   componentDidCatch(erreur: Error) {
+    // Nouvelle version publiée pendant que l'appli était ouverte (16/11/2026) : un morceau de l'ancienne version
+    // n'existe plus sur le serveur. On recharge une fois pour prendre la nouvelle, sans signaler d'erreur.
+    if (estVersionPerimee(erreur)) {
+      let deja = false
+      try { deja = sessionStorage.getItem('coach-recharge-version') === '1'; sessionStorage.setItem('coach-recharge-version', '1') } catch { /* stockage indisponible */ }
+      if (!deja) return location.reload()
+    }
     signalerErreur(erreur, 'Écran')
   }
   render() {
