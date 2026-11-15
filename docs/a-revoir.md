@@ -16,9 +16,8 @@ de conversation quand il faut s'en servir. Ici ne restent que les chantiers tech
 - À régler dans le tableau de bord Supabase : protection contre les mots de passe compromis, inscriptions libres désactivées.
 
 ## Lot 2 de l'audit des experts (fait en 14.2.0, règles relues)
-- À trancher : ordre de la saison quand la course est très loin (aujourd'hui des semaines d'« entretien » intense au
-  début, avant la base) ; hausse débutant +5 % (code) ou +7,5 % ; écran qui affichait le bilan de semaine trop tôt
-  (corrigé dans l'aperçu du dimanche : à confirmer à l'usage).
+- Tranché le 16/11/2026 : course très loin → base plus longue au début (14.2.1) ; débutant à +5 % par semaine.
+- À confirmer à l'usage : bilan de semaine du dimanche (séance du jour comptée comme faite).
 - À vérifier à l'usage : séance dédiée au 1er seuil qui avance d'un cran par séance ; test CP à la place de la sortie
   longue ; muscu à 4 exercices (volume à ajuster plus tard si besoin).
 

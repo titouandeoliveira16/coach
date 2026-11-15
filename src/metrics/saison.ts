@@ -11,7 +11,7 @@ import { decaler } from './vfc'
  *    débutant, 2 si tu ne roulais pas encore régulièrement.
  *  - Cycle 1er seuil (relu le 13/11/2026) : autant de semaines que le 2e seuil (4 à 10), 2 séances au 1er seuil par
  *    semaine (dédiée + blocs dans la sortie longue) et 1 rappel VO2 court (Rønnestad 2014 ; Spiering 2021).
- *  - 2e seuil : tirer (2 à 4 semaines) puis allonger le maintien, 10 semaines au plus ; au-delà, de l'entretien au début.
+ *  - 2e seuil : tirer (2 à 4 semaines) puis allonger le maintien, 10 semaines au plus ; au-delà, une base plus longue.
  *  - Reprise seulement après un vrai arrêt, moins les semaines déjà roulées depuis (13/11/2026).
  *  - Tests CP (relus le 15/11/2026) : à la fin de la reprise (jamais en 1re semaine après un arrêt), puis à la fin du
  *    bloc qui précède chaque phase, 5 à 8 semaines d'écart ; test court avant « allonger le seuil » (il donne la nouvelle
@@ -46,8 +46,8 @@ const semainesEntre = (a: string, b: string) => Math.round((Date.parse(b) - Date
  * Durée de chaque phase (en semaines) selon le nombre de semaines jusqu'à la course, semaine de course comprise.
  * Prépa hivernale de Methodic Cycling (cycles de 3 semaines + 1 allégée), relue le 10/11/2026 : l'ordre des blocs change
  * peu les progrès à charge égale (Sylta 2016) ; durées = choix d'entraîneur. En partant de la course : affûtage 2,
- * spécifique 3, cycle VO2max 3 ; puis le 2e seuil (tirée 2-4, poussée 2-8), le cycle 1er seuil (4-10), et au-delà de
- * l'entretien au début. Reprise : 0 si tu roulais déjà régulièrement, sinon 2 (4 en débutant ou après un arrêt).
+ * spécifique 3, cycle VO2max 3 ; puis le 2e seuil (tirée 2-4, poussée 2-8), le cycle 1er seuil (4-10), et au-delà,
+ * une base plus longue (jamais d'entretien avant la base). Reprise : 0 si tu roulais déjà régulièrement, sinon 2 (4 en débutant ou après un arrêt).
  */
 export function dureesPhases(n: number, repriseLongue = false, entraine = false, semainesReprise?: number) {
   const d = { reprise: 0, entretien: 0, base: 0, 'seuil-tirage': 0, 'seuil-maintien': 0, 'fin-prepa': 0, specifique: 0, affutage: 0 }
@@ -70,10 +70,10 @@ export function dureesPhases(n: number, repriseLongue = false, entraine = false,
   d['seuil-tirage'] = seuil <= 2 ? seuil : seuil <= 4 ? 2 : Math.min(4, Math.ceil(seuil / 2))
   d['seuil-maintien'] = seuil - d['seuil-tirage']
   d.entretien = reste - d.base - seuil
-  // Quelques semaines de trop : elles vont au cycle 1er seuil (jusqu'à 12) plutôt qu'à de l'entretien
-  const vers1erSeuil = Math.min(d.entretien, 12 - d.base)
-  d.base += vers1erSeuil
-  d.entretien -= vers1erSeuil
+  // Semaines de trop (course très loin) : toutes au cycle 1er seuil, au début (16/11/2026, validé par Titouan : l'ordre
+  // de l'entraîneur est respecté, base d'abord ; avant, de l'« entretien » intense passait avant la base)
+  d.base += d.entretien
+  d.entretien = 0
   return d
 }
 

@@ -129,7 +129,7 @@ export function preparerArrivee(r: ReponsesArrivee, jour: string, testsFaits: Re
       ...(dureePrincipale ? { dureeCourseMin: dureePrincipale } : {}),
       // Tu roulais déjà : le budget de la 1re semaine part de tes kJ réels, pas de la semaine type
       ...(historique?.budgetDepart ? { budgetDepart: historique.budgetDepart } : {}),
-      saisonV2: true, saisonV3: true, saisonV4: true,
+      saisonV2: true, saisonV3: true, saisonV4: true, saisonV6: true,
     },
   }
   return { profil, entrainement, profilSportif: ps, saison, cpConnue: r.cpW !== undefined, fcConnue: r.fcMax !== undefined }
@@ -284,6 +284,23 @@ export async function migrerSaisonV4() {
 }
 
 /**
+ * Ordre de l'entraîneur (16/11/2026) : une saison qui place de l'« entretien » à venir avant sa base (course très loin)
+ * est recalculée une fois depuis cette semaine ; les semaines en trop vont à la base. Courses et tests gardés.
+ */
+export async function migrerSaisonV6() {
+  const e = (await db.reglages.get('entrainement'))?.valeur as ReglagesEntrainement | undefined
+  const prog = e?.programme
+  if (!e || !prog || prog.modele !== 'chauvin' || prog.saisonV6 || !prog.phases?.length) return
+  const lundi = decalerJour(aujourdhui(), -((new Date(`${aujourdhui()}T12:00:00`).getDay() + 6) % 7))
+  const triees = [...prog.phases].sort((a, b) => a.debut.localeCompare(b.debut))
+  const base = triees.find((p) => p.type === 'base' && p.debut > lundi)
+  const entretienAvant = !!base && triees.some((p, i) => p.type === 'entretien' && p.debut < base.debut && (triees[i + 1]?.debut ?? '9999') > lundi)
+  if (entretienAvant) await recalculerSaison(true)
+  const apres = (await db.reglages.get('entrainement'))?.valeur as ReglagesEntrainement | undefined
+  if (apres?.programme && !apres.programme.saisonV6) await enregistrer(db.reglages, { id: 'entrainement', valeur: { ...apres, programme: { ...apres.programme, saisonV6: true } } })
+}
+
+/**
  * Cycle 1er seuil aussi long que le 2e seuil, reprise seulement après un vrai arrêt (13/11/2026) : une saison qui n'a pas
  * encore commencé le 2e seuil est recalculée une fois depuis cette semaine. Courses et tests gardés.
  */
@@ -354,7 +371,7 @@ export async function recalculerSaison(garderTests = false) {
   const lundi = decalerJour(jour, -((new Date(`${jour}T12:00:00`).getDay() + 6) % 7))
   const passees = prog.phases.filter((p) => p.debut < lundi)
   const phases = [...passees, ...phasesAvecCoursesA(saison.phases, datesCoursesA(prog.competitions.map((c) => ({ ...c, niveau: niveaux.get(c.date) }))))]
-  await enregistrer(db.reglages, { id: 'entrainement', valeur: { ...e, programme: { ...prog, phases, ...(garderTests ? {} : { testsCp: [...prog.testsCp.filter((d) => d < lundi), ...saison.testsCp], testsCourts: [...(prog.testsCourts ?? []).filter((d) => d < lundi), ...saison.testsCourts] }), saisonV2: true, saisonV3: true, saisonV4: true, saisonV5: true } } })
+  await enregistrer(db.reglages, { id: 'entrainement', valeur: { ...e, programme: { ...prog, phases, ...(garderTests ? {} : { testsCp: [...prog.testsCp.filter((d) => d < lundi), ...saison.testsCp], testsCourts: [...(prog.testsCourts ?? []).filter((d) => d < lundi), ...saison.testsCourts] }), saisonV2: true, saisonV3: true, saisonV4: true, saisonV5: true, saisonV6: true } } })
   const { recalculerSemainesAVenir } = await import('../plan/programme')
   await recalculerSemainesAVenir()
 }

@@ -108,6 +108,8 @@ export interface ReglagesProgramme {
   saisonV4?: boolean
   /** Saison recalculée une fois : 1er seuil aussi long que le 2e seuil, reprise seulement après un vrai arrêt (13/11/2026) */
   saisonV5?: boolean
+  /** Saison sans « entretien » avant la base (16/11/2026) */
+  saisonV6?: boolean
   /** Puissance Z2 de départ (W) : ajustée ensuite automatiquement */
   z2W?: number
   /** Saison calculée depuis la course (forme Chauvin) : reprise sans intensité ; absent = saison écrite à la main */

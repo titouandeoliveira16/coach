@@ -26,6 +26,7 @@ apresPremiereSynchro().then(async () => {
     ['saison V3', () => import('./modules/entrainement/arrivee/donnees').then((m) => m.migrerSaisonV3())],
     ['saison V4', () => import('./modules/entrainement/arrivee/donnees').then((m) => m.migrerSaisonV4())],
     ['saison V5', () => import('./modules/entrainement/arrivee/donnees').then((m) => m.migrerSaisonV5())],
+    ['saison V6', () => import('./modules/entrainement/arrivee/donnees').then((m) => m.migrerSaisonV6())],
     ['muscu', () => import('./modules/entrainement/arrivee/donnees').then((m) => m.migrerMuscu())],
     ['historique', () => import('./modules/entrainement/arrivee/donnees').then((m) => m.completerHistorique())],
     ['semaine en cours', () => import('./modules/entrainement/plan/programme').then((m) => m.actualiserSemaineEnCours())],
