@@ -11,6 +11,7 @@ import { useReglagesEntrainement } from '../reglagesEntrainement'
 import { CalageFc } from './CalageFc'
 import { SectionProfilSportif, type ProfilSportif } from './ProfilSportif'
 import { SectionAgenda } from './SectionAgenda'
+import { SectionIgpsport } from './SectionIgpsport'
 import { SectionIntervals } from './SectionIntervals'
 import { SectionProfil } from './SectionProfil'
 import { SectionVelo } from './SectionVelo'
@@ -39,6 +40,7 @@ export function SectionReglagesEntrainement() {
       <SectionProfilSportif />
       <SectionVelo />
       <SectionIntervals />
+      <SectionIgpsport />
       <div className="flex flex-col gap-2">
         <Tuile titre="Google Agenda" ouvert={agenda} onClick={() => setAgenda(!agenda)} />
         <Tuile titre="Catalogue scientifique" ouvert={catalogue} onClick={() => setCatalogue(!catalogue)} />

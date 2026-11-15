@@ -272,6 +272,7 @@ const ETAPES_MONTRE: { titre: string; points: string[]; lien?: [string, string] 
       'Sur Intervals : menu ☰ → Settings → rubrique « Connections ».',
       'Touche « Connect » à côté de chacun de tes appareils : Garmin Connect, COROS, Wahoo, Polar, Suunto ou Zwift, et accepte le partage.',
       'Ne passe pas par Strava : Strava interdit de transmettre tes sorties à d’autres applis.',
+      'Compteur iGPSPORT : il n’a pas de lien avec Intervals. Une fois Intervals relié, relie-le dans Entraînement → Réglages → Compteur iGPSPORT : tes sorties (historique compris) remonteront toutes seules.',
     ],
     lien: ['Ouvrir les réglages Intervals', 'https://intervals.icu/settings'],
   },

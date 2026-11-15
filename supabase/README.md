@@ -37,7 +37,7 @@ La fonction vérifie elle-même l'utilisateur connecté : la vérification JWT d
 4. **Edge Functions → inscription → Code** : coller `functions/inscription/index.ts`, Deploy (route « supprimer mon
    compte »).
 
-État des fonctions : `intervals`, `rappels`, `agenda` et `inscription` ont « Verify JWT » désactivé ; chacune vérifie
+État des fonctions : `intervals`, `rappels`, `agenda`, `inscription` et `igpsport` (sql/09, tâche toutes les 15 min) ont « Verify JWT » désactivé ; chacune vérifie
 elle-même le compte connecté (et `rappels/envoyer` le secret de la tâche planifiée).
 
 ## Déploiement automatique des fonctions (depuis le 11/11/2026)

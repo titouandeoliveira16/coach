@@ -21,6 +21,12 @@ de conversation quand il faut s'en servir. Ici ne restent que les chantiers tech
 - À vérifier à l'usage : séance dédiée au 1er seuil qui avance d'un cran par séance ; test CP à la place de la sortie
   longue ; muscu à 4 exercices (volume à ajuster plus tard si besoin).
 
+## Compteur iGPSPORT (14.3.0, 16/11/2026)
+- Fonction `igpsport` + `sql/09` : accès non officiel à iGPSPORT (même chemin que l'outil libre intervalssync) →
+  .fit envoyés dans Intervals.icu (external_id `igpsport_<id>`), 12 par compte et par passage, toutes les 15 min.
+- À surveiller : si iGPSPORT change son site, l'erreur s'affiche dans Réglages → Compteur iGPSPORT ; comptes chinois
+  (app.igpsport.cn) pas gérés.
+
 ## Chantiers techniques en attente
 - Mode sans capteur de puissance (FC / RPE, charge en sRPE) pour les comptes invités.
 - Prise en main guidée des premiers jours pour les comptes invités.

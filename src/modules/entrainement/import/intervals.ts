@@ -61,6 +61,16 @@ const ecrireEtat = async (e: EtatIntervals) => enregistrer(db.reglages, { id: CL
 export const etatIntervalsServeur = () => appeler<{ connecte: boolean; athlete: string | null }>('etat')
 
 /** Vérifie la clé auprès d'Intervals.icu et l'enregistre (chiffrée) sur le serveur. */
+/**
+ * Historique arrivé d'un coup dans Intervals (sorties iGPSPORT, 16/11/2026) : une fois, on réimporte les 90 derniers
+ * jours et les kJ des 6 derniers mois, pour que ces sorties comptent dans Cycle.
+ */
+export async function reimporterHistorique() {
+  await ecrireEtat({ ...(await lireEtat()), depuis: decalerJour(aujourdhui(), -JOURS_HISTORIQUE) })
+  await importerIntervals()
+  await importerHistoriqueKj(true)
+}
+
 export async function relierIntervals(cle: string, athlete?: string) {
   const r = await appeler<{ athlete: string; nom?: string }>('cle', { cle, athlete })
   await ecrireEtat({ ...(await lireEtat()), relie: true })
