@@ -189,7 +189,7 @@ async function envoyer(userId: string, curseurs: Curseurs, tout: boolean) {
         ligne._modifie = coupure
         await table.put(ligne)
       }
-      if (!tout && !refusAvant.has(`${table.name}|${cleDe(table, ligne)}`) && (ligne._recu || ligne._modifie <= depuis)) continue
+      if (!tout && !refusAvant.has(`${table.name}|${cleDe(table, ligne)}`) && (ligne._recu || ligne._modifie < depuis)) continue  // « < » : une écriture faite à la même milliseconde que la coupure repart (sans risque : l'envoi est idempotent)
       const { _modifie, _recu, ...valeur } = ligne
       aEnvoyer.push({ table_nom: table.name, cle: cleDe(table, ligne), valeur, supprime: false, modifie_le: _modifie })
     }
