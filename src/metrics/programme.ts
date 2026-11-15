@@ -24,7 +24,7 @@ export const NOMS_DISCIPLINES: Record<Discipline, string> = {
 /** Disciplines proposées (enduro et descente mis de côté le 5/11/2026 : le code reste, on ne les propose plus). */
 export const DISCIPLINES_PROPOSEES: Discipline[] = ['route', 'xco', 'xcc', 'xcm']
 /**
- * Phases. Saisons calculées (depuis le 6/11/2026, forme de l'entraîneur l'entraîneur, contenu relu par la science) :
+ * Phases. Saisons calculées (depuis le 6/11/2026, forme de l'entraîneur, contenu relu par la science) :
  * reprise → seuil-tirage (tirer le seuil) → seuil-maintien (allonger le seuil) → fin-prepa (sweet spot + VO2) →
  * specifique → affutage → recuperation. 'vo2' et 'seuil' restent pour la saison écrite à la main de Titouan.
  */

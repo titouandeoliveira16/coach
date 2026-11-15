@@ -2,7 +2,7 @@ import type { Phase } from './programme'
 import { decaler } from './vfc'
 
 /**
- * Saison calculée à l'envers depuis la course principale. Forme de l'entraîneur l'entraîneur, contenu relu par la
+ * Saison calculée à l'envers depuis la course principale. Forme de l'entraîneur, contenu relu par la
  * science (6/11/2026) : l'ordre des blocs change peu les progrès à charge égale (Sylta 2016), on suit donc le sien.
  * reprise (base d'endurance) → tirer le seuil → allonger le seuil → fin de prépa (sweet spot + VO2, 3 sem.) →
  * proche de la course (3 sem.) → affûtage (1-2 sem. : volume en baisse, intensité gardée, Bosquet 2007) →
