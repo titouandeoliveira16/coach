@@ -67,8 +67,12 @@ export function PageMuscu() {
       <div className="mb-2 flex items-center gap-2">
         <button type="button" onClick={() => navigate(-1)} className="py-2 pr-2 text-2xl text-accent" aria-label="Retour">‹</button>
         <h1 className="text-xl font-extrabold">Muscu · {NOMS_PERIODES[s.periode]}</h1>
-        <span className="ml-auto text-sm text-texte-3">{nFaites}/{exos.length}</span>
       </div>
+      {/* Date en haut si la séance n'est pas aujourd'hui (aperçu, champs grisés) et avancement en clair (16/11/2026) */}
+      <p className="mb-2 text-[13px] text-texte-2">
+        {p.date !== aujourdhui() ? <><b className="text-texte">{new Date(`${p.date}T12:00:00`).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</b> · aperçu · </> : ''}
+        {nFaites} exercice{nFaites > 1 ? 's' : ''} fait{nFaites > 1 ? 's' : ''} sur {exos.length}
+      </p>
       <p className="rounded-xl border border-attention/40 bg-attention/10 px-3 py-2 text-[13px] text-attention">⌚ Lance ta montre : activité <b>Musculation</b>. Sinon ta séance ne remonte pas dans ta charge.</p>
       <p className="mt-2 text-[13px] text-texte-2">
         {s.facteur ? `Reprise après un arrêt : charges à ${Math.round(s.facteur * 100)} %. ` : ''}{s.series} séries de {s.reps} répétitions{s.legere ? ' légères : garde 2 répétitions en réserve' : ' lourdes : une charge que tu pourrais soulever 1 ou 2 fois de plus, jamais jusqu’à l’échec'}{s.reduite ? ' · version réduite (demain, séance clé)' : ''} · descente lente (2-3 s), montée vive · repos 2-3 min entre les séries{s.soir ? ' · 3 h après le vélo au moins' : ''}.
@@ -80,7 +84,7 @@ export function PageMuscu() {
         const ch0 = premier && !premier.sansCharge ? charge(premier) : undefined
         const pct = (x: number) => (ch0 ? ` (≈ ${Math.max(premier.pas || 1, Math.round((ch0 * x) / (premier.pas || 1)) * (premier.pas || 1))} kg)` : '')
         return (
-          <button type="button" onClick={() => setEchauffe(!echauffe)} className={`mt-3 flex w-full items-start gap-3 rounded-2xl border-[1.5px] bg-surface p-3 text-left ${echauffe ? 'border-transparent' : 'border-muscu'}`}>
+          <button type="button" disabled={p.date > aujourdhui()} onClick={() => setEchauffe(!echauffe)} className={`mt-3 flex disabled:opacity-50 w-full items-start gap-3 rounded-2xl border-[1.5px] bg-surface p-3 text-left ${echauffe ? 'border-transparent' : 'border-muscu'}`}>
             <span className="min-w-0 flex-1">
               <b className="block text-[15px]">{echauffe ? '✓ ' : ''}Échauffement · 10 min</b>
               <span className="block text-xs text-texte-2">5 min de vélo ou de cardio léger, puis sur {premier?.nom.toLowerCase() ?? 'le 1er exercice'} : 8 répétitions à ~50 %{pct(0.5)}, 4 à ~70 %{pct(0.7)}, 2 à ~85 %{pct(0.85)} de ta charge.</span>
@@ -90,7 +94,7 @@ export function PageMuscu() {
         )
       })()}
 
-      <div className="mt-2 space-y-2">
+      <fieldset disabled={p.date > aujourdhui()} className={`mt-2 min-w-0 space-y-2 ${p.date > aujourdhui() ? 'opacity-50' : ''}`}>
         {exos.map((e) => {
           const x = saisies[e.id] ?? VIDE
           const ch = charge(e)
@@ -145,7 +149,7 @@ export function PageMuscu() {
             </div>
           )
         })}
-      </div>
+      </fieldset>
 
       <div className="mt-2 rounded-2xl bg-surface p-3">
         <p className="text-[15px] font-semibold">Prévention <span className="text-xs font-normal text-texte-3">· sans suivi de charge</span></p>

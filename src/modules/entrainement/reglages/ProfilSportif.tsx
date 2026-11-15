@@ -115,7 +115,9 @@ export function SectionProfilSportif() {
 
   return (
     <Repliable titre="Mon profil sportif" resume={resume || 'à remplir'}>
+      {/* Regroupé en blocs (16/11/2026), les lignes restent les mêmes */}
       <p className="mb-1 text-xs text-texte-3">Tes réponses règlent le programme. Touche une ligne pour la changer.</p>
+      <p className="mt-4 mb-1 text-[13px] font-semibold text-texte-3 first:mt-0">Ma discipline et mes courses</p>
       <Ligne {...props('sports')} libelle="Sports pratiqués" valeur={ps.sports.join(', ')}>
         {choixMultiple(SPORTS, ps.sports, (sports) => modifierPs({ sports }))}
       </Ligne>
@@ -143,6 +145,7 @@ export function SectionProfilSportif() {
         <CalageVitesse refs={prog.coursesReference ?? []} auto={vitesse?.auto ?? 0} facteurs={vitesse?.facteurs ?? {}} onChanger={(coursesReference) => changerProg({ coursesReference })} />
         <p className="mt-1.5 text-xs text-texte-3">{AIDES.niveauxCourses}</p>
       </Ligne>
+      <p className="mt-4 mb-1 text-[13px] font-semibold text-texte-3 first:mt-0">Mon niveau</p>
       <Ligne {...props('anciennete')} libelle="Vélo régulier depuis" valeur={ps.anciennete ?? ''}>
         <p className="mb-1.5 text-xs text-texte-3">Au moins 2 fois par semaine, sans arrêt de plus de 2 mois.</p>
         {choixUnique(ANCIENNETES, ps.anciennete, (anciennete) => modifierPs({ anciennete }))}
@@ -156,6 +159,7 @@ export function SectionProfilSportif() {
         {choixUnique(['Oui', 'Non'], ps.intervalles === undefined ? undefined : ps.intervalles ? 'Oui' : 'Non', (v) => modifierPs({ intervalles: v === 'Oui' }))}
         <p className="mt-1.5 text-xs text-texte-3">Niveau retenu : <b>{NOMS_NIVEAUX[niveauDuProfil(ps)]}</b>. {AIDES.profilNiveau}</p>
       </Ligne>
+      <p className="mt-4 mb-1 text-[13px] font-semibold text-texte-3 first:mt-0">Mon temps</p>
       <Ligne {...props('heures')} libelle="Temps par semaine" valeur={ps.heuresSemaine ?? ''}>
         {choixUnique(HEURES, ps.heuresSemaine, (heuresSemaine) => modifierPs({ heuresSemaine }))}
         <p className="mt-1.5 text-xs text-texte-3">{AIDES.profilTemps}</p>
@@ -167,6 +171,7 @@ export function SectionProfilSportif() {
         <ChampNombre libelle="Au moins" unite="min" decimales={0} valeur={prog.minLongMin} onValider={(v) => v && changerProg({ minLongMin: v })} />
         <ChampNombre libelle="Au plus" unite="min" decimales={0} valeur={prog.maxLongMin} onValider={(v) => v && changerProg({ maxLongMin: v })} />
       </Ligne>
+      <p className="mt-4 mb-1 text-[13px] font-semibold text-texte-3 first:mt-0">Matériel, santé, nutrition, muscu</p>
       <Ligne {...props('materiel')} libelle="Matériel" valeur={ps.materiel.join(', ')}>{choixMultiple(MATERIEL, ps.materiel, (materiel) => modifierPs({ materiel }))}</Ligne>
       <Ligne {...props('sensibles')} libelle="Points sensibles" valeur={ps.pointsSensibles ?? ''}>
         <input defaultValue={ps.pointsSensibles} placeholder="Ex. genoux, tendon d'Achille…" onBlur={(e) => modifierPs({ pointsSensibles: e.target.value.trim() || undefined })}

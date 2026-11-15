@@ -19,7 +19,7 @@ export function SectionCodes() {
   // Le serveur refuse ou ne répond pas : on dit pourquoi (sinon l'encart disparaîtrait sans explication)
   if (!codes)
     return erreur ? (
-      <Repliable titre="Inviter quelqu'un" resume="Pas disponible">
+      <Repliable titre="Inviter quelqu'un" resume="Indisponible pour l'instant" libelle="Pourquoi">
         <p className="text-sm text-texte-2">Le serveur répond : « {erreur} »</p>
         <p className="mt-1 text-xs text-texte-3">
           « Réservé au coach » : ton compte n'est pas dans la table « coachs » (vérifie l'email de la ligne « insert »). « Pas encore installée » :

@@ -27,14 +27,14 @@ export function Profil({ etapes, cpW, extensible = false }: { etapes: Etape[]; c
     <>
       <svg viewBox="0 0 1000 60" preserveAspectRatio="none" className={`monte-svg mt-2 block w-full rounded-lg bg-surface-2 ${extensible ? 'h-auto min-h-8 flex-1' : 'h-14'}`} aria-hidden>
         {blocs.map((e, i) => {
-          const h = e.w ? Math.max(0.12, e.w / wMax) * 56 : 56
+          const h = e.w ? Math.max(0.12, e.w / wMax) * 56 : aFond(e) ? 56 : 20
           return <rect key={i} x={departs[i]} y={60 - h} width={Math.max(largeurs[i] - 1, 1)} height={h} rx="3" fill={couleur(e, cpW)} style={{ animationDelay: `${Math.min(i * 12, 500)}ms` }} />
         })}
       </svg>
       {/* Légende des zones présentes (la couleur n'est jamais seule) */}
       {cpW && (
         <p className="mt-1 flex flex-wrap gap-x-2.5 gap-y-0.5 text-[11px] text-texte-3">
-          {[...new Set(blocs.map((e) => (e.w ? couleur(e, cpW) : COULEUR_A_FOND)))].map((c) => (
+          {[...new Set(blocs.filter((e) => e.w || aFond(e)).map((e) => couleur(e, cpW)))].map((c) => (
             <span key={c} className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm" style={{ background: c }} />{c === COULEUR_A_FOND ? 'à fond' : `Z${COULEURS_ZONES.indexOf(c as (typeof COULEURS_ZONES)[number]) + 1}`}</span>
           ))}
         </p>
@@ -43,7 +43,10 @@ export function Profil({ etapes, cpW, extensible = false }: { etapes: Etape[]; c
   )
 }
 
-const couleur = (e: Pick<Etape, 'w'>, cpW?: number) => (e.w && cpW ? couleurPctCP((e.w / cpW) * 100) : e.w ? '#8b949e' : couleurPctCP(undefined))
+// Une étape sans watts n'est « à fond » que si elle le dit (sprint) : sinon gris neutre (16/11/2026 : une séance au seuil
+// sans watts s'affichait toute « à fond »)
+const aFond = (e: Pick<Etape, 'w' | 'libelle'>) => !e.w && /fond|sprint/i.test(e.libelle ?? '')
+const couleur = (e: Pick<Etape, 'w' | 'libelle'>, cpW?: number) => (e.w && cpW ? couleurPctCP((e.w / cpW) * 100) : aFond(e) ? couleurPctCP(undefined) : '#8b949e')
 
 /** Déroulé minute par minute d'une séance vélo (à suivre sur le compteur), en couleurs de zones comme sur Zwift. */
 export function Deroule({ etapes, sansProfil = false }: { etapes: Etape[]; sansProfil?: boolean }) {
@@ -80,7 +83,7 @@ export function Deroule({ etapes, sansProfil = false }: { etapes: Etape[]; sansP
                   </span>
                 )}
               </span>
-              {e.dureeSec > 0 && <span className="shrink-0 font-semibold tabular-nums" style={{ color: couleur(cible, cpW) }}>{cible.wMin && cible.wMax ? `${cible.wMin}-${cible.wMax} W` : cible.w ? `${cible.w} W` : 'à fond'}</span>}
+              {e.dureeSec > 0 && <span className="shrink-0 font-semibold tabular-nums" style={{ color: couleur(cible, cpW) }}>{cible.wMin && cible.wMax ? `${cible.wMin}-${cible.wMax} W` : cible.w ? `${cible.w} W` : aFond(cible) ? 'à fond' : ''}</span>}
             </li>
           )
         })}

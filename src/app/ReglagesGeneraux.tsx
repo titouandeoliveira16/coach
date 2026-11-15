@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import type { CSSProperties } from 'react'
 import { Carte } from '../core/ui/Carte'
 import { EnTete } from '../core/ui/EnTete'
 import { SectionCodes } from './SectionCodes'
@@ -28,8 +29,10 @@ export function ReglagesGeneraux() {
   const naviguer = useNavigate()
   return (
     <>
-      <EnTete titre="Réglages" />
-      <div className="space-y-3 px-4">
+      {/* Retour en haut (16/11/2026) : avant, seulement tout en bas de la page */}
+      <EnTete titre="Réglages" aDroite={<Link to="/" className="inline-block py-2 pl-4 text-base text-texte">‹ Accueil</Link>} />
+      {/* Boutons principaux en orange, comme dans l'Entraînement (l'accueil a un accent blanc) */}
+      <div className="space-y-3 px-4" style={{ '--color-accent': '#ff6a13' } as CSSProperties}>
         <SectionCompte />
         <SectionCodes />
         {!compte.invite && <SectionErreurs />}
@@ -52,7 +55,6 @@ export function ReglagesGeneraux() {
           Revoir la visite guidée
         </button>
         <p className="text-center text-sm text-texte-3">Les réglages propres à chaque module sont dans son onglet Réglages.</p>
-        <Link to="/" className="block py-2 text-center text-sm text-texte-2">‹ Retour à l'accueil</Link>
       </div>
     </>
   )

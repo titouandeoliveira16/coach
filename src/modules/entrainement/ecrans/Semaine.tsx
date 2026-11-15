@@ -129,7 +129,7 @@ export function Semaine() {
                 <div key={x.id} className="flex items-center gap-2.5 rounded-xl border-l-[3px] bg-surface px-3 py-2.5" style={{ borderLeftColor: VERT }}>
                   <span className="w-9 shrink-0 text-[13px] text-texte-3">{k === 0 && !duJour.length ? court(d) : ''}</span>
                   <span className="min-w-0 flex-1 truncate text-sm"><IconeSport sport={x.sport} homeTrainer={x.homeTrainer} />{x.titre ?? x.type ?? 'Séance'}</span>
-                  <span className="shrink-0 text-xs text-texte-3">hors plan ✓</span>
+                  <span className="shrink-0 text-xs text-texte-3">faite (non prévue)</span>
                 </div>
               ))}
             </div>
@@ -217,7 +217,9 @@ function AVoir({ lundi, deps, onMessage }: { lundi: string; deps: unknown[]; onM
   if (alertes === undefined || chargee === undefined) return null
   const n = alertes.length
   if (!n && !chargee && !aVenir) return null
-  const resume = n ? `${n} point${n > 1 ? 's' : ''} à voir` : chargee ? 'Semaine chargée : le minimum' : 'Rien à signaler · semaine chargée ?'
+  // Le 1er point écrit en clair (16/11/2026), plutôt que « 2 points à voir »
+  const premier = alertes[0] && alertes[0].length > 70 ? `${alertes[0].slice(0, 68).trimEnd()}…` : alertes[0]
+  const resume = n ? `${premier}${n > 1 ? ` (+${n - 1})` : ''}` : chargee ? 'Semaine chargée : le minimum' : 'Rien à signaler · semaine chargée ?'
   return (
     <Repliable titre="À voir cette semaine" resume={resume} libelle="Voir" className={n ? 'border-attention/50' : ''}>
       {n > 0 && <ul className="space-y-1.5 text-sm">{alertes.map((a, i) => <li key={i}>{a}</li>)}</ul>}

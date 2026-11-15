@@ -45,7 +45,7 @@ function Connecte() {
         Se déconnecter
       </button>
       <div className="space-y-1 border-t border-bordure pt-3">
-        <p className="text-xs text-texte-3">Tes données sont rangées sur ton compte (serveur Supabase) et sur ce téléphone. Personne d'autre ne peut les lire, elles ne sont ni vendues ni partagées.</p>
+        <p className="text-xs text-texte-3">Tes données sont rangées sur ton compte en ligne et sur ce téléphone. Personne d'autre ne peut les lire, elles ne sont ni vendues ni partagées.</p>
         <button type="button" className="w-full py-2 text-left text-sm font-semibold text-texte-2" onClick={() => exporterToutesMesDonnees()}>
           Exporter toutes mes données (fichier)
         </button>
