@@ -6,7 +6,7 @@ import { db } from '../../../core/db'
 import { useReglage } from '../../../core/reglages'
 import { enregistrer } from '../../../core/stockage'
 import { enregistrerSeance } from '../seances/donnees'
-import { apresSeance, chargeProposee, EXOS, FORCE_DEFAUT, NOMS_PERIODES, PREVENTION, type ExoForce, type ReglagesForce, type SeanceForce } from './force'
+import { apresSeance, chargeProposee, etapesDe, exosDe, FORCE_DEFAUT, NOMS_PERIODES, preventionDe, type ExoForce, type ReglagesForce, type SeanceForce } from './force'
 import { Picto } from './Picto'
 
 /** Ce que tu as changé (le reste suit la proposition) : charge, répétitions et séries cochées. */
@@ -24,12 +24,13 @@ export function PageMuscu() {
   const [rpe, setRpe] = useState<number>()
   const [debut] = useState(() => new Date().toISOString())
   const [fin, setFin] = useState(false)
+  const [echauffe, setEchauffe] = useState(false)
 
   const decision = useLiveQuery(async () => (await db.decisions.get(aujourdhui())) ?? null)
   const brute: SeanceForce | undefined = p?.muscu
   // Feu orange (sans « je maintiens ») : une série de moins, mêmes charges
   const s: SeanceForce | undefined = brute && decision?.couleur === 'orange' && !decision.force && brute.series > 1 ? { ...brute, series: brute.series - 1 } : brute
-  const exos = s ? EXOS[s.lieu] : []
+  const exos = s ? exosDe(s) : []
   useEffect(() => { if (!ouvert && exos[0]) setOuvert(exos[0].id) }, [ouvert, exos])
 
   if (p === undefined) return null
@@ -70,10 +71,26 @@ export function PageMuscu() {
       </div>
       <p className="rounded-xl border border-attention/40 bg-attention/10 px-3 py-2 text-[13px] text-attention">⌚ Lance ta montre : activité <b>Musculation</b>. Sinon ta séance ne remonte pas dans ta charge.</p>
       <p className="mt-2 text-[13px] text-texte-2">
-        {s.facteur ? `Reprise après un arrêt : charges à ${Math.round(s.facteur * 100)} %. ` : ''}{s.series} séries de {s.reps} répétitions{s.legere ? ' légères : garde 2 répétitions en réserve' : ' lourdes'} · descente lente (2-3 s), montée vive · repos 2-3 min entre les séries{s.soir ? ' · 3 h après le vélo au moins' : ''}.
+        {s.facteur ? `Reprise après un arrêt : charges à ${Math.round(s.facteur * 100)} %. ` : ''}{s.series} séries de {s.reps} répétitions{s.legere ? ' légères : garde 2 répétitions en réserve' : ' lourdes : une charge que tu pourrais soulever 1 ou 2 fois de plus, jamais jusqu’à l’échec'}{s.reduite ? ' · version réduite (demain, séance clé)' : ''} · descente lente (2-3 s), montée vive · repos 2-3 min entre les séries{s.soir ? ' · 3 h après le vélo au moins' : ''}.
       </p>
 
-      <div className="mt-3 space-y-2">
+      {/* Échauffement (relu le 15/11/2026 : plausible, Ribeiro 2021) : à cocher comme une série */}
+      {(() => {
+        const premier = exos[0]
+        const ch0 = premier && !premier.sansCharge ? charge(premier) : undefined
+        const pct = (x: number) => (ch0 ? ` (≈ ${Math.max(premier.pas || 1, Math.round((ch0 * x) / (premier.pas || 1)) * (premier.pas || 1))} kg)` : '')
+        return (
+          <button type="button" onClick={() => setEchauffe(!echauffe)} className={`mt-3 flex w-full items-start gap-3 rounded-2xl border-[1.5px] bg-surface p-3 text-left ${echauffe ? 'border-transparent' : 'border-muscu'}`}>
+            <span className="min-w-0 flex-1">
+              <b className="block text-[15px]">{echauffe ? '✓ ' : ''}Échauffement · 10 min</b>
+              <span className="block text-xs text-texte-2">5 min de vélo ou de cardio léger, puis sur {premier?.nom.toLowerCase() ?? 'le 1er exercice'} : 8 répétitions à ~50 %{pct(0.5)}, 4 à ~70 %{pct(0.7)}, 2 à ~85 %{pct(0.85)} de ta charge.</span>
+            </span>
+            <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-base font-extrabold ${echauffe ? 'bg-bon text-fond' : 'border-[1.5px] border-bordure text-texte-3'}`}>✓</span>
+          </button>
+        )
+      })()}
+
+      <div className="mt-2 space-y-2">
         {exos.map((e) => {
           const x = saisies[e.id] ?? VIDE
           const ch = charge(e)
@@ -119,7 +136,7 @@ export function PageMuscu() {
                     <summary className="cursor-pointer font-semibold text-muscu">Comment faire ?</summary>
                     <div className="mt-2 flex justify-center"><Picto type={e.picto} taille={96} /></div>
                     <ol className="mt-2 space-y-1.5">
-                      {e.etapes.map((t, i) => <li key={i} className="flex gap-2 text-texte-2"><b className="text-muscu">{i + 1}</b><span>{t}</span></li>)}
+                      {etapesDe(e, s.genoux).map((t, i, l) => <li key={i} className="flex gap-2 text-texte-2"><b className="text-muscu">{i === l.length - 1 ? '!' : i + 1}</b><span>{t}</span></li>)}
                     </ol>
                     <p className="mt-2 text-xs text-texte-3">Matériel : {e.materiel}. {e.pourquoi}</p>
                   </details>
@@ -133,7 +150,7 @@ export function PageMuscu() {
       <div className="mt-2 rounded-2xl bg-surface p-3">
         <p className="text-[15px] font-semibold">Prévention <span className="text-xs font-normal text-texte-3">· sans suivi de charge</span></p>
         <ul className="mt-1 space-y-0.5 text-[13px] text-texte-2">
-          {PREVENTION[s.lieu].map((x) => <li key={x.nom}>{x.nom} · {x.dose}</li>)}
+          {preventionDe(s).map((x) => <li key={x.nom}>{x.nom} · {x.dose}</li>)}
         </ul>
       </div>
 

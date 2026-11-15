@@ -137,7 +137,7 @@ describe('audit vraie vie', () => {
         // dans les 4 jours avant une course, 2 au plus (1 en entretien et avant la course), rien en récupération
         const toutes = (await db.prevues.where('date').between(l, decalerJour(l, 7), true, true).toArray()).filter((x) => x.statut === 'prevue')
         const muscus = toutes.filter((x) => x.muscu && x.date <= decalerJour(l, 6))
-        const max = phase.type === 'recuperation' ? 0 : ['fin-prepa', 'specifique', 'affutage', 'entretien'].includes(phase.type) ? 1 : 2
+        const max = ['recuperation', 'fin-prepa', 'specifique', 'affutage', 'entretien'].includes(phase.type) ? 1 : 2
         if (muscus.length > max) problemes.push(`${l} : ${muscus.length} séances de muscu en ${phase.type}`)
         const courses = [...prog.competitions.map((c) => c.date)]
         for (const m of muscus) {
@@ -146,6 +146,7 @@ describe('audit vraie vie', () => {
           const lendemain = toutes.find((x) => x.sport === 'velo' && x.date === decalerJour(m.date, 1) && (x.intensite === 'haute' || x.longue || x.velo?.famille === 'test' || x.velo?.famille === 'course'))
           if (lendemain) problemes.push(`${l} : muscu le ${m.date}, veille de ${lendemain.titre}`)
           if (courses.some((c) => c >= m.date && c <= decalerJour(m.date, 4))) problemes.push(`${l} : muscu le ${m.date}, moins de 4 jours avant une course`)
+          if (courses.some((c) => c < m.date && decalerJour(c, 2) >= m.date)) problemes.push(`${l} : muscu le ${m.date}, moins de 3 jours après une course`)
         }
 
         // La semaine vécue

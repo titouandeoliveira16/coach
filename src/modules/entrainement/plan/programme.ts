@@ -1,5 +1,5 @@
 import { db } from '../../../core/db'
-import { dureeForce, EXOS, joursMuscu, NOMS_PERIODES, planForce, type ReglagesForce, type SeanceForce } from '../muscu/force'
+import { dureeForce, exosDe, joursMuscu, NOMS_PERIODES, planForce, semainesApprentissage, type ReglagesForce, type SeanceForce } from '../muscu/force'
 import { signalerErreur } from '../../../core/erreurs'
 import { aujourdhui, decalerJour, depuisJour, ecartJours, NOMS_JOURS } from '../../../core/dates'
 import { enregistrer, supprimer } from '../../../core/stockage'
@@ -716,18 +716,26 @@ async function genererSemaineVeloBrute(lundi: string) {
     const semainesFaites = new Set(faitesAvant.map((p) => lundiDe(p.date))).size
     const derniere = faitesAvant.at(-1)
     const semainesSans = derniere ? Math.max(0, Math.round(ecartJours(lundiDe(derniere.date), lundi) / 7) - 1) : 0
-    const plan = planForce({ semainesFaites, semainesSans, repriseEnCours: !!derniere?.muscu?.longue && semainesSans === 0, phase: phase.type, allegee, seancesVoulues: force.seances })
+    const plan = planForce({ semainesFaites, semainesSans, repriseEnCours: !!derniere?.muscu?.longue && semainesSans === 0, phase: phase.type, allegee, seancesVoulues: force.seances, apprentissage: semainesApprentissage(force.experience) })
     const faitesForce = (await db.prevues.where('date').between(lundi, semaine[6], true, true).toArray()).filter((p) => p.sport === 'renfo' && p.muscu && p.statut === 'faite').length
     const cles = [placement.intensite, intensite2?.date, placement.long, dateTest, ...competitions].filter((d): d is string => !!d)
     const jours = joursMuscu({
       roles, dates: semaine, n: plan.seances - faitesForce, cles, durs: [placement.intensite, intensite2?.date].filter((d): d is string => !!d && d !== dateTest),
       courses: prog.competitions.map((x) => x.date), indispos: [...indispos], velo: aCreer.map(([d]) => d),
     }).filter((j) => j.date >= aPartirDe)
-    for (const j of jours) {
-      const sf: SeanceForce = { periode: plan.periode, semaine: plan.semaine, series: plan.series, reps: plan.reps, lieu: force.lieu, legere: plan.legere, soir: j.soir, ...(plan.facteur ? { facteur: plan.facteur } : {}), ...(plan.longue ? { longue: true } : {}) }
+    const dejaFaites = faitesAvant.length + faitesForce
+    for (const [k, j] of jours.entries()) {
+      // 2e séance ailleurs si tu l'as choisi (1 salle + 1 maison) ; soulevé et leg curl en alternance (15/11/2026)
+      const lieu = k === 1 && force.lieu2 ? force.lieu2 : force.lieu
+      const series = j.reduite ? Math.min(2, plan.series) : plan.series
+      const sf: SeanceForce = {
+        periode: plan.periode, semaine: plan.semaine, series, reps: plan.reps, lieu, legere: plan.legere, soir: j.soir,
+        variante: (dejaFaites + k) % 2 === 0 ? 'souleve' : 'curl', ...(j.reduite ? { reduite: true } : {}), ...(genoux ? { genoux: true } : {}), ...(discipline !== 'route' ? { vtt: true } : {}),
+        ...(plan.facteur ? { facteur: plan.facteur } : {}), ...(plan.longue ? { longue: true } : {}),
+      }
       await enregistrer(db.prevues, {
-        id: `auto-${j.date}-muscu`, date: j.date, sport: 'renfo', titre: `Muscu · ${NOMS_PERIODES[plan.periode]}`,
-        detail: `${plan.series} × ${plan.reps} répétitions${plan.legere ? ' légères' : ' lourdes'} · ${EXOS[force.lieu].length} exercices + prévention${plan.facteur ? ` · reprise : charges à ${Math.round(plan.facteur * 100)} %` : ''}${j.soir ? ' · le soir, 3 h après le vélo au moins' : ''}`,
+        id: `auto-${j.date}-muscu`, date: j.date, sport: 'renfo', titre: `Muscu · ${NOMS_PERIODES[plan.periode]}${j.reduite ? ' (réduite)' : ''}`,
+        detail: `${series} × ${plan.reps} répétitions${plan.legere ? ' légères' : ' lourdes'} · ${exosDe(sf).length} exercices + prévention${lieu !== force.lieu ? (lieu === 'maison' ? ' · à la maison' : ' · en salle') : ''}${plan.facteur ? ` · reprise : charges à ${Math.round(plan.facteur * 100)} %` : ''}${j.soir ? ' · le soir, 3 h après le vélo au moins' : ''}${j.reduite ? ' · version réduite : demain, séance clé' : ''}`,
         dureeMin: dureeForce(sf), intensite: 'moyenne', priorite: 'normale', statut: 'prevue', origine: 'auto', muscu: sf,
       } satisfies SeancePrevue)
     }

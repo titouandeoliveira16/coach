@@ -208,12 +208,14 @@ export async function simuler(sc: Scenario, detail = false, journal?: string[]):
     }
     // Muscu
     const muscus = toutes.filter((x) => x.muscu && x.date <= decalerJour(l, 6))
-    const maxMuscu = phase.type === 'recuperation' ? 0 : ['fin-prepa', 'specifique', 'affutage', 'entretien'].includes(phase.type) ? 1 : 2
+    // Récupération : 1 séance d'entretien, 3 jours après la course au plus tôt (15/11/2026)
+    const maxMuscu = ['recuperation', 'fin-prepa', 'specifique', 'affutage', 'entretien'].includes(phase.type) ? 1 : 2
     if (muscus.length > maxMuscu) p(`${muscus.length} séances de muscu`)
     for (const m of muscus) {
       const velo = toutes.find((x) => x.sport === 'velo' && x.date === m.date)
       if (velo && !(m.muscu!.soir && velo.intensite !== 'basse' && velo.velo?.famille !== 'test')) p(`muscu le ${m.date} avec ${velo.titre}`)
       if (courses.some((c) => c >= m.date && c <= decalerJour(m.date, 4))) p(`muscu le ${m.date}, moins de 4 jours avant une course`)
+      if (courses.some((c) => c < m.date && decalerJour(c, 2) >= m.date)) p(`muscu le ${m.date}, moins de 3 jours après une course`)
       if (!(m.dureeMin > 0)) p(`muscu de ${m.dureeMin} min`)
     }
     // Panne

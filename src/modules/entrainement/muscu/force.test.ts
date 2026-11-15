@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Role } from '../../../metrics/programme'
-import { apresSeance, chargeProposee, dureeForce, EXOS, joursMuscu, planForce } from './force'
+import { apresSeance, chargeProposee, dureeForce, etapesDe, EXOS, exosDe, joursMuscu, planForce, preventionDe, semainesApprentissage } from './force'
 
 const squat = EXOS.salle.find((e) => e.id === 'squat')!
 const curlSol = EXOS.maison.find((e) => e.id === 'curlsol')!
@@ -12,11 +12,16 @@ describe('muscu du cycliste (13/11/2026)', () => {
     expect(p(2)).toMatchObject({ periode: 'lourd', semaine: 1, series: 3, reps: 10 })
     expect(p(6)).toMatchObject({ periode: 'lourd', reps: 6 })
     expect(p(10)).toMatchObject({ periode: 'lourd', reps: 5 })
-    expect(p(14)).toMatchObject({ periode: 'entretien', seances: 1 })
+    // Entretien : 2 séries à la même charge (15/11/2026)
+    expect(p(14)).toMatchObject({ periode: 'entretien', seances: 1, series: 2 })
     expect(p(6, 'base', true).series).toBe(2)
     expect(p(6, 'fin-prepa' as never).periode).toBe('entretien')
     expect(p(8, 'affutage' as never)).toMatchObject({ periode: 'affutage', series: 2, seances: 1 })
-    expect(p(8, 'recuperation' as never).seances).toBe(0)
+    // Semaine d'après la course : 1 séance d'entretien (3 jours après au plus tôt, joursMuscu) ; rien en apprentissage
+    expect(p(8, 'recuperation' as never)).toMatchObject({ periode: 'entretien', seances: 1, series: 2 })
+    expect(p(1, 'recuperation' as never).seances).toBe(0)
+    // Jamais fait de squat : 4 semaines d'apprentissage
+    expect(planForce({ semainesFaites: 3, phase: 'base', allegee: false, seancesVoulues: 2, apprentissage: semainesApprentissage('jamais') }).periode).toBe('apprentissage')
   })
   it('arrêt : jusqu’à 3 semaines même charge, 4 à 8 semaines −10 % et 2 séries, au-delà −20 % et 2 semaines légères', () => {
     const p = (semainesSans: number, repriseEnCours = false) => planForce({ semainesFaites: 6, semainesSans, repriseEnCours, phase: 'base', allegee: false, seancesVoulues: 1 })
@@ -36,6 +41,8 @@ describe('muscu du cycliste (13/11/2026)', () => {
     expect(joursMuscu({ roles, dates, n: 2, cles: ['2027-01-05', '2027-01-10'], durs: ['2027-01-05'], courses: [] }).map((j) => j.date)).toEqual(['2027-01-06', '2027-01-08'])
     // Course le samedi : rien à partir du mardi ; plus de jour sans vélo → pas de séance (le jour dur est aussi trop près)
     expect(joursMuscu({ roles, dates, n: 1, cles: ['2027-01-05', '2027-01-09'], durs: ['2027-01-05'], courses: ['2027-01-09'] })).toEqual([])
+    // Course le dimanche d'avant : rien avant le mercredi (3 jours après)
+    expect(joursMuscu({ roles, dates, n: 1, cles: ['2027-01-10'], durs: [], courses: ['2027-01-03'] }).map((j) => j.date)).toEqual(['2027-01-06'])
     // Aucun jour libre : le soir de la séance dure
     const plein: Role[] = ['velo-z2', 'velo-dur', 'velo-z2', 'velo-z2', 'velo-z2', 'velo-z2', 'velo-long']
     expect(joursMuscu({ roles: plein, dates, n: 1, cles: ['2027-01-05', '2027-01-10'], durs: ['2027-01-05'], courses: [] })).toEqual([{ date: '2027-01-05', soir: true }])
@@ -54,5 +61,17 @@ describe('muscu du cycliste (13/11/2026)', () => {
     expect(chargeProposee(squat, { charge: 60, repsRef: 10 }, 10)).toBe(60)
     expect(chargeProposee(squat, undefined, 10)).toBeUndefined()
   })
-  it('environ 1 h en force lourde, prévention comprise', () => expect(dureeForce({ periode: 'lourd', semaine: 1, series: 3, reps: 6, lieu: 'salle' })).toBeLessThanOrEqual(70))
+  it('environ 1 h en force lourde, prévention comprise ; une jambe à la fois compte plus long', () => {
+    expect(dureeForce({ periode: 'lourd', semaine: 1, series: 3, reps: 6, lieu: 'salle' })).toBeLessThanOrEqual(70)
+    expect(dureeForce({ periode: 'lourd', semaine: 1, series: 3, reps: 6, lieu: 'maison' })).toBeGreaterThan(dureeForce({ periode: 'lourd', semaine: 1, series: 3, reps: 6, lieu: 'salle' }))
+  })
+  it('4 exercices, soulevé et leg curl en alternance ; réduite sans soulevé ; genoux, sécurité, haut du corps en VTT (15/11/2026)', () => {
+    const ids = (x: Parameters<typeof exosDe>[0]) => exosDe(x).map((e) => e.id)
+    expect(ids({ lieu: 'salle', variante: 'souleve' })).toEqual(['squat', 'presse', 'souleve', 'mollets'])
+    expect(ids({ lieu: 'salle', variante: 'curl' })).toEqual(['squat', 'presse', 'curl', 'mollets'])
+    expect(ids({ lieu: 'maison', variante: 'souleve', reduite: true })).not.toContain('souleve1')
+    expect(etapesDe(squat, true)[1]).toMatch(/moins bas/)
+    expect(etapesDe(squat).at(-1)).toMatch(/gainant/)
+    expect(preventionDe({ lieu: 'maison', vtt: true }).map((x) => x.nom)).toContain('Pompes')
+  })
 })

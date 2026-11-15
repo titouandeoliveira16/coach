@@ -31,6 +31,8 @@ export interface ReponsesArrivee {
   muscu?: string
   /** Muscu : en salle ou à la maison */
   muscuLieu?: 'salle' | 'maison'
+  /** Muscu : déjà fait du squat chargé (apprentissage de 4, 3 ou 2 semaines) */
+  muscuExperience?: 'jamais' | 'un-peu' | 'regulier'
   /** Suivi de la nutrition (besoins du jour, repas du soir), en option comme la muscu */
   nutrition: boolean
   /** Nutrition à l'effort (glucides par heure sur les sorties longues et les courses) ; absent = oui */
@@ -221,7 +223,7 @@ export async function enregistrerArrivee(r: ReponsesArrivee) {
   // Muscu reliée à l'Entraînement (13/11/2026) : activée selon la réponse, charges déjà connues gardées
   const forceAvant = await lire<ReglagesForce>('force')
   const avecMuscu = !!r.muscu && !/^Pas/.test(r.muscu)
-  await enregistrer(db.reglages, { id: 'force', valeur: { ...FORCE_DEFAUT, ...forceAvant, actif: avecMuscu, seances: /2/.test(r.muscu ?? '') ? 2 : 1, lieu: r.muscuLieu ?? forceAvant?.lieu ?? 'salle' } satisfies ReglagesForce })
+  await enregistrer(db.reglages, { id: 'force', valeur: { ...FORCE_DEFAUT, ...forceAvant, actif: avecMuscu, seances: /2/.test(r.muscu ?? '') ? 2 : 1, lieu: r.muscuLieu ?? forceAvant?.lieu ?? 'salle', ...(r.muscuExperience ? { experience: r.muscuExperience } : {}) } satisfies ReglagesForce })
   await enregistrer(db.reglages, { id: 'arrivee', valeur: { fait: jour } satisfies EtatArrivee })
   // La semaine en cours (et la suivante si on est déjà en fin de semaine) est construite tout de suite
   const { genererSemaineVelo } = await import('../plan/programme')

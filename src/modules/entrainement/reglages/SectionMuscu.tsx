@@ -4,7 +4,7 @@ import { db } from '../../../core/db'
 import { useReglage } from '../../../core/reglages'
 import { Aide } from '../../../core/ui/Aide'
 import { AIDES } from '../aides'
-import { EXOS, FORCE_DEFAUT, type Lieu, type ReglagesForce } from '../muscu/force'
+import { exosDe, FORCE_DEFAUT, semainesApprentissage, type Lieu, type ReglagesForce } from '../muscu/force'
 import { genererSemaineVelo, recalculerSemainesAVenir } from '../plan/programme'
 import { lundiDe } from '../seances/donnees'
 
@@ -51,9 +51,25 @@ export function DetailMuscu() {
               <button key={l} type="button" onClick={async () => { await modifier({ lieu: l }); await recalculerSemainesAVenir() }} className={puce(f.lieu === l)}>{l === 'salle' ? 'Salle' : 'Maison'}</button>
             ))}
           </div>
-          <p className="mt-2 text-xs text-texte-3">{EXOS[f.lieu].map((e) => e.nom).join(' · ')} · puis prévention</p>
+          <p className="mt-2 text-xs text-texte-3">{exosDe({ lieu: f.lieu, variante: 'souleve' }).map((e) => e.nom).join(' · ')} (soulevé et leg curl en alternance) · puis prévention</p>
+          {f.seances === 2 && (
+            <>
+              <p className="mt-3 text-[13px] text-texte-2">Ta 2e séance de la semaine</p>
+              <div className="mt-1.5 flex gap-2">
+                {(['salle', 'maison'] as Lieu[]).map((l) => (
+                  <button key={l} type="button" onClick={async () => { await modifier({ lieu2: l === f.lieu ? undefined : l }); await recalculerSemainesAVenir() }} className={puce((f.lieu2 ?? f.lieu) === l)}>{l === 'salle' ? 'Salle' : 'Maison'}</button>
+                ))}
+              </div>
+            </>
+          )}
+          <p className="mt-3 text-[13px] text-texte-2">As-tu déjà fait du squat avec une charge ?</p>
+          <div className="mt-1.5 flex flex-wrap gap-2">
+            {([['jamais', 'Jamais'], ['un-peu', 'Un peu'], ['regulier', 'Régulièrement']] as const).map(([v, t]) => (
+              <button key={v} type="button" onClick={async () => { await modifier({ experience: v }); await recalculerSemainesAVenir() }} className={puce((f.experience ?? 'regulier') === v)}>{t}</button>
+            ))}
+          </div>
           <p className="mt-2 text-[13px] text-texte-2">Placée sur un jour sans vélo (ou un jour « muscu » de ta semaine type) ; sinon le soir d’une séance dure, 3 h après au moins. Jamais la veille d’une séance clé.</p>
-          <p className="mt-1 text-xs text-texte-3">Apprentissage 2 semaines → force lourde 12 semaines → entretien 1 fois par semaine → rien dans les 4 jours avant ta course. Le programme avance avec les semaines faites. Semaine allégée du vélo : mêmes charges, 2 séries. Séance manquée : même charge ; arrêt de 4 à 8 semaines : −10 % ; au-delà : −20 % et 2 semaines légères.</p>
+          <p className="mt-1 text-xs text-texte-3">Apprentissage {semainesApprentissage(f.experience)} semaines → force lourde l’hiver → entretien 1 fois par semaine (2 séries) dès la fin de prépa → dernière séance 5 à 7 jours avant ta course A, rien dans les 4 derniers jours, reprise 3 jours après. 2 séances par semaine font plus progresser ; 1 garde l’essentiel. Le programme avance avec les semaines faites. Semaine allégée du vélo : mêmes charges, 2 séries. Séance manquée : même charge ; arrêt de 4 à 8 semaines : −10 % ; au-delà : −20 % et 2 semaines légères.</p>
         </div>
       )}
     </div>

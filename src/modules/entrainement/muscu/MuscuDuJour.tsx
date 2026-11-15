@@ -3,7 +3,7 @@ import { db } from '../../../core/db'
 import { useReglage } from '../../../core/reglages'
 import { enregistrer } from '../../../core/stockage'
 import type { SeancePrevue } from '../types'
-import { chargeProposee, EXOS, FORCE_DEFAUT, type ReglagesForce } from './force'
+import { chargeProposee, dureeForce, exosDe, FORCE_DEFAUT, semainesApprentissage, type ReglagesForce } from './force'
 import { Picto } from './Picto'
 
 const COURTS: Record<string, string> = { squat: 'Squat', presse: 'Presse', souleve: 'Soulevé', curl: 'Leg curl', mollets: 'Mollets', bulgare: 'Bulgare', stepup: 'Step-up', souleve1: 'Soulevé', curlsol: 'Leg curl', mollets1: 'Mollets' }
@@ -13,19 +13,19 @@ export function MuscuDuJour({ p, couleur }: { p: SeancePrevue; couleur: 'vert' |
   const navigate = useNavigate()
   const [force, modifier] = useReglage<ReglagesForce>('force', FORCE_DEFAUT)
   const s = p.muscu!
-  const exos = EXOS[s.lieu]
+  const exos = exosDe(s)
   const squat = exos.find((e) => !e.sansCharge)!
   const charge = chargeProposee(squat, force.exos[squat.id], s.reps, s.facteur)
   const changerLieu = async () => {
     const lieu = s.lieu === 'salle' ? 'maison' : 'salle'
     await modifier({ lieu })
-    await enregistrer(db.prevues, { ...p, muscu: { ...s, lieu } })
+    await enregistrer(db.prevues, { ...p, dureeMin: dureeForce({ ...s, lieu }), muscu: { ...s, lieu } })
   }
   return (
     <>
       <p className="mt-0.5 text-[22px] font-bold leading-tight">{p.titre}</p>
       <p className="mt-0.5 text-[13px] text-muscu">
-        {s.periode === 'lourd' ? `Semaine ${s.semaine} sur 12 · ` : s.periode === 'apprentissage' ? `Semaine ${s.semaine} sur 2 · ` : ''}{s.series} × {s.reps}{s.legere ? ' légères' : ''} + prévention · ~{p.dureeMin} min{s.facteur ? ` · reprise ${Math.round(s.facteur * 100)} %` : ''}{s.soir ? ' · le soir, 3 h après le vélo' : ''}
+        {s.periode === 'lourd' ? `Semaine ${s.semaine} sur 12 · ` : s.periode === 'apprentissage' ? `Semaine ${s.semaine} sur ${semainesApprentissage(force.experience)} · ` : ''}{s.series} × {s.reps}{s.legere ? ' légères' : ''} + prévention · ~{p.dureeMin} min{s.facteur ? ` · reprise ${Math.round(s.facteur * 100)} %` : ''}{s.soir ? ' · le soir, 3 h après le vélo' : ''}
       </p>
       {couleur !== 'vert' && (
         <p className="mt-1 text-[13px] text-attention">{couleur === 'rouge' ? 'Feu rouge : pas de muscu lourde aujourd’hui, décale-la à un autre jour.' : 'Feu orange : une série de moins par exercice, mêmes charges.'}</p>
