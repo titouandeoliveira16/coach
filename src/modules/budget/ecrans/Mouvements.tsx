@@ -43,7 +43,7 @@ export function Mouvements() {
   for (const m of liste) parJour.set(m.date, [...(parJour.get(m.date) ?? []), m])
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 pb-20">
       {mois ? <NavMois mois={mois} onChanger={setMois} max={actuel} /> : <p className="py-3 text-center font-semibold">Toute la période</p>}
       <div className="flex gap-2">
         <input value={recherche} onChange={(e) => setRecherche(e.target.value)} placeholder="Rechercher (note, catégorie, montant)"

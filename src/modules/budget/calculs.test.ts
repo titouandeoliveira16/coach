@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { formatEuros } from '../../core/format'
 import {
-  bilanMois, categoriesParUsage, couleurJauge, decalerMois, dernierJour, patrimoineAu, plafondDe, previsionFinDeMois,
+  bilanMois, categoriesParUsage, couleurJauge, decalerMois, depensesParCategorie, dernierJour, patrimoineAu, plafondDe, repartition503020,
   resteAVivre, resumeMois, seuilFranchi, soldeAu, verseAu, type Donnees,
 } from './calculs'
 import type { Categorie, Compte, Mouvement } from './types'
@@ -56,11 +56,11 @@ describe('budget', () => {
     expect(plafondDe('courses', '2026-11', plafonds)).toBe(20000)
     expect(plafondDe('courses', '2027-01', plafonds)).toBe(25000)
   })
-  it('jauge : vert < 75 %, orange jusqu’à 100 %, rouge au-delà', () => {
+  it('jauge : vert < 75 %, orange jusqu’à 110 %, rouge au-delà', () => {
     expect(couleurJauge(7000, 10000)).toBe('vert')
     expect(couleurJauge(7500, 10000)).toBe('orange')
     expect(couleurJauge(10000, 10000)).toBe('orange')
-    expect(couleurJauge(10001, 10000)).toBe('rouge')
+    expect(couleurJauge(11001, 10000)).toBe('rouge')
   })
   it('alerte à 90 % puis à 100 %', () => {
     expect(seuilFranchi(8000, 9000, 10000)).toBe(90)
@@ -92,7 +92,8 @@ describe('budget', () => {
   }
   it('résumé du mois ; reste à vivre = argent disponible (courant + espèces) − charges fixes encore prévues', () => {
     const r = resumeMois(d, '2026-10')
-    expect(r).toMatchObject({ revenus: 120000, depenses: 30000, fixesRestantes: 40000, epargne: 30000, investi: 0 })
+    // Mis de côté = revenus − dépenses (le virement vers le livret n'en est qu'une partie)
+    expect(r).toMatchObject({ revenus: 120000, depenses: 30000, fixesRestantes: 40000, epargne: 90000, investi: 0 })
     // 100 000 au départ + 120 000 − 30 000 − 30 000 (mis sur le livret) = 160 000 ; − 40 000 de charges fixes
     expect(resteAVivre(d, '2026-10-10')).toMatchObject({ courant: 160000, especes: 0, reste: 120000 })
   })
@@ -105,27 +106,22 @@ describe('budget', () => {
     expect(abonnementsAVerifier(avec, '2026-10-15')).toHaveLength(1)
     // Courses (plafond fixe ? non) : seul l'abonnement est retiré en plus
     expect(resteAVivre(avec, '2026-10-10').abonnements).toBe(1099)
-    expect(previsionFinDeMois(avec, '2026-10-10').abonnements).toBe(1099)
     // Payé, sauté ou remis à demain
     expect(abonnementsAVenir({ ...avec, etatsAbonnements: { 'sp|2026-10': { statut: 'paye' } } }, '2026-10-16')).toHaveLength(0)
     expect(abonnementsAVerifier({ ...avec, etatsAbonnements: { 'sp|2026-10': { relance: '2026-10-17' } } }, '2026-10-16')).toHaveLength(0)
     // Créé après l'échéance du mois : rien pour ce mois-là
     expect(abonnementsAVenir({ ...avec, abonnements: [{ ...spotify, depuis: '2026-10-20' }] }, '2026-10-25')).toHaveLength(0)
     // Mois court : le 31 devient le 30
-    expect(abonnementsAVerifier({ ...avec, abonnements: [{ ...spotify, jour: 31 }] }, '2026-11-30')).toHaveLength(1)
+    expect(abonnementsAVerifier({ ...avec, abonnements: [{ ...spotify, jour: 31 }] }, '2026-11-30').map((x) => x.mois)).toEqual(['2026-10', '2026-11'])
   })
 
-  it('prévision fin de mois au rythme actuel', () => {
-    const p = previsionFinDeMois(d, '2026-10-10')
-    // 100 000 + 120 000 − 30 000 − 30 000 = 160 000 ; rythme 30 000 / 10 j = 3 000/j ; 21 j restants
-    expect(p.solde).toBe(160000)
-    expect(p.prevision).toBe(160000 - 40000 - 3000 * 21)
-  })
-  it('bilan : catégories dépassées et écarts avec le mois précédent', () => {
+  it('bilan : catégories dépassées ; pas de comparaison avec un mois pas encore suivi', () => {
     const b = bilanMois(d, '2026-10')
     expect(b.depassees).toEqual([{ categorieId: 'courses', depense: 25000, plafond: 20000 }])
-    expect(b.hausses[0]).toEqual({ categorieId: 'courses', ecart: 25000 })
+    expect(b.hausses).toEqual([])
     expect(b.patrimoineDebut).toBeUndefined()
+    const novembre = { ...d, mouvements: [...d.mouvements, mvt({ type: 'depense', montant: 40000, date: '2026-11-03', compteId: 'courant', categorieId: 'courses' })] }
+    expect(bilanMois(novembre, '2026-11').hausses[0]).toEqual({ categorieId: 'courses', ecart: 15000 })
   })
 })
 
@@ -162,22 +158,94 @@ describe('revenus réguliers et fin de mois', () => {
     expect(soldeAu(d.comptes[0], d.mouvements, [], '2026-10-30')).toBe(140000)
   })
 
-  it('revenus attendus : ajoutés au reste à vivre et à la prévision, sauf ceux de fin de mois', () => {
+  it('revenus attendus : ajoutés au reste à vivre, sauf ceux de fin de mois', () => {
     const d: Donnees = { ...d0, abonnements: [salaire, job], etatsAbonnements: {} }
     const r = resteAVivre(d, '2026-11-03')
     expect(r.revenusAttendus).toBe(30000)
     expect(r.abonnements).toBe(0)
     expect(r.reste).toBe(80000)
-    expect(previsionFinDeMois(d, '2026-11-03').revenusAttendus).toBe(30000)
     // Arrivé et confirmé : plus attendu
     expect(resteAVivre({ ...d, etatsAbonnements: { 'job|2026-11': { statut: 'paye' } } }, '2026-11-06').revenusAttendus).toBe(0)
   })
 
   it('export CSV : comptes, mouvements, mois de rattachement', async () => {
     const { exporterCsv } = await import('./exporter')
-    const d: Donnees = { ...d0, mouvements: [mvt({ type: 'revenu', montant: 90000, date: '2026-10-30', compteId: 'courant', categorieId: 'salaire', note: 'AED' })] }
+    const d: Donnees = { ...d0, mouvements: [mvt({ type: 'revenu', montant: 90000, date: '2026-10-30', compteId: 'courant', categorieId: 'salaire', note: '-20 pour Léo' })] }
     const csv = exporterCsv(d, '2026-11-03')
     expect(csv).toContain('"courant";courant;2026-10-01;1400,00')
-    expect(csv).toContain('2026-10-30;revenu;900,00;"courant";"";"salaire";"AED";2026-11')
+    // Une note qui commence par « - » n'est pas lue comme une formule par Excel ou Numbers
+    expect(csv).toContain(`2026-10-30;revenu;900,00;"courant";"";"salaire";"'-20 pour Léo";2026-11`)
+  })
+})
+
+describe('audit Budget 11/2026', () => {
+  const base: Donnees = {
+    comptes: [compte('courant', 'courant', 100000, '2026-11-01'), compte('especes', 'especes', 0, '2026-11-01'), compte('pea', 'investissement', 0, '2026-11-01'), compte('livret', 'epargne', 50000, '2026-11-01')],
+    mouvements: [], plafonds: [], releves: [],
+    categories: [...categories, cat('sorties'), cat('abonnements', { nature: 'besoin', fixe: true }), cat('abonnements-spotify', { parentId: 'abonnements', nature: 'loisir' }),
+      cat('remboursement', { genre: 'revenu' })],
+  }
+
+  it('un remboursement vient en moins de la dépense remboursée, pas dans les revenus', () => {
+    const d: Donnees = { ...base, mouvements: [
+      mvt({ type: 'depense', montant: 12000, date: '2026-11-20', compteId: 'courant', categorieId: 'sorties' }),
+      mvt({ type: 'revenu', montant: 9000, date: '2026-11-26', compteId: 'courant', categorieId: 'remboursement', rembourse: 'sorties' }),
+      mvt({ type: 'revenu', montant: 80000, date: '2026-11-02', compteId: 'courant', categorieId: 'salaire' }),
+    ] }
+    expect(depensesParCategorie(d.mouvements, d.categories, '2026-11').get('sorties')).toBe(3000)
+    // Même reçu le 26 : il reste en novembre (ce n'est pas un salaire de fin de mois)
+    expect(resumeMois(d, '2026-11')).toMatchObject({ revenus: 80000, depenses: 3000, epargne: 77000 })
+    expect(resumeMois(d, '2026-12').revenus).toBe(0)
+    // Jamais en dessous de 0 pour une catégorie
+    const seul = { ...d, mouvements: d.mouvements.slice(1) }
+    expect(depensesParCategorie(seul.mouvements, seul.categories, '2026-11').has('sorties')).toBe(false)
+  })
+
+  it('livret → PEA : pas d’épargne en plus ; un virement vers un placement compte comme investi', () => {
+    const d: Donnees = { ...base, mouvements: [
+      mvt({ type: 'revenu', montant: 80000, date: '2026-11-02', compteId: 'courant', categorieId: 'salaire' }),
+      mvt({ type: 'virement', montant: 40000, date: '2026-11-05', compteId: 'livret', versCompteId: 'pea' }),
+    ] }
+    expect(resumeMois(d, '2026-11')).toMatchObject({ epargne: 80000, investi: 40000 })
+    expect(repartition503020(d, '2026-11').epargne).toBe(80000)
+  })
+
+  it('50/30/20 : la nature de la sous-catégorie l’emporte (Spotify = loisir)', () => {
+    const d: Donnees = { ...base, mouvements: [
+      mvt({ type: 'depense', montant: 1199, date: '2026-11-05', compteId: 'courant', categorieId: 'abonnements-spotify' }),
+      mvt({ type: 'depense', montant: 1000, date: '2026-11-05', compteId: 'courant', categorieId: 'abonnements' }),
+    ] }
+    expect(repartition503020(d, '2026-11')).toMatchObject({ loisirs: 1199, besoins: 1000 })
+  })
+
+  it('jauges : rouge seulement au-delà de 110 %', () => {
+    expect(couleurJauge(10500, 10000)).toBe('orange')
+    expect(couleurJauge(11001, 10000)).toBe('rouge')
+  })
+
+  it('reste à vivre : le salaire du 28 déjà reçu sert au mois suivant', () => {
+    const d: Donnees = { ...base, mouvements: [mvt({ type: 'revenu', montant: 80000, date: '2026-11-28', compteId: 'courant', categorieId: 'salaire' })] }
+    const r = resteAVivre(d, '2026-11-28')
+    expect(r.courant).toBe(180000)
+    expect(r.pourMoisSuivant).toBe(80000)
+    expect(r.reste).toBe(100000)
+  })
+
+  it('abonnements : celui du 30 pas confirmé est redemandé le mois suivant ; une saisie à la main le règle', async () => {
+    const { abonnementsAVerifier, aVenir } = await import('./calculs')
+    const spotify = { id: 'sp', nom: 'Spotify', montant: 1199, categorieId: 'abonnements-spotify', compteId: 'courant', jour: 30, actif: true, depuis: '2026-11-01' }
+    const d: Donnees = { ...base, abonnements: [spotify], etatsAbonnements: {} }
+    expect(abonnementsAVerifier(d, '2026-12-02')).toEqual([{ a: spotify, mois: '2026-11' }])
+    expect(aVenir(d, '2026-12-02').depenses.filter((a) => a.id === 'sp')).toHaveLength(2)
+    const saisi = { ...d, mouvements: [mvt({ type: 'depense', montant: 1199, date: '2026-11-30', compteId: 'courant', categorieId: 'abonnements' })] }
+    expect(abonnementsAVerifier(saisi, '2026-12-02')).toEqual([])
+  })
+
+  it('charge fixe + abonnement de la même catégorie : seul le reste de la charge fixe est compté en plus', async () => {
+    const { detailFixesRestantes } = await import('./calculs')
+    const spotify = { id: 'sp', nom: 'Spotify', montant: 1199, categorieId: 'abonnements-spotify', compteId: 'courant', jour: 30, actif: true, depuis: '2026-11-01' }
+    const d: Donnees = { ...base, plafonds: [{ id: 'abonnements|2026-11', categorieId: 'abonnements', mois: '2026-11', montant: 5000 }], abonnements: [spotify], etatsAbonnements: {} }
+    expect(detailFixesRestantes(d, '2026-11')[0].montant).toBe(5000 - 1199)
+    expect(resteAVivre(d, '2026-11-10').reste).toBe(100000 - 5000)
   })
 })

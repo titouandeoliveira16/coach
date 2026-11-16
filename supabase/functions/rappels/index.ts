@@ -186,17 +186,30 @@ function lendemain(date: string) {
   return d.toISOString().slice(0, 10)
 }
 
-/** Noms des abonnements à confirmer ce jour-là (même règle que l'appli : échéance passée, ni payé, ni sauté, ni remis à plus tard). */
+/**
+ * Noms des abonnements à confirmer ce jour-là, même règle que l'appli : échéance passée (ce mois-ci, ou le mois précédent
+ * jamais traitée), ni payée, ni sautée, ni remise à plus tard, ni déjà saisie à la main (même catégorie, montant à ± 10 %).
+ */
 async function abonnementsAVerifier(userId: string, date: string) {
   const v = (await ligne(userId, 'reglages', 'abonnements'))?.valeur as
-    { abonnements?: { id: string; nom: string; jour: number; actif: boolean; depuis: string }[]; etatsAbonnements?: Record<string, { statut?: string; relance?: string }> } | undefined
+    { abonnements?: { id: string; nom: string; jour: number; actif: boolean; depuis: string; montant: number; categorieId: string }[]; etatsAbonnements?: Record<string, { statut?: string; relance?: string }> } | undefined
+  if (!v?.abonnements?.length) return []
   const mois = date.slice(0, 7)
-  const fin = new Date(Date.UTC(Number(mois.slice(0, 4)), Number(mois.slice(5, 7)), 0)).getUTCDate()
-  return (v?.abonnements ?? []).filter((a) => {
-    const ech = `${mois}-${String(Math.min(a.jour, fin)).padStart(2, '0')}`
-    const e = v?.etatsAbonnements?.[`${a.id}|${mois}`]
-    return a.actif && ech >= a.depuis && ech <= date && !e?.statut && (!e?.relance || e.relance <= date)
-  }).map((a) => a.nom)
+  const d = new Date(`${mois}-15T12:00:00Z`)
+  d.setUTCMonth(d.getUTCMonth() - 1)
+  const precedent = d.toISOString().slice(0, 7)
+  const { data } = await admin.from('donnees').select('valeur').eq('user_id', userId).eq('table_nom', 'mouvements').eq('supprime', false)
+    .gte('valeur->>date', `${precedent}-01`)
+  const mouvements = (data ?? []).map((x) => x.valeur as { date: string; montant: number; categorieId?: string; abonnementId?: string })
+  const aVerifier = (a: NonNullable<typeof v.abonnements>[number], m: string) => {
+    const fin = new Date(Date.UTC(Number(m.slice(0, 4)), Number(m.slice(5, 7)), 0)).getUTCDate()
+    const ech = `${m}-${String(Math.min(a.jour, fin)).padStart(2, '0')}`
+    const e = v.etatsAbonnements?.[`${a.id}|${m}`]
+    const saisi = mouvements.some((x) => x.date?.startsWith(m)
+      && (x.abonnementId === a.id || (!x.abonnementId && x.categorieId === a.categorieId && Math.abs(x.montant - a.montant) <= a.montant * 0.1)))
+    return a.actif && ech >= a.depuis && ech <= date && !e?.statut && (!e?.relance || e.relance <= date) && !saisi
+  }
+  return v.abonnements.filter((a) => aVerifier(a, precedent) || aVerifier(a, mois)).map((a) => a.nom)
 }
 
 /** Vrai si l'utilisateur a des comptes dans le Budget. */
@@ -305,15 +318,16 @@ async function rappelsDe(a: any, c: ClesVapid, remontees: { titre: string; texte
 
     // Budget : rappel de saisie à l'heure choisie dans l'appli (réglage synchronisé « budget »).
     // L'appel a lieu tous les quarts d'heure : le rappel part dans le quart d'heure choisi, donc une seule fois par jour.
-    const budget = (await ligne(a.user_id, 'reglages', 'budget'))?.valeur as { rappelActif?: boolean; rappelHeure?: string; rappelReleves?: boolean; rappelControle?: boolean; dernierControle?: string } | undefined
+    const budget = (await ligne(a.user_id, 'reglages', 'budget'))?.valeur as { rappelActif?: boolean; rappelHeure?: string; rappelReleves?: boolean; rappelControle?: boolean; rappelAbonnements?: boolean; dernierControle?: string } | undefined
     // Relevés du mois : le 5 à 9 h (sauf si désactivé dans Budget → Réglages), pour qui utilise le Budget
     if (t.date.endsWith('-05') && dansLeQuart(t.heure, '09:00') && budget?.rappelReleves !== false && (await utiliseBudget(a.user_id)))
       messages.push({ titre: '📈 Relevés du mois', texte: '2 minutes, maintenant que tes revenus du mois sont arrivés : compare ton compte courant avec ta banque, puis note la valeur de tes placements.', tag: 'releves', url: './#/budget/patrimoine' })
     // Dimanche, à l'heure du rappel du soir : contrôle du solde du compte courant (sauf si déjà fait aujourd'hui)
     if (t.jour === 0 && budget?.rappelControle !== false && budget?.dernierControle !== t.date && dansLeQuart(t.heure, budget?.rappelHeure ?? '21:00') && (await utiliseBudget(a.user_id)))
       messages.push({ titre: '🔍 Contrôle de la semaine', texte: "1 minute : compare le solde de ton compte courant avec celui de ta banque.", tag: 'controle', url: './#/budget/mois' })
-    // Abonnements dont le prélèvement est passé et pas encore confirmé (réglage « abonnements »), à l'heure du rappel du soir
-    if (dansLeQuart(t.heure, budget?.rappelHeure ?? '21:00')) {
+    // Abonnements dont le prélèvement est passé et pas encore confirmé (réglage « abonnements »), à l'heure du rappel du soir,
+    // sauf si coupé dans Budget → Réglages
+    if (budget?.rappelAbonnements !== false && dansLeQuart(t.heure, budget?.rappelHeure ?? '21:00')) {
       const n = await abonnementsAVerifier(a.user_id, t.date)
       if (n.length) messages.push({ titre: '🔁 Abonnements', texte: `${n.join(', ')} : est-ce passé sur ton compte ?`, tag: 'abonnements', url: './#/budget/mois' })
     }

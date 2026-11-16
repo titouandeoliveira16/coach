@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Route, Routes } from 'react-router-dom'
+import { Route, Routes, useLocation } from 'react-router-dom'
 import { EnTete } from '../../core/ui/EnTete'
 import { Onglets } from '../../core/ui/Onglets'
 import { Pager } from '../../core/ui/Pager'
@@ -27,6 +27,8 @@ export function EcranBudget() {
   const d = useBudget()
   const [saisie, setSaisie] = useState<Partial<Mouvement> | null>(null)
   const [message, setMessage] = useState<string>()
+  // Pas de « + » sur l'écran des plafonds (il y cacherait un champ)
+  const surPlafonds = useLocation().pathname.includes('/plafonds')
 
   // Mise à jour unique des données (catégories choisies ensemble, départ au 1er octobre)
   const demarre = !!d?.comptes.length
@@ -67,10 +69,10 @@ export function EcranBudget() {
           onClick={() => setMessage(undefined)}>{message}</div>
       )}
 
-      <button type="button" onClick={() => setSaisie({})} aria-label="Nouveau mouvement"
+      {!surPlafonds && <button type="button" onClick={() => setSaisie({})} aria-label="Nouveau mouvement"
         className="fixed right-5 bottom-44 z-20 flex h-16 w-16 items-center justify-center rounded-full bg-accent text-fond shadow-lg shadow-black/50 active:scale-95">
         <IconePlus className="h-8 w-8" />
-      </button>
+      </button>}
 
       {saisie && <Saisie initial={saisie} onFermer={(m) => { setSaisie(null); if (m) setMessage(m) }} />}
     </ContexteSaisie.Provider>

@@ -1,7 +1,11 @@
 import { moisDuRevenu, soldeAu, type Donnees } from './calculs'
 
 const euros = (c: number) => (c / 100).toFixed(2).replace('.', ',')
-const cellule = (t: string | undefined) => `"${(t ?? '').replace(/"/g, '""')}"`
+/** Texte entre guillemets ; s'il commence par = + - @ (ou tabulation), une apostrophe devant : sinon Excel ou Numbers le lisent comme une formule */
+const cellule = (t: string | undefined) => {
+  const v = (t ?? '').replace(/"/g, '""')
+  return `"${/^[=+\-@\t\r]/.test(v) ? `'${v}` : v}"`
+}
 
 /**
  * Export CSV (séparateur « ; », montants en euros avec virgule, lisible dans Numbers ou Excel) :

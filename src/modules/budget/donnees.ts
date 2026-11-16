@@ -5,7 +5,7 @@ import { db } from '../../core/db'
 import { useReglage } from '../../core/reglages'
 import { enregistrer, supprimer } from '../../core/stockage'
 import { depensesParCategorie, echeance, moisDe, plafondDe, racine, seuilFranchi, type Donnees } from './calculs'
-import { installerCategories } from './categoriesDepart'
+import { installerCategories, migrerCategoriesV4 } from './categoriesDepart'
 import type { Abonnement, Categorie, Compte, EtatAbonnement, Mouvement, Plafond, Releve, TypeCompte } from './types'
 
 /** Toutes les données du module, tenues à jour (undefined pendant le chargement). */
@@ -70,6 +70,8 @@ export interface ReglagesBudget {
   rappelReleves?: boolean
   /** Contrôle du solde du compte courant chaque dimanche (par défaut : oui) */
   rappelControle?: boolean
+  /** Rappel « abonnements à vérifier » le jour du prélèvement (par défaut : oui) */
+  rappelAbonnements?: boolean
   /** Jour du dernier contrôle du solde fait */
   dernierControle?: string
   /** Dernier bilan mensuel fermé ("2026-10") */
@@ -91,17 +93,15 @@ export const COMPTES_DEPART: { id: string; nom: string; type: TypeCompte }[] = [
   { id: 'pea', nom: 'PEA', type: 'investissement' },
 ]
 
-const NOMS_OCTOBRE: Record<string, string> = { pea: 'PEA (Trade Republic)', 'compte-titres': 'CTO (Trade Republic)' }
-
 /** Crée les comptes de départ (avec leurs soldes) et les catégories toutes faites. */
 export async function demarrer(soldes: Record<string, number>, jour = aujourdhui(), jourEpargne = jour) {
   for (const [i, c] of COMPTES_DEPART.entries()) {
     const dateDepart = c.type === 'epargne' || c.type === 'investissement' ? jourEpargne : jour
-    await enregistrer(db.comptes, { ...c, nom: NOMS_OCTOBRE[c.id] ?? c.nom, soldeInitial: soldes[c.id] ?? 0, dateDepart, ordre: i })
+    await enregistrer(db.comptes, { ...c, soldeInitial: soldes[c.id] ?? 0, dateDepart, ordre: i })
   }
   await installerCategories()
-  // Les mises à jour uniques (départ au 1er octobre) ne concernent pas un nouveau départ
-  await noterVersion(3)
+  // Les mises à jour uniques ne concernent pas un nouveau départ
+  await noterVersion(VERSION)
 }
 
 /**
@@ -112,7 +112,7 @@ export async function remettreAZero() {
   for (const t of [db.mouvements, db.releves, db.plafonds, db.comptes] as Table<{ id: string }, string>[])
     for (const ligne of await t.toArray()) await supprimer(t, ligne.id)
   const { bilanVu: _b, ...reste } = ((await db.reglages.get('budget'))?.valeur ?? {}) as Partial<ReglagesBudget>
-  await enregistrer(db.reglages, { id: 'budget', valeur: { rappelActif: false, rappelHeure: '21:00', ...reste, version: 3 } })
+  await enregistrer(db.reglages, { id: 'budget', valeur: { rappelActif: false, rappelHeure: '21:00', ...reste, version: VERSION } })
 }
 
 async function noterVersion(version: number) {
@@ -120,23 +120,20 @@ async function noterVersion(version: number) {
   await enregistrer(db.reglages, { id: 'budget', valeur: { rappelActif: false, rappelHeure: '21:00', ...actuel, version } })
 }
 
+/** Numéro des mises à jour uniques déjà faites (réglage « budget ») */
+const VERSION = 4
+
 /**
- * Mises à jour uniques, une fois les comptes créés (numéro gardé dans le réglage « budget ») :
- * catégories choisies ensemble, noms des comptes Trade Republic. Les soldes de départ ne sont jamais dans le code :
- * ils viennent de l'écran de départ ou de l'import de données personnelles (Accueil → ⚙️).
+ * Mises à jour uniques, une fois les comptes créés (numéro gardé dans le réglage « budget »).
+ * Les soldes de départ ne sont jamais dans le code : ils viennent de l'écran de départ ou d'un import.
  */
 export async function mettreAJour() {
   await alignerDepartsSurReleves()
   const r = (await db.reglages.get('budget'))?.valeur as Partial<ReglagesBudget> | undefined
-  if ((r?.version ?? 0) >= 3 || !(await db.comptes.count())) return
-  if ((r?.version ?? 0) < 2) {
-    await installerCategories()
-    for (const [id, nom] of Object.entries(NOMS_OCTOBRE)) {
-      const c = await db.comptes.get(id)
-      if (c) await enregistrer(db.comptes, { ...c, nom })
-    }
-  }
-  await noterVersion(3)
+  if ((r?.version ?? 0) >= VERSION || !(await db.comptes.count())) return
+  if ((r?.version ?? 0) < 2) await installerCategories()
+  if ((r?.version ?? 0) < 4) await migrerCategoriesV4()
+  await noterVersion(VERSION)
 }
 
 // ---------- Écritures ----------

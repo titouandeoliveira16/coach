@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { formatEuros } from '../../../core/format'
 import { Bouton } from '../../../core/ui/Bouton'
 import { Repliable } from '../../../core/ui/Repliable'
-import { importer, lireImport, resumeImport, type FichierImport } from '../importer'
+import { importer, lireImport, ressemblants, resumeImport, type FichierImport } from '../importer'
 
 /** Importer un fichier de mouvements (ex. un mois passé préparé par Claude). Il reste sur le téléphone. */
 export function CarteImport() {
@@ -19,6 +19,8 @@ export function CarteImport() {
     }
   }
   const r = fichier && resumeImport(fichier)
+  const [doublons, setDoublons] = useState(0)
+  useEffect(() => { if (fichier) ressemblants(fichier).then(setDoublons) }, [fichier])
 
   return (
     <Repliable titre="Importer des mouvements" libelle="Ouvrir" resume="Un fichier préparé pour toi">
@@ -34,8 +36,10 @@ export function CarteImport() {
         <div className="mt-2 rounded-xl bg-surface-2 p-3 text-sm">
           <p>{r.lignes} mouvements · dépenses {formatEuros(r.depenses)} · revenus {formatEuros(r.revenus)}</p>
           {Object.entries(fichier!.soldes ?? {}).map(([id, e]) => <p key={id} className="text-texte-2">Solde du compte « {id} » réglé à {formatEuros(Math.round(e * 100))} aujourd'hui</p>)}
+          {doublons > 0 && <p className="mt-1" style={{ color: 'var(--color-attention)' }}>{doublons} ligne{doublons > 1 ? 's ressemblent' : ' ressemble'} à un mouvement déjà noté (même jour, même montant) : saisi à la main ? Il serait alors en double.</p>}
           <Bouton className="mt-2" onClick={async () => {
-            const res = await importer(fichier!)
+            let res
+            try { res = await importer(fichier!) } catch (e) { setMessage((e as Error).message); return }
             setMessage(`✓ ${res.ajoutes} mouvement${res.ajoutes > 1 ? 's' : ''} ajouté${res.ajoutes > 1 ? 's' : ''}${res.deja ? ` (${res.deja} déjà présents)` : ''}.`)
             setFichier(undefined)
             setTexte('')

@@ -104,21 +104,28 @@ export function plafondDe(categorieId: string, mois: string, plafonds: Plafond[]
 
 const duMois = (mois: string) => (m: Mouvement) => moisDe(m.date) === mois
 
-/** Dépenses d'un mois par catégorie principale. */
-export function depensesParCategorie(mouvements: Mouvement[], categories: Categorie[], mois: string): Map<string, number> {
+/** Remboursement rattaché à une catégorie de dépense : il vient en moins de cette dépense (pas un revenu). */
+export const estRemboursement = (m: Mouvement) => m.type === 'revenu' && !!m.rembourse
+
+/**
+ * Dépenses nettes d'un mois par catégorie (principale, ou la catégorie exacte avec `exacte`) :
+ * dépenses − remboursements rattachés (jamais en dessous de 0 pour une catégorie).
+ */
+export function depensesParCategorie(mouvements: Mouvement[], categories: Categorie[], mois: string, exacte = false): Map<string, number> {
   const r = new Map<string, number>()
+  const cle = (id?: string) => (exacte ? id : racine(id, categories)) ?? 'sans'
   for (const m of mouvements.filter(duMois(mois))) {
-    if (m.type !== 'depense') continue
-    const c = racine(m.categorieId, categories) ?? 'sans'
-    r.set(c, (r.get(c) ?? 0) + m.montant)
+    if (m.type === 'depense') r.set(cle(m.categorieId), (r.get(cle(m.categorieId)) ?? 0) + m.montant)
+    else if (estRemboursement(m)) r.set(cle(m.rembourse), (r.get(cle(m.rembourse)) ?? 0) - m.montant)
   }
+  for (const [k, v] of r) if (v <= 0) r.delete(k)
   return r
 }
 
 export type CouleurJauge = 'vert' | 'orange' | 'rouge'
-/** Vert sous 75 %, orange de 75 à 100 %, rouge au-delà. */
+/** Vert sous 75 %, orange de 75 à 110 %, rouge au-delà de 110 % (un petit dépassement n'est pas une alerte). */
 export function couleurJauge(depense: number, plafond: number): CouleurJauge {
-  if (depense > plafond) return 'rouge'
+  if (depense > plafond * 1.1) return 'rouge'
   if (depense >= plafond * 0.75) return 'orange'
   return 'vert'
 }
@@ -146,19 +153,40 @@ export interface Donnees {
 /** Jour d'échéance d'un abonnement pour un mois ("2026-11-05"), ramené au dernier jour pour les mois courts. */
 export const echeance = (a: Abonnement, mois: string) => `${mois}-${String(Math.min(a.jour, joursDansMois(mois))).padStart(2, '0')}`
 
+/**
+ * Échéance déjà réglée sans passer par la carte : un mouvement de cet abonnement ce mois-là, ou un mouvement
+ * saisi à la main dans la même catégorie (principale) pour un montant proche (± 10 %).
+ */
+export function dejaSaisi(a: Abonnement, mois: string, d: Pick<Donnees, 'mouvements' | 'categories'>) {
+  const cat = racine(a.categorieId, d.categories)
+  return d.mouvements.some((m) => moisDe(m.date) === mois && (m.type === 'depense' || m.type === 'revenu')
+    && (m.abonnementId === a.id || (!m.abonnementId && racine(m.categorieId, d.categories) === cat && Math.abs(m.montant - a.montant) <= a.montant * 0.1)))
+}
+
 /** Abonnements du mois de `jour` pas encore payés ni sautés (y compris ceux en retard) : comptés d'avance. */
 export function abonnementsAVenir(d: Donnees, jour: string) {
   const mois = moisDe(jour)
-  return (d.abonnements ?? []).filter((a) => a.actif && echeance(a, mois) >= a.depuis && !d.etatsAbonnements?.[`${a.id}|${mois}`]?.statut)
+  return (d.abonnements ?? []).filter((a) => a.actif && echeance(a, mois) >= a.depuis && !d.etatsAbonnements?.[`${a.id}|${mois}`]?.statut && !dejaSaisi(a, mois, d))
 }
 
-/** Abonnements à faire confirmer aujourd'hui : échéance passée, pas encore traités, pas remis à plus tard. */
-export function abonnementsAVerifier(d: Donnees, jour: string) {
+/** Échéances du mois précédent jamais traitées (ni payées, ni sautées, ni saisies) : on les redemande. */
+export function abonnementsEnRetard(d: Donnees, jour: string) {
+  const mois = decalerMois(moisDe(jour), -1)
+  return (d.abonnements ?? []).filter((a) => a.actif && echeance(a, mois) >= a.depuis && !d.etatsAbonnements?.[`${a.id}|${mois}`]?.statut && !dejaSaisi(a, mois, d))
+}
+
+/** Abonnements à faire confirmer aujourd'hui (avec leur mois) : échéance passée, pas encore traités, pas remis à plus tard. */
+export function abonnementsAVerifier(d: Donnees, jour: string): { a: Abonnement; mois: string }[] {
   const mois = moisDe(jour)
-  return abonnementsAVenir(d, jour).filter((a) => {
-    const relance = d.etatsAbonnements?.[`${a.id}|${mois}`]?.relance
-    return echeance(a, mois) <= jour && (!relance || relance <= jour)
-  })
+  const pret = (a: Abonnement, m: string) => {
+    const relance = d.etatsAbonnements?.[`${a.id}|${m}`]?.relance
+    return echeance(a, m) <= jour && (!relance || relance <= jour)
+  }
+  const precedent = decalerMois(mois, -1)
+  return [
+    ...abonnementsEnRetard(d, jour).filter((a) => pret(a, precedent)).map((a) => ({ a, mois: precedent })),
+    ...abonnementsAVenir(d, jour).filter((a) => pret(a, mois)).map((a) => ({ a, mois })),
+  ]
 }
 
 const sommeAbonnements = (l: Abonnement[]) => l.reduce((s, a) => s + a.montant, 0)
@@ -166,6 +194,7 @@ const sommeAbonnements = (l: Abonnement[]) => l.reduce((s, a) => s + a.montant, 
 /**
  * Revenu de fin de mois : à partir du 25, un revenu sert à vivre le mois suivant (ex. salaire versé le 30).
  * Il compte alors pour le mois suivant dans les bilans (revenus, 50/30/20) ; le solde du compte, lui, ne change pas.
+ * Un remboursement n'est pas un revenu : il n'est pas concerné.
  */
 export const JOUR_REVENU_MOIS_SUIVANT = 25
 export const moisDuRevenu = (date: string) => (Number(date.slice(8)) >= JOUR_REVENU_MOIS_SUIVANT ? decalerMois(moisDe(date), 1) : moisDe(date))
@@ -174,71 +203,84 @@ export const moisDuRevenu = (date: string) => (Number(date.slice(8)) >= JOUR_REV
 export const estRevenuAttendu = (a: Abonnement, d: Pick<Donnees, 'categories'>) => d.categories.find((c) => c.id === a.categorieId)?.genre === 'revenu'
 
 /**
- * À venir ce mois-ci (pas encore confirmés) : dépenses régulières (abonnements) et revenus réguliers attendus.
- * Les revenus attendus à partir du 25 servent au mois suivant : ils ne sont pas comptés ici.
+ * À venir ce mois-ci (pas encore confirmés) : dépenses régulières (abonnements, y compris celles du mois précédent
+ * jamais confirmées) et revenus réguliers attendus. Les revenus attendus à partir du 25 servent au mois suivant : pas comptés ici.
  */
 export function aVenir(d: Donnees, jour: string) {
   const l = abonnementsAVenir(d, jour)
   const revenus = l.filter((a) => estRevenuAttendu(a, d) && a.jour < JOUR_REVENU_MOIS_SUIVANT)
-  const depenses = l.filter((a) => !estRevenuAttendu(a, d))
+  const depenses = [...abonnementsEnRetard(d, jour), ...l].filter((a) => !estRevenuAttendu(a, d))
   return { depenses, revenus }
 }
 
-/** Charges fixes encore à payer ce mois-ci, catégorie par catégorie (plafond − déjà payé). */
+/**
+ * Charges fixes encore à payer ce mois-ci, catégorie par catégorie :
+ * plafond − déjà payé − abonnements de la catégorie encore à venir (comptés à part).
+ */
 export function detailFixesRestantes(d: Donnees, mois: string) {
   const parCat = depensesParCategorie(d.mouvements, d.categories, mois)
-  const abonnees = categoriesAbonnees(d)
+  const abonnes = abonnementsAVenir(d, premierJour(mois)).filter((a) => !estRevenuAttendu(a, d))
   return d.categories
-    .filter((c) => c.genre === 'depense' && !c.parentId && c.fixe && !c.archive && !abonnees.has(c.id))
-    .map((c) => ({ categorie: c, montant: Math.max(0, (plafondDe(c.id, mois, d.plafonds) ?? 0) - (parCat.get(c.id) ?? 0)) }))
+    .filter((c) => c.genre === 'depense' && !c.parentId && c.fixe && !c.archive)
+    .map((c) => {
+      const aVenirCat = sommeAbonnements(abonnes.filter((a) => racine(a.categorieId, d.categories) === c.id))
+      return { categorie: c, montant: Math.max(0, (plafondDe(c.id, mois, d.plafonds) ?? 0) - (parCat.get(c.id) ?? 0) - aVenirCat) }
+    })
     .filter((x) => x.montant > 0)
 }
 
-/** Catégories (racines) suivies par un abonnement actif : elles ne passent plus par le système « charge fixe ». */
-const categoriesAbonnees = (d: Donnees) => new Set((d.abonnements ?? []).filter((a) => a.actif && !estRevenuAttendu(a, d)).map((a) => racine(a.categorieId, d.categories)))
-
 export interface ResumeMois {
+  /** Revenus qui servent à ce mois (remboursements exclus : ils viennent en moins des dépenses) */
   revenus: number
+  /** Dépenses nettes des remboursements */
   depenses: number
   /** Charges fixes encore prévues ce mois-ci (plafond − déjà payé) */
   fixesRestantes: number
-  /** Versé sur les comptes d'investissement */
+  /** Versé sur les comptes d'investissement (investissements et virements vers un placement) */
   investi: number
-  /** Mis sur les comptes épargne (net des retraits) */
+  /** Mis de côté : revenus − dépenses (un passage du livret au PEA n'est pas de l'épargne nouvelle) */
   epargne: number
 }
 
 export function resumeMois(d: Donnees, mois: string): ResumeMois {
   const du = d.mouvements.filter(duMois(mois))
-  const somme = (f: (m: Mouvement) => boolean) => du.filter(f).reduce((s, m) => s + m.montant, 0)
   const typeDe = (id?: string) => d.comptes.find((c) => c.id === id)?.type
   // Revenus : ceux qui servent à ce mois (un salaire du 30 compte pour le mois suivant)
-  const revenus = d.mouvements.filter((m) => m.type === 'revenu' && moisDuRevenu(m.date) === mois).reduce((s, m) => s + m.montant, 0)
-  const depenses = somme((m) => m.type === 'depense')
-  const investi = somme((m) => m.type === 'investissement')
-  const epargne =
-    somme((m) => m.type === 'virement' && typeDe(m.versCompteId) === 'epargne' && typeDe(m.compteId) !== 'epargne') -
-    somme((m) => m.type === 'virement' && typeDe(m.compteId) === 'epargne' && typeDe(m.versCompteId) !== 'epargne')
+  const revenus = d.mouvements.filter((m) => m.type === 'revenu' && !estRemboursement(m) && moisDuRevenu(m.date) === mois).reduce((s, m) => s + m.montant, 0)
+  const depenses = [...depensesParCategorie(d.mouvements, d.categories, mois).values()].reduce((s, v) => s + v, 0)
+  const investi = du.reduce((s, m) => {
+    const vers = typeDe(m.versCompteId) === 'investissement', de = typeDe(m.compteId) === 'investissement'
+    if (m.type === 'investissement' || (m.type === 'virement' && vers && !de)) return s + m.montant
+    if (m.type === 'virement' && de && !vers) return s - m.montant
+    return s
+  }, 0)
   const fixesRestantes = fixesRestantesDuMois(d, mois)
-  return { revenus, depenses, fixesRestantes, investi, epargne }
+  return { revenus, depenses, fixesRestantes, investi, epargne: revenus - depenses }
 }
 
 /**
  * Reste à vivre (mois en cours) : l'argent disponible aujourd'hui, compte(s) courant(s) + espèces,
  * moins les charges fixes et les abonnements encore à payer ce mois-ci, plus les revenus réguliers attendus
- * avant le 25 (ceux de fin de mois servent au mois suivant). Part de ce que tu as vraiment, comme ta banque.
+ * avant le 25, moins les revenus déjà reçus qui servent au mois suivant (salaire du 28). Part de ce que tu as vraiment.
  */
 export function resteAVivre(d: Donnees, jour: string) {
-  const solde = (type: Compte['type']) => d.comptes
-    .filter((c) => c.type === type && !c.archive && c.dateDepart <= jour)
-    .reduce((s, c) => s + soldeAu(c, d.mouvements, d.releves, jour), 0)
+  const mois = moisDe(jour)
+  const disponibles = d.comptes.filter((c) => (c.type === 'courant' || c.type === 'especes') && !c.archive && c.dateDepart <= jour)
+  const solde = (type: Compte['type']) => disponibles.filter((c) => c.type === type).reduce((s, c) => s + soldeAu(c, d.mouvements, d.releves, jour), 0)
   const courant = solde('courant')
   const especes = solde('especes')
-  const fixesRestantes = fixesRestantesDuMois(d, moisDe(jour))
+  const fixesRestantes = fixesRestantesDuMois(d, mois)
   const v = aVenir(d, jour)
   const abonnements = sommeAbonnements(v.depenses)
   const revenusAttendus = sommeAbonnements(v.revenus)
-  return { courant, especes, fixesRestantes, abonnements, revenusAttendus, reste: courant + especes - fixesRestantes - abonnements + revenusAttendus }
+  const ids = new Set(disponibles.map((c) => c.id))
+  const pourMoisSuivant = d.mouvements
+    .filter((m) => m.type === 'revenu' && !estRemboursement(m) && moisDe(m.date) === mois && m.date <= jour && moisDuRevenu(m.date) !== mois && ids.has(m.compteId))
+    .reduce((s, m) => s + m.montant, 0)
+  return {
+    courant, especes, fixesRestantes, abonnements, revenusAttendus, pourMoisSuivant,
+    reste: courant + especes - fixesRestantes - abonnements + revenusAttendus - pourMoisSuivant,
+  }
 }
 
 function fixesRestantesDuMois(d: Donnees, mois: string) {
@@ -246,50 +288,19 @@ function fixesRestantesDuMois(d: Donnees, mois: string) {
 }
 
 /**
- * Prévision du solde des comptes courants en fin de mois :
- * solde d'aujourd'hui − charges fixes encore prévues − rythme des dépenses variables × jours restants.
- * Rythme = dépenses variables payées depuis un compte courant ce mois-ci ÷ jours écoulés
- * (les 7 premiers jours, s'il existe, le rythme du mois précédent, plus fiable).
- */
-export function previsionFinDeMois(d: Donnees, jour: string) {
-  const mois = moisDe(jour)
-  const courants = d.comptes.filter((c) => c.type === 'courant' && c.dateDepart <= jour)
-  const solde = courants.reduce((s, c) => s + soldeAu(c, d.mouvements, d.releves, jour), 0)
-  const estCourant = new Set(courants.map((c) => c.id))
-  const fixe = (m: Mouvement) => d.categories.find((c) => c.id === racine(m.categorieId, d.categories))?.fixe
-  const variables = (m2: string, jusqua: string) =>
-    d.mouvements
-      .filter((m) => m.type === 'depense' && moisDe(m.date) === m2 && m.date <= jusqua && estCourant.has(m.compteId) && !fixe(m) && !m.abonnementId)
-      .reduce((s, m) => s + m.montant, 0)
-
-  const ecoules = Number(jour.slice(8))
-  const restants = joursDansMois(mois) - ecoules
-  let rythme = variables(mois, jour) / ecoules
-  const precedent = decalerMois(mois, -1)
-  const debut = debutSuivi(courants)
-  if (ecoules < 7 && debut && debut <= premierJour(precedent)) rythme = variables(precedent, dernierJour(precedent)) / joursDansMois(precedent)
-
-  const fixesRestantes = fixesRestantesDuMois(d, mois)
-  // Abonnements pas encore passés et revenus attendus (avant le 25), sur un compte courant
-  const v = aVenir(d, jour)
-  const abonnements = sommeAbonnements(v.depenses.filter((a) => estCourant.has(a.compteId)))
-  const revenusAttendus = sommeAbonnements(v.revenus.filter((a) => estCourant.has(a.compteId)))
-  return {
-    solde, fixesRestantes, abonnements, revenusAttendus, rythme: Math.round(rythme), restants,
-    prevision: Math.round(solde - fixesRestantes - abonnements + revenusAttendus - rythme * restants),
-  }
-}
-
-/**
- * Règle 50/30/20 (E. Warren) : besoins, loisirs et épargne (livrets + investissements) d'un mois,
- * en part des revenus du mois. Dépenses sans nature (ex. « À catégoriser ») : à part.
+ * Règle 50/30/20 (E. Warren) : besoins, loisirs et épargne d'un mois, en part des revenus du mois.
+ * Besoin ou loisir : celui de la sous-catégorie s'il est précisé (ex. Spotify = loisir), sinon celui de la catégorie.
+ * Épargne = revenus − dépenses. Dépenses sans nature (ex. « À catégoriser ») : à part.
  */
 export function repartition503020(d: Donnees, mois: string) {
-  const parCat = depensesParCategorie(d.mouvements, d.categories, mois)
-  const somme = (nature?: Categorie['nature']) =>
-    [...parCat].filter(([id]) => d.categories.find((c) => c.id === id)?.nature === nature).reduce((s, [, v]) => s + v, 0)
+  const parCat = depensesParCategorie(d.mouvements, d.categories, mois, true)
+  const natureDe = (id: string) => {
+    const c = d.categories.find((x) => x.id === id)
+    return c?.nature ?? d.categories.find((x) => x.id === c?.parentId)?.nature
+  }
+  const somme = (nature?: Categorie['nature']) => [...parCat].filter(([id]) => natureDe(id) === nature).reduce((s, [, v]) => s + v, 0)
   const r = resumeMois(d, mois)
-  return { revenus: r.revenus, besoins: somme('besoin'), loisirs: somme('loisir'), autres: somme(undefined), epargne: Math.max(0, r.epargne + r.investi) }
+  return { revenus: r.revenus, besoins: somme('besoin'), loisirs: somme('loisir'), autres: somme(undefined), epargne: Math.max(0, r.epargne) }
 }
 
 // ---------- Bilan mensuel ----------
@@ -310,7 +321,10 @@ export function bilanMois(d: Donnees, mois: string): Bilan {
   const resume = resumeMois(d, mois)
   const ce = depensesParCategorie(d.mouvements, d.categories, mois)
   const avant = depensesParCategorie(d.mouvements, d.categories, decalerMois(mois, -1))
-  const ecarts = [...new Set([...ce.keys(), ...avant.keys()])]
+  // Pas de comparaison avec un mois pas encore suivi
+  const debutSuiviDu = debutSuivi(d.comptes)
+  const comparable = !!debutSuiviDu && debutSuiviDu <= premierJour(decalerMois(mois, -1))
+  const ecarts = (comparable ? [...new Set([...ce.keys(), ...avant.keys()])] : [])
     .map((id) => ({ categorieId: id, ecart: (ce.get(id) ?? 0) - (avant.get(id) ?? 0) }))
     .filter((e) => Math.abs(e.ecart) >= 100)
   const depassees = [...ce.entries()]

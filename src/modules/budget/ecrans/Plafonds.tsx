@@ -29,7 +29,7 @@ export function Plafonds() {
       <div className="space-y-3 px-4">
         <NavMois mois={mois} onChanger={(m) => setParams({ mois: m }, { replace: true })} />
         <p className="text-sm text-texte-2">
-          Un changement vaut pour <b className="text-texte">{nomMois(mois)}</b> et les mois suivants ; les mois d'avant gardent leurs plafonds.
+          Un changement vaut à partir de <b className="text-texte">{nomMois(mois)}</b>, jusqu’au prochain changement ; les mois d’avant gardent leurs plafonds.
           Chaque nouveau mois reprend ceux du mois précédent.
         </p>
         {groupes.map((g) => (

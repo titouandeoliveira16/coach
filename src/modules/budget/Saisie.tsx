@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useBloquerFond } from '../../core/ui/bloquerFond'
-import { aujourdhui } from '../../core/dates'
+import { aujourdhui, decalerJour } from '../../core/dates'
 import { formatEuros } from '../../core/format'
 import { categoriesParUsage, moisDuRevenu, nomMois } from './calculs'
 import { enregistrerMouvement, nouvelId, useBudget } from './donnees'
@@ -14,6 +14,14 @@ const TYPES: { id: TypeMouvement; nom: string }[] = [
 ]
 const TOUCHES = ['1', '2', '3', '4', '5', '6', '7', '8', '9', ',', '0', '⌫']
 const champ = 'w-full rounded-lg border border-bordure bg-surface-2 px-3 py-2.5 outline-none focus:border-accent'
+
+/**
+ * Mode rattrapage : la date choisie est gardée pour les saisies suivantes pendant 15 minutes
+ * (on rattrape plusieurs jours de retard sans la rechoisir à chaque fois).
+ */
+let derniereDate: { date: string; a: number } | undefined
+const DUREE_MEMOIRE = 15 * 60 * 1000
+const dateParDefaut = () => (derniereDate && Date.now() - derniereDate.a < DUREE_MEMOIRE ? derniereDate.date : aujourdhui())
 
 /** Centimes → texte du pavé ("12,5") */
 const versTexte = (c?: number) => (c ? String(c / 100).replace('.', ',') : '')
@@ -31,7 +39,8 @@ export function Saisie({ initial, onFermer }: { initial?: Partial<Mouvement>; on
   const [categorieId, setCategorieId] = useState(initial?.categorieId)
   const [compteId, setCompteId] = useState(initial?.compteId)
   const [versCompteId, setVersCompteId] = useState(initial?.versCompteId)
-  const [date, setDate] = useState(initial?.date ?? aujourdhui())
+  const [date, setDate] = useState(initial?.date ?? dateParDefaut())
+  const [rembourse, setRembourse] = useState(initial?.rembourse)
   const [note, setNote] = useState(initial?.note ?? '')
   const [occupe, setOccupe] = useState(false)
   if (!d) return null
@@ -54,7 +63,11 @@ export function Saisie({ initial, onFermer }: { initial?: Partial<Mouvement>; on
 
   const montant = versCentimes(texte)
   const avecCategorie = type === 'depense' || type === 'revenu'
-  const pret = montant > 0 && !!de && (avecCategorie ? categorieValide : !!vers)
+  // Remboursement d'un ami : il vient en moins d'une catégorie de dépense (au lieu de compter comme un revenu)
+  const remboursement = type === 'revenu' && categorieId === 'remboursement'
+  const depensesPrincipales = remboursement ? categoriesParUsage(d.categories, d.mouvements, 'depense', aujourdhui()) : []
+  const pret = montant > 0 && !!de && (avecCategorie ? categorieValide && (!remboursement || !!rembourse) : !!vers)
+  const jours = [{ nom: "Aujourd'hui", jour: aujourdhui() }, { nom: 'Hier', jour: decalerJour(aujourdhui(), -1) }, { nom: 'Avant-hier', jour: decalerJour(aujourdhui(), -2) }]
 
   const toucher = (t: string) => {
     if (t === '⌫') return setTexte(texte.slice(0, -1))
@@ -69,15 +82,18 @@ export function Saisie({ initial, onFermer }: { initial?: Partial<Mouvement>; on
     const m: Mouvement = {
       id: initial?.id ?? nouvelId(), type, montant, date, compteId: de!,
       ...(avecCategorie ? { categorieId } : { versCompteId: vers }),
+      ...(remboursement && rembourse ? { rembourse } : {}),
       ...(note.trim() ? { note: note.trim() } : {}),
+      ...(initial?.abonnementId ? { abonnementId: initial.abonnementId } : {}),
     }
+    derniereDate = { date, a: Date.now() }
     const alerte = await enregistrerMouvement(m)
     onFermer(alerte ?? (initial?.id ? 'Mouvement modifié ✓' : `${formatEuros(montant)} enregistré ✓`))
   }
 
   return (
     <div className="fixed inset-0 z-40 flex touch-none items-end bg-black/60" onClick={() => onFermer()}>
-      <div className="pb-sur max-h-[96dvh] w-full touch-pan-y overflow-y-auto overscroll-contain rounded-t-3xl border-t border-bordure bg-surface px-4 pt-3" onClick={(e) => e.stopPropagation()}>
+      <div className="max-h-[96dvh] w-full touch-pan-y overflow-y-auto overscroll-contain rounded-t-3xl border-t border-bordure bg-surface px-4 pt-3" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <p className="font-bold">{initial?.id ? 'Modifier' : 'Nouveau mouvement'}</p>
           <button type="button" onClick={() => onFermer()} aria-label="Fermer" className="px-2 text-2xl text-texte-3">×</button>
@@ -108,7 +124,7 @@ export function Saisie({ initial, onFermer }: { initial?: Partial<Mouvement>; on
                 <button key={c.id} type="button" onClick={() => setCategorieId(c.id)}
                   className={`flex flex-col items-center gap-0.5 rounded-xl border px-1 py-2 active:scale-95 ${principale === c.id ? 'border-accent bg-accent/15' : 'border-bordure bg-surface-2'}`}>
                   <span className="text-2xl leading-none">{c.emoji}</span>
-                  <span className="w-full truncate text-center text-[11px] text-texte-2">{c.nom}</span>
+                  <span className="line-clamp-2 w-full text-center text-xs leading-tight text-texte-2">{c.nom}</span>
                 </button>
               ))}
             </div>
@@ -118,6 +134,17 @@ export function Saisie({ initial, onFermer }: { initial?: Partial<Mouvement>; on
                   <button key={s.id} type="button" onClick={() => setCategorieId(categorieId === s.id ? s.parentId : s.id)}
                     className={`rounded-full border px-3 py-1.5 text-sm font-semibold ${categorieId === s.id ? 'border-accent bg-accent text-fond' : 'border-bordure bg-surface-2 text-texte-2'}`}>{s.emoji} {s.nom}</button>
                 ))}
+              </div>
+            )}
+            {remboursement && (
+              <div className="mt-3">
+                <p className="text-sm text-texte-2">Ce qu'on te rembourse (ça vient en moins de cette dépense) :</p>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {depensesPrincipales.map((c) => (
+                    <button key={c.id} type="button" onClick={() => setRembourse(c.id)}
+                      className={`rounded-full border px-3 py-1.5 text-sm font-semibold ${rembourse === c.id ? 'border-accent bg-accent text-fond' : 'border-bordure bg-surface-2 text-texte-2'}`}>{c.emoji} {c.nom}</button>
+                  ))}
+                </div>
               </div>
             )}
             <label className="mt-3 flex items-center justify-between gap-3">
@@ -143,16 +170,25 @@ export function Saisie({ initial, onFermer }: { initial?: Partial<Mouvement>; on
           </div>
         )}
 
-        <div className="mt-2 flex gap-2">
-          <input type="date" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} className={`${champ} w-auto`} />
-          <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Note (facultatif)" className={champ} />
+        <div className="mt-2 flex gap-1.5">
+          {jours.map((j) => (
+            <button key={j.jour} type="button" onClick={() => setDate(j.jour)}
+              className={`min-h-9 rounded-full border px-3 text-sm font-semibold ${date === j.jour ? 'border-accent bg-accent text-fond' : 'border-bordure bg-surface-2 text-texte-2'}`}>{j.nom}</button>
+          ))}
+          <input type="date" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} aria-label="Autre date"
+            className={`min-w-0 flex-1 rounded-full border px-2 text-sm outline-none ${jours.some((j) => j.jour === date) ? 'border-bordure bg-surface-2 text-texte-3' : 'border-accent bg-accent/15'}`} />
         </div>
-        {type === 'revenu' && moisDuRevenu(date) !== date.slice(0, 7) && <p className="mt-1 text-xs text-texte-3">Reçu à partir du 25 : compté pour {nomMois(moisDuRevenu(date))} dans les bilans (ton solde, lui, change tout de suite).</p>}
+        <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Note (facultatif)" className={`${champ} mt-2`} />
+        {type === 'revenu' && !remboursement && moisDuRevenu(date) !== date.slice(0, 7) && <p className="mt-1 text-xs text-texte-3">Reçu à partir du 25 : compté pour {nomMois(moisDuRevenu(date))} dans les bilans (ton solde, lui, change tout de suite).</p>}
+        {date.slice(0, 7) !== aujourdhui().slice(0, 7) && <p className="mt-1 text-xs text-texte-3">Daté de {nomMois(date.slice(0, 7))} : il comptera dans ce mois-là.</p>}
 
-        <button type="button" disabled={!pret || occupe} onClick={valider}
-          className="mt-3 mb-2 w-full rounded-xl bg-accent py-3.5 text-lg font-bold text-fond active:scale-[0.98] disabled:opacity-40">
-          {pret ? 'Enregistrer' : !montant ? 'Tape le montant' : avecCategorie ? 'Choisis une catégorie' : 'Choisis les comptes'}
-        </button>
+        {/* Toujours visible en bas de la feuille, même quand elle défile */}
+        <div className="pb-sur sticky bottom-0 -mx-4 mt-3 bg-surface px-4 pt-2">
+          <button type="button" disabled={!pret || occupe} onClick={valider}
+            className="mb-2 w-full rounded-xl bg-accent py-3.5 text-lg font-bold text-fond active:scale-[0.98] disabled:opacity-40">
+            {pret ? 'Enregistrer' : !montant ? 'Tape le montant' : !avecCategorie ? 'Choisis les comptes' : remboursement && categorieValide ? 'Choisis ce qu\'on te rembourse' : 'Choisis une catégorie'}
+          </button>
+        </div>
       </div>
     </div>
   )

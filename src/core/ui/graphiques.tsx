@@ -282,7 +282,7 @@ export function Camembert({
             // 2 px d'écart entre les parts (sauf s'il n'y en a qu'une)
             const trait = visibles.length > 1 ? Math.max(long - 2, 0.5) : long
             return (
-              <circle key={p.nom} cx="90" cy="90" r={R} fill="none" stroke={p.couleur} strokeWidth={choix === i ? EP + 6 : EP}
+              <circle key={`${i}-${p.nom}`} cx="90" cy="90" r={R} fill="none" stroke={p.couleur} strokeWidth={choix === i ? EP + 6 : EP}
                 strokeDasharray={`${trait} ${C - trait}`} strokeDashoffset={-debuts[i]} opacity={choix === undefined || choix === i ? 1 : 0.45}
                 onPointerDown={() => setChoix(choix === i ? undefined : i)} />
             )
@@ -293,7 +293,7 @@ export function Camembert({
       </svg>
       <ul className="min-w-0 flex-1 space-y-1 text-sm">
         {visibles.map((p, i) => (
-          <li key={p.nom} className="flex items-center gap-2" onClick={() => setChoix(choix === i ? undefined : i)}>
+          <li key={`${i}-${p.nom}`} className="flex items-center gap-2" onClick={() => setChoix(choix === i ? undefined : i)}>
             <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: p.couleur }} />
             <span className="min-w-0 flex-1 truncate text-texte-2">{p.nom}</span>
             <span className="font-semibold">{Math.round((p.valeur / total) * 100)} %</span>

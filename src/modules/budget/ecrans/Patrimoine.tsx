@@ -8,6 +8,7 @@ import { Repliable } from '../../../core/ui/Repliable'
 import { Feuille } from '../../../core/ui/Feuille'
 import { GraphiqueLignes } from '../../../core/ui/graphiques'
 import { ageReleve, dernierReleve, derniersMois, moisCourt, moisDe, patrimoineAu, patrimoineParMois, soldeAu, verseAu, type Donnees } from '../calculs'
+import { ChampSolde } from '../ChampSolde'
 import { enregistrerCompte, enregistrerReleve, nouvelId, supprimerReleve, useBudget } from '../donnees'
 import type { Compte, TypeCompte } from '../types'
 import { ETAT } from '../ui'
@@ -99,6 +100,16 @@ function LigneCompte({ c, d, jour, onToucher }: { c: Compte; d: Donnees; jour: s
   )
 }
 
+/** Supprimer un relevé : une vraie cible au doigt et une confirmation (on ne le récupère pas). */
+function SupprimerReleve({ id }: { id: string }) {
+  const [confirmer, setConfirmer] = useState(false)
+  return confirmer ? (
+    <button type="button" onClick={() => supprimerReleve(id)} onBlur={() => setConfirmer(false)} className="min-h-11 rounded-lg px-2 text-sm font-semibold text-mauvais">Supprimer ?</button>
+  ) : (
+    <button type="button" aria-label="Supprimer le relevé" onClick={() => setConfirmer(true)} className="flex h-11 w-11 items-center justify-center text-xl text-texte-3">×</button>
+  )
+}
+
 function NouveauCompte({ ordre, onFermer }: { ordre: number; onFermer: () => void }) {
   const [nom, setNom] = useState('')
   const [type, setType] = useState<TypeCompte>('epargne')
@@ -110,7 +121,7 @@ function NouveauCompte({ ordre, onFermer }: { ordre: number; onFermer: () => voi
         <select value={type} onChange={(e) => setType(e.target.value as TypeCompte)} className={champ}>
           {(Object.keys(NOMS_TYPES) as TypeCompte[]).map((t) => <option key={t} value={t}>{NOMS_TYPES[t]}</option>)}
         </select>
-        <input value={solde} onChange={(e) => setSolde(e.target.value)} inputMode="decimal" placeholder="Solde aujourd'hui (€)" className={champ} />
+        <ChampSolde valeur={solde} onChanger={setSolde} placeholder="Solde ce matin, avant tes dépenses du jour (€)" />
         <Bouton disabled={!nom.trim()} onClick={async () => {
           await enregistrerCompte({ id: nouvelId(), nom: nom.trim(), type, soldeInitial: centimes(solde), dateDepart: aujourdhui(), ordre })
           onFermer()
@@ -163,7 +174,7 @@ function FicheCompte({ c, d, onFermer }: { c: Compte; d: Donnees; onFermer: () =
                 <li key={r.id} className="flex items-center justify-between py-1">
                   <span className="text-texte-2">{formatDate(r.date)}</span>
                   <span className="flex items-center gap-3"><b className="tabular-nums">{formatEuros(r.valeur)}</b>
-                    <button type="button" aria-label="Supprimer le relevé" onClick={() => supprimerReleve(r.id)} className="text-texte-3">×</button></span>
+                    <SupprimerReleve id={r.id} /></span>
                 </li>
               ))}
             </ul>

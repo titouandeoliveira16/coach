@@ -27,6 +27,12 @@ export function lireFichierDonnees(texte: string): FichierDonnees {
   }
   if (!f || typeof f !== 'object' || !(f.profil || f.entrainement || f.recordsPuissance || f.comptesDepart || f.bornesFc))
     throw new Error('Rien à importer dans ce fichier.')
+  // Comptes du Budget : un solde en nombre et une vraie date, sinon des soldes « NaN » partout
+  for (const [id, v] of Object.entries(f.comptesDepart ?? {}))
+    if (typeof v?.solde !== 'number' || !Number.isFinite(v.solde) || typeof v.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(v.date))
+      throw new Error(`Compte « ${id} » : solde (nombre) et date (AAAA-MM-JJ) attendus.`)
+  if (f.bornesFc && (!Array.isArray(f.bornesFc) || f.bornesFc.some((b) => typeof b !== 'number' || !Number.isFinite(b))))
+    throw new Error('Bornes de FC : 4 nombres attendus.')
   return f
 }
 

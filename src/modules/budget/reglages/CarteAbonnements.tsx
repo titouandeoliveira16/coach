@@ -22,7 +22,7 @@ export function CarteAbonnements({ d }: { d: Donnees }) {
   return (
     <Repliable titre="Abonnements et revenus réguliers"
       resume={`${liste.filter((a) => !estRevenuAttendu(a, d)).length} abonnement(s) · ${liste.filter((a) => estRevenuAttendu(a, d)).length} revenu(s) régulier(s)`}>
-      <p className="text-xs text-texte-3">Comptés d'avance dans ton reste à vivre et ta prévision. Le jour prévu, l'appli te demande s'il est bien passé. Choisis une catégorie de revenu pour un salaire ou une bourse : à partir du 25, il compte pour le mois suivant.</p>
+      <p className="text-xs text-texte-3">Comptés d'avance dans ton reste à vivre. Le jour prévu, l'appli te demande s'il est bien passé. Choisis une catégorie de revenu pour un salaire ou une bourse : à partir du 25, il compte pour le mois suivant.</p>
       {liste.map((a) => (
         <button key={a.id} type="button" onClick={() => setOuvert(a)} className="flex w-full items-center justify-between py-2 text-left active:opacity-60">
           <span className={a.actif ? '' : 'text-texte-3 line-through'}>{estRevenuAttendu(a, d) ? '💰' : '🔁'} {a.nom}</span>

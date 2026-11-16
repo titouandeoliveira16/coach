@@ -33,6 +33,11 @@ export interface Mouvement {
   note?: string
   /** Mouvement créé en confirmant un abonnement */
   abonnementId?: string
+  /**
+   * Revenu « Remboursement » (un ami te rend sa part) : la catégorie de dépense remboursée. Il vient alors en moins
+   * des dépenses de cette catégorie au lieu de compter comme un revenu.
+   */
+  rembourse?: string
 }
 
 /** Abonnement qui revient chaque mois (Spotify, téléphone…), confirmé à la main le jour où il passe. */
@@ -89,7 +94,7 @@ export interface Releve {
   compteId: string
   date: string
   valeur: number
-  /** Compte courant : ajustement après le contrôle du solde (écart en centimes = banque − appli) et sa justification */
+  /** Anciennes versions (avant 14.7) : ajustement après le contrôle du solde (écart en centimes = banque − appli) et sa justification */
   ecart?: number
   note?: string
 }

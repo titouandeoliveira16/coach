@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Suspense, type CSSProperties } from 'react'
+import { Suspense, useEffect, type CSSProperties } from 'react'
 import { FiletErreur } from '../core/ui/FiletErreur'
 import { aujourdhui } from '../core/dates'
 import { db } from '../core/db'
@@ -37,6 +37,9 @@ function Coquille() {
   const feu = useLiveQuery(async () => (await db.decisions.get(aujourdhui()))?.couleur, [])
   const lueur = moduleActif?.id === 'entrainement' && feu ? LUEURS[feu] : moduleActif?.id === 'revision' ? 'rgba(96,165,250,.16)' : 'transparent'
   const style = { '--accent': accent, '--color-accent': accent, '--lueur': lueur } as CSSProperties
+  // Aussi à la racine : les feuilles qui montent du bas sont posées hors de la coquille (portail) et doivent
+  // prendre la couleur du module (jaune dans le Budget, bleu dans la Révision), pas l'orange par défaut
+  useEffect(() => { document.documentElement.style.setProperty('--accent', accent) }, [accent])
 
   // Personne de connecté sur cet appareil : connexion, ou création du compte avec un code
   // iPhone dans Safari : on installe d'abord l'appli sur l'écran d'accueil (notifications, et pas de 2e connexion)

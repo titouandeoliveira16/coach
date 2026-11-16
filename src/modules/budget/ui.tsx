@@ -25,8 +25,10 @@ export function decrireMouvement(m: Mouvement, categories: Categorie[], comptes:
   switch (m.type) {
     case 'depense':
       return { emoji: cat?.emoji ?? '💸', titre: parent ? `${parent.nom} · ${cat!.nom}` : cat?.nom ?? 'Dépense', montant: formatEuros(-m.montant), couleur: 'var(--color-texte)' }
-    case 'revenu':
-      return { emoji: cat?.emoji ?? '💰', titre: cat?.nom ?? 'Revenu', montant: formatEuros(m.montant, { signe: true }), couleur: ETAT.vert }
+    case 'revenu': {
+      const pour = m.rembourse ? categories.find((c) => c.id === m.rembourse) : undefined
+      return { emoji: cat?.emoji ?? '💰', titre: pour ? `Remboursement · ${pour.nom}` : cat?.nom ?? 'Revenu', montant: formatEuros(m.montant, { signe: true }), couleur: ETAT.vert }
+    }
     case 'virement':
       return { emoji: '🔁', titre: `${nomCompte(m.compteId)} → ${nomCompte(m.versCompteId)}`, montant: formatEuros(m.montant), couleur: 'var(--color-texte-3)' }
     case 'investissement':
@@ -54,11 +56,17 @@ export function LigneMouvement({ m, categories, comptes, onToucher, avecDate }: 
   )
 }
 
-/** Petite jauge horizontale. */
-export function Jauge({ part, couleur }: { part: number; couleur: string }) {
+/**
+ * Petite jauge horizontale. `repere` (0-1) : où tu devrais en être aujourd'hui si tu dépensais au même rythme
+ * tout le mois (ex. 0,5 le 15 d'un mois de 30 jours), un trait fin.
+ */
+export function Jauge({ part, couleur, repere }: { part: number; couleur: string; repere?: number }) {
   return (
-    <div className="h-2 overflow-hidden rounded-full bg-surface-2">
+    <div className="relative h-2 rounded-full bg-surface-2">
       <div className="h-full rounded-full" style={{ width: `${Math.min(part, 1) * 100}%`, background: couleur }} />
+      {repere !== undefined && repere > 0 && repere < 1 && (
+        <div aria-hidden className="absolute -top-1 -bottom-1 w-0.5 rounded-full bg-texte-2" style={{ left: `calc(${repere * 100}% - 1px)` }} />
+      )}
     </div>
   )
 }

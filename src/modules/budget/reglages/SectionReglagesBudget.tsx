@@ -31,7 +31,7 @@ export function SectionReglagesBudget() {
   return (
     <>
       <Repliable titre="Rappels"
-        resume={[r.rappelActif ? `saisie à ${r.rappelHeure.replace(':', ' h ')}` : 'pas de rappel de saisie', r.rappelReleves !== false && 'relevés le 5', r.rappelControle !== false && 'contrôle le dimanche'].filter(Boolean).join(' · ')}>
+        resume={[r.rappelActif ? `saisie à ${r.rappelHeure.replace(':', ' h ')}` : 'pas de rappel de saisie', r.rappelReleves !== false && 'relevés le 5', r.rappelControle !== false && 'contrôle le dimanche', r.rappelAbonnements !== false && 'abonnements'].filter(Boolean).join(' · ')}>
         <label className="flex items-center justify-between py-1.5">
           <span className="text-texte-2">Rappel chaque jour</span>
           <input type="checkbox" checked={r.rappelActif} onChange={(e) => modifier({ rappelActif: e.target.checked })} className="h-6 w-6 accent-[#facc15]" />
@@ -52,7 +52,11 @@ export function SectionReglagesBudget() {
           <span className="text-texte-2">Contrôle du solde du compte courant le dimanche</span>
           <input type="checkbox" checked={r.rappelControle !== false} onChange={(e) => modifier({ rappelControle: e.target.checked })} className="h-6 w-6 shrink-0 accent-[#facc15]" />
         </label>
-        <p className="text-xs text-texte-3">Pas de rappel si tu as déjà saisi quelque chose ce jour-là. Le 1er du mois, tu reçois aussi l'annonce de ton bilan. Les notifications doivent être activées une fois pour toute l'appli : Accueil → ⚙️.</p>
+        <label className="flex items-center justify-between py-1.5">
+          <span className="text-texte-2">Abonnements à vérifier, le jour du prélèvement (à l'heure du rappel du soir)</span>
+          <input type="checkbox" checked={r.rappelAbonnements !== false} onChange={(e) => modifier({ rappelAbonnements: e.target.checked })} className="h-6 w-6 shrink-0 accent-[#facc15]" />
+        </label>
+        <p className="text-xs text-texte-3">Pas de rappel de saisie si tu as déjà saisi quelque chose ce jour-là. Les notifications ne montrent jamais de montant. Le 1er du mois, tu reçois aussi l'annonce de ton bilan. Les notifications doivent être activées une fois pour toute l'appli : Accueil → ⚙️.</p>
       </Repliable>
 
       <CarteAbonnements d={d} />

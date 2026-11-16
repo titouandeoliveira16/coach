@@ -1,7 +1,12 @@
-/** Lit un nombre saisi au clavier français ("18,5" ou "18.5"). Vide ou invalide → undefined. */
+/**
+ * Lit un nombre saisi au clavier français ("18,5" ou "18.5"), ou copié d'une appli bancaire ("1 234,56 €", "1.234,56",
+ * "−12,50" avec le vrai signe moins). Vide ou invalide → undefined.
+ */
 export function lireNombre(texte: string): number | undefined {
-  const n = Number(texte.trim().replace(',', '.'))
-  return texte.trim() === '' || Number.isNaN(n) ? undefined : n
+  let t = texte.trim().replace(/[\s  €]/g, '').replace(/^[−–]/, '-')
+  if (t.includes(',') && t.includes('.')) t = t.replace(/\./g, '')
+  const n = Number(t.replace(',', '.'))
+  return t === '' || !Number.isFinite(n) ? undefined : n
 }
 
 /** Affiche un nombre à la française : 18,5 */

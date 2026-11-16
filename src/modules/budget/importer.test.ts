@@ -23,3 +23,19 @@ it('import : mouvements ajoutés une seule fois, solde du jour recalé', async (
   expect(soldeAu((await db.comptes.get('courant'))!, await db.mouvements.toArray(), [], aujourdhui())).toBe(446)
   expect(() => lireImport('{"mouvements":[{"type":"depense","montant":-1,"date":"2026-10-15"}]}')).toThrow(/Ligne 1/)
 })
+
+it('import : vérifications, lignes identiques gardées, identifiants courts', async () => {
+  const ligne = (m: object) => JSON.stringify({ mouvements: [m] })
+  expect(() => lireImport(ligne({ type: 'depense', montant: '12', date: '2026-10-15' }))).toThrow(/montant/)
+  expect(() => lireImport(ligne({ type: 'depense', montant: 12, date: '2026-13-45' }))).toThrow(/date/)
+  expect(() => lireImport(ligne({ type: 'depense', montant: 12, date: '2026-10-15', note: 5 }))).toThrow(/texte/)
+  expect(() => lireImport(ligne({ type: 'virement', montant: 12, date: '2026-10-15' }))).toThrow(/vers/)
+  expect(() => lireImport(JSON.stringify({ mouvements: [], soldes: { courant: 'x' } }))).toThrow(/Soldes/)
+  await expect(importer(lireImport(ligne({ type: 'virement', montant: 12, date: '2026-10-15', vers: 'nulle-part' })))).rejects.toThrow(/inconnu/)
+  const cafe = { type: 'depense', montant: 1.5, date: '2026-10-16', categorie: 'courses' }
+  const longue = { ...cafe, montant: 2, note: 'x'.repeat(400) }
+  const f = lireImport(JSON.stringify({ mouvements: [cafe, cafe, longue] }))
+  expect(await importer(f)).toEqual({ ajoutes: 3, deja: 0 })
+  expect((await db.mouvements.toArray()).every((m) => m.id.length < 200)).toBe(true)
+  expect(await importer(f)).toEqual({ ajoutes: 0, deja: 3 })
+})
