@@ -27,6 +27,12 @@ de conversation quand il faut s'en servir. Ici ne restent que les chantiers tech
 - À surveiller : si iGPSPORT change son site, l'erreur s'affiche dans Réglages → Compteur iGPSPORT ; comptes chinois
   (app.igpsport.cn) pas gérés.
 
+## Sans course et appareils (14.6.0, 16/11/2026)
+- Sans course : cycle vers un test de début de saison (1er mars par défaut), sans semaines course, affûtage ni
+  récupération ; carte « Ton cycle est fini » ensuite. Saisons « forme générale » existantes recalculées une fois (V7).
+- Appareils (questionnaire + Mon profil sportif) : conseils de connexion Intervals et boutons d'envoi selon le matériel.
+  Bryton : pas encore de lien automatique (l'outil libre intervalssync sait le faire : à ajouter si un élève en a un).
+
 ## Chantiers techniques en attente
 - Mode sans capteur de puissance (FC / RPE, charge en sRPE) pour les comptes invités.
 - Prise en main guidée des premiers jours pour les comptes invités.

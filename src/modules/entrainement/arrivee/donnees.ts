@@ -5,7 +5,7 @@ import { enregistrer } from '../../../core/stockage'
 import { zonesDepuisCp } from '../../../core/zones'
 import { ageAu, type Profil } from '../../../core/profil'
 import type { Competition, Discipline, Phase, Role } from '../../../metrics/programme'
-import { calculerSaison, datesCoursesA, lireHistorique, phasesAvecCoursesA } from '../../../metrics/saison'
+import { calculerSaison, datesCoursesA, premierMars, lireHistorique, phasesAvecCoursesA } from '../../../metrics/saison'
 import { dureeDeCourse, epreuveDe, niveauDuProfil, niveauxCourses, phaseDe } from '../../../metrics/programme'
 import type { ProfilSportif } from '../reglages/ProfilSportif'
 import { DEFAUT_ENTRAINEMENT } from '../reglagesEntrainement'
@@ -31,6 +31,8 @@ export interface ReponsesArrivee {
   muscu?: string
   /** Muscu : en salle ou à la maison */
   muscuLieu?: 'salle' | 'maison'
+  /** Avec quoi tu enregistres tes sorties (16/11/2026) */
+  appareils?: string[]
   /** Muscu : déjà fait du squat chargé (apprentissage de 4, 3 ou 2 semaines) */
   muscuExperience?: 'jamais' | 'un-peu' | 'regulier'
   /** Suivi de la nutrition (besoins du jour, repas du soir), en option comme la muscu */
@@ -88,6 +90,7 @@ export function preparerArrivee(r: ReponsesArrivee, jour: string, testsFaits: Re
   const ps: ProfilSportif = {
     sports: [r.discipline === 'route' ? 'Vélo route' : 'VTT', ...(r.muscu && !/^Pas/.test(r.muscu) ? ['Musculation'] : [])],
     materiel: ['Capteur de puissance'],
+    ...(r.appareils?.length ? { appareils: r.appareils } : {}),
     anciennete: r.anciennete, heuresRecentes: r.heuresRecentes, intervalles: r.intervalles,
     heuresSemaine: r.heuresSemaine, pointsSensibles: r.pointsSensibles || undefined, muscu: r.muscu, nutrition: r.nutrition, nutritionEffort: r.nutritionEffort !== false,
   }
@@ -103,7 +106,10 @@ export function preparerArrivee(r: ReponsesArrivee, jour: string, testsFaits: Re
   const jourDur = r.semaineType.indexOf('velo-dur')
   // Deux courses A ou plus : la préparation vise la 1re, puis récupération et bloc jusqu'à la suivante
   const premiereA = datesCoursesA([...(r.sansCourse ? [] : [principale]), ...(r.autresCourses ?? [])])[0] ?? r.course.date
+  // Aucune course A : cycle vers un test de début de saison (16/11/2026)
+  const sansCourse = !!r.sansCourse && !datesCoursesA(r.autresCourses ?? []).length
   const saison = calculerSaison({
+    sansCourse,
     debut: jour, course: premiereA, arretSemaines: Math.max(r.arretSemaines, historique?.arret ?? 0), repriseFaite: historique?.repriseFaite, debutant: niveauDuProfil(ps) === 'debutant', prioriteSeuil: ['debutant', 'intermediaire'].includes(niveauDuProfil(ps)), entraine: historique?.entraine,
     jourLong: jourLong >= 0 ? jourLong : 6, jourDur: jourDur >= 0 ? jourDur : 1, aujourdhui: jour,
   })
@@ -129,7 +135,8 @@ export function preparerArrivee(r: ReponsesArrivee, jour: string, testsFaits: Re
       ...(dureePrincipale ? { dureeCourseMin: dureePrincipale } : {}),
       // Tu roulais déjà : le budget de la 1re semaine part de tes kJ réels, pas de la semaine type
       ...(historique?.budgetDepart ? { budgetDepart: historique.budgetDepart } : {}),
-      saisonV2: true, saisonV3: true, saisonV4: true, saisonV6: true,
+      saisonV2: true, saisonV3: true, saisonV4: true, saisonV6: true, saisonV7: true,
+      ...(sansCourse ? { finCycle: r.course.date } : {}),
     },
   }
   return { profil, entrainement, profilSportif: ps, saison, cpConnue: r.cpW !== undefined, fcConnue: r.fcMax !== undefined }
@@ -152,7 +159,7 @@ export async function reponsesExistantes() {
     ...(prog?.discipline ? { discipline: prog.discipline } : {}),
     ...(sportif ? {
       anciennete: sportif.anciennete, heuresRecentes: sportif.heuresRecentes, intervalles: sportif.intervalles, heuresSemaine: sportif.heuresSemaine,
-      pointsSensibles: sportif.pointsSensibles, muscu: sportif.muscu, nutrition: sportif.nutrition !== false, nutritionEffort: sportif.nutritionEffort !== false,
+      pointsSensibles: sportif.pointsSensibles, muscu: sportif.muscu, ...(sportif.appareils ? { appareils: sportif.appareils } : {}), nutrition: sportif.nutrition !== false, nutritionEffort: sportif.nutritionEffort !== false,
     } : {}),
     ...(prog ? {
       semaineType: prog.semaineType.map((x) => (x === 'course' ? 'libre' : x)),
@@ -284,6 +291,25 @@ export async function migrerSaisonV4() {
 }
 
 /**
+ * Pas de course (16/11/2026) : une saison calculée vers une « forme générale » à 20 semaines (avec semaines course,
+ * affûtage et récupération pour une course qui n'existe pas) vise désormais un test de début de saison, le 1er mars.
+ */
+export async function migrerSaisonV7() {
+  const e = (await db.reglages.get('entrainement'))?.valeur as ReglagesEntrainement | undefined
+  const prog = e?.programme
+  if (!e || !prog || prog.modele !== 'chauvin' || prog.saisonV7 || !prog.phases?.length) return
+  const niveaux = niveauxCourses(prog.competitions, prog.phases)
+  const sansA = !prog.competitions.some((c) => niveaux.get(c.date) === 'A' && c.date > aujourdhui())
+  const avecAffutage = prog.phases.some((p) => p.type === 'affutage' && p.debut > aujourdhui())
+  if (sansA && avecAffutage && !prog.finCycle) {
+    await enregistrer(db.reglages, { id: 'entrainement', valeur: { ...e, programme: { ...prog, finCycle: premierMars(aujourdhui()) } } })
+    await recalculerSaison()
+  }
+  const apres = (await db.reglages.get('entrainement'))?.valeur as ReglagesEntrainement | undefined
+  if (apres?.programme && !apres.programme.saisonV7) await enregistrer(db.reglages, { id: 'entrainement', valeur: { ...apres, programme: { ...apres.programme, saisonV7: true } } })
+}
+
+/**
  * Ordre de l'entraîneur (16/11/2026) : une saison qui place de l'« entretien » à venir avant sa base (course très loin)
  * est recalculée une fois depuis cette semaine ; les semaines en trop vont à la base. Courses et tests gardés.
  */
@@ -353,13 +379,15 @@ export async function recalculerSaison(garderTests = false) {
   // Course A : niveau noté, ou (anciennes données sans niveau) la plus lointaine
   const niveaux = niveauxCourses(prog.competitions, prog.phases)
   const a = prog.competitions.filter((c) => niveaux.get(c.date) === 'A' && c.date > decalerJour(jour, 21)).sort((x, y) => x.date.localeCompare(y.date))[0]
-  if (!a) return
+  // Pas de course A : cycle vers le test de début de saison (16/11/2026)
+  const sansCourse = !a && !!prog.finCycle && prog.finCycle > decalerJour(jour, 21)
+  if (!a && !sansCourse) return
   const ps = (await db.reglages.get('profil-sportif'))?.valeur as ProfilSportif | undefined
   const historique = await historiqueRecent(jour, e.cpW ?? 260, prog.semaineType, prog.phases)
   const jourLong = prog.semaineType.indexOf('velo-long')
   const jourDur = prog.semaineType.indexOf('velo-dur')
   const saison = calculerSaison({
-    debut: jour, course: a.date, arretSemaines: historique.arret, repriseFaite: historique.repriseFaite, debutant: niveauDuProfil(ps) === 'debutant', prioriteSeuil: ['debutant', 'intermediaire'].includes(niveauDuProfil(ps)), entraine: historique.entraine,
+    sansCourse, debut: jour, course: a ? a.date : prog.finCycle!, arretSemaines: historique.arret, repriseFaite: historique.repriseFaite, debutant: niveauDuProfil(ps) === 'debutant', prioriteSeuil: ['debutant', 'intermediaire'].includes(niveauDuProfil(ps)), entraine: historique.entraine,
     jourLong: jourLong >= 0 ? jourLong : 6, jourDur: jourDur >= 0 ? jourDur : 1, aujourdhui: jour,
   })
   if ((e.tests ?? []).some((t) => t.type === 'cp' && t.date <= jour && ecartJours(t.date, jour) <= 28)) {
@@ -371,7 +399,7 @@ export async function recalculerSaison(garderTests = false) {
   const lundi = decalerJour(jour, -((new Date(`${jour}T12:00:00`).getDay() + 6) % 7))
   const passees = prog.phases.filter((p) => p.debut < lundi)
   const phases = [...passees, ...phasesAvecCoursesA(saison.phases, datesCoursesA(prog.competitions.map((c) => ({ ...c, niveau: niveaux.get(c.date) }))))]
-  await enregistrer(db.reglages, { id: 'entrainement', valeur: { ...e, programme: { ...prog, phases, ...(garderTests ? {} : { testsCp: [...prog.testsCp.filter((d) => d < lundi), ...saison.testsCp], testsCourts: [...(prog.testsCourts ?? []).filter((d) => d < lundi), ...saison.testsCourts] }), saisonV2: true, saisonV3: true, saisonV4: true, saisonV5: true, saisonV6: true } } })
+  await enregistrer(db.reglages, { id: 'entrainement', valeur: { ...e, programme: { ...prog, phases, ...(garderTests ? {} : { testsCp: [...prog.testsCp.filter((d) => d < lundi), ...saison.testsCp], testsCourts: [...(prog.testsCourts ?? []).filter((d) => d < lundi), ...saison.testsCourts] }), saisonV2: true, saisonV3: true, saisonV4: true, saisonV5: true, saisonV6: true, saisonV7: true } } })
   const { recalculerSemainesAVenir } = await import('../plan/programme')
   await recalculerSemainesAVenir()
 }

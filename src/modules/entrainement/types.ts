@@ -110,6 +110,10 @@ export interface ReglagesProgramme {
   saisonV5?: boolean
   /** Saison sans « entretien » avant la base (16/11/2026) */
   saisonV6?: boolean
+  /** Pas de course : date du test de début de saison qui clôt le cycle (16/11/2026) */
+  finCycle?: string
+  /** Saison sans course recalculée une fois vers un test de début de saison (16/11/2026) */
+  saisonV7?: boolean
   /** Puissance Z2 de départ (W) : ajustée ensuite automatiquement */
   z2W?: number
   /** Saison calculée depuis la course (forme Chauvin) : reprise sans intensité ; absent = saison écrite à la main */

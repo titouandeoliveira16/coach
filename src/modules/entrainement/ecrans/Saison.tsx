@@ -228,6 +228,35 @@ function ChoixAcceptes() {
 }
 
 /** Saison : où j'en suis (frise avec courses et tests), les 3 prochaines semaines, puis les phases repliées (validé le 7/11/2026). */
+/**
+ * Sans course (16/11/2026) : le test de début de saison est passé. Ajouter une course (la saison se recalcule pour la
+ * préparer) ou repartir pour un nouveau cycle de progression (16 semaines par défaut).
+ */
+function FinDeCycle() {
+  const [r, modifier] = useReglagesEntrainement()
+  const prog = programmeDe(r.programme)
+  const [date, setDate] = useState(() => decalerJour(aujourdhui(), 7 * 16))
+  const niveaux = niveauxCourses(prog.competitions, prog.phases)
+  const aVenir = prog.competitions.some((c) => niveaux.get(c.date) === 'A' && c.date >= aujourdhui())
+  if (!prog.finCycle || aVenir || decalerJour(prog.finCycle, 7) > aujourdhui()) return null
+  return (
+    <Carte titre="Ton cycle est fini">
+      <p className="text-sm text-texte-2">
+        Ton test de début de saison est passé : regarde ta nouvelle CP dans Progrès. Ajoute une course (Réglages → Mon profil
+        sportif → Mes courses) et ta saison se recalcule pour la préparer, ou repars pour un nouveau cycle de progression.
+      </p>
+      <label className="mt-3 flex items-center justify-between gap-2 text-sm text-texte-2">
+        Nouveau cycle jusqu’au
+        <input type="date" min={decalerJour(aujourdhui(), 56)} value={date} onChange={(e) => setDate(e.target.value)} className="rounded-lg border border-bordure bg-surface-2 px-2 py-1.5 text-texte" />
+      </label>
+      <button type="button" className="mt-3 w-full rounded-xl bg-accent py-3 font-bold text-fond"
+        onClick={async () => { await modifier({ programme: { ...prog, finCycle: date } }); const m = await import('../arrivee/donnees'); await m.recalculerSaison() }}>
+        Repartir pour un cycle
+      </button>
+    </Carte>
+  )
+}
+
 export function Saison() {
   const s = useLiveQuery(saison)
   const [r] = useReglagesEntrainement()
@@ -257,6 +286,7 @@ export function Saison() {
 
   return (
     <div className="space-y-3">
+      <FinDeCycle />
       <Carte>
         <p className="text-[13px] font-semibold text-texte-2">Où j'en suis</p>
         {s.demarrage ? (

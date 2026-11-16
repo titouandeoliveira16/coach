@@ -1,5 +1,6 @@
 import { estMineur, useProfil } from '../../../core/profil'
-import { aujourdhui } from '../../../core/dates'
+import { APPAREILS, conseilsConnexions } from '../appareils'
+import { aujourdhui, decalerJour } from '../../../core/dates'
 import { useState, type ReactNode } from 'react'
 import { DetailMuscu } from './SectionMuscu'
 import { useReglage } from '../../../core/reglages'
@@ -9,7 +10,7 @@ import { ANCIENNETES, DISCIPLINES_PROPOSEES, HEURES_RECENTES, NOMS_DISCIPLINES, 
 import { AIDES } from '../aides'
 import { programmeDe, useReglagesEntrainement } from '../reglagesEntrainement'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { datesCoursesA, phasesAvecCoursesA } from '../../../metrics/saison'
+import { datesCoursesA, phasesAvecCoursesA, premierMars } from '../../../metrics/saison'
 import { poidsDesTests, recalculerSemainesAVenir, referencesVitesse } from '../plan/programme'
 import { CalageVitesse, CoursePrincipale, ListeCourses } from './ListeCourses'
 import type { ReglagesProgramme } from '../types'
@@ -22,6 +23,8 @@ export interface ProfilSportif extends ReponsesNiveau {
   sports: string[]
   heuresSemaine?: string
   materiel: string[]
+  /** Avec quoi tu enregistres tes sorties (Garmin, COROS, iGPSPORT…) : règle les conseils de connexion et les boutons d'envoi */
+  appareils?: string[]
   pointsSensibles?: string
   muscu?: string
   /** Repas du jour (besoins du jour, repas du soir, bilan du dimanche) : absent = activé */
@@ -138,7 +141,18 @@ export function SectionProfilSportif() {
         <p className="mb-1.5 text-[13px] font-semibold text-texte-2">Ta course principale</p>
         {principale
           ? <CoursePrincipale key={principale.date} course={principale} contexte={contexteCourses} onChanger={(a) => changerCourses(prog.competitions.map((c) => (c === principale ? a : c)))} onRetirer={() => changerCourses(prog.competitions.filter((c) => c !== principale))} />
-          : <p className="text-sm text-texte-2">Aucune : ajoute une course de niveau A ci-dessous, elle devient ta course principale et ta saison se construit autour.</p>}
+          : <>
+            <p className="text-sm text-texte-2">Aucune : ajoute une course de niveau A ci-dessous, elle devient ta course principale et ta saison se construit autour.</p>
+            {/* Sans course (16/11/2026) : la saison vise un test de début de saison */}
+            {prog.modele === 'chauvin' && (
+              <label className="mt-2 flex items-center justify-between gap-2 text-sm text-texte-2">
+                En attendant, test de début de saison le
+                <input type="date" min={decalerJour(aujourdhui(), 56)} defaultValue={prog.finCycle ?? premierMars(aujourdhui())}
+                  onBlur={(e) => e.target.value && e.target.value !== prog.finCycle && changerProg({ finCycle: e.target.value }).then(() => import('../arrivee/donnees').then((m) => m.recalculerSaison()))}
+                  className="rounded-lg border border-bordure bg-surface-2 px-2 py-1.5 text-texte" />
+              </label>
+            )}
+          </>}
         <p className="mt-4 mb-1.5 text-[13px] font-semibold text-texte-2">Tes autres courses</p>
         <ListeCourses courses={prog.competitions} effectifs={niveaux} contexte={contexteCourses} onChanger={changerCourses} principale={principale?.date} />
         <p className="mt-4 text-[13px] font-semibold text-texte-2">Ta vitesse en course</p>
@@ -173,6 +187,10 @@ export function SectionProfilSportif() {
       </Ligne>
       <p className="mt-4 mb-1 text-[13px] font-semibold text-texte-3 first:mt-0">Matériel, santé, nutrition, muscu</p>
       <Ligne {...props('materiel')} libelle="Matériel" valeur={ps.materiel.join(', ')}>{choixMultiple(MATERIEL, ps.materiel, (materiel) => modifierPs({ materiel }))}</Ligne>
+      <Ligne {...props('appareils')} libelle="Mes appareils" valeur={(ps.appareils ?? []).join(', ')}>
+        {choixMultiple([...APPAREILS], ps.appareils ?? [], (appareils) => modifierPs({ appareils }))}
+        <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-texte-3">{conseilsConnexions(ps.appareils).map((x) => <li key={x}>{x}</li>)}</ul>
+      </Ligne>
       <Ligne {...props('sensibles')} libelle="Points sensibles" valeur={ps.pointsSensibles ?? ''}>
         <input defaultValue={ps.pointsSensibles} placeholder="Ex. genoux, tendon d'Achille…" onBlur={(e) => modifierPs({ pointsSensibles: e.target.value.trim() || undefined })}
           className="w-full rounded-lg border border-bordure bg-surface-2 px-3 py-2 text-sm" />

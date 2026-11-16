@@ -1,5 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { aujourdhui, decalerJour } from '../../../core/dates'
+import { premierMars } from '../../../metrics/saison'
+import { APPAREILS, conseilsConnexions } from '../appareils'
 import { enregistrer } from '../../../core/stockage'
 import { db } from '../../../core/db'
 import { Bouton } from '../../../core/ui/Bouton'
@@ -25,6 +27,17 @@ function Choix<T extends string | number | boolean>({ options, valeur, onChoisir
   return (
     <div className="flex flex-wrap gap-1.5">
       {options.map(([nom, v]) => <button key={nom} type="button" className={puce(valeur === v)} onClick={() => onChoisir(v)}>{nom}</button>)}
+    </div>
+  )
+}
+/** Plusieurs choix possibles (appareils) */
+function ChoixMultiple({ options, valeurs, onChanger }: { options: readonly string[]; valeurs: string[]; onChanger: (v: string[]) => void }) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {options.map((o) => (
+        <button key={o} type="button" aria-pressed={valeurs.includes(o)} className={puce(valeurs.includes(o))}
+          onClick={() => onChanger(valeurs.includes(o) ? valeurs.filter((x) => x !== o) : [...valeurs, o])}>{o}</button>
+      ))}
     </div>
   )
 }
@@ -123,6 +136,9 @@ export function QuestionnaireArrivee({ montreSeulement = false }: { montreSeulem
             <Question libelle="Déjà suivi un plan avec des intervalles pendant au moins 6 semaines ?">
               <Choix options={[['Oui', true], ['Non', false]]} valeur={r.intervalles} onChoisir={(intervalles) => maj({ intervalles })} />
             </Question>
+            <Question libelle="Avec quoi tu enregistres tes sorties ?" aide="Montre, compteur, home trainer : plusieurs choix possibles. L’appli te dira quoi relier et où envoyer tes séances.">
+              <ChoixMultiple options={APPAREILS} valeurs={r.appareils ?? []} onChanger={(appareils) => maj({ appareils })} />
+            </Question>
             <Question libelle="Arrêté le vélo ces dernières semaines ?" aide="Après un arrêt, la reprise est plus longue.">
               <Choix options={ARRETS} valeur={r.arretSemaines} onChoisir={(arretSemaines) => maj({ arretSemaines })} />
             </Question>
@@ -185,10 +201,19 @@ export function QuestionnaireArrivee({ montreSeulement = false }: { montreSeulem
             <div className="space-y-3">
               <Choix options={[['J’ai une course', 'oui'], ['Pas de course prévue', 'non']]} valeur={r.sansCourse ? 'non' : 'oui'}
                 onChoisir={(v) => maj(v === 'non'
-                  ? { sansCourse: true, course: { nom: 'Forme générale', date: decalerJour(jour, 7 * 20) } }
+                  ? { sansCourse: true, course: { nom: 'Test de début de saison', date: premierMars(jour) } }
                   : { sansCourse: false, course: { nom: '', date: '' } })} />
               {r.sansCourse ? (
-                <p className="text-sm text-texte-2">Ta saison vise une forme générale dans 20 semaines : base, seuils puis VO2max, avec des tests CP pour voir tes progrès. Ajoute une course quand tu en as une (Réglages → Mon profil sportif) : tout se recalcule.</p>
+                <>
+                  <Question libelle="Jusqu’à quand ?" aide="Le début de ta saison de courses : le 1er mars par défaut.">
+                    <input type="date" min={decalerJour(jour, 56)} value={r.course?.date ?? ''} onChange={(e) => maj({ course: { nom: 'Test de début de saison', date: e.target.value } })} className={champ} />
+                  </Question>
+                  <p className="text-sm text-texte-2">
+                    Objectif : progresser en {NOMS_DISCIPLINES[r.discipline ?? 'route'].toLowerCase()} et être prêt pour le début de ta saison. Base, seuils puis VO2max
+                    jusqu’à cette date, et la dernière semaine, un test CP pour mesurer tes progrès. Ajoute une course quand tu en as une
+                    (Réglages → Mon profil sportif) : tout se recalcule pour la préparer.
+                  </p>
+                </>
               ) : <>
               <Question libelle="Nom"><input value={r.course?.nom ?? ''} placeholder="Ex. cyclosportive, manche XCO…" onChange={(e) => maj({ course: { ...r.course, date: r.course?.date ?? '', nom: e.target.value } })} className={champ} /></Question>
               <Question libelle="Date"><input type="date" min={jour} value={r.course?.date ?? ''} onChange={(e) => maj({ course: { ...r.course, nom: r.course?.nom ?? '', date: e.target.value } })} className={champ} /></Question>
@@ -235,7 +260,7 @@ export function QuestionnaireArrivee({ montreSeulement = false }: { montreSeulem
         </>
       )}
 
-      {etape === 4 && <Montre />}
+      {etape === 4 && <Montre appareils={r.appareils} />}
 
       {message && <p className="text-sm text-mauvais">{message}</p>}
       {etape < 4 && (
@@ -260,7 +285,7 @@ export function QuestionnaireArrivee({ montreSeulement = false }: { montreSeulem
   )
 }
 
-const ETAPES_MONTRE: { titre: string; points: string[]; lien?: [string, string] }[] = [
+const etapesMontre = (appareils?: string[]): { titre: string; points: string[]; lien?: [string, string] }[] => [
   {
     titre: 'Crée ton compte Intervals.icu',
     points: ['C’est gratuit : inscris-toi avec ton email (ou ton compte Google).', 'Intervals.icu récupère les sorties de presque toutes les montres et compteurs, et les transmet à l’appli.'],
@@ -270,9 +295,9 @@ const ETAPES_MONTRE: { titre: string; points: string[]; lien?: [string, string] 
     titre: 'Relie ta montre et ton compteur',
     points: [
       'Sur Intervals : menu ☰ → Settings → rubrique « Connections ».',
-      'Touche « Connect » à côté de chacun de tes appareils : Garmin Connect, COROS, Wahoo, Polar, Suunto ou Zwift, et accepte le partage.',
+      // Selon tes appareils (questionnaire, 16/11/2026)
+      ...conseilsConnexions(appareils),
       'Ne passe pas par Strava : Strava interdit de transmettre tes sorties à d’autres applis.',
-      'Compteur iGPSPORT : il n’a pas de lien avec Intervals. Une fois Intervals relié, relie-le dans Entraînement → Réglages → Compteur iGPSPORT : tes sorties (historique compris) remonteront toutes seules.',
     ],
     lien: ['Ouvrir les réglages Intervals', 'https://intervals.icu/settings'],
   },
@@ -287,7 +312,7 @@ const ETAPES_MONTRE: { titre: string; points: string[]; lien?: [string, string] 
 ]
 
 /** Dernière étape : relier sa montre via Intervals.icu (indispensable pour que l'appli voie tes séances). */
-function Montre() {
+function Montre({ appareils }: { appareils?: string[] }) {
   const [cle, setCle] = useState('')
   const [occupe, setOccupe] = useState(false)
   const [message, setMessage] = useState<string>()
@@ -295,11 +320,11 @@ function Montre() {
   return (
     <>
       <p className="-mt-2 text-sm text-texte-2">Ta saison est prête. Dernière étape : relier ta montre, pour que l'appli voie tes séances toute seule.</p>
-      {ETAPES_MONTRE.map((e, i) => (
+      {etapesMontre(appareils).map((e, i, liste) => (
         <Carte key={e.titre} titre={`${i + 1}. ${e.titre}`}>
           <ul className="list-disc space-y-1.5 pl-5 text-sm text-texte-2">{e.points.map((p) => <li key={p}>{p}</li>)}</ul>
           {e.lien && <a href={e.lien[1]} target="_blank" rel="noreferrer" className="mt-3 block rounded-xl bg-surface-2 px-4 py-3 text-center text-sm font-semibold text-accent">{e.lien[0]} ↗</a>}
-          {i === ETAPES_MONTRE.length - 1 && (
+          {i === liste.length - 1 && (
             <div className="mt-3 space-y-2">
               <input value={cle} onChange={(x) => setCle(x.target.value)} placeholder="Ta clé API Intervals.icu" autoComplete="off" autoCapitalize="off" spellCheck={false} className={champ} />
               <Bouton disabled={occupe || cle.trim().length < 10} onClick={async () => {

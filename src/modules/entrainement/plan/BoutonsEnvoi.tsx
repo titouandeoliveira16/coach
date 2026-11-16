@@ -4,13 +4,19 @@ import { envoyerSeance, retirerSeance, useEnvoi, type Cible } from '../import/en
 import type { SeancePrevue } from '../types'
 import { useReglage } from '../../../core/reglages'
 import { envoyerSeanceIgpsport, type EnvoiIgpsport } from '../import/igpsport'
+import { avecZwift, libelleEnvoiMontre } from '../appareils'
+import type { ProfilSportif } from '../reglages/ProfilSportif'
 
-const NOMS: Record<Cible, string> = { garmin: 'ta montre (Garmin)', zwift: 'Zwift' }
+const NOMS: Record<Cible, string> = { garmin: 'ta montre / ton compteur', zwift: 'Zwift' }
 
 /** « Envoyer à Garmin » / « Envoyer à Zwift » : la séance part dans ton calendrier Intervals.icu, qui la transmet. */
 export function BoutonsEnvoi({ p, etapes }: { p: SeancePrevue; etapes: Etape[] }) {
   const envoi = useEnvoi(p.id)
   const [igp] = useReglage<EnvoiIgpsport>('igpsport-envoi', {})
+  // Boutons nommés d'après ton matériel (16/11/2026) : « Envoyer à ma COROS », Zwift seulement si tu l'as
+  const [ps] = useReglage<Partial<ProfilSportif>>('profil-sportif', {})
+  const montre = libelleEnvoiMontre(ps.appareils)
+  const zwift = avecZwift(ps.appareils)
   const envoyeCompteur = igp.envois?.[p.id]
   const [occupe, setOccupe] = useState(false)
   const [message, setMessage] = useState<string>()
@@ -44,8 +50,8 @@ export function BoutonsEnvoi({ p, etapes }: { p: SeancePrevue; etapes: Etape[] }
         </>
       ) : (
         <div className="flex gap-2">
-          <button type="button" disabled={occupe} className={bouton} onClick={() => agir(() => envoyerSeance(p, etapes, 'garmin'), 'Envoyée ✓ Elle arrive sur ta montre après la synchro Garmin Connect.')}>Envoyer à Garmin</button>
-          <button type="button" disabled={occupe} className={bouton} onClick={() => agir(() => envoyerSeance(p, etapes, 'zwift'), 'Envoyée ✓ Zwift → Workouts → Custom → Intervals.icu.')}>Envoyer à Zwift</button>
+          {montre && <button type="button" disabled={occupe} className={bouton} onClick={() => agir(() => envoyerSeance(p, etapes, 'garmin'), 'Envoyée ✓ Intervals.icu la transmet à ta montre ou ton compteur (« Upload planned workouts » coché) : elle arrive à la prochaine synchro.')}>{montre}</button>}
+          {zwift && <button type="button" disabled={occupe} className={bouton} onClick={() => agir(() => envoyerSeance(p, etapes, 'zwift'), 'Envoyée ✓ Zwift → Workouts → Custom → Intervals.icu.')}>Envoyer à Zwift</button>}
         </div>
       )}
       {/* Compteur iGPSPORT (16/11/2026) : seulement quand tu le demandes */}

@@ -37,6 +37,19 @@ export interface EntreeSaison {
   aujourdhui?: string
   /** Débutant ou intermédiaire : en saison courte (< 12 semaines), le seuil à la place du bloc VO2 (15/11/2026) */
   prioriteSeuil?: boolean
+  /**
+   * Pas de course (16/11/2026, validé par Titouan) : `course` est la date du test de début de saison (1er mars par
+   * défaut). Base, seuils puis VO2 jusque-là, sans semaines « course », affûtage ni récupération ; la dernière semaine
+   * est un test CP complet qui mesure les progrès.
+   */
+  sansCourse?: boolean
+}
+
+/** Le 1er mars qui suit (au moins 8 semaines plus tard) : date du test de début de saison par défaut. */
+export function premierMars(jour: string) {
+  const an = Number(jour.slice(0, 4))
+  const mars = `${an}-03-01`
+  return semainesEntre(jour, mars) >= 8 ? mars : `${an + 1}-03-01`
 }
 
 const lundiDe = (d: string) => decaler(d, -((new Date(`${d}T12:00:00`).getDay() + 6) % 7))
@@ -49,14 +62,14 @@ const semainesEntre = (a: string, b: string) => Math.round((Date.parse(b) - Date
  * spécifique 3, cycle VO2max 3 ; puis le 2e seuil (tirée 2-4, poussée 2-8), le cycle 1er seuil (4-10), et au-delà,
  * une base plus longue (jamais d'entretien avant la base). Reprise : 0 si tu roulais déjà régulièrement, sinon 2 (4 en débutant ou après un arrêt).
  */
-export function dureesPhases(n: number, repriseLongue = false, entraine = false, semainesReprise?: number) {
+export function dureesPhases(n: number, repriseLongue = false, entraine = false, semainesReprise?: number, sansCourse = false) {
   const d = { reprise: 0, entretien: 0, base: 0, 'seuil-tirage': 0, 'seuil-maintien': 0, 'fin-prepa': 0, specifique: 0, affutage: 0 }
   if (n <= 0) return d
   if (n < 3) return { ...d, affutage: n }
   // Saison de moins de 12 semaines : 1 semaine d'affûtage (relecture du 15/11/2026 : efficace dès 7 jours, Wang 2023)
-  d.affutage = n >= 12 ? 2 : 1
+  d.affutage = sansCourse ? 0 : n >= 12 ? 2 : 1
   let reste = n - d.affutage
-  d.specifique = Math.min(3, reste)
+  d.specifique = sansCourse ? 0 : Math.min(3, reste)
   reste -= d.specifique
   d['fin-prepa'] = Math.min(3, reste)
   reste -= d['fin-prepa']
@@ -86,7 +99,7 @@ export function calculerSaison(e: EntreeSaison) {
   // Semaines déjà roulées depuis l'arrêt : retirées (pas de reprise faite deux fois, 13/11/2026)
   const brute = e.debutant ? 4 : e.entraine || arret >= 2 ? repriseSelonCoupure(arret) : 2
   const reprise = Math.max(0, brute - (e.repriseFaite ?? 0))
-  const d = dureesPhases(n, arret >= 4 || !!e.debutant, !!e.entraine && !e.debutant && arret < 2, reprise)
+  const d = dureesPhases(n, arret >= 4 || !!e.debutant, !!e.entraine && !e.debutant && arret < 2, reprise, !!e.sansCourse)
   const phases: Phase[] = []
   let l = l0
   // Saison courte, moins d'expérience : le bloc VO2 devient du seuil (meilleur rapport gain/fatigue sur une cyclo ;
@@ -96,7 +109,9 @@ export function calculerSaison(e: EntreeSaison) {
     if (d[type] > 0) phases.push({ debut: l, type: type === 'fin-prepa' && seuilAuLieuDeVo2 ? 'seuil-tirage' : type })
     l = decaler(l, 7 * d[type])
   }
-  phases.push({ debut: decaler(lc, 7), type: 'recuperation' }, { debut: decaler(lc, 14), type: 'entretien' })
+  // Sans course : pas de récupération (rien à récupérer), l'entretien suit le test
+  if (e.sansCourse) phases.push({ debut: decaler(lc, 7), type: 'entretien' })
+  else phases.push({ debut: decaler(lc, 7), type: 'recuperation' }, { debut: decaler(lc, 14), type: 'entretien' })
 
   // Tests CP
   const jourLong = e.jourLong ?? 6
@@ -106,7 +121,7 @@ export function calculerSaison(e: EntreeSaison) {
   const ajouter = (lundi: string, court: boolean) => {
     let date = decaler(lundi, court ? jourDur : jourLong)
     if (e.aujourdhui && date < e.aujourdhui) date = decaler(date, 7)
-    if (date >= lc) return
+    if (date >= lc && !(e.sansCourse && date <= decaler(lc, 6))) return
     testsCp.push(date)
     if (court) testsCourts.push(date)
   }
@@ -131,6 +146,16 @@ export function calculerSaison(e: EntreeSaison) {
       ajouter(fin, ph.type === 'seuil-maintien' || d[ph.type as 'seuil-tirage' | 'fin-prepa'] < 4)
       dernier = fin
     }
+  }
+  // Sans course : la dernière semaine finit par un test CP complet (il mesure ce que l'hiver t'a fait gagner) ; un
+  // test prévu moins de 3 semaines avant est retiré
+  if (e.sansCourse && n >= 3) {
+    const final = decaler(lc, jourLong)
+    for (const t of testsCp.filter((x) => semainesEntre(x, final) < 3)) {
+      testsCp.splice(testsCp.indexOf(t), 1)
+      if (testsCourts.includes(t)) testsCourts.splice(testsCourts.indexOf(t), 1)
+    }
+    testsCp.push(final)
   }
   return { phases, testsCp: [...new Set(testsCp)].sort(), testsCourts, semaines: n }
 }

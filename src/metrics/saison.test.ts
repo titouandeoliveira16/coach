@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { calculerSaison, chargeHabituelle, datesCoursesA, dureesPhases, lireHistorique, migrerBase, phasesAvecCoursesA } from './saison'
+import { premierMars, calculerSaison, chargeHabituelle, datesCoursesA, dureesPhases, lireHistorique, migrerBase, phasesAvecCoursesA } from './saison'
 import { estSemaineAllegee, coefficientPhase, phaseDe } from './programme'
 import { decalerJour } from '../core/dates'
 
@@ -239,5 +239,18 @@ describe('robustesse (audit du 11/11/2026)', () => {
     const phases = [{ debut: '2026-10-28', type: 'base' as const }]
     const allegees = [0, 1, 2, 3, 4, 5, 6, 7].map((i) => estSemaineAllegee(decalerJour('2026-10-26', 7 * i), phases))
     expect(allegees.filter(Boolean).length).toBe(2)
+  })
+  it('sans course : test de début de saison (1er mars), pas de semaines course, d’affûtage ni de récupération (16/11/2026)', () => {
+    expect(premierMars('2026-11-16')).toBe('2027-03-01')
+    expect(premierMars('2027-02-01')).toBe('2028-03-01')
+    const s = calculerSaison({ debut: '2026-11-16', course: '2027-03-01', sansCourse: true, entraine: true, jourLong: 6 })
+    const types = s.phases.map((p) => p.type)
+    expect(types).not.toContain('specifique')
+    expect(types).not.toContain('affutage')
+    expect(types).not.toContain('recuperation')
+    expect(types.at(-1)).toBe('entretien')
+    // Dernière semaine : test complet le dimanche de la semaine du 1er mars
+    expect(s.testsCp.at(-1)).toBe('2027-03-07')
+    for (let i = 1; i < s.testsCp.length; i++) expect(Date.parse(s.testsCp[i]) - Date.parse(s.testsCp[i - 1])).toBeGreaterThanOrEqual(3 * 7 * 86_400_000)
   })
 })
