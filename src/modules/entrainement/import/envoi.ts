@@ -11,7 +11,8 @@ import { appeler } from './intervals'
  * Watts réels, sans ERG. Les envois sont retenus dans un réglage synchronisé (ils survivent au recalcul de la semaine).
  */
 export type Cible = 'garmin' | 'zwift'
-export interface Envoi { id: string; cible: Cible; le: string }
+/** `signature` : la séance telle qu'envoyée (date, titre, étapes) ; si elle change, l'envoi est mis à jour (16/11/2026) */
+export interface Envoi { id: string; cible: Cible; le: string; signature?: string }
 
 const CLE = 'envois-intervals'
 const lireEnvois = async () => ((await db.reglages.get(CLE))?.valeur as Record<string, Envoi> | undefined) ?? {}
@@ -49,6 +50,8 @@ export function texteIntervals(etapes: Etape[]) {
     .join('\n')
 }
 
+export const signatureSeance = (p: Pick<SeancePrevue, 'date' | 'titre'>, etapes: Etape[]) => JSON.stringify([p.date, p.titre, texteIntervals(etapes)])
+
 export async function envoyerSeance(p: SeancePrevue, etapes: Etape[], cible: Cible) {
   const envois = await lireEnvois()
   const avant = envois[p.id]
@@ -56,7 +59,24 @@ export async function envoyerSeance(p: SeancePrevue, etapes: Etape[], cible: Cib
     id: avant?.id, date: p.date, nom: p.titre, description: texteIntervals(etapes),
     dureeSec: etapes.reduce((t, e) => t + e.dureeSec, 0), indoor: cible === 'zwift',
   })
-  await enregistrer(db.reglages, { id: CLE, valeur: { ...(await lireEnvois()), [p.id]: { id, cible, le: new Date().toISOString() } } })
+  await enregistrer(db.reglages, { id: CLE, valeur: { ...(await lireEnvois()), [p.id]: { id, cible, le: new Date().toISOString(), signature: signatureSeance(p, etapes) } } })
+}
+
+/**
+ * Séances déjà envoyées puis recalculées (16/11/2026 : une séance envoyée à Zwift à 2 h, ramenée ensuite à 95 min, était
+ * restée à 2 h sur Zwift) : la nouvelle version remplace l'ancienne, toute seule, tant que la séance est à venir.
+ * Un envoi d'avant cette version (sans signature) est renvoyé une fois.
+ */
+export async function mettreAJourEnvois() {
+  const envois = await lireEnvois()
+  const jour = new Date().toLocaleDateString('sv-SE')
+  for (const [prevueId, envoi] of Object.entries(envois)) {
+    const p = await db.prevues.get(prevueId)
+    const etapes = p?.velo?.etapes
+    if (!p || !etapes?.length || p.statut !== 'prevue' || p.date < jour) continue
+    if (envoi.signature === signatureSeance(p, etapes)) continue
+    await envoyerSeance(p, etapes, envoi.cible).catch(() => {})
+  }
 }
 
 export async function retirerSeance(p: SeancePrevue) {

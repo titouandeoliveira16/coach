@@ -275,7 +275,10 @@ export async function genererSemaineVelo(lundi: string) {
   // Photo de la semaine d'avant gardée pendant le calcul : remise au démarrage si l'appli est coupée en plein calcul
   debutCalcul(lundi, avant)
   try {
-    return await genererSemaineVeloBrute(lundi)
+    const phrases = await genererSemaineVeloBrute(lundi)
+    // Séances déjà envoyées (Zwift, montre, compteur) et changées par ce calcul : la nouvelle version part toute seule
+    void mettreAJourTousEnvois()
+    return phrases
   } catch (e) {
     await remettreSemaine(lundi, avant)
     signalerErreur(e, `Semaine du ${lundi} non recalculée (semaine d'avant gardée)`)
@@ -283,6 +286,13 @@ export async function genererSemaineVelo(lundi: string) {
   } finally {
     finCalcul()
   }
+}
+
+/** Séances déjà envoyées puis recalculées : mises à jour sur Zwift / la montre (Intervals) et le compteur iGPSPORT. */
+export async function mettreAJourTousEnvois() {
+  if (typeof window === 'undefined') return
+  await import('../import/envoi').then((m) => m.mettreAJourEnvois()).catch(() => {})
+  await import('../import/igpsport').then((m) => m.mettreAJourEnvoisIgpsport()).catch(() => {})
 }
 
 /** Remet les séances d'avant le calcul (et retire celles créées entre-temps). */

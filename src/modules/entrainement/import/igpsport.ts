@@ -82,7 +82,7 @@ async function apresEnvoi(r: { envoyees?: number; reste?: number }) {
 }
 
 /** Compteur relié (pour montrer le bouton d'envoi) et séances déjà envoyées (id → date). */
-export interface EnvoiIgpsport { relie?: boolean; envois?: Record<string, string> }
+export interface EnvoiIgpsport { relie?: boolean; envois?: Record<string, string>; signatures?: Record<string, string> }
 const lireEnvoi = async () => ((await db.reglages.get('igpsport-envoi'))?.valeur as EnvoiIgpsport | undefined) ?? {}
 const ecrireEnvoi = async (e: EnvoiIgpsport) => enregistrer(db.reglages, { id: 'igpsport-envoi', valeur: { ...(await lireEnvoi()), ...e } })
 
@@ -104,7 +104,23 @@ export async function envoyerSeanceIgpsport(p: SeancePrevue, etapes: Etape[]) {
   })
   if (!r.envoyees) throw new Error('iGPSPORT n’a pas accepté la séance.')
   const avant = await lireEnvoi()
-  await ecrireEnvoi({ envois: { ...avant.envois, [p.id]: new Date().toISOString() } })
+  await ecrireEnvoi({ envois: { ...avant.envois, [p.id]: new Date().toISOString() }, signatures: { ...avant.signatures, [p.id]: JSON.stringify([titre, etapes]) } })
+}
+
+/** Séances déjà envoyées au compteur puis recalculées : la nouvelle version remplace l'ancienne (16/11/2026). */
+export async function mettreAJourEnvoisIgpsport() {
+  const e = await lireEnvoi()
+  if (!e.relie || !e.envois) return
+  const jour = new Date().toLocaleDateString('sv-SE')
+  for (const prevueId of Object.keys(e.envois)) {
+    const p = await db.prevues.get(prevueId)
+    const etapes = p?.velo?.etapes
+    if (!p || !etapes?.length || p.statut !== 'prevue' || p.date < jour) continue
+    const d = depuisJour(p.date)
+    const titre = `${NOMS[d.getDay()]} ${p.date.slice(8, 10)}/${p.date.slice(5, 7)} · ${p.titre}`.slice(0, 64)
+    if (e.signatures?.[prevueId] === JSON.stringify([titre, etapes])) continue
+    await envoyerSeanceIgpsport(p, etapes).catch(() => {})
+  }
 }
 
 export async function relierIgpsport(identifiant: string, motDePasse: string) {

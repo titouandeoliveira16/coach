@@ -31,6 +31,8 @@ export function EcranEntrainement() {
     nettoyerDoublons().then(nettoyerPeseesEffacees).then(retirerCourseAVenir).then(importerIntervalsSiBesoin)
       // Compteur iGPSPORT relié ? (bouton « Envoyer à mon compteur »), demandé une fois par appareil
       .then(() => import('./import/igpsport')).then((m) => m.verifierRelie()).catch(() => {})
+      // Séances déjà envoyées puis recalculées (hors connexion par exemple) : nouvelle version renvoyée
+      .then(() => import('./plan/programme')).then((m) => m.mettreAJourTousEnvois()).catch(() => {})
   }, [])
 
   return (
