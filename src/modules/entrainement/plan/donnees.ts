@@ -167,9 +167,11 @@ export async function chargesSemaine(lundi: string) {
   const precedentes = [1, 2, 3, 4].map((n) => realiseeEntre(decalerJour(lundi, -7 * n), decalerJour(lundi, -7 * n + 6)))
   // Budget kJ (vélo) : réalisé + reste à faire
   const kjRealises = seances.filter((s) => s.date >= lundi && s.date <= decalerJour(lundi, 6)).reduce((a, s) => a + (s.kj ?? 0), 0)
-  const kjReste = prevues.filter((p) => p.statut === 'prevue').reduce((a, p) => a + (p.kjPrevu ?? 0), 0)
+  // Prévu = ce qui était prévu au départ (toutes les séances prévues de la semaine, faites ou non), comme le bilan du
+  // dimanche (16/11/2026 : avant, « fait + reste à faire », qui devenait égal au fait une fois la semaine finie)
+  const kjPlan = prevues.reduce((a, p) => a + (p.kjPrevu ?? 0), 0)
   return {
     prevue, realisee, precedente: precedentes[0], moyenne4: precedentes.reduce((a, b) => a + b, 0) / 4,
-    unite: c.chargeRef === 'trimp' ? 'TRIMP' : 'sRPE', kjRealises, kjPrevus: kjRealises + kjReste,
+    unite: c.chargeRef === 'trimp' ? 'TRIMP' : 'sRPE', kjRealises, kjPrevus: kjPlan,
   }
 }
