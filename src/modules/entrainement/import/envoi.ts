@@ -12,7 +12,7 @@ import { appeler } from './intervals'
  */
 export type Cible = 'garmin' | 'zwift'
 /** `signature` : la séance telle qu'envoyée (date, titre, étapes) ; si elle change, l'envoi est mis à jour (16/11/2026) */
-export interface Envoi { id: string; cible: Cible; le: string; signature?: string }
+export interface Envoi { id: string; cible: Cible; le: string; signature?: string; date?: string }
 
 const CLE = 'envois-intervals'
 const lireEnvois = async () => ((await db.reglages.get(CLE))?.valeur as Record<string, Envoi> | undefined) ?? {}
@@ -59,7 +59,7 @@ export async function envoyerSeance(p: SeancePrevue, etapes: Etape[], cible: Cib
     id: avant?.id, date: p.date, nom: p.titre, description: texteIntervals(etapes),
     dureeSec: etapes.reduce((t, e) => t + e.dureeSec, 0), indoor: cible === 'zwift',
   })
-  await enregistrer(db.reglages, { id: CLE, valeur: { ...(await lireEnvois()), [p.id]: { id, cible, le: new Date().toISOString(), signature: signatureSeance(p, etapes) } } })
+  await enregistrer(db.reglages, { id: CLE, valeur: { ...(await lireEnvois()), [p.id]: { id, cible, le: new Date().toISOString(), signature: signatureSeance(p, etapes), date: p.date } } })
 }
 
 /**
@@ -72,6 +72,16 @@ export async function mettreAJourEnvois() {
   const jour = new Date().toLocaleDateString('sv-SE')
   for (const [prevueId, envoi] of Object.entries(envois)) {
     const p = await db.prevues.get(prevueId)
+    // Séance changée de jour par le recalcul, supprimée ou abandonnée (16/11/2026) : l'ancienne version est retirée de
+    // Zwift / la montre, sinon elle y restait en double
+    // (les envois d'avant cette version n'ont pas de date : celle de l'identifiant « auto-AAAA-MM-JJ-velo »)
+    const date = envoi.date ?? prevueId.match(/\d{4}-\d{2}-\d{2}/)?.[0]
+    if ((!p || p.statut === 'abandonnee') && date && date >= jour) {
+      await appeler('retirer', { id: envoi.id }).catch(() => {})
+      const { [prevueId]: _retire, ...reste } = await lireEnvois()
+      await enregistrer(db.reglages, { id: CLE, valeur: reste })
+      continue
+    }
     const etapes = p?.velo?.etapes
     if (!p || !etapes?.length || p.statut !== 'prevue' || p.date < jour) continue
     if (envoi.signature === signatureSeance(p, etapes)) continue
