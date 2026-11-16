@@ -1,6 +1,7 @@
 import { db } from '../../../core/db'
 import { dureeForce, exosDe, joursMuscu, NOMS_PERIODES, planForce, semainesApprentissage, type ReglagesForce, type SeanceForce } from '../muscu/force'
 import { signalerErreur } from '../../../core/erreurs'
+import { calculEnCours, debutCalcul, finCalcul, oublierPhoto, photoInterrompue } from '../../../core/calcul'
 import { aujourdhui, decalerJour, depuisJour, ecartJours, NOMS_JOURS } from '../../../core/dates'
 import { enregistrer, supprimer } from '../../../core/stockage'
 import {
@@ -271,15 +272,36 @@ export async function facteursPersonnels(r: Pick<ReglagesEntrainement, 'tests' |
  */
 export async function genererSemaineVelo(lundi: string) {
   const avant = await db.prevues.where('date').aboveOrEqual(lundi).toArray()
+  // Photo de la semaine d'avant gardée pendant le calcul : remise au démarrage si l'appli est coupée en plein calcul
+  debutCalcul(lundi, avant)
   try {
     return await genererSemaineVeloBrute(lundi)
   } catch (e) {
-    const ids = new Set(avant.map((p) => p.id))
-    for (const p of await db.prevues.where('date').aboveOrEqual(lundi).toArray()) if (!ids.has(p.id)) await supprimer(db.prevues, p.id)
-    for (const p of avant) await enregistrer(db.prevues, p)
+    await remettreSemaine(lundi, avant)
     signalerErreur(e, `Semaine du ${lundi} non recalculée (semaine d'avant gardée)`)
     throw e
+  } finally {
+    finCalcul()
   }
+}
+
+/** Remet les séances d'avant le calcul (et retire celles créées entre-temps). */
+async function remettreSemaine(lundi: string, avant: SeancePrevue[]) {
+  const ids = new Set(avant.map((p) => p.id))
+  for (const p of await db.prevues.where('date').aboveOrEqual(lundi).toArray()) if (!ids.has(p.id)) await supprimer(db.prevues, p.id)
+  for (const p of avant) await enregistrer(db.prevues, p)
+}
+
+/**
+ * Au démarrage (16/11/2026) : un calcul de semaine coupé en plein milieu (appli fermée, mise à jour) a laissé une semaine
+ * à moitié écrite. On remet la semaine d'avant, puis on la recalcule.
+ */
+export async function reprendreCalculInterrompu() {
+  const photo = photoInterrompue<SeancePrevue>()
+  if (!photo || calculEnCours()) return
+  await remettreSemaine(photo.lundi, photo.avant)
+  oublierPhoto()
+  if (decalerJour(photo.lundi, 6) >= aujourdhui()) await genererSemaineVelo(photo.lundi).catch(() => {})
 }
 
 async function genererSemaineVeloBrute(lundi: string) {

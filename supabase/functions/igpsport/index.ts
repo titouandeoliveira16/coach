@@ -9,6 +9,8 @@
 //   /igpsport/etat     → { relie, identifiant, derniereSynchro, importees, reste, erreur }
 //   /igpsport/synchro  → récupère tout de suite les nouvelles sorties (et la suite de l'historique)
 //   /igpsport/delier   → efface le lien (les sorties déjà envoyées restent dans Intervals)
+//   /igpsport/faits    → sorties déjà envoyées [{ rideId, intervalsId }]
+//   /igpsport/fit      { rideId } → le fichier .fit d'une de tes sorties (base64), pour compléter une séance sans watts
 //   /igpsport/seances  { seances: [{ jour, titre, description, structure, totalTime }] } → séances de la semaine dans
 //                      les entraînements personnalisés d'iGPSPORT (le compteur les reçoit par l'appli iGPSPORT) ; une
 //                      séance par jour de la semaine, réécrite chaque semaine (iGPSPORT n'offre pas d'effacement)
@@ -254,6 +256,25 @@ Deno.serve(async (req) => {
     }
 
     if (route === 'synchro') return json(await synchroniser(user.id, debut + 60_000))
+
+    if (route === 'faits') {
+      const { data: faits } = await admin.from('igpsport_faits').select('ride_id, intervals_id').eq('user_id', user.id)
+      return json({ faits: (faits ?? []).map((f: { ride_id: number; intervals_id: string | null }) => ({ rideId: Number(f.ride_id), intervalsId: f.intervals_id })) })
+    }
+
+    if (route === 'fit') {
+      const rideId = Number(corps.rideId)
+      const { data: fait } = await admin.from('igpsport_faits').select('ride_id').eq('user_id', user.id).eq('ride_id', rideId).maybeSingle()
+      if (!fait) return json({ erreur: 'Sortie inconnue.' }, 404)
+      const { data: compte } = await admin.from('igpsport_comptes').select('identifiant, mdp_chiffre').eq('user_id', user.id).maybeSingle()
+      if (!compte) return json({ erreur: 'Relie d’abord ton compteur iGPSPORT.' }, 409)
+      const fit = await fichierFit(await connexionIgp(compte.identifiant, await dechiffrer(compte.mdp_chiffre)), rideId)
+      if (!fit) return json({ erreur: 'Fichier introuvable chez iGPSPORT.' }, 404)
+      // base64 par morceaux (un gros fichier dépasserait la pile avec un seul String.fromCharCode)
+      let bin = ''
+      for (let i = 0; i < fit.length; i += 0x8000) bin += String.fromCharCode(...fit.subarray(i, i + 0x8000))
+      return json({ fit: btoa(bin) })
+    }
 
     if (route === 'seances') {
       try {

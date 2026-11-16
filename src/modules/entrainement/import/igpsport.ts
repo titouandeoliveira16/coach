@@ -31,6 +31,37 @@ async function appeler<T>(route: string, corps?: unknown): Promise<T> {
 /** Une seule fois par appareil (comptes reliés avant la 14.4) : on demande au serveur si le compteur est relié. */
 export async function verifierRelie() {
   if ((await lireEnvoi()).relie === undefined) await etatIgpsport().catch(() => {})
+  if ((await lireEnvoi()).relie) await completerWattsIgpsport().catch(() => {})
+}
+
+/**
+ * Une seule fois (16/11/2026) : séances vélo sans watts dont la même sortie existe sur le compteur iGPSPORT (Intervals
+ * avait gardé la version de la montre) : on lit le .fit du compteur et on complète la séance (watts, kJ, et le reste
+ * s'il manque). Rien n'est touché si le fichier du compteur n'a pas de watts non plus.
+ */
+export async function completerWattsIgpsport() {
+  if ((await db.reglages.get('igpsport-watts'))?.valeur) return 0
+  const { faits } = await appeler<{ faits: { rideId: number; intervalsId: string | null }[] }>('faits')
+  const { chargerContexte, fusionner } = await import('../seances/donnees')
+  const { importerFit } = await import('./fit')
+  const c = await chargerContexte()
+  const seances = await db.seances.toArray()
+  let n = 0
+  for (const f of faits) {
+    if (!f.intervalsId || !f.intervalsId.startsWith('i')) continue
+    const s = seances.find((x) => x.sport === 'velo' && !x.kj && (x.idExterne === f.intervalsId || x.autresIds?.includes(f.intervalsId!)))
+    if (!s) continue
+    try {
+      const { fit } = await appeler<{ fit: string }>('fit', { rideId: f.rideId })
+      const octets = Uint8Array.from(atob(fit), (ch) => ch.charCodeAt(0))
+      const lue = await importerFit(new File([octets], `igpsport_${f.rideId}.fit`), c)
+      if (!lue.kj) continue
+      await enregistrer(db.seances, fusionner({ ...lue, id: s.id, idExterne: s.idExterne, autresIds: s.autresIds, prevueId: s.prevueId, titre: s.titre, date: s.date, rpe: s.rpe }, s))
+      n++
+    } catch { /* sortie suivante */ }
+  }
+  await enregistrer(db.reglages, { id: 'igpsport-watts', valeur: { le: new Date().toISOString(), completees: n } })
+  return n
 }
 
 export async function etatIgpsport() {

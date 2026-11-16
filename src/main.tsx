@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './app/App.tsx'
 import { demanderStockagePersistant } from './core/db'
+import { calculEnCours } from './core/calcul'
 import { registerSW } from 'virtual:pwa-register'
 import { apresPremiereSynchro, demarrerSynchro } from './core/synchro'
 import { synchroniserRappels } from './core/notifications'
@@ -31,6 +32,8 @@ setTimeout(() => { try { sessionStorage.removeItem('coach-recharge-version') } c
 // une erreur n'empêche plus les suivantes.
 apresPremiereSynchro().then(async () => {
   const etapes: [string, () => Promise<unknown>][] = [
+    // Calcul de semaine coupé en plein milieu : semaine d'avant remise, puis recalculée (16/11/2026)
+    ['calcul interrompu', () => import('./modules/entrainement/plan/programme').then((m) => m.reprendreCalculInterrompu())],
     // Séances à venir remises au format avec répétitions (v0.62)
     ['format des séances', () => import('./modules/entrainement/plan/programme').then((m) => m.mettreAJourFormatSeances())],
     // Saison recalculée une fois par changement de règles (v10.5 → v13.9)
@@ -66,7 +69,8 @@ const appliquer = registerSW({
     const verifier = () => enregistrement.update().catch(() => {})
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') verifier()
-      else if (miseAJourPrete) appliquer(true)
+      // Jamais en plein calcul de semaine : la mise à jour attend le prochain passage en arrière-plan
+      else if (miseAJourPrete && !calculEnCours()) appliquer(true)
     })
     setInterval(verifier, 60 * 60 * 1000)
   },

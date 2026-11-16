@@ -25,4 +25,10 @@ describe('doublons', () => {
     const f = fusionner(riche, pauvre)
     expect(f).toMatchObject({ id: 'b', kj: 900, rpe: 3, sensations: 4, autresIds: ['i1'] })
   })
+  it('compteur (watts, sans cœur) + montre (cœur) : la fusion garde les watts et le cœur (16/11/2026)', () => {
+    const compteur: Seance = { ...base, id: 'b', idExterne: 'i2', kj: 900, fcMoy: undefined, tempsZones: undefined }
+    const montre: Seance = { ...base, fcMoy: 142, fcMax: 171, tempsZones: [600, 1800, 300, 60, 0] }
+    const f = fusionner(compteur, montre)
+    expect(f).toMatchObject({ kj: 900, fcMoy: 142, fcMax: 171, tempsZones: [600, 1800, 300, 60, 0] })
+  })
 })

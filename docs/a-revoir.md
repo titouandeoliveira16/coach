@@ -11,7 +11,7 @@ de conversation quand il faut s'en servir. Ici ne restent que les chantiers tech
 ## Audit des experts du 14/11/2026 (lot 1 fait en 14.1.0)
 - Fait : synchro (coupures iPhone, ouverture hors ligne), limites serveur (`sql/08-limites.sql`, appliqué), inscription
   (8 caractères, codes valables 30 jours, 10 essais ratés par heure, accord santé), contrôles Intervals, CSP, mineurs sans perte de gras.
-- Reste : écriture d'une semaine en une seule fois (atomique), rotation de la clé de chiffrement Intervals, nom du modèle `chauvin`
+- Reste : rotation de la clé de chiffrement Intervals, nom du modèle `chauvin`
   dans le code, épingler les versions des actions GitHub.
 - À régler dans le tableau de bord Supabase : protection contre les mots de passe compromis, inscriptions libres désactivées.
 

@@ -152,6 +152,12 @@ export function fusionner(gardee: Seance, autre: Seance): Seance {
     type: gardee.type ?? autre.type,
     prevueId: gardee.prevueId ?? autre.prevueId,
     meilleurs: gardee.meilleurs ?? autre.meilleurs,
+    // Ce qui manque à la plus riche est pris dans l'autre (16/11/2026) : ex. watts du compteur + cœur de la montre
+    fcMoy: gardee.fcMoy ?? autre.fcMoy,
+    fcMax: gardee.fcMax ?? autre.fcMax,
+    tempsZones: gardee.tempsZones ?? autre.tempsZones,
+    distanceKm: gardee.distanceKm ?? autre.distanceKm,
+    deniveleM: gardee.deniveleM ?? autre.deniveleM,
     autresIds: [...new Set([...(gardee.autresIds ?? []), ...(autre.autresIds ?? []), ...(autre.idExterne ? [autre.idExterne] : [])])]
       .filter((id) => id !== gardee.idExterne),
   }
