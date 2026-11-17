@@ -89,7 +89,7 @@ export interface EntreeSignal {
 }
 
 export interface Alerte {
-  code: 'vfc' | 'fc-repos' | 'ressenti' | 'tsb' | 'pic' | 'malade' | 'cv' | 'saturation'
+  code: 'vfc' | 'fc-repos' | 'ressenti' | 'dette' | 'tsb' | 'pic' | 'malade' | 'cv' | 'saturation'
   texte: string
   /** false = information seulement (ne compte pas dans le nombre d'indicateurs) */
   compte: boolean
@@ -132,22 +132,25 @@ export function calculerSignal(e: EntreeSignal, s: Seuils = SEUILS_DEFAUT): Sign
   if (vfc.fcRepos7 !== undefined && vfc.fcReposBase !== undefined && vfc.fcRepos7 > vfc.fcReposBase + s.fcReposEcart)
     alertes.push({ code: 'fc-repos', texte: `FC de repos 7 j élevée (${Math.round(vfc.fcRepos7)} bpm, base ${Math.round(vfc.fcReposBase)})`, compte: true })
 
-  // Ressenti et sommeil : une seule alerte, quelle que soit la cause (note, nuit courte, dette)
+  // Ressenti et nuit : une seule alerte, quelle que soit la cause (note, nuit courte)
+  // Relecture du 17/11/2026 (option A choisie par Titouan) : le feu suit ton corps (VFC, pouls au repos, ressenti, nuit de
+  // la veille : Javaloyes 2019-2020, Saw 2016, Craven 2022). La dette de sommeil sur 7 jours, la fraîcheur et le pic de
+  // charge sont affichés pour info, sans changer la couleur : aucun seuil validé pour décider d'une séance (Impellizzeri
+  // 2020), et le plan se pénalisait lui-même (3 semaines chargées → fraîcheur basse → rouge → budget −15 %)
   const textes: string[] = []
-  // Sommeil : moyenne 7 j sous 7 h, ou nettement sous ta normale ; nuit de 6 h ou moins, ou 1 h 30 sous ta normale
   const h = e.sommeilH
   const etat = etatSommeil(h, s)
   if (etat.nuitCourte) textes.push(h!.nuit! <= s.nuitMinH ? `nuit courte (${enHeures(h!.nuit!)}, ${s.nuitMinH} h ou moins)` : `nuit courte (${enHeures(h!.nuit!)} contre ${enHeures(h!.moyenne30!)} d'habitude)`)
-  if (etat.dette) textes.push(h!.moyenne7! < s.moyenne7MinH ? `dette de sommeil (${enHeures(h!.moyenne7!)} en moyenne sur 7 j, moins de ${s.moyenne7MinH} h)` : `dette de sommeil (${enHeures(h!.moyenne7!)} sur 7 j contre ${enHeures(h!.moyenne30!)} d'habitude)`)
   if (e.sommeil !== undefined && e.sommeil <= s.sommeilMax) textes.push('sommeil mauvais cette nuit')
   if (e.ressenti !== undefined && e.ressenti < s.ressentiMin) textes.push(`ressenti bas ce matin (${f1(e.ressenti)}/5)`)
   if (textes.length) alertes.push({ code: 'ressenti', texte: textes.join(', ').replace(/^./, (c) => c.toUpperCase()), compte: true })
+  if (etat.dette) alertes.push({ code: 'dette', texte: h!.moyenne7! < s.moyenne7MinH ? `Sommeil de la semaine : ${enHeures(h!.moyenne7!)} en moyenne (moins de ${s.moyenne7MinH} h)` : `Sommeil de la semaine : ${enHeures(h!.moyenne7!)} contre ${enHeures(h!.moyenne30!)} d'habitude`, compte: false })
 
   if (e.tsb !== undefined && e.tsb < s.tsbMin)
-    alertes.push({ code: 'tsb', texte: `Fraîcheur basse : ${Math.round(e.tsb)}, prudence sous ${s.tsbMin}`, compte: true })
+    alertes.push({ code: 'tsb', texte: `Fraîcheur basse : ${Math.round(e.tsb)}`, compte: false })
 
   if (e.ratioPic !== undefined && e.ratioPic > s.picMax)
-    alertes.push({ code: 'pic', texte: `Pic de charge : 7 derniers jours à ${Math.round(e.ratioPic * 100)} % de ta moyenne`, compte: true })
+    alertes.push({ code: 'pic', texte: `Pic de charge : 7 derniers jours à ${Math.round(e.ratioPic * 100)} % de ta moyenne`, compte: false })
 
   if (vfc.cv7 !== undefined && vfc.cvBase !== undefined && vfc.cv7 > vfc.cvBase * s.cvFacteur)
     alertes.push({ code: 'cv', texte: `VFC instable cette semaine (CV ${f1(vfc.cv7)} % contre ${f1(vfc.cvBase)} % d'habitude)`, compte: false })
@@ -206,7 +209,7 @@ function detailsSignal(e: EntreeSignal, alertes: Alerte[], calibration: boolean,
   const h = e.sommeilH
   const { nuitCourte, dette, sousRepere } = etatSommeil(h, s)
   if (nuitCourte) alerte('😴', dette ? 'Nuit courte, et manque de sommeil sur la semaine' : 'Nuit courte', ['sommeil', 'Nuit courte'])
-  else if (dette) alerte('😴', 'Manque de sommeil accumulé sur la semaine', ['sommeil', 'En retard'])
+  else if (dette) info('😴', 'Manque de sommeil sur la semaine (pour info : la couleur suit ta nuit)', ['sommeil', 'En retard'])
   // Conseil (le feu ne change pas) : sieste courte en début d'après-midi (Mesas 2023, Lastella 2021)
   if (nuitCourte || dette) info('💤', CONSEIL_SIESTE)
   // Repère conseillé (sans effet sur la couleur) : on s'habitue à manquer de sommeil sans le sentir (Van Dongen 2003)
@@ -219,9 +222,9 @@ function detailsSignal(e: EntreeSignal, alertes: Alerte[], calibration: boolean,
   else if (e.ressenti < s.ressentiMin) alerte('🙂', 'Ressenti en baisse ce matin', ['ressenti', 'En baisse'])
   else ok('🙂', 'Bon ressenti ce matin', ['ressenti', 'Bon'])
 
-  // Charge d'entraînement
-  if (a('pic')) alerte('🏋️', 'Hausse brutale de ta charge d’entraînement', ['charge', 'Hausse brutale'])
-  if (a('tsb')) alerte('🏋️', 'Fatigue d’entraînement accumulée', ['charge', 'Fatigue'])
+  // Charge d'entraînement : pour info seulement (relecture du 17/11/2026)
+  if (a('pic')) info('🏋️', 'Hausse brutale de ta charge d’entraînement (pour info)', ['charge', 'Hausse brutale'])
+  if (a('tsb')) info('🏋️', 'Fatigue d’entraînement accumulée (pour info)', ['charge', 'Fatigue'])
   if (!a('pic') && !a('tsb') && (e.tsb !== undefined || e.ratioPic !== undefined)) ok('🏋️', 'Charge d’entraînement bien dosée', ['charge', 'Bien dosée'])
   return d
 }

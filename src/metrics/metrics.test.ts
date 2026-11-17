@@ -161,20 +161,25 @@ describe('signal', () => {
     expect(adapterSeance({ intensite: 'haute', dureeMin: 60 }, s)).toMatch(/endurance basse/)
   })
 
-  it('sommeil : nuit courte ou dette = une seule alerte (🟠)', () => {
+  it('sommeil : la nuit et le ressenti = une seule alerte (🟠) ; la dette de la semaine pour info seulement', () => {
     const court = calculerSignal({ vfc: vfcOk, sommeilH: { nuit: 5.5, moyenne7: 6.5 }, sommeil: 1, ressenti: 2 })
     expect(court.couleur).toBe('orange')
-    expect(court.alertes).toHaveLength(1)
+    expect(court.alertes.filter((a) => a.compte)).toHaveLength(1)
     expect(court.raison).toMatch(/nuit courte/i)
-    // Dette personnelle : 7 j à 7 h 10 contre 8 h d'habitude
-    expect(calculerSignal({ vfc: vfcOk, sommeilH: { nuit: 7, moyenne7: 7.17, moyenne30: 8 } }).couleur).toBe('orange')
+    // Dette de la semaine (7 h 10 contre 8 h d'habitude, ou 6 h 59 de moyenne) : affichée, la couleur reste verte (17/11/2026)
+    const dette = calculerSignal({ vfc: vfcOk, sommeilH: { nuit: 7, moyenne7: 7.17, moyenne30: 8 } })
+    expect(dette.couleur).toBe('vert')
+    expect(dette.alertes.some((a) => a.code === 'dette' && !a.compte)).toBe(true)
+    expect(calculerSignal({ vfc: vfcOk, sommeilH: { nuit: 8.5, moyenne7: 6.98 } }).couleur).toBe('vert')
     expect(calculerSignal({ vfc: vfcOk, sommeilH: { nuit: 7.5, moyenne7: 7.6, moyenne30: 8 } }).couleur).toBe('vert')
     const n = analyserSommeil([{ date: '2026-10-21', h: 7 }, { date: '2026-10-22', h: 6 }, { date: '2026-10-23', h: 8 }], '2026-10-23')
     expect(n).toEqual({ nuit: 8, moyenne7: 7, moyenne30: undefined })
   })
 
-  it('🔴 si deux indicateurs ou malade', () => {
-    expect(calculerSignal({ vfc: { ...vfcOk, ln7: 3.9 }, tsb: -28 }).couleur).toBe('rouge')
+  it('🔴 si deux indicateurs du corps ou malade ; fraîcheur et pic de charge pour info seulement', () => {
+    expect(calculerSignal({ vfc: { ...vfcOk, ln7: 3.9 }, ressenti: 2 }).couleur).toBe('rouge')
+    expect(calculerSignal({ vfc: { ...vfcOk, ln7: 3.9 }, tsb: -28 }).couleur).toBe('orange')
+    expect(calculerSignal({ vfc: vfcOk, tsb: -40, ratioPic: 1.6 }).couleur).toBe('vert')
     expect(calculerSignal({ vfc: vfcOk, maladeOuDouleur: true }).couleur).toBe('rouge')
   })
 

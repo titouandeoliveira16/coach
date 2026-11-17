@@ -10,6 +10,7 @@ import { Aide } from '../../../core/ui/Aide'
 import { Carte } from '../../../core/ui/Carte'
 import { AIDES } from '../aides'
 import { analyser } from '../analyse/donnees'
+import { ChargeInfo } from './ChargeInfo'
 import { adapterDuJour } from '../plan/adaptation'
 import { MuscuDuJour, MuscuDuSoir } from '../muscu/MuscuDuJour'
 import { JOURS_REPRISE, annulerReport, repriseApresMaladie, reporterIntensite } from '../plan/imprevus'
@@ -149,7 +150,7 @@ export function CarteAujourdhui({ onModifierMatin, apresForme, remplir = false }
 
   const etapesDuJour = prevue && (decision?.force ? prevue.velo?.etapes : adaptation!.etapes)
   const minutesAdaptees = adaptation?.etapes ? Math.round(adaptation.etapes.reduce((t, e) => t + e.dureeSec, 0) / 60) : undefined
-  const autresSignaux = signal.details.filter((x) => !x.cle || x.cle === 'charge')
+  const autresSignaux = signal.details.filter((x) => !x.cle)
   const ressenti = mesure ? scoreRessenti(mesure) : undefined
   const plages = plagesForme(a.vfc, analyserSommeil(a.mesures.map((m) => ({ date: m.date, h: m.sommeilH })), jour))
   const couleurEtat = (e?: 'ok' | 'alerte' | 'info') => (e === 'alerte' ? COULEUR[signal.couleur === 'vert' ? 'orange' : signal.couleur] : e === 'ok' ? COULEUR.vert : 'var(--color-texte-2)')
@@ -174,11 +175,13 @@ export function CarteAujourdhui({ onModifierMatin, apresForme, remplir = false }
         <button type="button" onClick={basculerForme} className="mt-1 text-left">
           {plages.map((p) => <LignePlage key={p.cle} p={p} etat={signal.details.find((x) => x.cle === p.cle)?.etat} couleur={couleurEtat} />)}
         </button>
+        <ChargeInfo forme={a.forme} ratioPic={a.ratioPic} ouvert={formeOuverte} />
         {formeOuverte && (
           <div className="mt-3.5 space-y-3 border-t border-bordure pt-3">
+            {enAlerte.length === 0 && <p className="text-xs text-texte-3">Le feu suit ton corps : VFC, pouls au repos, ressenti et nuit.<Aide titre="Règle du feu" texte={AIDES.feu} /></p>}
             {enAlerte.length > 0 && (
               <p className="rounded-xl px-3 py-2.5 text-[13px] leading-snug" style={{ background: `color-mix(in srgb, ${COULEUR[signal.couleur]} 12%, transparent)` }}>
-                <b style={{ color: COULEUR[signal.couleur] }}>Pourquoi {signal.couleur} ?</b> {pourquoiCourt.replace(/^./, (c) => c.toUpperCase())}. {signal.couleur === 'orange' ? 'Une seule alerte : séance dure raccourcie, mêmes watts.' : 'Deux alertes ou plus : pas d’intensité aujourd’hui.'}<Aide titre="Règle du feu" texte={`${pourquoi} ${regle}`} />
+                <b style={{ color: COULEUR[signal.couleur] }}>Pourquoi {signal.couleur} ?</b> {pourquoiCourt.replace(/^./, (c) => c.toUpperCase())}. {signal.couleur === 'orange' ? 'Une seule alerte de ton corps : séance dure raccourcie, mêmes watts.' : 'Deux alertes de ton corps ou plus : pas d’intensité aujourd’hui.'}<Aide titre="Règle du feu" texte={`${pourquoi} ${regle} ${AIDES.feu}`} />
               </p>
             )}
             {signal.calibrationVfc && <p className="text-xs text-texte-3">Récupération en calibration ({a.vfc.nBase}/14 jours de mesures)</p>}
@@ -251,7 +254,7 @@ export function CarteAujourdhui({ onModifierMatin, apresForme, remplir = false }
             <p className="mt-0.5 text-[22px] font-bold leading-tight">{prevue.titre}{prevue.sport === 'velo' && !/\d+ ?(min|h)/.test(prevue.titre) ? ` · ${prevue.dureeMin} min` : ''}</p>
             {adaptation?.modifiee ? (
               <>
-                <p className="mt-1 text-sm"><b style={{ color: COULEUR[signal.couleur] }}>Pourquoi {signal.couleur === 'orange' ? 'raccourcie' : 'pas d’intensité'} ?</b> {pourquoiCourt}<Aide titre="Règle du feu" texte={`${pourquoi} ${regle}`} /></p>
+                <p className="mt-1 text-sm"><b style={{ color: COULEUR[signal.couleur] }}>Pourquoi {signal.couleur === 'orange' ? 'raccourcie' : 'pas d’intensité'} ?</b> {pourquoiCourt}<Aide titre="Règle du feu" texte={`${pourquoi} ${regle} ${AIDES.feu}`} /></p>
                 <ChoixSeance maintenue={!!decision?.force} couleur={COULEUR[signal.couleur]} onChoisir={choisir}
                   conseil={signal.couleur === 'orange' ? `Raccourcie${minutesAdaptees ? ` · ${minutesAdaptees} min` : ''}` : 'Très facile ou repos'}
                   prevu={signal.couleur === 'orange' ? `Complète · ${prevue.dureeMin} min` : 'Séance prévue'} />
