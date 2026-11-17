@@ -1,6 +1,6 @@
 import { IconeSport } from '../IconeSport'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { db } from '../../../core/db'
 import { enregistrer } from '../../../core/stockage'
@@ -26,7 +26,7 @@ import { joursPanneVelo } from '../plan/imprevus'
 import { annulerSemaineChargee, lireSemaineChargee, passerSemaineChargee } from '../plan/semaineChargee'
 import { FormulairePrevue } from '../plan/FormulairePrevue'
 import { annulerPrevue, changerDeJour, chargesSemaine, joursDe, joursPourDeplacer, supprimerPrevue } from '../plan/donnees'
-import { alertesCumul, estIntensite, genererSemaineVelo, lireMeta, noterResultat } from '../plan/programme'
+import { alertesCumul, estIntensite, genererSemaineVelo, lireMeta, mettreSemaineAJour, noterResultat } from '../plan/programme'
 import { programmeDe, useReglagesEntrainement } from '../reglagesEntrainement'
 import { lundiDe, nouvelId } from '../seances/donnees'
 import { RAISONS, type Raison, type Seance, type SeancePrevue } from '../types'
@@ -158,6 +158,8 @@ function CarteVelo({ lundi, deps, onMessage, onPrecedente, onSuivante }: { lundi
   const meta = useLiveQuery(async () => (await lireMeta(lundi)) ?? null, [lundi, ...deps])
   const kj = useLiveQuery(() => chargesSemaine(lundi), [lundi, ...deps])
   const [occupe, setOccupe] = useState(false)
+  // En arrivant sur une semaine (en cours ou les 2 suivantes) : recalculée toute seule si elle date d'avant aujourd'hui
+  useEffect(() => { mettreSemaineAJour(lundi) }, [lundi])
   if (meta === undefined || !kj) return null
   // Le programme démarre avec la première phase : avant, les séances sont fixées à la main
   const debutProgramme = [...programmeDe(r.programme).phases].map((p) => p.debut).sort()[0]

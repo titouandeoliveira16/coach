@@ -2,7 +2,7 @@ import { db } from '../../../core/db'
 import { dureeForce, exosDe, joursMuscu, NOMS_PERIODES, planForce, semainesApprentissage, type ReglagesForce, type SeanceForce } from '../muscu/force'
 import { signalerErreur } from '../../../core/erreurs'
 import { calculEnCours, debutCalcul, finCalcul, oublierPhoto, photoInterrompue } from '../../../core/calcul'
-import { aujourdhui, decalerJour, depuisJour, ecartJours, NOMS_JOURS } from '../../../core/dates'
+import { aujourdhui, decalerJour, depuisJour, ecartJours, NOMS_JOURS, versJour } from '../../../core/dates'
 import { enregistrer, supprimer } from '../../../core/stockage'
 import {
   ajustementZ2, departSelonHeures, PALIERS_SV1_DEDIE, meilleurLevier, pistesDeblocage, BLOCS_SV1, signalSv1, signalFcSv1, plageFcSv1, sprintsDeLaPhase, SV1_DEPART_PCT, SV1_MAX_PCT, budgetDePhase, budgetSemaine, plafondEtNominal, formatDe, gardeFouCourse, NOMS_FAMILLES, plafondsReprise, projeterSaison, choisirFormat, construireIntervalles, construireTest, construireZ2, coefficientPhase, estSemaineAllegee, etatProgression, palierRaccourci, tenirDansCreneau,
@@ -1048,24 +1048,40 @@ export async function mettreAJourFormatSeances() {
  * À l'ouverture (13/11/2026) : la semaine en cours construite avant la fin de la précédente (comptée à 100 %) est
  * recalculée une fois avec le vrai bilan.
  */
+/**
+ * Semaine à jour toute seule (17/11/2026, demande de Titouan : un élève qui oublie le bouton ↻ doit quand même avoir la
+ * bonne semaine) : la semaine en cours et les 2 suivantes sont recalculées une fois par jour, à l'ouverture ou quand on
+ * arrive dessus (séances faites gardées, envois à la montre et à Zwift mis à jour). Une seule à la fois.
+ */
+let miseAJourEnCours: Promise<unknown> = Promise.resolve()
+export function mettreSemaineAJour(lundi: string) {
+  miseAJourEnCours = miseAJourEnCours.then(async () => {
+    const actuel = lundiDe(aujourdhui())
+    if (lundi < actuel || lundi > decalerJour(actuel, 14)) return
+    const m = await lireMeta(lundi)
+    if (m && versJour(new Date(m.genereeLe)) >= aujourdhui()) return
+    // Semaine jamais construite : seulement la semaine en cours (si le programme existe) ; les suivantes sont construites d'avance
+    if (!m && lundi !== actuel) return
+    if (!m && !(await db.reglages.get('entrainement'))?.valeur) return
+    await genererSemaineVelo(lundi).catch(() => {})
+  }).catch(() => {})
+  return miseAJourEnCours
+}
+
 export async function actualiserSemaineEnCours() {
   // Zones de puissance enregistrées avec des trous entre elles (avant le 17/11/2026) : chaque zone repart 1 W au-dessus de la précédente
   const e = (await db.reglages.get('entrainement'))?.valeur as ReglagesEntrainement | undefined
   const z = e?.zonesVelo
   if (e && z?.some((x, i) => i > 0 && z[i - 1].wMax !== undefined && x.wMin !== z[i - 1].wMax! + 1))
     await enregistrer(db.reglages, { id: 'entrainement', valeur: { ...e, zonesVelo: z.map((x, i) => (i > 0 && z[i - 1].wMax !== undefined ? { ...x, wMin: z[i - 1].wMax! + 1 } : x)) } })
-  // 14.8 : les semaines à venir déjà construites par l'ancien calcul (séances au-dessus du budget) sont refaites une fois ;
-  // la semaine en cours reste telle quelle
+  // 14.8 : les semaines à venir déjà construites par l'ancien calcul (séances au-dessus du budget) sont refaites une fois
   for (const l of [7, 14].map((n) => decalerJour(lundiDe(aujourdhui()), n))) {
     const m = await lireMeta(l)
     if (m && m.version !== 2) await genererSemaineVelo(l).catch(() => {})
   }
-  // Le dimanche : la semaine prochaine est recalculée une fois avec le vrai bilan de celle-ci (comme le bilan l'annonce)
-  if (new Date(`${aujourdhui()}T12:00:00`).getDay() === 0) {
-    const suivante = decalerJour(lundiDe(aujourdhui()), 7)
-    const m = await lireMeta(suivante)
-    if (m && (m.version !== 2 || m.genereeLe.slice(0, 10) < aujourdhui())) await genererSemaineVelo(suivante).catch(() => {})
-  }
+  // Chaque jour, la semaine en cours à jour (et le dimanche, la semaine prochaine avec le vrai bilan de celle-ci)
+  await mettreSemaineAJour(lundiDe(aujourdhui()))
+  if (new Date(`${aujourdhui()}T12:00:00`).getDay() === 0) await mettreSemaineAJour(decalerJour(lundiDe(aujourdhui()), 7))
   const lundi = lundiDe(aujourdhui())
   if ((await lireMeta(lundi))?.bilanProvisoire) await genererSemaineVelo(lundi).catch(() => {})
 }

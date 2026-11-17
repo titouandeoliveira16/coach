@@ -36,6 +36,8 @@ export interface MesureMatin {
   motivation?: Note
   /** 5 = serein, 1 = très stressé */
   serenite?: Note
+  /** Chiffres venus de la montre (via Intervals) : mis à jour aux imports suivants tant que tu ne les as pas changés à la main */
+  importes?: ('vfcMs' | 'fcRepos' | 'sommeilH')[]
   /** Nuit sans montre (ou portée en partie) : VFC, FC de repos et sommeil de cette nuit sont ignorés */
   sansMontre?: boolean
   modifieLe: string

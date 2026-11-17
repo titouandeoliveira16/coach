@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Bouton } from '../../../core/ui/Bouton'
 import { Carte } from '../../../core/ui/Carte'
+import { ChampHeures } from '../../../core/ui/ChampHeures'
 import { ChampNombre } from '../../../core/ui/ChampNombre'
 import { ChoixNote } from '../../../core/ui/ChoixNote'
 import { aujourdhui } from '../../../core/dates'
@@ -16,7 +17,8 @@ const MONTRES = ['Garmin', 'COROS', 'Suunto', 'Polar', 'Wahoo']
  */
 export function SaisieMatin({ existante, onTermine }: { existante?: MesureMatin; onTermine: () => void }) {
   const [m, setM] = useState<Omit<MesureMatin, 'modifieLe'>>(existante ?? { date: aujourdhui() })
-  const changer = (changements: Partial<MesureMatin>) => setM((x) => ({ ...x, ...changements }))
+  // Une valeur changée à la main n'est plus remplacée par la montre aux imports suivants
+  const changer = (changements: Partial<MesureMatin>) => setM((x) => ({ ...x, ...changements, ...(x.importes ? { importes: x.importes.filter((k) => !(k in changements)) } : {}) }))
   // Ta montre (profil sportif → Mes appareils), pas « ta Garmin » pour tout le monde
   const [ps] = useReglage<{ appareils?: string[] }>('profil-sportif', {})
   const montre = ps.appareils?.find((a) => MONTRES.includes(a))
@@ -30,7 +32,7 @@ export function SaisieMatin({ existante, onTermine }: { existante?: MesureMatin;
       </p>
       <ChampNombre libelle="VFC" unite="ms" decimales={0} valeur={m.vfcMs} onValider={(v) => changer({ vfcMs: v })} />
       <ChampNombre libelle="FC de repos" unite="bpm" decimales={0} valeur={m.fcRepos} onValider={(v) => changer({ fcRepos: v })} />
-      <ChampNombre libelle="Durée de sommeil" unite="h" valeur={m.sommeilH} onValider={(v) => changer({ sommeilH: v })} />
+      <ChampHeures libelle="Durée de sommeil" valeur={m.sommeilH} onValider={(v) => changer({ sommeilH: v })} />
 
       <div className="mt-2 border-t border-bordure pt-2">
         {QUESTIONS.map((q) => (

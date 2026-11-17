@@ -116,9 +116,21 @@ async function importerWellness(depuis: string) {
   for (const j of jours) {
     const avant = await db.mesures.get(j.date)
     const m: MesureMatin = { modifieLe: new Date().toISOString(), ...avant, date: j.date }
-    if (m.vfcMs === undefined && j.hrv) m.vfcMs = Math.round(j.hrv)
-    if (m.fcRepos === undefined && j.restingHR) m.fcRepos = Math.round(j.restingHR)
-    if (m.sommeilH === undefined && j.sleepSecs) m.sommeilH = Math.round(j.sleepSecs / 360) / 10
+    // Une valeur de la montre est mise à jour aux imports suivants (le matin, la nuit n'est pas toujours entière au 1er
+    // import : 8 h 30 puis 8 h 45), sauf si tu l'as saisie ou changée à la main (17/11/2026)
+    // Mesures d'avant la 14.9 (sans cette liste) : celles d'hier et d'aujourd'hui sont considérées venues de la montre
+    const recente = !!avant && !avant.importes && j.date >= decalerJour(aujourdhui(), -1)
+    const importes = new Set(avant?.importes ?? (recente ? (['vfcMs', 'fcRepos', 'sommeilH'] as const).filter((k) => avant![k] !== undefined) : []))
+    const depuisMontre = (cle: 'vfcMs' | 'fcRepos' | 'sommeilH', v: number | undefined) => {
+      if (v === undefined || (m[cle] !== undefined && !importes.has(cle))) return
+      m[cle] = v
+      importes.add(cle)
+    }
+    depuisMontre('vfcMs', j.hrv ? Math.round(j.hrv) : undefined)
+    depuisMontre('fcRepos', j.restingHR ? Math.round(j.restingHR) : undefined)
+    // À la minute près, pour l'afficher en heures et minutes (8 h 45)
+    depuisMontre('sommeilH', j.sleepSecs ? Math.round(j.sleepSecs / 60) / 60 : undefined)
+    if (importes.size) m.importes = [...importes]
     // Les pas du jour augmentent au fil de la journée : toujours la dernière valeur de la montre
     if (j.steps) m.pas = j.steps
     if (m.vfcMs !== avant?.vfcMs || m.fcRepos !== avant?.fcRepos || m.sommeilH !== avant?.sommeilH || m.pas !== avant?.pas) {
@@ -314,6 +326,8 @@ async function completerCourbe() {
 export async function importerIntervalsSiBesoin() {
   const etat = await lireEtat()
   if (!etat.relie) return
-  if (etat.dernierImport && Date.now() - new Date(etat.dernierImport).getTime() < 3600_000) return
+  // Le matin (avant midi), toutes les 20 min : les chiffres de la nuit arrivent parfois en plusieurs fois ; sinon toutes les heures
+  const delai = new Date().getHours() < 12 ? 20 * 60_000 : 3600_000
+  if (etat.dernierImport && Date.now() - new Date(etat.dernierImport).getTime() < delai) return
   await importerIntervals().catch(() => {})
 }
