@@ -1,3 +1,4 @@
+import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { zonesDepuisCp } from '../../../core/zones'
 import { aujourdhui } from '../../../core/dates'
@@ -24,7 +25,9 @@ export function SectionVelo() {
   const [message, setMessage] = useState<string>()
   const [ps] = useReglage<ProfilSportif>('profil-sportif', { sports: [], materiel: [] })
   const prog = programmeDe(reglages.programme)
-  const wkg = reglages.cpW && profil.poidsKg ? reglages.cpW / profil.poidsKg : undefined
+  // Même poids que Progrès : ta dernière pesée (sinon celui du profil)
+  const poids = useLiveQuery(() => poidsAu(aujourdhui()), []) ?? profil.poidsKg
+  const wkg = reglages.cpW && poids ? reglages.cpW / poids : undefined
 
   return (
     <section className={`rounded-2xl border bg-surface p-3.5 ${cpOuvert ? 'border-accent' : 'border-bordure'}`}>

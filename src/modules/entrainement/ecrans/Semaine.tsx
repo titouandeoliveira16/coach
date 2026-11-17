@@ -184,20 +184,20 @@ function CarteVelo({ lundi, deps, onMessage, onPrecedente, onSuivante }: { lundi
           {semaine}
           <button type="button" onClick={onSuivante} className="pl-2 text-xl text-accent" aria-label="Semaine suivante">›</button>
         </span>
-        {(meta || kj.kjPrevus > 0) && (
+        {(meta || kj.kjPrevus > 0 || (passee && kj.kjRealises > 0)) && (
           <span className="flex items-center gap-2 text-sm">
-            <span><b className="text-lg">{formatNombre(Math.round(kj.kjRealises))}</b> / {formatNombre(Math.round(kj.kjPrevus))} kJ</span>
+            <span><b className="text-lg">{formatNombre(Math.round(kj.kjRealises))}</b>{kj.kjPrevus > 0 ? ` / ${formatNombre(Math.round(kj.kjPrevus))}` : ''} kJ</span>
             {!passee && <button type="button" onClick={generer} disabled={occupe} className="px-1 text-lg text-accent disabled:opacity-40" aria-label="Recalculer le vélo de la semaine">{occupe ? '…' : '↻'}</button>}
           </span>
         )}
       </div>
-      {meta || kj.kjPrevus > 0 ? (
+      {meta || kj.kjPrevus > 0 || (passee && kj.kjRealises > 0) ? (
         <>
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-surface-2">
             <div className="h-full rounded-full bg-accent" style={{ width: `${Math.min(100, kj.kjPrevus ? (kj.kjRealises / kj.kjPrevus) * 100 : 0)}%` }} />
           </div>
           <BarresSemaine lundi={lundi} />
-          {meta && <p className="mt-1.5 text-xs text-texte-3">Budget {formatNombre(meta.budget)} kJ · {meta.phase}{meta.allegee ? ' · semaine allégée' : ''} · {meta.raison}{lundi > lundiDe(aujourdhui()) ? ' · provisoire : il se recalcule avec ce que tu fais d’ici la fin de cette semaine' : ''}<Aide titre="Budget kJ" texte={AIDES.budgetAuto} /></p>}
+          {meta && <p className="mt-1.5 text-xs text-texte-3">{meta.phase}{meta.allegee ? ' · semaine allégée' : ''} · {meta.raison}{lundi > lundiDe(aujourdhui()) ? ' · provisoire : il se recalcule avec ce que tu fais d’ici la fin de cette semaine' : ''}<Aide titre="Budget kJ" texte={AIDES.budgetAuto} /></p>}
         </>
       ) : (
         <>

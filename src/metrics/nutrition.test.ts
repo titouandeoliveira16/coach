@@ -43,7 +43,8 @@ describe('perte de gras légère', () => {
     expect(repos.maintien - repos.kcal).toBeGreaterThanOrEqual(250)
     expect(repos.plancher).toBe(true)
     const z2 = besoinsDuJour({ ...p, activites: [{ sport: 'velo', dureeMin: 60, intensite: 'basse', kj: 600, partGlucides: 0.5 }], objectif: 'perte' })
-    expect(z2.deficit).toBe(170)
+    // Arrondi à 50 kcal comme le besoin et le maintien (17/11/2026), ≈ 170 avant arrondi
+    expect(z2.deficit).toBe(200)
     const inter = besoinsDuJour({ ...p, activites: [{ sport: 'velo', dureeMin: 60, intensite: 'haute', kj: 700, partGlucides: 0.8 }], objectif: 'perte' })
     expect(inter.journee).toBe('dure')
     expect(inter.deficit).toBe(100)

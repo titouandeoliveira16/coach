@@ -152,9 +152,11 @@ export function besoinsDuJour(o: {
   const lipides = Math.max((energie - glucides * 4 - proteines * 4) / 9, lipidesMin)
   const kcal = glucides * 4 + proteines * 4 + lipides * 9
   const r = (n: number) => Math.round(n)
+  // Chiffres affichés arrondis à 50 kcal et qui s'additionnent : maintien − perte de gras − étalement = besoin (audit du 17/11/2026)
+  const kcalA = Math.round(kcal / 50) * 50, maintienA = Math.round(maintien / 50) * 50, reductionA = Math.round(reduction / 50) * 50
   return {
-    kcal: Math.round(kcal / 50) * 50, maintien: Math.round(maintien / 50) * 50, deficit: r(Math.max(0, maintien - energie)), journee,
-    plancher: perte && plancherHabituel > maintien - deficitVise, reduction: r(reduction), base: r(base), quotidien: r(quotidien), seances: r(seances),
+    kcal: kcalA, maintien: maintienA, deficit: Math.max(0, maintienA - reductionA - kcalA), journee,
+    plancher: perte && plancherHabituel > maintien - deficitVise, reduction: reductionA, base: r(base), quotidien: r(quotidien), seances: r(seances),
     glucides: r(glucides), glucidesParKg: gkg, kcalGlucides: r(kcalGlucides), proteines: r(proteines), proteinesParKg, lipides: r(lipides),
   }
 }

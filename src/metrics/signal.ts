@@ -144,7 +144,7 @@ export function calculerSignal(e: EntreeSignal, s: Seuils = SEUILS_DEFAUT): Sign
   if (textes.length) alertes.push({ code: 'ressenti', texte: textes.join(', ').replace(/^./, (c) => c.toUpperCase()), compte: true })
 
   if (e.tsb !== undefined && e.tsb < s.tsbMin)
-    alertes.push({ code: 'tsb', texte: `Fraîcheur (TSB) basse : ${Math.round(e.tsb)}`, compte: true })
+    alertes.push({ code: 'tsb', texte: `Fraîcheur basse : ${Math.round(e.tsb)}, prudence sous ${s.tsbMin}`, compte: true })
 
   if (e.ratioPic !== undefined && e.ratioPic > s.picMax)
     alertes.push({ code: 'pic', texte: `Pic de charge : 7 derniers jours à ${Math.round(e.ratioPic * 100)} % de ta moyenne`, compte: true })

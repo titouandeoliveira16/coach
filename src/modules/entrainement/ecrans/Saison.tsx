@@ -331,7 +331,7 @@ export function Saison() {
           <p className="text-xs text-texte-3">
             {courses.map((c) => `${c.nom} (${niveaux.get(c.date) ?? 'B'}) le ${jm(c.date)}`).join(' · ')}
             {courses.length > 0 && tests.length > 0 ? ' · ' : ''}
-            {tests.length > 0 && `tests CP (○) ${tests.slice(0, 3).map(jm).join(', ')}`}
+            {tests.length > 0 && `tests CP (○) ${tests.map(jm).join(', ')}`}
           </p>
         )}
       </Carte>

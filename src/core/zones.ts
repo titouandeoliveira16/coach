@@ -33,9 +33,10 @@ export const ZONES_PCT_CP: { nom: string; min: number; max?: number }[] = [
 
 /** Zones de puissance d'une CP ; les bornes de FC déjà réglées sont gardées zone par zone. */
 export function zonesDepuisCp(cpW: number, anciennes: { fcMin?: number; fcMax?: number }[] = []) {
+  // Zones qui se suivent sans trou ni chevauchement : chaque zone commence 1 W au-dessus de la précédente (17/11/2026)
   return ZONES_PCT_CP.map((z, i) => ({
     nom: z.nom,
-    wMin: Math.round((cpW * z.min) / 100),
+    wMin: i === 0 ? 0 : Math.round((cpW * (ZONES_PCT_CP[i - 1].max ?? z.min)) / 100) + 1,
     ...(z.max !== undefined ? { wMax: Math.round((cpW * z.max) / 100) } : {}),
     ...(anciennes[i]?.fcMin !== undefined ? { fcMin: anciennes[i].fcMin } : {}),
     ...(anciennes[i]?.fcMax !== undefined && z.max !== undefined ? { fcMax: anciennes[i].fcMax } : {}),

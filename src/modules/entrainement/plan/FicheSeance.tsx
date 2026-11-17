@@ -22,7 +22,7 @@ export function FicheSeance({ velo }: { velo?: SeanceVelo }) {
   return (
     <div className="mt-3">
       <p className="mb-1 text-[13px] font-semibold text-texte-2">Fiche scientifique</p>
-      <Suspense fallback={null}><Fiche s={s} /></Suspense>
+      <Suspense fallback={null}><Fiche s={s} sansDuree /></Suspense>
     </div>
   )
 }

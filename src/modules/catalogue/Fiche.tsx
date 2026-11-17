@@ -39,10 +39,11 @@ function Etapes({ etapes, unite }: { etapes: Etape[]; unite?: string }) {
 const Titre = ({ children }: { children: string }) => <p className="mt-3 text-[11px] font-semibold text-texte-2">{children}</p>
 
 /** Une séance : résumé et profil, détail au toucher. */
-export function Fiche({ s }: { s: SeanceCatalogue }) {
+/** `sansDuree` : sous une séance déjà dimensionnée pour toi, pas de durée « type » qui contredirait la tienne. */
+export function Fiche({ s, sansDuree = false }: { s: SeanceCatalogue; sansDuree?: boolean }) {
   const [ouverte, setOuverte] = useState(false)
   const p = s.preuve
-  const meta = [s.zone !== '—' && s.zone, s.rpe !== '—' && `RPE ${s.rpe}`, s.dureeMin && `${s.dureeMin} min`, s.travailMin ? `${String(s.travailMin).replace('.', ',')} min de qualité` : '']
+  const meta = [s.zone !== '—' && s.zone, s.rpe !== '—' && `RPE ${s.rpe}`, !sansDuree && s.dureeMin && `${s.dureeMin} min`, !sansDuree && s.travailMin ? `${String(s.travailMin).replace('.', ',')} min de qualité` : '']
     .filter(Boolean).join(' · ')
   return (
     <div className="rounded-[14px] bg-surface">

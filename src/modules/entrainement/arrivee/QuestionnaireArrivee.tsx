@@ -1,9 +1,11 @@
+import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useState, type ReactNode } from 'react'
 import { aujourdhui, decalerJour } from '../../../core/dates'
 import { premierMars } from '../../../metrics/saison'
 import { APPAREILS, conseilsConnexions } from '../appareils'
 import { enregistrer } from '../../../core/stockage'
 import { db } from '../../../core/db'
+import type { ReglagesEntrainement } from '../types'
 import { Bouton } from '../../../core/ui/Bouton'
 import { Carte } from '../../../core/ui/Carte'
 import { ANCIENNETES, DISCIPLINES_PROPOSEES, HEURES_RECENTES, NOMS_DISCIPLINES, NOMS_PHASES, epreuveDe, niveauDuProfil, niveauxCourses, verifierSemaineType } from '../../../metrics/programme'
@@ -11,7 +13,7 @@ import { Defileur, EditeurSemaine } from '../reglages/EditeurSemaine'
 import { champsParcours, ChampsParcours, EditeurCols, ListeCourses, parcoursDe } from '../reglages/ListeCourses'
 import { AIDES } from '../aides'
 import { importerIntervals, relierIntervals } from '../import/intervals'
-import { enregistrerArrivee, preparerArrivee, reponsesExistantes, SEMAINE_TYPE_DEPART, semaineDepuisJours, type EtatArrivee, type ReponsesArrivee } from './donnees'
+import { cpProvisoire, historiqueRecent, enregistrerArrivee, preparerArrivee, reponsesExistantes, SEMAINE_TYPE_DEPART, semaineDepuisJours, type EtatArrivee, type ReponsesArrivee } from './donnees'
 
 const HEURES = ['Moins de 4 h', '4 à 6 h', '6 à 8 h', '8 à 10 h', '10 à 12 h', 'Plus de 12 h']
 const MUSCU = ['Pas pour l’instant', '1 séance par semaine', '2 séances par semaine']
@@ -83,7 +85,14 @@ export function QuestionnaireArrivee({ montreSeulement = false }: { montreSeulem
     !!r.semaineType && verifierSemaineType(r.semaineType).ok,
     !!r.course?.date && r.course.date > jour,
   ]
-  const apercu = etape === 3 && pret[3] ? preparerArrivee(reponses(), jour) : undefined
+  // Aperçu calculé comme l'enregistrement (avec tes sorties récentes et tes tests) : la saison affichée est celle qui sera gardée
+  const rep = reponses()
+  const contexte = useLiveQuery(async () => {
+    if (etape !== 3 || !pret[3]) return undefined
+    const ent = (await db.reglages.get('entrainement'))?.valeur as ReglagesEntrainement | undefined
+    return { tests: ent?.tests, historique: await historiqueRecent(jour, rep.cpW ?? ent?.cpW ?? cpProvisoire(rep.poidsKg), rep.semaineType) }
+  }, [etape, pret[3], rep.cpW, rep.poidsKg, JSON.stringify(rep.semaineType)])
+  const apercu = etape === 3 && pret[3] && contexte ? preparerArrivee(rep, jour, contexte.tests, contexte.historique) : undefined
   const contexteCourses = { discipline: r.discipline ?? 'route', typeCourse: r.typeCourse, dureeCourseMin: r.dureeCourseMin, cpW: nombre(textes.cp), poidsKg: nombre(textes.poids) } as const
 
   const titres = ['Faisons connaissance', 'Ton profil', 'Ta semaine', 'Ton objectif', 'Relie ta montre']

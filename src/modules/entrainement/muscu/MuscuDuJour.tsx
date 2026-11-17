@@ -25,10 +25,10 @@ export function MuscuDuJour({ p, couleur }: { p: SeancePrevue; couleur: 'vert' |
     <>
       <p className="mt-0.5 text-[22px] font-bold leading-tight">{p.titre}</p>
       <p className="mt-0.5 text-[13px] text-muscu">
-        {s.periode === 'lourd' ? `Semaine ${s.semaine} sur 12 · ` : s.periode === 'apprentissage' ? `Semaine ${s.semaine} sur ${semainesApprentissage(force.experience)} · ` : ''}{s.series} × {s.reps}{s.legere ? ' légères' : ''} + prévention · ~{p.dureeMin} min{s.facteur ? ` · reprise ${Math.round(s.facteur * 100)} %` : ''}{s.soir ? ' · le soir, 3 h après le vélo' : ''}
+        {s.periode === 'lourd' ? `Semaine ${s.semaine} sur 12 · ` : s.periode === 'apprentissage' ? `Semaine ${s.semaine} sur ${semainesApprentissage(force.experience)} · ` : ''}{couleur === 'orange' && s.series > 1 ? `${s.series - 1} × ${s.reps} (feu orange)` : `${s.series} × ${s.reps}`}{s.legere ? ' légères' : ''} + prévention · ~{p.dureeMin} min{s.facteur ? ` · reprise ${Math.round(s.facteur * 100)} %` : ''}{s.soir ? ' · le soir, 3 h après le vélo' : ''}
       </p>
       {couleur !== 'vert' && (
-        <p className="mt-1 text-[13px] text-attention">{couleur === 'rouge' ? 'Feu rouge : pas de muscu lourde aujourd’hui, décale-la à un autre jour.' : 'Feu orange : une série de moins par exercice, mêmes charges.'}</p>
+        <p className="mt-1 text-[13px] text-attention">{couleur === 'rouge' ? 'Feu rouge : pas de muscu lourde aujourd’hui, décale-la à un autre jour.' : s.series > 1 ? 'Feu orange : une série de moins par exercice, mêmes charges.' : 'Feu orange : séance gardée telle quelle (une seule série par exercice).'}</p>
       )}
       <div className="mt-2.5 grid grid-cols-5 gap-1.5">
         {exos.map((e) => (

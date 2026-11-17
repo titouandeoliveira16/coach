@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { aujourdhui } from '../../../core/dates'
 import { formatEuros } from '../../../core/format'
 import { Puces } from '../../../core/ui/Puces'
-import { moisDe, racine } from '../calculs'
+import { estRemboursement, moisDe, racine } from '../calculs'
 import { DetailMouvement } from '../DetailMouvement'
 import { useBudget } from '../donnees'
 import type { Mouvement, TypeMouvement } from '../types'
@@ -38,7 +38,9 @@ export function Mouvements() {
     }
     return true
   })
-  const total = (t: TypeMouvement) => liste.filter((m) => m.type === t).reduce((s, m) => s + m.montant, 0)
+  // Comme l'écran Mois : un remboursement d'ami vient en moins des dépenses, pas dans les revenus (17/11/2026)
+  const rembourse = liste.filter(estRemboursement).reduce((s, m) => s + m.montant, 0)
+  const total = (t: TypeMouvement) => liste.filter((m) => m.type === t && !estRemboursement(m)).reduce((s, m) => s + m.montant, 0) - (t === 'depense' ? rembourse : 0)
   const parJour = new Map<string, Mouvement[]>()
   for (const m of liste) parJour.set(m.date, [...(parJour.get(m.date) ?? []), m])
 

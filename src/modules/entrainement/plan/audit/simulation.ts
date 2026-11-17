@@ -119,6 +119,7 @@ export async function simuler(sc: Scenario, detail = false, journal?: string[]):
   const fin = [r.course.date, ...(r.autresCourses ?? []).map((c) => c.date)].sort().pop()!
   const cp = r.cpW!
   let refPrec: number | undefined
+  let prec: { budget: number; allegee: boolean; reduite: boolean } | undefined
   const derniers = new Map<string, { palier: number; resultat?: string }>()
   for (let l = DEBUT; l <= decalerJour(fin, 14); l = decalerJour(l, 7)) {
     vi.setSystemTime(new Date(`${l}T06:00:00`))
@@ -146,6 +147,15 @@ export async function simuler(sc: Scenario, detail = false, journal?: string[]):
     if (!Number.isFinite(meta.budget) || meta.budget <= 0) p(`budget ${meta.budget}`)
     if (refPrec && meta.budgetRef > refPrec * 1.1 + 1) p(`budget +${Math.round((meta.budgetRef / refPrec - 1) * 100)} % (${refPrec} → ${meta.budgetRef}) · ${meta.raison}`)
     refPrec = meta.budgetRef
+    // Audit des chiffres (17/11/2026) : le budget affiché est le total des séances prévues, et ce qu'il annonce est vrai
+    const totalPrevu = semaine.reduce((t, x) => t + (x.kjPrevu ?? 0), 0)
+    if (Math.abs(totalPrevu - meta.budget) > 3) p(`budget affiché ${meta.budget} kJ ≠ séances prévues ${Math.round(totalPrevu)} kJ`)
+    const ecartVise = meta.budgetVise ? meta.budget / meta.budgetVise : 1
+    const explique = /limité|dépassent|Point de départ/.test(meta.raison)
+    if (!explique && (ecartVise < 0.95 || ecartVise > 1.05)) p(`prévu ${meta.budget} kJ pour un budget visé de ${meta.budgetVise} kJ, sans explication · ${meta.raison}`)
+    if (prec && !prec.allegee && meta.allegee && !explique && meta.budget > prec.budget * 0.8) p(`semaine allégée pas allégée : ${prec.budget} → ${meta.budget} kJ (${Math.round((meta.budget / prec.budget - 1) * 100)} %)`)
+    if (prec && !prec.allegee && !prec.reduite && !meta.allegee && /^\+/.test(meta.raison) && !explique && meta.budget > prec.budget * 1.125) p(`hausse annoncée « ${meta.raison.split(' :')[0]} », réelle +${Math.round((meta.budget / prec.budget - 1) * 100)} % (${prec.budget} → ${meta.budget})`)
+    prec = { budget: meta.budget, allegee: meta.allegee, reduite: (meta.budgetVise ?? meta.budget) < meta.budgetRef * 0.9 }
     for (const s of semaine) {
       // Séances bien formées
       if (!(s.dureeMin > 0) || !(s.kjPrevu! > 0) || Number.isNaN(s.kjPrevu)) p(`${s.titre} : durée ${s.dureeMin}, kJ ${s.kjPrevu}`)
@@ -154,6 +164,11 @@ export async function simuler(sc: Scenario, detail = false, journal?: string[]):
         const plat = deplier(et)
         const total = plat.reduce((t, x) => t + x.dureeSec, 0)
         if (Math.abs(total - s.dureeMin * 60) > 120) p(`${s.titre} : déroulé de ${Math.round(total / 60)} min pour ${s.dureeMin} min`)
+        // kJ annoncés = kJ des étapes (audit des chiffres du 17/11/2026), quand toutes les étapes ont leurs watts
+        if (plat.every((x) => x.w !== undefined) && s.kjPrevu) {
+          const kjEt = plat.reduce((t, x) => t + (x.dureeSec * x.w!) / 1000, 0)
+          if (Math.abs(kjEt - s.kjPrevu) > Math.max(15, s.kjPrevu * 0.04)) p(`${s.titre} : ${s.kjPrevu} kJ annoncés, ${Math.round(kjEt)} kJ dans les étapes`)
+        }
         for (const x of plat) {
           if (x.dureeSec <= 0) p(`${s.titre} : étape « ${x.libelle} » de ${x.dureeSec} s`)
           if (x.w !== undefined && (Number.isNaN(x.w) || x.w < 0.3 * cp || x.w > 2.6 * cp)) p(`${s.titre} : « ${x.libelle} » à ${x.w} W (CP ${cp})`)
@@ -224,7 +239,7 @@ export async function simuler(sc: Scenario, detail = false, journal?: string[]):
       vi.setSystemTime(new Date(`${panne}T06:00:00`))
       await declarerPanneVelo(panne, decalerJour(panne, 3))
       const pendant = (await db.prevues.where('date').between(panne, decalerJour(panne, 3), true, true).toArray()).filter((x) => x.sport === 'velo' && x.statut === 'prevue')
-      if (pendant.length) p(`${pendant.length} séance(s) de vélo prévue(s) pendant la panne`)
+      if (pendant.length) p(`${pendant.length} séances de vélo prévues pendant la panne`)
     }
     // Intensité sautée deux semaines de suite : l'alerte
     if (sc.sauts.length && l === decalerJour(sc.sauts[1], 7)) {
@@ -234,7 +249,7 @@ export async function simuler(sc: Scenario, detail = false, journal?: string[]):
         p(`intensité sautée 2 semaines de suite sans alerte · ${(await db.prevues.where('date').between(sc.sauts[0], decalerJour(sc.sauts[1], 6), true, true).toArray()).filter((x) => x.sport === 'velo').map((x) => `${x.date.slice(5)} ${x.titre} ${x.statut} ${x.origine}`).join(' | ')}`)
     }
 
-    if (journal) journal.push(`${l} · ${phase.type}${meta.allegee ? ' (allégée)' : ''} · budget ${meta.budget} kJ · ${meta.raison}\n    ${toutes.filter((x) => x.date <= decalerJour(l, 6)).sort((x, y) => x.date.localeCompare(y.date)).map((x) => `${x.date.slice(5)} ${x.titre} (${x.dureeMin}′${x.kjPrevu ? `, ${x.kjPrevu} kJ` : ''})`).join(' | ')}`)
+    if (journal) journal.push(`${l} · ${phase.type}${meta.allegee ? ' (allégée)' : ''} · budget ${meta.budget} kJ (réf. ${meta.budgetRef}, visé ${meta.budgetVise ?? meta.budget}) · ${meta.raison}\n    ${toutes.filter((x) => x.date <= decalerJour(l, 6)).sort((x, y) => x.date.localeCompare(y.date)).map((x) => `${x.date.slice(5)} ${x.titre} (${x.dureeMin}′${x.kjPrevu ? `, ${x.kjPrevu} kJ` : ''})`).join(' | ')}`)
     if (detail && problemes.some((x) => x.startsWith(l))) problemes.push(`   semaine : ${toutes.filter((x) => x.date <= decalerJour(l, 6)).sort((x, y) => x.date.localeCompare(y.date)).map((x) => `${x.date.slice(5)} ${x.sport} ${x.titre} (${x.dureeMin}′, ${x.intensite})`).join(' | ')} · roles ${prog.semaineType.join(',')} · courses ${courses.filter(ici).join(',')}`)
     // La semaine vécue
     const malade = a() < vie.malade

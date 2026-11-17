@@ -91,7 +91,7 @@ export function Mois() {
           </p>
           <p className="chiffre text-5xl" style={{ color: reste.reste < 0 ? ETAT.rouge : undefined }}>{formatEuros(reste.reste)}</p>
           <p className="mt-1 text-sm text-texte-3">
-            {formatEuros(reste.courant)} sur ton compte{reste.especes ? ` ${reste.especes < 0 ? '−' : '+'} ${formatEuros(Math.abs(reste.especes))} en espèces` : ''}
+            {formatEuros(reste.courant)} sur {d.comptes.filter((c) => c.type === 'courant' && !c.archive).length > 1 ? 'tes comptes courants' : 'ton compte'}{reste.especes ? ` ${reste.especes < 0 ? '−' : '+'} ${formatEuros(Math.abs(reste.especes))} en espèces` : ''}
             {reste.fixesRestantes > 0 && ` − ${formatEuros(reste.fixesRestantes)} de charges fixes à venir`}
             {reste.abonnements > 0 && ` − ${formatEuros(reste.abonnements)} d'abonnements à venir`}
             {reste.revenusAttendus > 0 && ` + ${formatEuros(reste.revenusAttendus)} de revenus attendus`}

@@ -5,8 +5,15 @@ import { maintienMesure, tendancePoids } from '../../../metrics/nutrition'
 import { besoinsDe, lireReglagesNutrition, modifierReglagesNutrition } from './besoins'
 import { peseesValides } from './pesees'
 
-/** Premier jour du journal des repas */
+/** Premier jour possible du journal des repas */
 export const DEBUT_JOURNAL = '2026-10-26'
+
+/** Premier jour du journal de CE compte : son premier repas noté (sinon aujourd'hui), pas une date écrite en dur (17/11/2026). */
+async function debutJournal() {
+  const cles = (await db.repas.toCollection().primaryKeys()).map(String).sort()
+  const premier = cles[0] ?? aujourdhui()
+  return premier > DEBUT_JOURNAL ? premier : DEBUT_JOURNAL
+}
 
 /** kcal d'après les macros (4 kcal/g de protéines et de glucides, 9 kcal/g de lipides) */
 export const kcalDesMacros = (r: Pick<JournalRepas, 'proteines' | 'glucides' | 'lipides'>) =>
@@ -26,14 +33,15 @@ export async function jourARemplir(maintenant = new Date()) {
   const duJour = await db.repas.get(jour)
   if (duJour) return { jour, saisie: duJour }
   if (maintenant.getHours() >= 18) return { jour, saisie: undefined }
-  if (hier >= DEBUT_JOURNAL && !(await db.repas.get(hier))) return { jour: hier, saisie: undefined }
+  if (hier >= (await debutJournal()) && !(await db.repas.get(hier))) return { jour: hier, saisie: undefined }
   return undefined
 }
 
 /** Suivi sur n jours : mangé vs besoin estimé, jour par jour. */
 export async function suiviRepas(n = 28) {
   const fin = aujourdhui()
-  const jours = Array.from({ length: n }, (_, i) => decalerJour(fin, i - n + 1)).filter((j) => j >= DEBUT_JOURNAL)
+  const debut = await debutJournal()
+  const jours = Array.from({ length: n }, (_, i) => decalerJour(fin, i - n + 1)).filter((j) => j >= debut)
   const lignes = []
   for (const j of jours) {
     const r = await db.repas.get(j)

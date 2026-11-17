@@ -9,6 +9,9 @@ export function lireNombre(texte: string): number | undefined {
   return t === '' || !Number.isFinite(n) ? undefined : n
 }
 
+/** « 1 séance », « 3 séances » (et un autre pluriel si besoin : « 1 jour de données », « 2 jours de données ») */
+export const pluriel = (n: number, un: string, plusieurs = `${un}s`) => `${n} ${n > 1 ? plusieurs : un}`
+
 /** Affiche un nombre à la française : 18,5 */
 export function formatNombre(n: number | undefined, decimales = 0): string {
   if (n === undefined) return ''

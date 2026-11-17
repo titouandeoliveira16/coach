@@ -130,7 +130,7 @@ export function CarteNutrition({ ouverte: ouverteParent, onBasculer }: {
         const tropVite = b.tendance < -0.01 * b.kg
         return (
           <p className={`mt-1 text-sm ${tropVite ? 'text-attention' : 'text-texte-2'}`}>
-            Poids : <b>{b.tendance > 0 ? '+' : ''}{formatNombre(b.tendance, 1)} kg/sem.</b>
+            Poids : <b>{b.tendance > 0 ? '+' : ''}{formatNombre(b.tendance, 1)} kg/sem.</b> <span className="text-texte-3">(sur 4 semaines)</span>
             {b.objectif === 'perte' && ` (visé ≈ ${formatNombre(-0.005 * b.kg, 1)})`}
             {tropVite && ' · trop rapide : mange un peu plus pour garder tes muscles et tes performances'}
           </p>

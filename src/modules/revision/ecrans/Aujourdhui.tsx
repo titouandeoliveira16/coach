@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { CircleCheck, CircleDot, RotateCcw } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { aujourdhui, depuisJour } from '../../../core/dates'
+import { ecartJours, aujourdhui, depuisJour } from '../../../core/dates'
 import { Aide } from '../../../core/ui/Aide'
 import { Bouton } from '../../../core/ui/Bouton'
 import { Carte } from '../../../core/ui/Carte'
@@ -51,7 +51,7 @@ export function Aujourdhui() {
   return (
     <div className="space-y-3 pb-4">
 
-      <p className="text-lg capitalize text-texte-2">{dateLongue(jour)} · <span className="text-texte-3">{NOMS_PERIODES[per]}</span></p>
+      <p className="text-lg text-texte-2 first-letter:uppercase">{dateLongue(jour)} · <span className="text-texte-3">{NOMS_PERIODES[per]}</span></p>
 
       {/* Minuteur en cours */}
       {minuteur.etat && (
@@ -97,7 +97,7 @@ export function Aujourdhui() {
             <li key={r.id} className="py-2.5">
               <div className="flex items-baseline justify-between gap-2">
                 <span className="font-medium">{nom(r.notionId)}</span>
-                <span className="shrink-0 text-sm text-texte-3">{libelleRappel(r)} · {dureeRappel(r)} min</span>
+                <span className="shrink-0 text-sm text-texte-3">{libelleRappel(r)}{r.prevu < jour ? <span className="text-attention"> · en retard de {ecartJours(r.prevu, jour)} j</span> : null} · {dureeRappel(r)} min</span>
               </div>
               <BoutonsResultat onChoisir={(res) => noter(r, res)} />
             </li>

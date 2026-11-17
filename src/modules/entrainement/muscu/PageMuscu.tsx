@@ -29,7 +29,8 @@ export function PageMuscu() {
   const decision = useLiveQuery(async () => (await db.decisions.get(aujourdhui())) ?? null)
   const brute: SeanceForce | undefined = p?.muscu
   // Feu orange (sans « je maintiens ») : une série de moins, mêmes charges
-  const s: SeanceForce | undefined = brute && decision?.couleur === 'orange' && !decision.force && brute.series > 1 ? { ...brute, series: brute.series - 1 } : brute
+  // Seulement pour la séance d'aujourd'hui : le feu du jour ne touche pas une séance d'un autre jour (audit du 17/11/2026)
+  const s: SeanceForce | undefined = brute && p?.date === aujourdhui() && decision?.couleur === 'orange' && !decision.force && brute.series > 1 ? { ...brute, series: brute.series - 1 } : brute
   const exos = s ? exosDe(s) : []
   useEffect(() => { if (!ouvert && exos[0]) setOuvert(exos[0].id) }, [ouvert, exos])
 
@@ -75,7 +76,7 @@ export function PageMuscu() {
       </p>
       <p className="rounded-xl border border-attention/40 bg-attention/10 px-3 py-2 text-[13px] text-attention">⌚ Lance ta montre : activité <b>Musculation</b>. Sinon ta séance ne remonte pas dans ta charge.</p>
       <p className="mt-2 text-[13px] text-texte-2">
-        {s.facteur ? `Reprise après un arrêt : charges à ${Math.round(s.facteur * 100)} %. ` : ''}{s.series} séries de {s.reps} répétitions{s.legere ? ' légères : garde 2 répétitions en réserve' : ' lourdes : une charge que tu pourrais soulever 1 ou 2 fois de plus, jamais jusqu’à l’échec'}{s.reduite ? ' · version réduite (demain, séance clé)' : ''} · descente lente (2-3 s), montée vive · repos 2-3 min entre les séries{s.soir ? ' · 3 h après le vélo au moins' : ''}.
+        {s.facteur ? `Reprise après un arrêt : charges à ${Math.round(s.facteur * 100)} %. ` : ''}{s.series} série{s.series > 1 ? 's' : ''} de {s.reps} répétitions{s.legere ? ' légères : garde 2 répétitions en réserve' : ' lourdes : une charge que tu pourrais soulever 1 ou 2 fois de plus, jamais jusqu’à l’échec'}{s.reduite ? ' · version réduite (demain, séance clé)' : ''} · descente lente (2-3 s), montée vive · repos 2-3 min entre les séries{s.soir ? ' · 3 h après le vélo au moins' : ''}.
       </p>
 
       {/* Échauffement (relu le 15/11/2026 : plausible, Ribeiro 2021) : à cocher comme une série */}

@@ -156,7 +156,8 @@ export const champsCourse = (t: keyof typeof TYPES_COURSE): Pick<SeancePrevue, '
 export async function chargesSemaine(lundi: string) {
   const c = await chargerContexte()
   const seances = await db.seances.where('date').between(decalerJour(lundi, -28), decalerJour(lundi, 6), true, true).toArray()
-  const prevues = (await db.prevues.where('date').between(lundi, decalerJour(lundi, 6), true, true).toArray()).filter(actives)
+  const toutes = await db.prevues.where('date').between(lundi, decalerJour(lundi, 6), true, true).toArray()
+  const prevues = toutes.filter(actives)
   const realiseeEntre = (du: string, au: string) => seances.filter((s) => s.date >= du && s.date <= au).reduce((a, s) => a + chargeDe(s, c), 0)
 
   const realisee = realiseeEntre(lundi, decalerJour(lundi, 6))
@@ -169,7 +170,8 @@ export async function chargesSemaine(lundi: string) {
   const kjRealises = seances.filter((s) => s.date >= lundi && s.date <= decalerJour(lundi, 6)).reduce((a, s) => a + (s.kj ?? 0), 0)
   // Prévu = ce qui était prévu au départ (toutes les séances prévues de la semaine, faites ou non), comme le bilan du
   // dimanche (16/11/2026 : avant, « fait + reste à faire », qui devenait égal au fait une fois la semaine finie)
-  const kjPlan = prevues.reduce((a, p) => a + (p.kjPrevu ?? 0), 0)
+  // Une séance pas faite reste dans le prévu (17/11/2026, même total que le bilan du dimanche)
+  const kjPlan = toutes.filter((p) => p.sport === 'velo').reduce((a, p) => a + (p.kjPrevu ?? 0), 0)
   return {
     prevue, realisee, precedente: precedentes[0], moyenne4: precedentes.reduce((a, b) => a + b, 0) / 4,
     unite: c.chargeRef === 'trimp' ? 'TRIMP' : 'sRPE', kjRealises, kjPrevus: kjPlan,

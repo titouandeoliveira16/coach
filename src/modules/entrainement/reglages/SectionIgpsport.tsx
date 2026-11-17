@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { depuis } from '../../../core/format'
+import { depuis, pluriel } from '../../../core/format'
 import { useSynchro } from '../../../core/synchro'
 import { Bouton } from '../../../core/ui/Bouton'
 import { Repliable } from '../../../core/ui/Repliable'
@@ -33,7 +33,7 @@ export function SectionIgpsport() {
     }
   }
   const bilan = (r: { envoyees: number; reste: number; erreur?: string }) =>
-    r.erreur ?? `✓ ${r.envoyees} sortie(s) envoyée(s)${r.reste ? ` · encore ${r.reste} dans ton historique : elles arrivent toutes seules, par paquets, toutes les 15 min` : ''}.`
+    r.erreur ?? `✓ ${pluriel(r.envoyees, 'sortie envoyée', 'sorties envoyées')}${r.reste ? ` · encore ${r.reste} dans ton historique : elles arrivent toutes seules, par paquets, toutes les 15 min` : ''}.`
 
   const resume = !session ? 'Connecte-toi à ton compte'
     : etat?.relie ? (etat.erreur ? <span className="text-attention">⚠︎ {etat.erreur}</span>
@@ -47,7 +47,7 @@ export function SectionIgpsport() {
       ) : etat?.relie ? (
         <div className="space-y-2">
           <p className="text-sm text-texte-2">
-            Compte {etat.identifiant} · {etat.importees ?? 0} sortie(s) envoyée(s) dans Intervals.icu{etat.reste ? `, encore ${etat.reste} dans ton historique` : ''}.
+            Compte {etat.identifiant} · {pluriel(etat.importees ?? 0, 'sortie envoyée', 'sorties envoyées')} dans Intervals.icu{etat.reste ? `, encore ${etat.reste} dans ton historique` : ''}.
             Les nouvelles arrivent toutes seules toutes les 15 minutes.
           </p>
           {etat.erreur && <p className="text-sm text-attention">{etat.erreur}</p>}

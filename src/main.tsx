@@ -46,6 +46,8 @@ apresPremiereSynchro().then(async () => {
     ['muscu', () => import('./modules/entrainement/arrivee/donnees').then((m) => m.migrerMuscu())],
     ['historique', () => import('./modules/entrainement/arrivee/donnees').then((m) => m.completerHistorique())],
     ['semaine en cours', () => import('./modules/entrainement/plan/programme').then((m) => m.actualiserSemaineEnCours())],
+    // Budget : ses mises à jour au démarrage, pas seulement à l'ouverture de l'écran (sinon l'Accueil affiche un autre reste à vivre)
+    ['budget', () => import('./modules/budget/donnees').then(async (m) => { const { db } = await import('./core/db'); if (await db.comptes.count()) await m.mettreAJour() })],
     // Contrôle des séances récentes recalculé avec les règles du moment (ex. arrêts exclus des moyennes, v0.71)
     ['contrôle des séances', () => import('./modules/entrainement/import/intervals').then((m) => m.recontrolerRecentes())],
   ]

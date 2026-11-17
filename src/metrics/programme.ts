@@ -307,7 +307,10 @@ export function construireIntervalles(f: Format, palier: number | Palier, cpW: n
   const wFacile = arrondi5(cpW * 0.5)
   const pr = preparationDe(f)
   const kjEncadrement = [...ECHAUFFEMENTS[pr], ...RETOURS[pr]].reduce((t, [d, x]) => t + d * cpW * x, 0)
-  const kj = (kjEncadrement + travailSec * wT + (corpsSec - travailSec) * wR) / 1000
+  // Récupération entre les séries à 50 % de la CP, comme dans le déroulé (audit des chiffres du 17/11/2026 : les over-unders
+  // et relances comptaient tout le temps hors travail à leur puissance de fond, 5 à 10 % de kJ en trop)
+  const recupSeries = Math.min(corpsSec - travailSec, (lePalier(f, palier).series - 1) * (f.recupSerieSec ?? 0))
+  const kj = (kjEncadrement + travailSec * wT + (corpsSec - travailSec - recupSeries) * wR + recupSeries * wFacile) / 1000
 
   // Déroulé : échauffement, séries / répétitions, récupérations, retour au calme
   const etapes = echauffement(pr, cpW)
@@ -1112,6 +1115,8 @@ export interface BilanSemaine {
   kjAVenir?: number
   /** Semaine avec une course C : la semaine d'après ne monte pas (15/11/2026) */
   courseC?: boolean
+  /** Semaine réduite sous sa référence (affûtage, récupération, garde-fou) : la suivante y revient, sans hausse (17/11/2026) */
+  reduite?: boolean
 }
 
 /**
@@ -1125,9 +1130,9 @@ export function budgetSemaine(prec: BilanSemaine | undefined, nominal: number, p
   if (!prec) {
     ref = nominal
     raison = raisonDepart
-  } else if (prec.allegee) {
+  } else if (prec.allegee || prec.reduite) {
     ref = prec.budgetRef
-    raison = 'Retour au budget d’avant la semaine allégée'
+    raison = prec.allegee ? 'Retour au budget d’avant la semaine allégée' : 'Retour au budget d’avant la semaine réduite'
   } else {
     const part = prec.kjPrevus ? prec.kjRealises / prec.kjPrevus : 0
     // 13/11/2026 (demande de Titouan) : le feu adapte la séance du jour ; la semaine d'après suit ce qui a été fait.
@@ -1180,11 +1185,13 @@ export function plafondEtNominal(o: {
   heuresMax?: number
   /** Minutes d'autres sports déjà prévues cette semaine (retirées des heures) */
   minutesAutres?: number
+  /** Pas de sortie longue cette semaine (ex. le test CP complet la remplace) */
+  sansLongue?: boolean
 }) {
   const kjZ2 = (min: number) => construireZ2(min, o.z2W).kj
   const nZ2 = o.semaineType.filter((x) => x === 'velo-z2').length + Math.max(0, o.semaineType.filter((x) => x === 'velo-dur').length - 1)
   const nominal = o.kjIntensite + kjZ2(Math.min(60, o.cap.z2)) + kjZ2(Math.min(Math.max(100, o.longueVisee ?? 0), o.cap.long))
-  const plafondJours = o.kjIntensite + nZ2 * kjZ2(o.cap.z2) + kjZ2(o.cap.long)
+  const plafondJours = o.kjIntensite + nZ2 * kjZ2(o.cap.z2) + (o.sansLongue ? 0 : kjZ2(o.cap.long))
   const plafondHeures = o.heuresMax ? Math.max(nominal, Math.round(((o.heuresMax * 60 - (o.minutesAutres ?? 0)) * 60 * o.z2W) / 1000)) : Infinity
   return { nominal, plafond: Math.min(plafondJours, plafondHeures), limite: (plafondHeures < plafondJours ? 'heures' : 'jours') as 'heures' | 'jours' }
 }
@@ -1585,8 +1592,10 @@ export function projeterSaison(o: {
     const allegee = coef === undefined && (estSemaineAllegee(l, triees, semaineB) || (!!competition && niveaux.get(competition.date) === 'B'))
     const plafond = o.plafondDe?.(l) ?? o.plafond
     const hausse = semaines.length > 0 && !precedenteAllegee && coef === undefined
+    const avant = ref
     if (hausse) ref = ref * (o.habituelle && ref < o.habituelle ? 1.1 : 1.075)
-    if (o.plancher && semaines.length > 0 && coef === undefined) ref = Math.max(ref, o.plancher)
+    // Plancher de la charge habituelle : comme la Semaine, +10 % par semaine au plus, et pas juste après une semaine allégée
+    if (o.plancher && hausse) ref = Math.max(ref, Math.min(o.plancher, avant * 1.1))
     const bloquee = hausse && !allegee && ref > plafond
     ref = Math.min(plafond, ref)
     precedenteAllegee = allegee || coef !== undefined

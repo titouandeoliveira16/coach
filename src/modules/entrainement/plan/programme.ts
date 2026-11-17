@@ -47,7 +47,19 @@ export interface MetaSemaine {
   genereeLe: string
   /** Construite avant la fin de la semaine d'avant (comptée à 100 %) : recalculée une fois celle-ci finie */
   bilanProvisoire?: boolean
+  /** Budget calculé par les règles, quand le total prévu (`budget`) n'a pas pu le suivre */
+  budgetVise?: number
+  /** 2 (17/11/2026) : `budget` = total des séances prévues, et les séances suivent le budget */
+  version?: number
 }
+
+/**
+ * Référence de la semaine pour la suivante. Semaines construites avant la 14.8 (le budget ne commandait pas les séances) :
+ * la référence est ce qui était vraiment prévu, sinon la semaine suivante chuterait d'un coup.
+ */
+/** Semaine réduite sous sa référence (affûtage, récupération, garde-fou) : la suivante y revient, sans hausse en plus. */
+const estReduite = (meta: MetaSemaine) => meta.version === 2 && !meta.allegee && (meta.budgetVise ?? meta.budget) < meta.budgetRef * 0.9
+const referenceDe = (meta: MetaSemaine, kjPrevus: number) => (meta.version === 2 || meta.allegee ? meta.budgetRef : Math.max(meta.budgetRef, Math.round(kjPrevus)))
 
 const cleSemaine = (lundi: string) => `semaine-${lundi}`
 export const lireMeta = async (lundi: string) => (await db.reglages.get(cleSemaine(lundi)))?.valeur as MetaSemaine | undefined
@@ -161,20 +173,19 @@ async function bilanPrecedent(lundi: string, reel = false): Promise<BilanSemaine
   return bilanDe(decalerJour(lundi, -7), reel)
 }
 
-/** Semaines des 6 dernières faites à moins de 80 % de leur budget : elles ne comptent pas comme « chargées » (15/11/2026). */
+/** Semaines des 6 dernières faites à moins de 80 % de ce qui était prévu : elles ne comptent pas comme « chargées » (15/11/2026). */
 async function semainesPeuFaites(lundi: string) {
   const parts = await partsRealisees(lundi)
   const peu = new Set(parts.flatMap((p, i) => (p !== undefined && p < 0.8 ? [decalerJour(lundi, -7 * (i + 1))] : [])))
   return (l: string) => peu.has(l)
 }
 
-/** Part du budget kJ réalisée, semaine par semaine, en remontant depuis la semaine d'avant `lundi` (6 au plus). */
+/** Part des kJ prévus réalisée, semaine par semaine, en remontant depuis la semaine d'avant `lundi` (6 au plus). */
 export async function partsRealisees(lundi: string) {
   const parts: (number | undefined)[] = []
   for (let i = 1; i <= 6; i++) {
-    const l = decalerJour(lundi, -7 * i)
-    const [meta, b] = [await lireMeta(l), await bilanDe(l)]
-    parts.push(meta && b && meta.budget ? b.kjRealises / meta.budget : undefined)
+    const b = await bilanDe(decalerJour(lundi, -7 * i))
+    parts.push(b && b.kjPrevus ? b.kjRealises / b.kjPrevus : undefined)
   }
   return parts
 }
@@ -188,16 +199,18 @@ async function bilanDe(precedent: string, reel = false): Promise<BilanSemaine | 
   const decisions = await db.decisions.where('date').between(precedent, fin, true, true).toArray()
   // Semaine pas encore finie (13/11/2026) : comptée comme si elle se passait à 100 %, sans jour rouge ni orange ; la
   // semaine d'après se recalcule avec le vrai bilan une fois celle-ci finie
-  if (!reel && fin >= aujourdhui()) {
+  // Le dimanche (dernier jour), c'est le vrai bilan : la séance du jour encore prévue compte comme faite (voir plus bas)
+  if (!reel && fin > aujourdhui()) {
     const kjPrevus = prevues.reduce((a, p) => a + (p.kjPrevu ?? 0), 0)
-    return { budgetRef: meta.budgetRef, kjPrevus, kjRealises: kjPrevus, rouges: 0, oranges: 0, allegee: meta.allegee, chargee: !!(await lireSemaineChargee(precedent)), provisoire: true }
+    return { budgetRef: referenceDe(meta, kjPrevus), kjPrevus, kjRealises: kjPrevus, rouges: 0, oranges: 0, allegee: meta.allegee, ...(estReduite(meta) ? { reduite: true } : {}), chargee: !!(await lireSemaineChargee(precedent)), provisoire: true }
   }
   // Bilan du dimanche (15/11/2026, demande de Titouan) : une séance encore prévue aujourd'hui (ou plus tard) compte
   // comme faite tant que la semaine n'est pas finie : pas de « semaine pas validée » avant ta séance du dimanche
   const restantes = fin >= aujourdhui() ? prevues.filter((p) => p.date >= aujourdhui() && p.statut === 'prevue') : []
+  const kjPrevus = prevues.reduce((a, p) => a + (p.kjPrevu ?? 0), 0)
   return {
-    budgetRef: meta.budgetRef,
-    kjPrevus: prevues.reduce((a, p) => a + (p.kjPrevu ?? 0), 0),
+    budgetRef: referenceDe(meta, kjPrevus),
+    kjPrevus,
     // Sortie dehors sans capteur de puissance : on compte les kJ prévus de la séance qu'elle a remplie
     kjRealises: seances.filter((s) => s.sport === 'velo').reduce((a, s) => a + (s.kj ?? prevues.find((p) => p.id === s.prevueId)?.kjPrevu ?? 0), 0)
       + restantes.reduce((a, p) => a + (p.kjPrevu ?? 0), 0),
@@ -205,6 +218,7 @@ async function bilanDe(precedent: string, reel = false): Promise<BilanSemaine | 
     rouges: decisions.filter((d) => d.couleur === 'rouge').length,
     oranges: decisions.filter((d) => d.couleur === 'orange').length,
     allegee: meta.allegee,
+    ...(estReduite(meta) ? { reduite: true } : {}),
     chargee: !!(await lireSemaineChargee(precedent)),
     ...(await semaineAvecCourseC(precedent) ? { courseC: true } : {}),
   }
@@ -518,7 +532,7 @@ async function genererSemaineVeloBrute(lundi: string) {
   // Route en ligne : simulation de course semaines 1 et 3 du « proche de la course » ; cyclosportive : sortie longue +
   // montées en fin de sortie une semaine sur deux en fin de prépa, semaines 1 et 2 du « proche de la course ».
   const typeCourse = prog.typeCourse ?? 'cyclo'
-  let longueCourse = discipline === 'route' && placement.long && !allegee
+  let longueCourseChoisie = discipline === 'route' && placement.long && !allegee
     ? typeCourse === 'en-ligne'
       // Phase spécifique : une séance « course » chaque semaine (relecture du 15/11/2026, principe de spécificité)
       ? phase.type === 'specifique' ? 'simulation-ligne' : undefined
@@ -529,7 +543,7 @@ async function genererSemaineVeloBrute(lundi: string) {
   let cotes = discipline === 'xcm' && phase.type !== 'reprise' && !allegee && !dateTest
   // Sortie longue dure (côtes, simulation, montées) : 48 h sans autre séance dure. L'intensité est déplacée sur une autre
   // endurance ; un test ou une course à côté, ou pas de jour pour déplacer : sortie longue normale (audit du 14/11/2026)
-  if ((cotes || longueCourse) && placement.long) {
+  if ((cotes || longueCourseChoisie) && placement.long) {
     const long = placement.long
     const colle = (d?: string) => !!d && Math.abs(ecartJours(d, long)) < 2 && d !== long
     if (placement.intensite && colle(placement.intensite) && placement.intensite !== dateTest) {
@@ -541,7 +555,7 @@ async function genererSemaineVeloBrute(lundi: string) {
     }
     const durAcote = colle(placement.intensite) || colle(dateTest) || coursesSemaine.some((x) => colle(x.date))
       || occupations.some((o) => o.dure && colle(o.date))
-    if (durAcote) { cotes = false; longueCourse = undefined }
+    if (durAcote) { cotes = false; longueCourseChoisie = undefined }
   }
 
   // 2e intensité vélo (forme Chauvin) : 4 jours de vélo ou plus, sauf débutant, hors reprise et semaine allégée, et
@@ -551,7 +565,7 @@ async function genererSemaineVeloBrute(lundi: string) {
   const courseDure = [...prevues.filter((p) => p.sport === 'course' && p.intensite === 'haute' && dansSemaine(p.date)).map((p) => p.date),
     ...seances.filter((x) => x.sport === 'course' && dansSemaine(x.date) && domaineDe(x, c.bornes) === 'haute').map((x) => x.date)]
   if (intensite && placement.intensite && placement.intensite !== dateTest && deuxIntensitesPossibles(niveau, joursVelo)
-    && phase.type !== 'reprise' && phase.type !== 'base' && !allegee && !courseDure.length && !longueCourse && !coursesSemaine.length) {
+    && phase.type !== 'reprise' && phase.type !== 'base' && !allegee && !courseDure.length && !longueCourseChoisie && !coursesSemaine.length) {
     const dures = [placement.intensite, ...occupations.filter((o) => o.dure).map((o) => o.date), ...(cotes && placement.long ? [placement.long] : [])]
     const jour2 = jourDeuxiemeIntensite(placement.z2.filter((d) => !procheCourse(d, competitions, delaiCourse)), dures, placement.z2.filter((d) => roles[semaine.indexOf(d)] === 'velo-dur'))
     if (jour2) {
@@ -574,7 +588,9 @@ async function genererSemaineVeloBrute(lundi: string) {
   const longue = await longueDeLaSemaine(lundi, prog, phase.type)
   // Plafond aussi limité par tes heures : le haut de ta tranche, moins les autres sports prévus cette semaine
   const minutesAutres = prevues.filter((p) => p.sport === 'course' && dansSemaine(p.date)).reduce((a, p) => a + p.dureeMin, 0)
-  const { nominal, plafond } = plafondEtNominal({ semaineType: roles, kjIntensite, cap, z2W, longueVisee: longue.visee, heuresMax: heuresSemaine ? heures[1] : undefined, minutesAutres })
+  // Reprise, récupération : le jour « dur » devient une endurance ; le plafond le compte comme tel (audit du 17/11/2026)
+  const rolesPlafond = kjIntensite === 0 ? roles.map((x) => (x === 'velo-dur' ? 'velo-z2' : x)) : roles
+  const { nominal, plafond } = plafondEtNominal({ semaineType: rolesPlafond, kjIntensite, cap, z2W, sansLongue: !placement.long, longueVisee: longue.visee, heuresMax: heuresSemaine ? heures[1] : undefined, minutesAutres })
   const prec = await bilanPrecedent(lundi)
   const b = coefPhase !== undefined
     ? budgetDePhase(prec, nominal, coefPhase, NOMS_PHASES[phase.type])
@@ -657,8 +673,21 @@ async function genererSemaineVeloBrute(lundi: string) {
   if (seanceSv1 && heuresSemaine && fixesSansSv1 + seanceSv1.dureeMin + 30 * placement.z2.filter((d) => d !== jourSv1).length + (placement.long ? 60 : 0) > heures[1] * 60) seanceSv1 = undefined
   const nZ2Restants = placement.z2.filter((d) => !(d === jourSv1 && seanceSv1)).length
   const minutesFixes = fixesSansSv1 + (seanceSv1?.dureeMin ?? 0)
+  /**
+   * Sortie longue et endurances de la semaine. `reduction` (0 à 2, audit des chiffres du 17/11/2026, décision de Titouan) :
+   * quand les séances à leur durée habituelle dépassent le budget, la sortie longue raccourcit d'abord (jusqu'à 45 min),
+   * les endurances un peu (jusqu'à 20 min) ; au-delà de 1, les endurances continuent de raccourcir. Toujours le même
+   * nombre de sorties dans la semaine.
+   */
+  const LONGUE_MIN = 45, Z2_MIN = 20
+  const construireEndurances = (reduction = 0, avecPhrases = true) => {
+  const liste: [string, SeanceConstruite][] = []
   let minutesDispo = heuresSemaine ? heures[1] * 60 - minutesFixes : Infinity
   let extraSv1 = 0
+  let longueCourse = longueCourseChoisie
+  const reduire = (min: number, plancher: number, part: number) => (min <= plancher ? min : Math.max(plancher, arrondi5(min - part * (min - plancher))))
+  const partLongue = Math.min(1, reduction)
+  const partZ2 = reduction <= 1 ? 0.4 * reduction : 0.4 + 0.6 * (reduction - 1)
   if (placement.long) {
     const kjLong = reste * partLong
     // Cycle 1er seuil : blocs dans la sortie longue en plus de la séance dédiée, même à 4 jours (13/11/2026 : 2 séances au 1er seuil par semaine)
@@ -678,11 +707,11 @@ async function genererSemaineVeloBrute(lundi: string) {
       blocs = blocsDansLongue && !cotes ? { w: sv1.w, ...palierSv1 } : undefined
     }
     const minLong = Math.min(capLong, Math.max(longueCourse === 'cyclo-montees' ? 180 : prog.minLongMin, longue.visee ?? 0))
-    const min = affutage
+    const minHabituel = affutage
       ? borner(Math.min(affutage, capLong), capLong, minutesPourKj(kjLong, z2W))
       : borner(minLong * (coefPhase ?? (allegee ? 0.7 : 1)), capLong, minutesPourKj(kjLong, z2W))
     if (longue.visee && longue.cible && longue.cible > prog.maxLongMin && !allegee)
-      phrases.push(`Ta course demande une sortie longue d'environ ${heuresMin(longue.cible)} ; ton maximum est ${heuresMin(prog.maxLongMin)} : allonge-le dans Réglages (Ma semaine type) si tu peux.`)
+      (avecPhrases ? phrases : []).push(`Ta course demande une sortie longue d'environ ${heuresMin(longue.cible)} ; ton maximum est ${heuresMin(prog.maxLongMin)} : allonge-le dans Réglages (Ma semaine type) si tu peux.`)
     // Conseil (pas une règle, relecture du 15/11/2026) : entre 8 et 3 semaines avant la course A, 2 sorties d'au moins 75 %
     // de la durée de course quand ta sortie longue habituelle n'y arrive pas
     const coursA = prog.competitions.filter((x) => x.date > lundi && niveaux.get(x.date) === 'A').sort((x, y) => x.date.localeCompare(y.date))[0]
@@ -690,13 +719,14 @@ async function genererSemaineVeloBrute(lundi: string) {
       const avant = ecartJours(lundi, coursA.date)
       const visee75 = arrondi5(0.75 * dureeDe(coursA.date))
       if (avant >= 21 && avant <= 56 && visee75 > capLong && visee75 > 120)
-        phrases.push(`D'ici 3 semaines avant ta course, prévois 2 sorties d'au moins ${heuresMin(visee75)} (75 % de ta course) un jour où tu as le temps : ta sortie longue habituelle n'y arrive pas.`)
+        (avecPhrases ? phrases : []).push(`D'ici 3 semaines avant ta course, prévois 2 sorties d'au moins ${heuresMin(visee75)} (75 % de ta course) un jour où tu as le temps : ta sortie longue habituelle n'y arrive pas.`)
     }
-    if (longueCourse === 'cyclo-montees' && capLong < 180) phrases.push('Ta sortie longue maximale est sous 3 h : la sortie avec montées en fin de sortie sera plus courte que conseillé pour une cyclosportive.')
+    if (longueCourse === 'cyclo-montees' && capLong < 180) (avecPhrases ? phrases : []).push('Ta sortie longue maximale est sous 3 h : la sortie avec montées en fin de sortie sera plus courte que conseillé pour une cyclosportive.')
     // Marathon VTT (hors reprise et semaine allégée) : sortie longue en côtes
     const courseProche = prog.competitions.some((x) => x.date >= lundi && x.date <= decalerJour(lundi, 20))
-    aCreer.push([placement.long, longueCourse === 'simulation-ligne'
-      ? construireSimulationLigne(r.cpW, z2W, capLong)
+    const min = reduire(minHabituel, Math.min(LONGUE_MIN, minHabituel), partLongue)
+    liste.push([placement.long, longueCourse === 'simulation-ligne'
+      ? construireSimulationLigne(r.cpW, z2W, reduction > 0 ? min : capLong)
       : longueCourse === 'cyclo-montees'
         ? (() => {
           // Cols de ta prochaine course A : nombre et durée des montées calés dessus (sinon 2-3 montées de 20-25')
@@ -709,7 +739,7 @@ async function genererSemaineVeloBrute(lundi: string) {
         : cotes
       ? construireLongueCotes(min, z2W, r.cpW, cotesDe(nLongs, courseProche))
       : construireZ2(min, z2W, jourSprints || blocs ? undefined : sprints, { longue: true, sv1: blocs, espacementSec: sprints.espacementSec })])
-    const sl = aCreer[aCreer.length - 1][1]
+    const sl = liste[liste.length - 1][1]
     minutesDispo -= sl.dureeMin
     // Ce que la sortie longue prend au-delà de sa part (blocs au 1er seuil, allongement) est pris sur les Z2 de semaine
     extraSv1 = Math.max(0, sl.kj - kjLong)
@@ -718,13 +748,34 @@ async function genererSemaineVeloBrute(lundi: string) {
     // Séance 1er seuil allongée au-delà de ton créneau : les autres endurances peuvent descendre à 30 min pour compenser
     const minZ2 = seanceSv1 && seanceSv1.dureeMin > maxDuJour(jourSv1!) ? 30 : 45
     const maxZ2 = Math.max(30, Math.min(maxDuJour(d), cap.z2, nZ2Restants ? Math.floor(minutesDispo / nZ2Restants / 5) * 5 : Infinity))
-    const min = borner(Math.min(minZ2, cap.z2, maxZ2), maxZ2, minutesPourKj((reste * (1 - partLong) - extraSv1) / placement.z2.length, z2W))
+    const min = reduire(borner(Math.min(minZ2, cap.z2, maxZ2), maxZ2, minutesPourKj((reste * (1 - partLong) - extraSv1) / placement.z2.length, z2W)), Z2_MIN, partZ2)
     // VTT : la première Z2 de la semaine se fait sur le terrain (technique), jamais la sortie longue
-    if (d === jourSv1 && seanceSv1) aCreer.push([d, seanceSv1])
-    else if (d === terrain && discipline !== 'route') aCreer.push([d, construireTerrain(discipline, min, z2W)])
-    else if (d === jourSprints) aCreer.push([d, construireZ2(min, z2W, sprints, { longue: false, espacementSec: sprints.espacementSec })])
-    else aCreer.push([d, construireZ2(min, z2W, undefined, lendemains.has(d) && rappel && !sansBlocs ? { sv1: { w: sv1.w, reps: 2, min: 10, fc: fcSv1 } } : {})])
+    if (d === jourSv1 && seanceSv1) liste.push([d, seanceSv1])
+    else if (d === terrain && discipline !== 'route') liste.push([d, construireTerrain(discipline, min, z2W)])
+    else if (d === jourSprints) liste.push([d, construireZ2(min, z2W, sprints, { longue: false, espacementSec: sprints.espacementSec })])
+    else liste.push([d, construireZ2(min, z2W, undefined, lendemains.has(d) && rappel && !sansBlocs ? { sv1: { w: sv1.w, reps: 2, min: 10, fc: fcSv1 } } : {})])
   })
+  return liste
+  }
+
+  // Le budget commande la semaine : à leur durée habituelle, les séances dépassent-elles le budget ?
+  const kjAvant = kjFaits + kjAutresPrevus + aCreer.reduce((a, [, x]) => a + x.kj, 0)
+  const totalAvec = (l: [string, SeanceConstruite][]) => kjAvant + l.reduce((a, [, x]) => a + x.kj, 0)
+  let endurances = construireEndurances()
+  // Toute première semaine sans historique : la semaine type à ses durées habituelles devient le point de départ
+  const premiere = !prec && !prog.budgetDepart
+  if (!premiere && totalAvec(endurances) > b.budget * 1.02 && endurances.length) {
+    // Plus petite réduction qui fait rentrer la semaine dans le budget (recherche par dichotomie, 12 essais)
+    let bas = 0, haut = 2
+    if (totalAvec(construireEndurances(2, false)) > b.budget) bas = 2
+    else for (let i = 0; i < 12; i++) {
+      const m = (bas + haut) / 2
+      if (totalAvec(construireEndurances(m, false)) > b.budget) bas = m
+      else haut = m
+    }
+    endurances = construireEndurances(bas >= 2 ? 2 : haut)
+  }
+  aCreer.push(...endurances)
 
   // Genoux sensibles : pédaler souple, la charge sur le genou baisse quand la cadence monte (Kutzner 2012 ; résultats mitigés)
   const genoux = /genou/i.test(ps?.pointsSensibles ?? '')
@@ -773,20 +824,29 @@ async function genererSemaineVeloBrute(lundi: string) {
     }
   }
 
+  // Audit des chiffres (17/11/2026) : le budget affiché est le total des séances prévues, un seul chiffre partout.
+  // Écart avec le budget calculé : dit dans la raison (créneaux trop courts, ou séances clés qui le dépassent à elles seules)
+  const total = Math.round(kjFaits + kjAutresPrevus + aCreer.reduce((a, [, s]) => a + s.kj, 0))
+  const limite = !premiere && total < b.budget * 0.95
+  const depasse = !premiere && total > b.budget * 1.02
+  const raison = premiere ? 'Point de départ : ta semaine type à ses durées habituelles' : limite ? `${b.raison} · limité par tes créneaux et jours libres (${b.budget} kJ visés)`
+    : depasse ? `${b.raison} · tes séances clés dépassent à elles seules le budget visé (${b.budget} kJ)` : b.raison
   const meta: MetaSemaine = {
-    budgetRef: b.budgetRef, budget: b.budget, raison: b.raison, allegee, phase: NOMS_PHASES[phase.type],
-    semaineDansPhase: nSemaine + 1, z2W, genereeLe: new Date().toISOString(), ...(prec?.provisoire ? { bilanProvisoire: true } : {}),
+    // Semaine limitée par tes créneaux : la suivante repart de ce qui a vraiment été prévu (pas de rattrapage d'un coup)
+    // Semaine normale : la suivante part de ce qui a vraiment été prévu (une hausse de 10 % = 10 % de plus que cette semaine).
+    // Semaine allégée ou réduite (affûtage, récupération, garde-fou) : on garde la référence d'avant, on y revient ensuite
+    budgetRef: premiere ? total : !allegee && b.budget >= b.budgetRef * 0.9 ? Math.min(b.budgetRef, total) : b.budgetRef, budget: total, budgetVise: b.budget, raison, allegee, phase: NOMS_PHASES[phase.type],
+    semaineDansPhase: nSemaine + 1, z2W, genereeLe: new Date().toISOString(), version: 2, ...(prec?.provisoire || prec?.kjAVenir ? { bilanProvisoire: true } : {}),
   }
   await enregistrer(db.reglages, { id: cleSemaine(lundi), valeur: meta })
   // Semaine chargée déjà déclarée : on garde le minimum, même après un recalcul
   if (await lireSemaineChargee(lundi)) await passerSemaineChargee(lundi)
 
-  const total = kjFaits + kjAutresPrevus + aCreer.reduce((a, [, s]) => a + s.kj, 0)
   phrases.unshift(
     ...aCreer.sort((x, y) => x[0].localeCompare(y[0])).map(([d, s]) => `${nomJour(d)} : ${s.titre} (${s.dureeMin} min, ${s.kj} kJ)`),
-    `Total vélo prévu : ${total} kJ pour un budget de ${b.budget} kJ.`,
+    `Total vélo prévu : ${total} kJ${total !== b.budget ? ` (budget visé ${b.budget} kJ)` : ''}.`,
   )
-  if (total < b.budget * 0.9) phrases.push('Budget pas atteignable avec tes créneaux et jours libres : on garde ce qui rentre.')
+  if (limite) phrases.push('Budget pas atteignable avec tes créneaux et jours libres : on garde ce qui rentre.')
   return phrases
 }
 
@@ -989,6 +1049,23 @@ export async function mettreAJourFormatSeances() {
  * recalculée une fois avec le vrai bilan.
  */
 export async function actualiserSemaineEnCours() {
+  // Zones de puissance enregistrées avec des trous entre elles (avant le 17/11/2026) : chaque zone repart 1 W au-dessus de la précédente
+  const e = (await db.reglages.get('entrainement'))?.valeur as ReglagesEntrainement | undefined
+  const z = e?.zonesVelo
+  if (e && z?.some((x, i) => i > 0 && z[i - 1].wMax !== undefined && x.wMin !== z[i - 1].wMax! + 1))
+    await enregistrer(db.reglages, { id: 'entrainement', valeur: { ...e, zonesVelo: z.map((x, i) => (i > 0 && z[i - 1].wMax !== undefined ? { ...x, wMin: z[i - 1].wMax! + 1 } : x)) } })
+  // 14.8 : les semaines à venir déjà construites par l'ancien calcul (séances au-dessus du budget) sont refaites une fois ;
+  // la semaine en cours reste telle quelle
+  for (const l of [7, 14].map((n) => decalerJour(lundiDe(aujourdhui()), n))) {
+    const m = await lireMeta(l)
+    if (m && m.version !== 2) await genererSemaineVelo(l).catch(() => {})
+  }
+  // Le dimanche : la semaine prochaine est recalculée une fois avec le vrai bilan de celle-ci (comme le bilan l'annonce)
+  if (new Date(`${aujourdhui()}T12:00:00`).getDay() === 0) {
+    const suivante = decalerJour(lundiDe(aujourdhui()), 7)
+    const m = await lireMeta(suivante)
+    if (m && (m.version !== 2 || m.genereeLe.slice(0, 10) < aujourdhui())) await genererSemaineVelo(suivante).catch(() => {})
+  }
   const lundi = lundiDe(aujourdhui())
   if ((await lireMeta(lundi))?.bilanProvisoire) await genererSemaineVelo(lundi).catch(() => {})
 }
@@ -1005,14 +1082,13 @@ export async function recalculerSemainesAVenir() {
 
 /**
  * Bilan du dimanche, en 3 lignes : ce qui a été fait, ce qui change la semaine suivante, et pourquoi.
- * Le budget et la séance d'intensité annoncés sont ceux que la génération de la semaine suivante utilisera.
+ * La semaine suivante est lue telle qu'elle est générée (CarteBilan la recalcule avec le vrai bilan le dimanche).
  */
 export async function bilanDimanche(lundi: string) {
   const fin = decalerJour(lundi, 6)
   const suivant = decalerJour(lundi, 7)
-  const r = await lireReglages()
-  const prog = r.programme
-  const prevues = (await db.prevues.where('date').between(lundi, fin, true, true).toArray()).filter((p) => p.statut !== 'abandonnee')
+  // Tout ce qui était prévu au départ, séances pas faites comprises (même total que l'écran Semaine)
+  const prevues = await db.prevues.where('date').between(lundi, fin, true, true).toArray()
   const seances = await db.seances.where('date').between(lundi, fin, true, true).toArray()
   const decisions = await db.decisions.where('date').between(lundi, fin, true, true).toArray()
   if (!prevues.length && !seances.length) return undefined
@@ -1024,61 +1100,42 @@ export async function bilanDimanche(lundi: string) {
   const minCourse = Math.round(seances.filter((s) => s.sport === 'course').reduce((a, s) => a + s.dureeSec, 0) / 60)
   const heures = (m: number) => `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')}`
   const fait = [
-    `${faites}/${prevues.length} séances prévues faites`,
+    prevues.length ? `${faites}/${prevues.length} séance${prevues.length > 1 ? 's prévues faites' : ' prévue faite'}` : 'pas de séance prévue cette semaine',
     kjPrevus ? `vélo ${Math.round(kjVelo)} / ${kjPrevus} kJ (${Math.round((kjVelo / kjPrevus) * 100)} %)` : kjVelo ? `vélo ${Math.round(kjVelo)} kJ` : undefined,
     minCourse ? `course ${heures(minCourse)}` : undefined,
   ].filter(Boolean).join(' · ')
 
-  // 2. Ce qui change la semaine suivante
-  const { phase, semaine: nSemaine } = phaseDe(suivant, prog.phases)
-  const finSuivante = decalerJour(suivant, 6)
-  const course = prog.competitions.find((c) => c.date >= suivant && c.date <= finSuivante)
-  const test = prog.testsCp.find((d) => d >= suivant && d <= finSuivante)
-  const coefSuivant = coefficientPhase(suivant, prog.phases, prog.competitions)
-  const allegee = coefSuivant === undefined && (estSemaineAllegee(suivant, prog.phases, semaineB(prog), await semainesPeuFaites(suivant)) || !!course)
-  const { w: z2W } = await z2Actuel()
-  const progS = programmeAu(prog, suivant)
-  const depart = await chargeDeDepart(suivant, prog.phases)
-  const cap = plafondsReprise(phase.type === 'reprise' ? nSemaine : undefined, progS.maxSemaineMin, progS.maxLongMin, depart?.facteur)
+  // 2. Ce qui change la semaine suivante : lu dans la semaine suivante telle qu'elle est générée (audit des chiffres du
+  // 17/11/2026 : plus de second calcul qui pouvait annoncer autre chose que ce que le lundi construit)
+  const metaS = await lireMeta(suivant)
+  const prevuesS = (await db.prevues.where('date').between(suivant, decalerJour(suivant, 6), true, true).toArray())
+    .filter((p) => p.sport === 'velo' && p.statut !== 'abandonnee').sort((x, y) => x.date.localeCompare(y.date))
   const histo = await histoIntensite()
-  let intensite: string
-  let kjIntensite: number
-  if (test) {
-    const t = construireTest(r.cpW, prog.testsCourts?.includes(test))
-    intensite = `${t.titre} (${nomJour(test)})`
-    kjIntensite = t.kj
-  } else {
-    const choix = choisirFormat(suivant, prog.phases, histo, prog.discipline, 0, prog.typeCourse)
-    const etat = etatProgression(histo, datesTests(r.tests))[choix.famille]
-    const palier = palierPossible(choix.format, allegee ? Math.max(0, etat.palier - 1) : etat.palier, prog.maxSemaineMin)
-    const s = construireIntervalles(choix.format, palier, r.cpW, etat.bonus, r.wPrimeKj)
-    intensite = `${s.titre} (palier ${palier + 1}/4)`
-    kjIntensite = s.kj
+  let change: string
+  if (!metaS) change = 'elle se calcule dès que tu ouvres la semaine prochaine'
+  else {
+    const totalS = prevuesS.reduce((a, p) => a + (p.kjPrevu ?? 0), 0)
+    const ecart = kjPrevus ? Math.round(((totalS - kjPrevus) / kjPrevus) * 100) : undefined
+    const dures = prevuesS.filter((p) => p.velo && (estIntensite(p) || p.velo.famille === 'test' || p.velo.famille === 'course'))
+    const longueS = prevuesS.find((p) => p.velo?.famille === 'z2-long')
+    const testS = prevuesS.find((p) => p.velo?.famille === 'test')
+    change = [
+      `vélo ${Math.round(totalS)} kJ prévus${ecart !== undefined ? ` (${ecart >= 0 ? '+' : ''}${ecart} % par rapport à cette semaine)` : ''}`,
+      ...(dures.length ? [`${dures.length > 1 ? 'séances dures' : 'séance dure'} : ${dures.map((p) => `${p.titre} (${nomJour(p.date)})`).join(', ')}`] : []),
+      `${metaS.phase}, semaine ${metaS.semaineDansPhase}${metaS.allegee ? ' (allégée)' : ''}`,
+      longueS ? `sortie longue de ${longueS.dureeMin} min (${nomJour(longueS.date)})` : testS ? 'pas de sortie longue : le test CP la remplace' : 'pas de sortie longue',
+    ].join(' · ')
   }
-  const longue = await longueDeLaSemaine(suivant, prog, phase.type)
-  const meta = await lireMeta(lundi)
-  const ps = (await db.reglages.get('profil-sportif'))?.valeur as Partial<ProfilSportif> | undefined
-  const { nominal, plafond } = plafondEtNominal({ semaineType: progS.semaineType, kjIntensite, cap, z2W, longueVisee: longue.visee, heuresMax: (() => { const h = heuresAu(prog, ps?.heuresSemaine, suivant); return h ? heuresDe(h)[1] : undefined })() })
-  // Bilan du dimanche : la vraie semaine, même pas tout à fait finie
-  const precSuivant = await bilanPrecedent(suivant, true)
-  const b = coefSuivant !== undefined
-    ? budgetDePhase(precSuivant, nominal, coefSuivant, NOMS_PHASES[phase.type])
-    : await avecGardeFou(avecPlancher(budgetSemaine(precSuivant, nominal, plafond, allegee, course ? `semaine de ta course (${course.nom})` : 'semaine allégée (1 sur 4)', hausseSous(depart, precSuivant, hausseBudget(niveauDuProfil(ps)))), depart, precSuivant, plafond, allegee), suivant)
-  const ecart = meta ? b.budget - meta.budget : undefined
-  const change = [
-    `budget vélo ${b.budget} kJ${ecart !== undefined ? ` (${ecart >= 0 ? '+' : ''}${ecart})` : ''}`,
-    `intensité : ${intensite}`,
-    `${NOMS_PHASES[phase.type]}, semaine ${nSemaine + 1}${allegee ? ' (allégée)' : ''}`,
-    longue.visee ? `sortie longue d'au moins ${Math.min(longue.visee, cap.long)} min (vers ${Math.min(longue.cible!, cap.long)} min)` : `sortie longue jusqu'à ${cap.long} min`,
-  ].join(' · ')
 
   // 3. Pourquoi
   const rouges = decisions.filter((d) => d.couleur === 'rouge').length
   const oranges = decisions.filter((d) => d.couleur === 'orange').length
+  const verts = decisions.length - rouges - oranges
   const tenues = histo.filter((h) => h.date >= lundi && h.date <= fin && h.resultat)
+  const nb = (n: number, mot: string) => `${n} ${mot}${n > 1 && mot !== 'orange' ? 's' : ''}`
   const pourquoi = [
-    b.raison,
-    ...(decisions.length ? [`feu : ${decisions.length - rouges - oranges} vert(s), ${oranges} orange(s), ${rouges} rouge(s)`] : []),
+    ...(metaS ? [metaS.raison] : []),
+    ...(decisions.length ? [`feu : ${nb(verts, 'vert')}, ${nb(oranges, 'orange')}, ${nb(rouges, 'rouge')}`] : []),
     ...tenues.map((h) => (h.resultat === 'reussie' ? `${NOMS_FAMILLES[h.famille]} tenu → palier suivant` : `${NOMS_FAMILLES[h.famille]} pas tenu → −5 % de watts`)),
     ...(await signauxFc(seances)),
   ].join(' · ')
@@ -1120,14 +1177,17 @@ function hausseSous(depart: Awaited<ReturnType<typeof chargeDeDepart>>, prec: Bi
 function avecPlancher<B extends { budgetRef: number; budget: number; raison: string }>(b: B, depart: Awaited<ReturnType<typeof chargeDeDepart>>, prec: BilanSemaine | undefined, plafond: number, allegee: boolean): B {
   if (!depart || b.budgetRef >= depart.plancher) return b
   if (prec && (prec.rouges >= 2 || (prec.kjPrevus > 0 && prec.kjRealises / prec.kjPrevus < 0.75))) return b
+  // Juste après une semaine allégée ou réduite : on revient au budget d'avant, sans hausse en plus (audit du 17/11/2026)
+  if (prec?.allegee || prec?.reduite) return b
   // Audit « vraie vie » du 13/11/2026 : en cours de saison, le plancher ne fait pas remonter de plus de 10 % d'un coup
   // (sinon +15 à +22 % après une semaine ratée) ; il s'applique en entier seulement au départ
   const ref = Math.round(Math.min(plafond, depart.plancher, prec ? prec.budgetRef * 1.1 : Infinity))
   if (ref <= b.budgetRef) return b
-  const coupure = depart.coupure ? `${depart.coupure} semaine${depart.coupure > 1 ? 's' : ''} de coupure` : 'pas de coupure'
+  const sous = depart.coupure ? `${depart.coupure} semaine${depart.coupure > 1 ? 's' : ''} sous la moitié de ta charge habituelle` : 'sans baisse depuis'
+  const visee = `vers ${Math.round(depart.facteur * 100)} % de ta charge habituelle (${depart.plancher.toLocaleString('fr-FR')} kJ sur ${depart.habituelle.toLocaleString('fr-FR')}, ${sous})`
   return {
     ...b, budgetRef: ref, budget: Math.round(allegee ? ref * 0.65 : ref),
-    raison: `${Math.round(depart.facteur * 100)} % de ta charge habituelle (${depart.habituelle.toLocaleString('fr-FR')} kJ, ${coupure})${allegee ? ' · semaine allégée : −35 %' : ''}`,
+    raison: `${ref < depart.plancher ? `+${Math.round((ref / (prec?.budgetRef ?? ref) - 1) * 100)} % ${visee}, 10 % par semaine au plus` : visee}${allegee ? ' · semaine allégée : −35 %' : ''}`,
   }
 }
 

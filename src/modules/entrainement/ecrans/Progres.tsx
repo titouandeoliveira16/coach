@@ -15,7 +15,10 @@ import { FTP_SUR_CP } from '../../../metrics/puissance'
 import { donneesProgres, HAUSSE_CP } from '../analyse/progres'
 import { progressionFamilles } from '../plan/programme'
 import { programmeDe, useReglagesEntrainement } from '../reglagesEntrainement'
-import { NOMS_FAMILLES } from '../../../metrics/programme'
+import { construireTest, NOMS_FAMILLES } from '../../../metrics/programme'
+
+/** Durée réelle d'un test (celle de sa fiche), ex. « 1 h 52 » */
+const dureeTest = (court: boolean) => { const m = construireTest(250, court).dureeMin; return `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')}` }
 import { Historique } from './Historique'
 import { ListeVictoires } from '../forme/Celebration'
 import { victoiresRecentes } from '../forme/victoires'
@@ -51,14 +54,14 @@ export function Progres() {
           <Tuile libelle="Prochain test" valeur={prochain ? depuisJour(prochain).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '–'}
           sous={prochain ? (t.testsCourts.includes(prochain) ? "court 3′ + 12′" : 'complet 12-7-3') : 'aucun prévu'} />
         )}
-        <Tuile libelle="CP" aide={AIDES.wkg} valeur={dernierTest?.wkg ? formatNombre(dernierTest.wkg, 2) : dernierTest ? `${dernierTest.w}` : '–'}
-          sous={dernierTest ? (dernierTest.wkg ? `W/kg · ${dernierTest.w} W` : 'W') : 'après ton 1er test'}
+        <Tuile libelle="CP" aide={AIDES.wkg} valeur={dernierTest?.wkg ? formatNombre(dernierTest.wkg, 2) : dernierTest ? `${dernierTest.w}` : t.cpW ? `${Math.round(t.cpW)}` : '–'}
+          sous={dernierTest ? (dernierTest.wkg ? `W/kg · ${dernierTest.w} W` : 'W') : t.cpW ? 'W · déclarée, avant ton 1er test' : 'après ton 1er test'}
           evolution={dernierTest?.wkg && avantDernier?.wkg ? `${dernierTest.wkg >= avantDernier.wkg ? '+' : ''}${formatNombre(dernierTest.wkg - avantDernier.wkg, 2)}` : undefined}
           hausse={dernierTest?.wkg && avantDernier?.wkg ? dernierTest.wkg >= avantDernier.wkg : undefined} />
         <Tuile libelle="Vélo 90 jours" aide={AIDES.kj90} valeur={formatNombre(t.kj90)} sous={`kJ · ${formatNombre(t.kj90Avant)} avant`}
-          evolution={signe(pct(t.kj90, t.kj90Avant))} hausse={t.kj90Avant ? t.kj90 >= t.kj90Avant : undefined} />
+          evolution={signe(pct(t.kj90, t.kj90Avant))} hausse={sens(t.kj90, t.kj90Avant)} />
         <Tuile libelle="Efficacité aérobie" aide={AIDES.efficacite} valeur={t.effRecente ? formatNombre(t.effRecente, 2) : '–'} sous="W par bpm · sorties faciles"
-          evolution={signe(pct(t.effRecente, t.effAvant))} hausse={t.effAvant ? t.effRecente! >= t.effAvant : undefined} />
+          evolution={signe(pct(t.effRecente, t.effAvant))} hausse={sens(t.effRecente, t.effAvant)} />
         {dernierTest && (
           <Tuile libelle="Prochain test" valeur={prochain ? depuisJour(prochain).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '–'}
           sous={prochain ? (t.testsCourts.includes(prochain) ? "court 3′ + 12′" : 'complet 12-7-3') : 'aucun prévu'} />
@@ -147,7 +150,7 @@ export function Progres() {
         {t.testsPrevus.map((d) => (
           <div key={d} className="flex items-center justify-between py-1 text-sm">
             <span>
-              <span className="capitalize">{depuisJour(d).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+              <span className="inline-block first-letter:uppercase">{depuisJour(d).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
               <span className="text-texte-3"> · {t.testsCourts.includes(d) ? "court (3' + 12')" : 'complet (12-7-3)'}</span>
             </span>
             <button type="button" className="px-2 text-texte-3" aria-label="Retirer ce test"
@@ -167,7 +170,7 @@ export function Progres() {
               setDateTest('')
             }}>OK</button>
         </div>
-        <p className="mt-2 text-xs text-texte-3">Un test toutes les 6 à 8 semaines, frais (après une semaine allégée). Complet = 1 h 50, court = 1 h 15. Résultat à saisir dans <Link to="/entrainement/reglages" className="text-accent">Réglages → Vélo</Link>.</p>
+        <p className="mt-2 text-xs text-texte-3">Un test avant chaque nouveau cycle, frais (après une semaine allégée). Complet = {dureeTest(false)}, court = {dureeTest(true)}. Résultat à saisir dans <Link to="/entrainement/reglages" className="text-accent">Réglages → Vélo</Link>.</p>
       </Repliable>
 
       <Repliable titre="Historique des séances" libelle="Voir" resume="Toutes tes séances, semaine par semaine">
@@ -192,7 +195,9 @@ function Ecart({ libelle, a, b, decimales = 0, inverse = false }: { libelle: str
   )
 }
 
-const signe = (n?: number) => (n === undefined ? undefined : `${n >= 0 ? '+' : ''}${Math.round(n)} %`)
+/** « +3 % » ; « = » quand l'écart est sous 0,5 % (pas un « +0 % » en vert) */
+const signe = (n?: number) => (n === undefined ? undefined : Math.abs(n) < 0.5 ? '=' : `${n >= 0 ? '+' : ''}${Math.round(n)} %`)
+const sens = (a?: number, b?: number) => (a === undefined || !b || Math.abs((a - b) / b) < 0.005 ? undefined : a >= b)
 
 function Tuile({ libelle, valeur, aide, sous, evolution, hausse }: { libelle: string; valeur: string; aide?: string; sous?: string; evolution?: string; hausse?: boolean }) {
   return (
@@ -213,7 +218,7 @@ function LigneFtp({ cpW, poidsKg, estimee }: { cpW?: number; poidsKg?: number; e
     <p className="entree rounded-[14px] bg-surface px-4 py-3 text-sm text-texte-2">
       FTP estimée : <b className="chiffre text-texte">≈ {ftp} W</b>{poidsKg ? <> · <b className="chiffre text-texte">{formatNombre(ftp / poidsKg, 2)} W/kg</b></> : null}
       <Aide titre="FTP et CP" texte={AIDES.ftp} />
-      <span className="block text-xs text-texte-3">À partir de ta CP {estimee ? 'estimée' : ''} de {Math.round(cpW)} W{poidsKg ? ` (${formatNombre(cpW / poidsKg, 2)} W/kg)` : ''} · sur Zwift, mets ta FTP égale à ta CP.</span>
+      <span className="block text-xs text-texte-3">Repère à partir de ta CP {estimee ? 'estimée' : ''} de {Math.round(cpW)} W{poidsKg ? ` (${formatNombre(cpW / poidsKg, 2)} W/kg)` : ''}. Sur Zwift, mets plutôt {Math.round(cpW)} W (ta CP) en FTP : tes séances sont calculées avec ta CP.</span>
     </p>
   )
 }

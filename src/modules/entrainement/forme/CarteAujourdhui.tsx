@@ -165,7 +165,8 @@ export function CarteAujourdhui({ onModifierMatin, apresForme, remplir = false }
             <span className="chiffre block text-[26px] leading-none" style={{ color: COULEUR[signal.couleur] }}>{signal.couleur[0].toUpperCase() + signal.couleur.slice(1)}</span>
             <span className="mt-1 block text-[13px] leading-snug text-texte-2">
               {enAlerte.length === 0 ? 'Tes signaux sont dans ta normale'
-                : `${enAlerte.length === 1 ? '1 signal hors de ta normale' : `${enAlerte.length} signaux hors de ta normale`} · ${signal.couleur === 'rouge' ? 'pas d’intensité' : 'séance adaptée'}`}
+                // Le signal nommé tout de suite (audit du 17/11/2026 : feu orange avec les 3 jauges vertes, la fraîcheur était cachée)
+                : `${pourquoiCourt.replace(/^./, (c) => c.toUpperCase())} · ${signal.couleur === 'rouge' ? 'pas d’intensité' : 'séance adaptée'}`}
             </span>
           </span>
           <span className={`shrink-0 self-start text-[13px] ${formeOuverte ? 'font-semibold text-accent' : 'text-texte-3'}`}>{formeOuverte ? 'Réduire ▴' : 'Détail ▾'}</span>

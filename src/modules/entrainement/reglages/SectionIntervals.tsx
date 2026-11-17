@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useState } from 'react'
 import { db } from '../../../core/db'
-import { depuis } from '../../../core/format'
+import { depuis, pluriel } from '../../../core/format'
 import { useSynchro } from '../../../core/synchro'
 import { Bouton } from '../../../core/ui/Bouton'
 import { Repliable } from '../../../core/ui/Repliable'
@@ -38,10 +38,10 @@ export function SectionIntervals() {
 
   const importer = () =>
     agir(async () => {
-      const r = await importerIntervals((n) => setMessage(`${n} séance(s) importée(s)…`))
-      const morceaux = [`✓ ${r.seances} séance(s)`, `${r.mesures} jour(s) de données Garmin`]
-      const strava = r.viaStrava ? ` · ${r.viaStrava} activité(s) venant de Strava ignorée(s) : relie Garmin et Zwift directement à Intervals.` : ''
-      return `${morceaux.join(' et ')} importé(s).${strava}`
+      const r = await importerIntervals((n) => setMessage(`${pluriel(n, 'séance importée', 'séances importées')}…`))
+      const morceaux = [`✓ ${pluriel(r.seances, 'séance')}`, `${pluriel(r.mesures, 'jour')} de données de ta montre`]
+      const strava = r.viaStrava ? ` · ${pluriel(r.viaStrava, 'activité venant de Strava ignorée', 'activités venant de Strava ignorées')} : relie ta montre et Zwift directement à Intervals.` : ''
+      return `${morceaux.join(' et ')} importés.${strava}`
     })
 
   return (

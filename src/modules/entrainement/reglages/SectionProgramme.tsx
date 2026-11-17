@@ -83,7 +83,7 @@ export function ProgrammeAvance() {
 function Ligne({ texte, onSupprimer }: { texte: string; onSupprimer: () => void }) {
   return (
     <div className="flex items-center justify-between py-1 text-sm">
-      <span className="capitalize">{texte}</span>
+      <span className="inline-block first-letter:uppercase">{texte}</span>
       <button type="button" className="px-2 text-texte-3" aria-label="Supprimer" onClick={onSupprimer}>×</button>
     </div>
   )

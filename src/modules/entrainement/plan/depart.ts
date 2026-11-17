@@ -1,5 +1,5 @@
 import { db } from '../../../core/db'
-import { decalerJour } from '../../../core/dates'
+import { aujourdhui, decalerJour } from '../../../core/dates'
 import { phaseDe, type Phase } from '../../../metrics/programme'
 import { chargeHabituelle } from '../../../metrics/saison'
 
@@ -29,7 +29,9 @@ export async function chargeDeDepart(lundi: string, phases: Phase[] = []) {
   const debut = decalerJour(lundi, -7 * SEMAINES)
   const historique = ((await db.reglages.get('historique-kj'))?.valeur as HistoriqueKj | undefined)?.semaines ?? {}
   const seances = (await db.seances.where('date').between(debut, decalerJour(lundi, -1), true, true).toArray()).filter((s) => s.sport === 'velo')
-  const semaines = Array.from({ length: SEMAINES }, (_, i) => {
+  // Semaines pas encore finies (semaine construite à l'avance) : pas comptées, ce ne sont pas des arrêts (audit du 17/11/2026)
+  const finies = Array.from({ length: SEMAINES }, (_, i) => decalerJour(debut, 7 * i)).filter((l) => decalerJour(l, 6) < aujourdhui()).length
+  const semaines = Array.from({ length: finies }, (_, i) => {
     const l = decalerJour(debut, 7 * i)
     const kj = Math.max(historique[l] ?? 0, seances.filter((s) => s.date >= l && s.date <= decalerJour(l, 6)).reduce((a, s) => a + (s.kj ?? 0), 0))
     const type = phases.length ? phaseDe(l, phases).phase.type : undefined

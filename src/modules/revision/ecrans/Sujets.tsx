@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Circle, CircleCheck } from 'lucide-react'
 import { aujourdhui, depuisJour } from '../../../core/dates'
-import { formatNombre, lireNombre } from '../../../core/format'
+import { formatNombre, lireNombre, pluriel } from '../../../core/format'
 import { Bouton } from '../../../core/ui/Bouton'
 import { Carte } from '../../../core/ui/Carte'
 import { Feuille } from '../../../core/ui/Feuille'
@@ -43,7 +43,7 @@ export function Sujets() {
             <button key={s.id} type="button" onClick={() => setOuvert(s)} className="flex w-full items-center justify-between gap-3 py-2 text-left active:opacity-60">
               <span className="min-w-0">
                 <span className="block truncate font-medium">{s.type === 'express' ? '⚡' : '⏱️'} {s.intitule || (s.epreuve === 'E1' ? 'Écrit 1' : 'Écrit 2')}</span>
-                <span className="block text-xs text-texte-3">{jjmm(s.date)} · {s.epreuve === 'E1' ? 'É1' : 'É2'}{s.notionsFaibles.length ? ` · ${s.notionsFaibles.length} notion(s) faible(s)` : ''}</span>
+                <span className="block text-xs text-texte-3">{jjmm(s.date)} · {s.epreuve === 'E1' ? 'É1' : 'É2'}{s.notionsFaibles.length ? ` · ${pluriel(s.notionsFaibles.length, 'notion faible', 'notions faibles')}` : ''}</span>
               </span>
               {s.note !== undefined && <b className="shrink-0">{formatNombre(s.note, 1)}/20</b>}
             </button>
