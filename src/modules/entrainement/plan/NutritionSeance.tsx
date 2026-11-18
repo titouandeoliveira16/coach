@@ -56,6 +56,8 @@ export function NutritionSeance({ p }: { p: SeancePrevue }) {
   const rechargeRapide = !!memeJour?.some((x) => x.id !== p.id && (x.statut === 'prevue' || x.statut === 'faite') && (x.intensite !== 'basse' || x.velo?.famille === 'course'))
   const c = conseilsSeance({
     sport: p.sport, dureeMin: p.dureeMin, intensite: p.intensite, test: p.velo?.famille === 'test', epreuve, palierVentre: ventre?.palier,
+    // Séances sur le terrain (VTT technique, spéciales, course) : dehors, pas de consigne de home trainer (18/11/2026)
+    homeTrainer: !(p.velo && ['vtt-terrain', 'vtt-speciales', 'course'].includes(p.velo.famille)),
     palierTolere: epreuve && course ? fenetreVentre(p.date, prog, notes, r.cpW)?.tolere : undefined, kg: profil.poidsKg, rechargeRapide,
   })
   const lignes = [

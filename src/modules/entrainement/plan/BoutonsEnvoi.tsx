@@ -16,7 +16,8 @@ export function BoutonsEnvoi({ p, etapes }: { p: SeancePrevue; etapes: Etape[] }
   // Boutons nommés d'après ton matériel (16/11/2026) : « Envoyer à ma COROS », Zwift seulement si tu l'as
   const [ps] = useReglage<Partial<ProfilSportif>>('profil-sportif', {})
   const montre = libelleEnvoiMontre(ps.appareils)
-  const zwift = avecZwift(ps.appareils)
+  // Pas de Zwift pour une séance dehors, sur le terrain (VTT technique, spéciales)
+  const zwift = avecZwift(ps.appareils) && !['vtt-terrain', 'vtt-speciales'].includes(p.velo?.famille ?? '')
   const envoyeCompteur = igp.envois?.[p.id]
   const [occupe, setOccupe] = useState(false)
   const [message, setMessage] = useState<string>()

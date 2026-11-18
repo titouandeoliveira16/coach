@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { aujourdhui, decalerJour, depuisJour } from '../../../core/dates'
 import { db } from '../../../core/db'
@@ -22,7 +23,8 @@ interface Effort {
  */
 /** Records importés (durée en s → watts et date), réglage synchronisé « recordsPuissance ». */
 export type RecordsImportes = Record<string, { w: number; date: string }>
-export function CourbePuissance() {
+/** `pied` : une ligne de plus sous la courbe (Progrès : l'efficacité aérobie, 18/11/2026). */
+export function CourbePuissance({ pied }: { pied?: ReactNode } = {}) {
   const seances = useLiveQuery(() => db.seances.filter((s) => s.sport === 'velo' && !!s.meilleurs).toArray())
   const importes = useLiveQuery(async () => ((await db.reglages.get('recordsPuissance'))?.valeur as RecordsImportes | undefined) ?? {})
   if (!seances || !importes) return null
@@ -59,6 +61,7 @@ export function CourbePuissance() {
         })}
       </div>
       <p className="mt-2 text-xs text-texte-3">Record : meilleure puissance moyenne tenue sur chaque durée (séances de l'appli et records importés). Touche la courbe pour les autres durées.</p>
+      {pied}
     </Carte>
   )
 }

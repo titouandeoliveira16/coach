@@ -617,6 +617,8 @@ async function genererSemaineVeloBrute(lundi: string) {
   const partLong = placement.long ? (placement.z2.length ? 0.6 : 1) : 0
   const borner = (min: number, max: number, v: number) => Math.min(max, Math.max(min, arrondi5(v)))
   const nLongs = (await db.prevues.toArray()).filter((p) => p.velo?.famille === 'z2-long' && p.statut === 'faite' && p.date < lundi).length
+  // Séance technique VTT : le thème tourne sur 4 semaines (séances techniques d'avant, faites ou prévues)
+  const nTerrain = (await db.prevues.toArray()).filter((p) => p.velo?.famille === 'vtt-terrain' && p.date < lundi && p.statut !== 'abandonnee').length
 
   const aCreer: [string, SeanceConstruite][] = []
   if (placement.intensite && intensite) aCreer.push([placement.intensite, intensite])
@@ -751,7 +753,7 @@ async function genererSemaineVeloBrute(lundi: string) {
     const min = reduire(borner(Math.min(minZ2, cap.z2, maxZ2), maxZ2, minutesPourKj((reste * (1 - partLong) - extraSv1) / placement.z2.length, z2W)), Z2_MIN, partZ2)
     // VTT : la première Z2 de la semaine se fait sur le terrain (technique), jamais la sortie longue
     if (d === jourSv1 && seanceSv1) liste.push([d, seanceSv1])
-    else if (d === terrain && discipline !== 'route') liste.push([d, construireTerrain(discipline, min, z2W)])
+    else if (d === terrain && discipline !== 'route') liste.push([d, construireTerrain(discipline, min, z2W, nTerrain)])
     else if (d === jourSprints) liste.push([d, construireZ2(min, z2W, sprints, { longue: false, espacementSec: sprints.espacementSec })])
     else liste.push([d, construireZ2(min, z2W, undefined, lendemains.has(d) && rappel && !sansBlocs ? { sv1: { w: sv1.w, reps: 2, min: 10, fc: fcSv1 } } : {})])
   })

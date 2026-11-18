@@ -6586,10 +6586,11 @@
     }
    ],
    "variantes": [
-    "Virages et appuis",
-    "Montées techniques",
-    "Descente : lignes et freinage",
-    "Avec un chrono une fois la section maîtrisée"
+    "Virages : trajectoire, appuis, enchaînement",
+    "Montées techniques : assis, franchissement, braquet",
+    "Descente : freinage, lignes, enchaînement",
+    "Relances et départs (efforts de 5 à 8 s)",
+    "Avec un chrono une fois la section maîtrisée (en descente, jamais à fond)"
    ],
    "quand": {
     "phases": [
@@ -6599,12 +6600,14 @@
     "recuperation": "< 24 h"
    },
    "conseils": [
+    "Position d'attaque : pédales à plat, coudes et genoux pliés, un doigt sur chaque frein, regard loin.",
+    "Un thème par semaine (virages, montées, descente, relances), un geste répété puis enchaîné, en début de sortie et au calme.",
     "Peu de watts mais une vraie fatigue (bras, attention) : compte-la avec ton effort perçu.",
-    "Répéter la même section avec un retour réfléchi vaut mieux qu'un long parcours."
+    "Casque, section à ta portée reconnue à pied d'abord, pas seul dans une descente engagée ; arrête-toi dès que les passages se dégradent."
    ],
    "preuve": {
     "niveau": "pratique",
-    "resultat": "La technique pèse lourd en VTT (l'aérobie n'explique qu'environ 40 % de la performance en XC ; en enduro, les vainqueurs se distinguent en descente technique). Aucune étude contrôlée sur l'entraînement technique.",
+    "resultat": "La technique pèse lourd en VTT (l'aérobie n'explique qu'environ 40 % de la performance en XC ; en enduro, les vainqueurs se distinguent en descente technique). Aucune étude contrôlée sur l'entraînement technique en VTT. Apprentissage moteur, hors VTT : regarder où l'on va plutôt que son corps aide peut-être un peu (Chua 2021, effet presque nul une fois corrigé par McKay 2024) ; varier les passages aide surtout en laboratoire (Czyż 2024) ; apprendre fatigué apprend moins bien (Branscheidt 2019).",
     "references": [
      {
       "auteurs": "Impellizzeri FM, Marcora SM, Rampinini E, Mognoni P, Sassi A",

@@ -94,11 +94,16 @@ describe('moteur VTT : construction des séances', () => {
     expect(c.lignes.find((l) => l.libelle === 'Z2 entre les montées')!.verdict).toBe('ok')
   })
 
-  it('VTT technique : 60 min au plus, puis Z2 ; spéciales d’enduro', () => {
-    expect(construireTerrain('xco', 45, 160).titre).toBe("VTT technique 45'")
+  it('VTT technique : un thème par semaine sur 4, 55 min au plus puis Z2, déroulé complet ; spéciales d’enduro', () => {
+    expect(construireTerrain('xco', 45, 160).titre).toBe('Technique · virages')
     const t = construireTerrain('enduro', 90, 160)
-    expect(t.titre).toBe("VTT technique 60' + 30' Z2")
+    expect(t.titre).toBe("Technique · virages + 35' Z2")
     expect(t.velo.famille).toBe('vtt-terrain')
+    expect(t.velo.etapes!.reduce((a, e) => a + e.dureeSec, 0)).toBe(90 * 60)
+    expect(construireTerrain('xco', 60, 160, 1).titre).toMatch(/montées/)
+    expect(construireTerrain('xco', 60, 160, 3).detail).toMatch(/relances/)
+    expect(construireTerrain('xco', 60, 160, 4).detail).toMatch(/Nouveau cycle/)
+    expect(construireTerrain('xco', 60, 160).detail).toMatch(/Casque/)
     expect(construireSpeciales(0, 250)).toMatchObject({ titre: "4 spéciales de 3'", velo: { famille: 'vtt-speciales' } })
   })
 })

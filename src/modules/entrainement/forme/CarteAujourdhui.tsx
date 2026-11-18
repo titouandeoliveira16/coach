@@ -10,7 +10,8 @@ import { Aide } from '../../../core/ui/Aide'
 import { Carte } from '../../../core/ui/Carte'
 import { AIDES } from '../aides'
 import { analyser } from '../analyse/donnees'
-import { ChargeInfo } from './ChargeInfo'
+import type { PointForme } from '../../../metrics/charge'
+import { CourbesRecuperation } from './CourbesRecuperation'
 import { adapterDuJour } from '../plan/adaptation'
 import { MuscuDuJour, MuscuDuSoir } from '../muscu/MuscuDuJour'
 import { JOURS_REPRISE, annulerReport, repriseApresMaladie, reporterIntensite } from '../plan/imprevus'
@@ -75,7 +76,8 @@ export function CarteAujourdhui({ onModifierMatin, apresForme, remplir = false }
   /** Sans la nutrition : la carte de la séance prend toute la place jusqu'aux onglets (Aujourd'hui sans défilement) */
   remplir?: boolean
   /** Glissé entre « Ta forme » et la séance (tuiles Nuit et Poids) */
-  apresForme?: ReactNode
+  /** Sous la carte du feu (cases Nuit, Poids, Charge) ; reçoit l'analyse du jour (charge) */
+  apresForme?: (a: { forme: PointForme[]; ratioPic?: number }) => ReactNode
   onModifierMatin?: () => void
   /** Un autre encart (Nutrition du jour) est déplié : la séance garde sa taille et descend */
   autreOuvert?: boolean
@@ -83,6 +85,7 @@ export function CarteAujourdhui({ onModifierMatin, apresForme, remplir = false }
   const jour = aujourdhui()
   const [formeOuverte, setFormeOuverte] = useState(false)
   const [detailOuvert, setDetailOuvert] = useState(false)
+  const [courbes, setCourbes] = useState(false)
   // La séance garde toute sa hauteur (boutons d'envoi et détail toujours visibles) : la page défile
   const seanceRef = useRef<HTMLElement>(null)
   const basculerForme = () => setFormeOuverte(!formeOuverte)
@@ -175,7 +178,6 @@ export function CarteAujourdhui({ onModifierMatin, apresForme, remplir = false }
         <button type="button" onClick={basculerForme} className="mt-1 text-left">
           {plages.map((p) => <LignePlage key={p.cle} p={p} etat={signal.details.find((x) => x.cle === p.cle)?.etat} couleur={couleurEtat} />)}
         </button>
-        <ChargeInfo forme={a.forme} ratioPic={a.ratioPic} ouvert={formeOuverte} />
         {formeOuverte && (
           <div className="mt-3.5 space-y-3 border-t border-bordure pt-3">
             {enAlerte.length === 0 && <p className="text-xs text-texte-3">Le feu suit ton corps : VFC, pouls au repos, ressenti et nuit.<Aide titre="Règle du feu" texte={AIDES.feu} /></p>}
@@ -184,6 +186,8 @@ export function CarteAujourdhui({ onModifierMatin, apresForme, remplir = false }
                 <b style={{ color: COULEUR[signal.couleur] }}>Pourquoi {signal.couleur} ?</b> {pourquoiCourt.replace(/^./, (c) => c.toUpperCase())}. {signal.couleur === 'orange' ? 'Une seule alerte de ton corps : séance dure raccourcie, mêmes watts.' : 'Deux alertes de ton corps ou plus : pas d’intensité aujourd’hui.'}<Aide titre="Règle du feu" texte={`${pourquoi} ${regle} ${AIDES.feu}`} />
               </p>
             )}
+            <button type="button" onClick={() => setCourbes(!courbes)} className="min-h-9 text-[13px] font-semibold text-accent">{courbes ? 'Masquer tes courbes ▴' : 'Ta VFC et ton pouls sur 2 mois ›'}</button>
+            {courbes && <CourbesRecuperation />}
             {signal.calibrationVfc && <p className="text-xs text-texte-3">Récupération en calibration ({a.vfc.nBase}/14 jours de mesures)</p>}
             {mesure && (
               <div>
@@ -227,7 +231,7 @@ export function CarteAujourdhui({ onModifierMatin, apresForme, remplir = false }
         )}
       </Carte>
 
-      {apresForme}
+      {apresForme?.(a)}
 
       {/* Séance du jour : la carte qui prend toute la place restante (elle défile seule si besoin) */}
       <Carte ref={seanceRef} visite="seance" className={`flex flex-col p-3! ${detailOuvert ? 'border-accent!' : ''} ${remplir && !detailOuvert ? 'min-h-0 flex-1' : 'shrink-0'}`}

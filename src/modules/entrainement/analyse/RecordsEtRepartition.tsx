@@ -3,7 +3,8 @@ import { aujourdhui, decalerJour } from '../../../core/dates'
 import { db } from '../../../core/db'
 
 /** Temps passé sous le 1er seuil, entre le 1er seuil et la CP, au-dessus de la CP, sur 4 semaines (vélo avec capteur). */
-export function Repartition() {
+/** `nu` : sans cadre ni titre (dans un repliable de Progrès). */
+export function Repartition({ nu = false }: { nu?: boolean } = {}) {
   const parts = useLiveQuery(async () => {
     const debut = decalerJour(aujourdhui(), -27)
     const s = (await db.seances.where('date').aboveOrEqual(debut).toArray()).filter((x) => x.sport === 'velo' && x.tempsPuissance)
@@ -16,8 +17,8 @@ export function Repartition() {
   const noms = ['Endurance (sous le 1er seuil)', 'Tempo / seuil (jusqu’à la CP)', 'Au-dessus de la CP']
   const couleurs = ['var(--color-z2)', 'var(--color-z4)', 'var(--color-z6, #e5484d)']
   return (
-    <section className="entree rounded-[14px] bg-surface p-4">
-      <h2 className="etiquette mb-2">Répartition de ton vélo (4 semaines)</h2>
+    <section className={nu ? '' : 'entree rounded-[14px] bg-surface p-4'}>
+      {!nu && <h2 className="etiquette mb-2">Répartition de ton vélo (4 semaines)</h2>}
       <div className="flex h-3 gap-0.5 overflow-hidden rounded-md">
         {parts.map((p, i) => p > 0 && <div key={i} style={{ flex: p, background: couleurs[i] }} />)}
       </div>

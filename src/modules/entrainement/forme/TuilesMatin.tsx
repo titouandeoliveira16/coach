@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Moon, Scale } from 'lucide-react'
+import { Moon, Scale, TrendingUp } from 'lucide-react'
 import { useState } from 'react'
 import { aujourdhui, decalerJour, depuisJour } from '../../../core/dates'
 import { db } from '../../../core/db'
@@ -8,6 +8,8 @@ import { analyserSommeil, enHeures, SEUILS_DEFAUT } from '../../../metrics/signa
 import { plagesForme } from '../../../metrics/plages'
 import { mesureUtile, scoreRessenti } from './donnees'
 import { lireSansPesee, peseesValides } from './pesees'
+import type { PointForme } from '../../../metrics/charge'
+import { ChargeOuverte, evolutionFond } from './ChargeInfo'
 
 const VERT = 'var(--color-bon)'
 const ORANGE = 'var(--color-attention)'
@@ -29,7 +31,6 @@ function MiniCourbe({ valeurs }: { valeurs: number[] }) {
 }
 
 const court = (h: number) => enHeures(h).replace(' h 00', ' h')
-const ressentiMot = (r: number) => (r < 2.5 ? 'en baisse' : r >= 4 ? 'très bon' : 'bon')
 const ecartKg = (kg: number) => `${kg > 0 ? '+' : kg < 0 ? '−' : ''}${formatNombre(Math.abs(kg), 1)} kg`
 
 function Chiffre({ titre, valeur, couleur }: { titre: string; valeur: string; couleur?: string }) {
@@ -54,9 +55,9 @@ function EnTeteOuvert({ Icone, couleur, titre, onFermer }: { Icone: typeof Moon;
  * Sous « Ta forme » (maquette P, 12/11/2026) : deux cases, Nuit (en gros, avec le ressenti en petit) et Poids (avec sa
  * petite courbe). Toucher une case l'ouvre sur toute la largeur : 14 dernières nuits, ou 4 dernières semaines de pesées.
  */
-export function TuilesMatin({ onPoids }: { onPoids?: () => void } = {}) {
+export function TuilesMatin({ onPoids, forme = [], ratioPic }: { onPoids?: () => void; forme?: PointForme[]; ratioPic?: number } = {}) {
   const jour = aujourdhui()
-  const [ouverte, setOuverte] = useState<'nuit' | 'poids'>()
+  const [ouverte, setOuverte] = useState<'nuit' | 'poids' | 'charge'>()
   const d = useLiveQuery(async () => {
     const mesures = (await db.mesures.where('date').between(decalerJour(jour, -40), jour, true, true).toArray()).map(mesureUtile)
     const pesees = (await peseesValides()).filter((p) => p.date >= decalerJour(jour, -28)).reverse()
@@ -153,21 +154,56 @@ export function TuilesMatin({ onPoids }: { onPoids?: () => void } = {}) {
     )
   }
 
+  if (ouverte === 'charge') {
+    return (
+      <div className="entree shrink-0 rounded-[14px] border-[1.5px] border-accent bg-surface p-3.5">
+        <EnTeteOuvert Icone={TrendingUp} couleur="var(--color-z2)" titre="Charge" onFermer={() => setOuverte(undefined)} />
+        <ChargeOuverte forme={forme} ratioPic={ratioPic} />
+      </div>
+    )
+  }
+
+  // Charge (18/11/2026) : évolution du fond sur 4 semaines, mini-courbes fond / fatigue des 6 dernières semaines
+  const fond = evolutionFond(forme)
+  const recents = forme.slice(-42)
+  const sept = Array.from({ length: 7 }, (_, i) => nuits.find((n) => n.date === decalerJour(jour, i - 6))?.h)
+
   return (
-    <div className="grid shrink-0 grid-cols-2 gap-2">
+    <div className="grid shrink-0 grid-cols-3 gap-2">
       <button type="button" onClick={() => setOuverte('nuit')} className="presse entree rounded-[14px] border-[1.5px] border-transparent bg-surface px-3 py-2.5 text-left">
-        <span className="flex items-center justify-between text-xs text-texte-2"><span className="flex items-center gap-1.5"><Moon className="h-3.5 w-3.5" style={{ color: 'var(--color-sommeil)' }} strokeWidth={2} />Nuit</span><span className="text-texte-3">▾</span></span>
-        <span className="chiffre mt-0.5 block text-[24px] leading-tight" style={{ color: nuit === undefined ? undefined : couleurNuit(nuit) }}>{nuit !== undefined ? enHeures(nuit) : '—'}</span>
-        <span className="mt-0.5 block text-xs text-texte-2">
-          {ressenti !== undefined ? <>Ressenti <b style={{ color: ressenti < 2.5 ? ORANGE : VERT }}>{ressentiMot(ressenti)} · {formatNombre(ressenti, 1)} / 5</b></> : 'Ressenti pas noté'}
+        <span className="flex items-center gap-1.5 text-xs text-texte-2"><Moon className="h-3.5 w-3.5" style={{ color: 'var(--color-sommeil)' }} strokeWidth={2} />Nuit</span>
+        <span className="chiffre mt-0.5 block text-[20px] leading-tight" style={{ color: nuit === undefined ? undefined : couleurNuit(nuit) }}>{nuit !== undefined ? court(nuit) : '—'}</span>
+        <span className="mt-0.5 block truncate text-[11px] text-texte-3">
+          {ressenti !== undefined ? <>ressenti <b style={{ color: ressenti < 2.5 ? ORANGE : VERT }}>{formatNombre(ressenti, 1)} / 5</b></> : 'ressenti pas noté'}
         </span>
+        <svg viewBox="0 0 100 26" preserveAspectRatio="none" className="mt-1 h-6 w-full" aria-hidden>
+          {sept.map((h, i) => h === undefined ? null : <rect key={i} x={i * 14.3 + 1} y={26 - Math.min(1, Math.max(0.15, (h - 4) / 5)) * 26} width="11" height={Math.min(1, Math.max(0.15, (h - 4) / 5)) * 26} rx="2" fill="var(--color-sommeil)" opacity={i === 6 ? 1 : 0.65} />)}
+        </svg>
       </button>
       <button type="button" onClick={() => setOuverte('poids')} className="presse entree rounded-[14px] border-[1.5px] border-transparent bg-surface px-3 py-2.5 text-left">
-        <span className="flex items-center justify-between text-xs text-texte-2"><span className="flex items-center gap-1.5"><Scale className="h-3.5 w-3.5 text-texte-3" strokeWidth={2} />Poids</span><b className="text-base text-texte">{poids ? `${formatNombre(poids.poidsKg, 1)} kg` : '—'}</b></span>
-        <MiniCourbe valeurs={d.pesees.slice(-7).map((p) => p.poidsKg)} />
-        <span className={`mt-1 block text-[11px] ${poids?.date !== jour && !d.sansPesee ? 'text-accent' : 'text-texte-3'}`}>
-          {poids?.date !== jour && !d.sansPesee ? 'à peser ce matin' : sur2 !== undefined ? `${ecartKg(sur2)} en 2 semaines` : ' '}
+        <span className="flex items-center gap-1.5 text-xs text-texte-2"><Scale className="h-3.5 w-3.5 text-texte-3" strokeWidth={2} />Poids</span>
+        <span className="chiffre mt-0.5 block text-[20px] leading-tight">{poids ? `${formatNombre(poids.poidsKg, 1)} kg` : '—'}</span>
+        <span className={`mt-0.5 block truncate text-[11px] ${poids?.date !== jour && !d.sansPesee ? 'text-accent' : 'text-texte-3'}`}>
+          {poids?.date !== jour && !d.sansPesee ? 'à peser ce matin' : sur2 !== undefined ? `${ecartKg(sur2)} en 2 sem.` : ' '}
         </span>
+        <MiniCourbe valeurs={d.pesees.slice(-7).map((p) => p.poidsKg)} />
+      </button>
+      <button type="button" onClick={() => setOuverte('charge')} className="presse entree rounded-[14px] border-[1.5px] border-transparent bg-surface px-3 py-2.5 text-left">
+        <span className="flex items-center gap-1.5 text-xs text-texte-2"><TrendingUp className="h-3.5 w-3.5" style={{ color: 'var(--color-z2)' }} strokeWidth={2} />Charge</span>
+        <span className="chiffre mt-0.5 block text-[20px] leading-tight">{fond !== undefined ? `${fond > 0 ? '+' : fond < 0 ? '−' : ''}${Math.abs(fond)} %` : '—'}</span>
+        <span className="mt-0.5 block truncate text-[11px] text-texte-3">{fond !== undefined ? 'fond, 4 semaines' : 'pas encore assez'}</span>
+        {recents.length >= 14 && (
+          <svg viewBox="0 0 100 26" preserveAspectRatio="none" className="mt-1 h-6 w-full" aria-hidden>
+            {(() => {
+              const max = Math.max(1, ...recents.flatMap((p) => [p.ctl, p.atl]))
+              const pts = (k: 'ctl' | 'atl') => recents.map((p, i) => `${((i / (recents.length - 1)) * 100).toFixed(1)},${(25 - (p[k] / max) * 23).toFixed(1)}`).join(' ')
+              return <>
+                <polyline points={pts('ctl')} fill="none" stroke="var(--color-z2)" strokeWidth="2" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
+                <polyline points={pts('atl')} fill="none" stroke="var(--color-attention)" strokeWidth="1.5" vectorEffect="non-scaling-stroke" strokeLinejoin="round" opacity="0.85" />
+              </>
+            })()}
+          </svg>
+        )}
       </button>
     </div>
   )

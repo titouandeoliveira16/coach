@@ -8,8 +8,6 @@ import { Aide } from '../../../core/ui/Aide'
 import { Carte } from '../../../core/ui/Carte'
 import { GraphiqueLignes, SERIES } from '../../../core/ui/graphiques'
 import { Repliable } from '../../../core/ui/Repliable'
-import { useReglage } from '../../../core/reglages'
-import type { ProfilSportif } from '../reglages/ProfilSportif'
 import { AIDES } from '../aides'
 import { FTP_SUR_CP } from '../../../metrics/puissance'
 import { donneesProgres, HAUSSE_CP } from '../analyse/progres'
@@ -22,7 +20,6 @@ const dureeTest = (court: boolean) => { const m = construireTest(250, court).dur
 import { Historique } from './Historique'
 import { ListeVictoires } from '../forme/Celebration'
 import { victoiresRecentes } from '../forme/victoires'
-import { SuiviRepas } from '../forme/SuiviRepas'
 import { CourbePuissance } from '../analyse/CourbePuissance'
 
 const jj = (d: string) => depuisJour(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'numeric' })
@@ -34,7 +31,7 @@ export function Progres() {
   const [r, modifier] = useReglagesEntrainement()
   const [dateTest, setDateTest] = useState('')
   const [court, setCourt] = useState(true)
-  const [ps] = useReglage<ProfilSportif>('profil-sportif', { sports: [], materiel: [] })
+  const [testsOuverts, setTestsOuverts] = useState(false)
   const nVictoires = useLiveQuery(async () => (await victoiresRecentes(30)).length)
   if (!t) return null
   const pct = (a?: number, b?: number) => (a !== undefined && b ? ((a - b) / b) * 100 : undefined)
@@ -44,29 +41,51 @@ export function Progres() {
   const avantDernier = t.tests[t.tests.length - 2]
 
   const prochain = t.testsPrevus[0]
-  const derniereEff = t.efficacite.length ? t.efficacite[t.efficacite.length - 1] : undefined
 
   return (
     <div className="space-y-3">
-      {/* Ce qui montre que tu progresses (allégé le 6/11/2026 : vélo 28 j, forme / fatigue et semaine en barres retirés) */}
+      {/* Progrès allégé (maquette validée le 18/11/2026) : CP et prochain test, puis ce qui dit « je progresse » */}
       <div className="grid grid-cols-2 gap-2">
-        {!dernierTest && (
-          <Tuile libelle="Prochain test" valeur={prochain ? depuisJour(prochain).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '–'}
-          sous={prochain ? (t.testsCourts.includes(prochain) ? "court 3′ + 12′" : 'complet 12-7-3') : 'aucun prévu'} />
-        )}
         <Tuile libelle="CP" aide={AIDES.wkg} valeur={dernierTest?.wkg ? formatNombre(dernierTest.wkg, 2) : dernierTest ? `${dernierTest.w}` : t.cpW ? `${Math.round(t.cpW)}` : '–'}
-          sous={dernierTest ? (dernierTest.wkg ? `W/kg · ${dernierTest.w} W` : 'W') : t.cpW ? 'W · déclarée, avant ton 1er test' : 'après ton 1er test'}
+          sous={`${dernierTest ? (dernierTest.wkg ? `W/kg · ${dernierTest.w} W` : 'W') : t.cpW ? 'W · déclarée' : 'après ton 1er test'}${(t.cpW ?? t.cpEstimee) ? ` · FTP ≈ ${Math.round((t.cpW ?? t.cpEstimee)! * FTP_SUR_CP)} W` : ''}`}
           evolution={dernierTest?.wkg && avantDernier?.wkg ? `${dernierTest.wkg >= avantDernier.wkg ? '+' : ''}${formatNombre(dernierTest.wkg - avantDernier.wkg, 2)}` : undefined}
           hausse={dernierTest?.wkg && avantDernier?.wkg ? dernierTest.wkg >= avantDernier.wkg : undefined} />
-        <Tuile libelle="Vélo 90 jours" aide={AIDES.kj90} valeur={formatNombre(t.kj90)} sous={`kJ · ${formatNombre(t.kj90Avant)} avant`}
-          evolution={signe(pct(t.kj90, t.kj90Avant))} hausse={sens(t.kj90, t.kj90Avant)} />
-        <Tuile libelle="Efficacité aérobie" aide={AIDES.efficacite} valeur={t.effRecente ? formatNombre(t.effRecente, 2) : '–'} sous="W par bpm · sorties faciles"
-          evolution={signe(pct(t.effRecente, t.effAvant))} hausse={sens(t.effRecente, t.effAvant)} />
-        {dernierTest && (
-          <Tuile libelle="Prochain test" valeur={prochain ? depuisJour(prochain).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '–'}
-          sous={prochain ? (t.testsCourts.includes(prochain) ? "court 3′ + 12′" : 'complet 12-7-3') : 'aucun prévu'} />
-        )}
+        <button type="button" onClick={() => setTestsOuverts(!testsOuverts)} className={`entree rounded-[14px] border-[1.5px] bg-surface p-3 text-left ${testsOuverts ? 'border-accent' : 'border-transparent'}`}>
+          <p className="text-[13px] font-semibold text-texte-2">Prochain test</p>
+          <p className="chiffre mt-0.5 text-2xl">{prochain ? depuisJour(prochain).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '–'}</p>
+          <p className="text-xs text-texte-3">{prochain ? (t.testsCourts.includes(prochain) ? "court 3′ + 12′" : 'complet 12-7-3') : 'aucun prévu'}</p>
+          <p className="text-xs font-semibold text-accent">{t.testsPrevus.length ? `${t.testsPrevus.length} test${t.testsPrevus.length > 1 ? 's' : ''} prévu${t.testsPrevus.length > 1 ? 's' : ''} ${testsOuverts ? '▴' : '›'}` : 'Ajouter un test ›'}</p>
+        </button>
       </div>
+      {testsOuverts && (
+        <Carte titre="Mes prochains tests" className="border-accent!">
+          <p className="text-sm text-texte-2">Chaque test recale tes zones et les watts de tes séances à venir.</p>
+          {t.testsPrevus.map((d) => (
+            <div key={d} className="flex items-center justify-between py-1 text-sm">
+              <span>
+                <span className="inline-block first-letter:uppercase">{depuisJour(d).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+                <span className="text-texte-3"> · {t.testsCourts.includes(d) ? "court (3' + 12')" : 'complet (12-7-3)'}</span>
+              </span>
+              <button type="button" className="min-h-11 px-2 text-texte-3" aria-label="Retirer ce test"
+                onClick={() => modifier({ programme: { ...prog, testsCp: prog.testsCp.filter((x) => x !== d), testsCourts: (prog.testsCourts ?? []).filter((x) => x !== d) } })}>×</button>
+            </div>
+          ))}
+          <div className="mt-2 flex items-center gap-2">
+            <input type="date" value={dateTest} onChange={(e) => setDateTest(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-bordure bg-surface-2 px-2 py-2 text-sm" />
+            <select value={court ? 'court' : 'complet'} onChange={(e) => setCourt(e.target.value === 'court')} className="rounded-lg border border-bordure bg-surface-2 px-2 py-2 text-sm">
+              <option value="court">Court</option>
+              <option value="complet">Complet</option>
+            </select>
+            <button type="button" disabled={!dateTest} className="px-2 text-sm font-semibold text-accent disabled:opacity-40"
+              onClick={() => {
+                modifier({ programme: { ...prog, testsCp: [...new Set([...prog.testsCp, dateTest])].sort(),
+                  testsCourts: court ? [...new Set([...(prog.testsCourts ?? []), dateTest])] : (prog.testsCourts ?? []).filter((x) => x !== dateTest) } })
+                setDateTest('')
+              }}>OK</button>
+          </div>
+          <p className="mt-2 text-xs text-texte-3">Un test avant chaque nouveau cycle, frais (après une semaine allégée). Complet = {dureeTest(false)}, court = {dureeTest(true)}. Résultat à saisir dans <Link to="/entrainement/reglages" className="text-accent">Réglages → Vélo</Link>.</p>
+        </Carte>
+      )}
 
       <Carte titre="Évolution de mes tests">
         {t.tests.length === 0 ? (
@@ -96,6 +115,13 @@ export function Progres() {
         )}
       </Carte>
 
+      <CourbePuissance pied={t.effRecente ? (
+        <p className="mt-2 flex items-center justify-between border-t border-bordure pt-2 text-xs text-texte-3">
+          <span>Efficacité aérobie (sorties faciles)<Aide titre="Efficacité aérobie" texte={AIDES.efficacite} /></span>
+          <b className="text-texte">{formatNombre(t.effRecente, 2)} W/bpm{signe(pct(t.effRecente, t.effAvant)) && <span className={sens(t.effRecente, t.effAvant) === undefined ? 'text-texte-3' : sens(t.effRecente, t.effAvant) ? 'text-bon' : 'text-mauvais'}> {signe(pct(t.effRecente, t.effAvant))}</span>}</b>
+        </p>
+      ) : undefined} />
+
       {familles && familles.length > 0 && (
         <Carte titre="Mes séances d'intensité">
           <ul className="space-y-2 text-sm">
@@ -112,69 +138,14 @@ export function Progres() {
         </Carte>
       )}
 
-      <Repartition />
-      <CourbePuissance />
-      <LigneFtp cpW={t.cpW ?? t.cpEstimee} poidsKg={t.poidsKg} estimee={!t.cpW} />
-
-      {/* Le reste, replié */}
-      <Repliable titre="Récupération" libelle="Voir" resume="VFC et pouls au repos sur les dernières semaines">
-        <p className="text-sm text-texte-2">VFC (moyenne 7 jours) et ta zone normale<Aide titre="VFC" texte={`${AIDES.vfc7} ${AIDES.zoneVfc}`} /></p>
-        <GraphiqueLignes etiquettes={t.physio.map((p) => jj(p.date))} format={(n) => n.toFixed(1).replace('.', ',')}
-          bande={{ nom: 'Zone normale', bas: t.physio.map((p) => p.bas), haut: t.physio.map((p) => p.haut) }}
-          series={[{ nom: 'VFC 7 j', couleur: SERIES[0], valeurs: t.physio.map((p) => p.ln7) }]} />
-        <p className="mt-3 text-sm text-texte-2">FC de repos (bpm)</p>
-        <GraphiqueLignes etiquettes={t.physio.map((p) => jj(p.date))} series={[{ nom: 'FC repos', couleur: SERIES[1], valeurs: t.physio.map((p) => p.fcRepos) }]} />
+      <Repliable titre="Répartition des zones" libelle="Voir" resume="Ton vélo des 4 dernières semaines, par intensité">
+        <Repartition nu />
       </Repliable>
 
-      {t.efficacite.length > 1 && (
-        <Repliable titre="Efficacité aérobie" libelle="Voir" resume={derniereEff ? `Dernière sortie facile : ${formatNombre(derniereEff.valeur, 2)} W par bpm` : undefined}>
-          <GraphiqueLignes etiquettes={t.efficacite.map((p) => jj(p.date))} format={(n) => n.toFixed(2).replace('.', ',')}
-            series={[{ nom: 'W par bpm', couleur: SERIES[0], valeurs: t.efficacite.map((p) => p.valeur) }]} />
-          <p className="mt-1 text-xs text-texte-3">Sorties faciles de 45 min et plus. Si la courbe monte, tu produis plus de watts pour le même cœur : tu progresses.</p>
-        </Repliable>
-      )}
-
-      {ps.nutrition !== false && (
-        <Repliable titre="Repas du soir" libelle="Voir" resume="Ce que tu manges face à ton besoin, sur 4 semaines">
-          <SuiviRepas nu />
-        </Repliable>
-      )}
-
-      <Repliable titre="Petites victoires" libelle="Voir" resume={nVictoires ? `${nVictoires} victoire${nVictoires > 1 ? 's' : ''} ce mois-ci` : t.regularite ? `Régularité : ${t.regularite.faites}/${t.regularite.prevues} séances faites (4 sem.)` : 'Tes progrès d’une séance à l’autre'}>
+      <Repliable titre="Historique des séances" libelle="Voir" resume={nVictoires ? `Tes séances semaine par semaine · ${nVictoires} victoire${nVictoires > 1 ? 's' : ''} ce mois-ci` : 'Tes séances semaine par semaine, et tes petites victoires'}>
         <ListeVictoires />
         <PetitesVictoires t={t} nu />
-      </Repliable>
-
-      <Repliable titre="Mes prochains tests" libelle="Voir" resume={t.testsPrevus.length ? `${t.testsPrevus.length} prévu${t.testsPrevus.length > 1 ? 's' : ''}` : 'Aucun test programmé'}>
-        <p className="text-sm text-texte-2">Chaque test recale tes zones et les watts de tes séances à venir.</p>
-        {t.testsPrevus.map((d) => (
-          <div key={d} className="flex items-center justify-between py-1 text-sm">
-            <span>
-              <span className="inline-block first-letter:uppercase">{depuisJour(d).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
-              <span className="text-texte-3"> · {t.testsCourts.includes(d) ? "court (3' + 12')" : 'complet (12-7-3)'}</span>
-            </span>
-            <button type="button" className="px-2 text-texte-3" aria-label="Retirer ce test"
-              onClick={() => modifier({ programme: { ...prog, testsCp: prog.testsCp.filter((x) => x !== d), testsCourts: (prog.testsCourts ?? []).filter((x) => x !== d) } })}>×</button>
-          </div>
-        ))}
-        <div className="mt-2 flex items-center gap-2">
-          <input type="date" value={dateTest} onChange={(e) => setDateTest(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-bordure bg-surface-2 px-2 py-2 text-sm" />
-          <select value={court ? 'court' : 'complet'} onChange={(e) => setCourt(e.target.value === 'court')} className="rounded-lg border border-bordure bg-surface-2 px-2 py-2 text-sm">
-            <option value="court">Court</option>
-            <option value="complet">Complet</option>
-          </select>
-          <button type="button" disabled={!dateTest} className="px-2 text-sm font-semibold text-accent disabled:opacity-40"
-            onClick={() => {
-              modifier({ programme: { ...prog, testsCp: [...new Set([...prog.testsCp, dateTest])].sort(),
-                testsCourts: court ? [...new Set([...(prog.testsCourts ?? []), dateTest])] : (prog.testsCourts ?? []).filter((x) => x !== dateTest) } })
-              setDateTest('')
-            }}>OK</button>
-        </div>
-        <p className="mt-2 text-xs text-texte-3">Un test avant chaque nouveau cycle, frais (après une semaine allégée). Complet = {dureeTest(false)}, court = {dureeTest(true)}. Résultat à saisir dans <Link to="/entrainement/reglages" className="text-accent">Réglages → Vélo</Link>.</p>
-      </Repliable>
-
-      <Repliable titre="Historique des séances" libelle="Voir" resume="Toutes tes séances, semaine par semaine">
-        <Historique />
+        <div className="mt-3"><Historique /></div>
       </Repliable>
     </div>
   )
@@ -210,18 +181,6 @@ function Tuile({ libelle, valeur, aide, sous, evolution, hausse }: { libelle: st
   )
 }
 
-/** FTP estimée à partir de la CP (la CP est en moyenne un peu au-dessus de la FTP : ≈ 97 %), en W et W/kg. */
-function LigneFtp({ cpW, poidsKg, estimee }: { cpW?: number; poidsKg?: number; estimee: boolean }) {
-  if (!cpW) return null
-  const ftp = Math.round(cpW * FTP_SUR_CP)
-  return (
-    <p className="entree rounded-[14px] bg-surface px-4 py-3 text-sm text-texte-2">
-      FTP estimée : <b className="chiffre text-texte">≈ {ftp} W</b>{poidsKg ? <> · <b className="chiffre text-texte">{formatNombre(ftp / poidsKg, 2)} W/kg</b></> : null}
-      <Aide titre="FTP et CP" texte={AIDES.ftp} />
-      <span className="block text-xs text-texte-3">Repère à partir de ta CP {estimee ? 'estimée' : ''} de {Math.round(cpW)} W{poidsKg ? ` (${formatNombre(cpW / poidsKg, 2)} W/kg)` : ''}. Sur Zwift, mets plutôt {Math.round(cpW)} W (ta CP) en FTP : tes séances sont calculées avec ta CP.</span>
-    </p>
-  )
-}
 
 type Donnees = NonNullable<Awaited<ReturnType<typeof donneesProgres>>>
 

@@ -11,6 +11,7 @@ import { importerIntervals } from '../import/intervals'
 import { besoinsDe, lireReglagesNutrition, modifierReglagesNutrition } from './besoins'
 import { Formulaire } from './CarteRepas'
 import { jourARemplir } from './repas'
+import { SuiviRepas } from './SuiviRepas'
 
 /** « du jour », « d'hier », « d'avant-hier » */
 const nomJour = (d: string, jour = aujourdhui()) => (d === jour ? 'du jour' : d === decalerJour(jour, -1) ? "d'hier" : d === decalerJour(jour, -2) ? "d'avant-hier" : `du ${jourCourt(d)}`)
@@ -44,6 +45,7 @@ export function CarteNutrition({ ouverte: ouverteParent, onBasculer }: {
     return Promise.all(jours.map(async (d) => [d, (await db.repas.get(d)) ?? null] as const))
   }, [jour])
   const [detail, setDetail] = useState(false)
+  const [suivi, setSuivi] = useState(false)
   const [ouverteLocale, setOuverteLocale] = useState(false)
   const ouverte = ouverteParent ?? ouverteLocale
   const setOuverte = (v: boolean) => (onBasculer ? onBasculer(v) : setOuverteLocale(v))
@@ -167,6 +169,9 @@ export function CarteNutrition({ ouverte: ouverteParent, onBasculer }: {
           </button>
         ))}
       </div>
+      {/* Suivi des repas (déplacé de Progrès le 18/11/2026) */}
+      <button type="button" onClick={() => setSuivi(!suivi)} className="min-h-10 text-left text-[13px] font-semibold text-accent">{suivi ? 'Masquer mes 4 semaines ▴' : 'Mes repas des 4 dernières semaines ›'}</button>
+      {suivi && <SuiviRepas nu />}
       {/* Rattraper un jour plus ancien (jusqu'à 7 jours) : un jour sans rien n'est pas compté */}
       <button type="button" onClick={() => setAutreJour(!autreJour)} className="mt-2 text-sm font-semibold text-accent">{autreJour ? '× Fermer' : '+ Noter un autre jour'}</button>
       {autreJour && sept && (

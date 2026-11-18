@@ -613,27 +613,63 @@ export function construireLongueCotes(duree: number, z2W: number, cpW: number, c
 }
 
 /** Sorties VTT sur le terrain : pas de cible en watts (monotrace), jugées sur l'effort perçu. */
-const TERRAIN: Record<Exclude<Discipline, 'route'>, string> = {
-  xco: 'virages, relances en sortie de virage, montées et descentes techniques',
-  xcc: 'virages rapides, départs et relances',
-  xcm: 'pilotage sur un long parcours varié, en mangeant comme en course',
-  enduro: 'virages, freinage, lignes en descente, remontées tranquilles',
-  dh: 'lignes, freinage, sauts et virages, en répétant une même section',
-}
 
 /**
- * Sortie VTT technique (une Z2 de la semaine) : 60 min au plus de technique (fiche du catalogue : 45-60 min),
- * complétée en Z2 si le créneau est plus long. kJ prévus estimés plus bas qu'une Z2 (arrêts, retours au départ).
+ * Séance technique VTT guidée (maquette validée le 18/11/2026, relue le 18/11/2026) : un thème par semaine sur 4 semaines,
+ * 3 exercices concrets (un geste répété, puis enchaîné), en début de sortie et au calme. Pratique d'entraîneur : aucune
+ * étude contrôlée sur l'entraînement technique en VTT ; regard tourné vers l'extérieur (Chua 2021, discuté par McKay 2024),
+ * pratique variée surtout utile en laboratoire (Czyż 2024), apprendre fatigué apprend moins bien (Branscheidt 2019).
  */
-export function construireTerrain(discipline: Exclude<Discipline, 'route'>, duree: number, z2W: number): SeanceConstruite {
+export const THEMES_TECHNIQUE: { nom: string; exos: [string, string][] }[] = [
+  { nom: 'virages', exos: [
+    ['Trajectoire', 'un virage, 8 passages : regarde la sortie avant d’entrer, entre large, touche l’intérieur tard, ressors large'],
+    ['Appuis', 'le même virage, 8 passages : pied extérieur en bas, poids dans les pieds, le vélo penche plus que toi ; le gros freinage en ligne droite avant, relâché dans le virage'],
+    ['Enchaînement', '3 virages d’affilée, 6 passages, retour au départ tranquille entre chaque'],
+  ] },
+  { nom: 'montées techniques', exos: [
+    ['Assis', 'une montée technique, 6 à 8 passages : assis au bout de la selle, buste bas, coudes pliés, pédalage rond pour garder l’adhérence'],
+    ['Franchissement', 'une marche ou une racine en montée, 6 à 8 passages : debout juste le temps de passer, roue avant allégée, puis tu te rassois'],
+    ['Braquet', 'la même montée, 6 passages : le bon braquet mis avant, jamais de vitesse en force ; au chrono une fois les passages propres'],
+  ] },
+  { nom: 'descente', exos: [
+    ['Freinage', 'une descente, 6 à 8 passages : freine fort en ligne droite, l’avant progressivement, relâche avant d’entrer dans le virage'],
+    ['Lignes', 'repère ta ligne à pied d’abord, puis 6 passages en regardant deux obstacles plus loin'],
+    ['Enchaînement', 'toute la section, 6 passages, bras souples ; un peu plus vite seulement si c’est propre, jamais à fond'],
+  ] },
+  { nom: 'relances et départs', exos: [
+    ['Sortie de virage', '6 fois : une ou deux vitesses plus légères avant d’entrer, puis 3-4 coups de pédale debout, cadence haute'],
+    ['Départs', '6 départs arrêtés : pédale vers 2 h, debout 5 s, puis tu passes une vitesse ; 2 min tranquille entre'],
+    ['Relance + montée', 'une sortie de virage puis une montée courte, 4 fois en enchaînant ; au chrono quand c’est propre'],
+  ] },
+]
+const SECURITE_TECHNIQUE = 'Casque, une section à ta portée, reconnue à pied d’abord ; pas seul dans une descente engagée (ou dis où tu es) ; arrête-toi dès que les passages se dégradent.'
+
+/**
+ * Sortie VTT technique (une Z2 de la semaine) : 55 min de technique au plus (10' d'échauffement + 3 exercices), puis Z2
+ * si le créneau est plus long. `n` = nombre de séances techniques d'avant : thème n % 4, cycle n / 4.
+ * kJ prévus estimés plus bas qu'une Z2 (arrêts, retours au départ).
+ */
+export function construireTerrain(_discipline: Exclude<Discipline, 'route'>, duree: number, z2W: number, n = 0): SeanceConstruite {
   const dureeMin = Math.round(duree)
-  const tech = Math.min(60, dureeMin)
+  const tech = Math.min(55, dureeMin)
   const z2 = dureeMin - tech
+  const theme = THEMES_TECHNIQUE[n % THEMES_TECHNIQUE.length]
+  const nouveauCycle = n >= THEMES_TECHNIQUE.length && n % THEMES_TECHNIQUE.length === 0
+  const ech = Math.min(10, Math.max(5, Math.round(tech / 5)))
+  const parExo = Math.max(5, Math.floor((tech - ech) / 3))
+  const etapes: Etape[] = []
+  let h = 0
+  // Pas de watts sur la technique (on y pilote, on ne vise pas une puissance) ; seulement sur la Z2 de fin
+  const ajouter = (min: number, libelle: string, w?: number) => { etapes.push({ debutSec: h, dureeSec: min * 60, libelle, ...(w ? { w: arrondi5(w) } : {}) }); h += min * 60 }
+  ajouter(ech, 'Échauffement facile en roulant vers ta section')
+  theme.exos.forEach(([nom, consigne], i) => ajouter(i === 2 ? tech - ech - 2 * parExo : parExo, `${nom} : ${consigne}`))
+  if (z2 > 0) ajouter(z2, 'Z2 tranquille pour finir', z2W)
+  const relances = theme.nom === 'relances et départs'
   return {
-    titre: `VTT technique ${tech}'${z2 >= 10 ? ` + ${z2}' Z2` : ''}`,
-    detail: `Sur le terrain, intensité basse (tu peux parler) : ${TERRAIN[discipline]}. Répète les passages plutôt qu'un long parcours${z2 >= 10 ? `, puis ${z2}' de Z2 tranquille` : ''}. Note ton effort perçu à la fin.`,
+    titre: `Technique · ${theme.nom}${z2 >= 10 ? ` + ${z2}' Z2` : ''}`,
+    detail: `Thème ${(n % THEMES_TECHNIQUE.length) + 1} sur 4 : ${theme.nom}. Position d’attaque : pédales à plat, coudes et genoux pliés, un doigt sur chaque frein, regard loin. Intensité basse, tu peux parler${relances ? ' (sauf les relances et les départs : des efforts de 5 à 8 s, 2 min tranquille entre)' : ''}. ${SECURITE_TECHNIQUE}${nouveauCycle ? ' Nouveau cycle : change de section ou prends-en une un peu plus difficile.' : ''} Note ton effort perçu à la fin.`,
     dureeMin, kj: Math.round((tech * 60 * z2W * 0.6 + z2 * 60 * z2W) / 1000),
-    velo: { famille: 'vtt-terrain', pourquoi: 'Une sortie Z2 sur le terrain : la technique compte beaucoup en VTT (Impellizzeri 2005, Kirkwood 2017).' },
+    velo: { famille: 'vtt-terrain', etapes, pourquoi: `Technique sur le terrain, thème ${theme.nom} : la technique compte beaucoup en VTT (Impellizzeri 2005, Kirkwood 2017). Un geste répété puis enchaîné, au calme et en début de sortie : pratique d’entraîneur (apprendre fatigué apprend moins bien, Branscheidt 2019).` },
   }
 }
 
