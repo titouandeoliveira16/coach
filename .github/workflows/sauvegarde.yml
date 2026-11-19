@@ -37,10 +37,10 @@ jobs:
           for t in donnees intervals_cles igpsport_comptes igpsport_faits push_abonnements push_config coachs codes_invitation erreurs; do
             corps=$(jq -n --arg q "select coalesce(json_agg(t), '[]'::json) as lignes from public.$t t" '{query: $q}')
             code=$(curl -sS -o "$dossier/$t.json" -w '%{http_code}' -X POST \
-              -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H 'Content-Type: application/json' \
+              -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H 'Content-Type: application/json' -H 'User-Agent: cycle-sauvegarde/1.0' \
               "https://api.supabase.com/v1/projects/$PROJET/database/query" -d "$corps")
             # Table absente (ou pas encore créée) : on la saute sans arrêter la sauvegarde
-            if [ "$code" != "200" ] && [ "$code" != "201" ]; then echo "::warning::$t : erreur $code, sautée"; rm -f "$dossier/$t.json"; fi
+            if [ "$code" != "200" ] && [ "$code" != "201" ]; then echo "::warning::$t : erreur $code, sautée ($(head -c 200 "$dossier/$t.json" | tr -d '\n'))"; rm -f "$dossier/$t.json"; fi
           done
           [ -s "$dossier/donnees.json" ] || { echo "::error::Export de la table donnees impossible"; exit 1; }
           nom="sauvegarde-$(date -u +%Y-%m-%d)"
