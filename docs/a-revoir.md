@@ -62,3 +62,5 @@ de conversation quand il faut s'en servir. Ici ne restent que les chantiers tech
   plus, VFC en ms, axe du pouls d'au moins 10 bpm, « 7 derniers jours » seulement avec assez d'historique, « 1 h 60 »,
   .FIT à 1 point toutes les 2-4 s et pauses, sortie à la main + importée = une seule, une petite sortie n'emporte plus la
   séance d'un autre jour, clé Intervals refusée signalée sur Aujourd'hui, flux non reçu relu au prochain import.
+- 19/11/2026 : le jeton `SUPABASE_ACCESS_TOKEN` des GitHub Actions est refusé (« Invalid access token ») : les fonctions ne
+  se déploient plus seules. `intervals` v14 déployée à la main. À refaire : nouveau jeton Supabase → secret GitHub.
