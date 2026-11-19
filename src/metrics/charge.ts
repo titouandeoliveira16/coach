@@ -59,7 +59,17 @@ export interface PointForme {
  * Calcule CTL / ATL / TSB jour par jour.
  * @param charges charge de chaque jour, dans l'ordre (jours sans séance = 0)
  */
-export function modeleForme(charges: { date: string; charge: number }[], ctl0 = 0, atl0 = 0): PointForme[] {
+/**
+ * Point de départ du fond et de la fatigue (audit du 18/11/2026) : sans historique avant, partir de 0 faisait croire à un fond
+ * qui double en 4 semaines (+91 % pour une charge stable). On part de la charge moyenne des 4 premières semaines, comme si
+ * elle durait depuis longtemps.
+ */
+export const departForme = (charges: { charge: number }[]) => {
+  const debut = charges.slice(0, 28)
+  return debut.length ? debut.reduce((a, c) => a + c.charge, 0) / debut.length : 0
+}
+
+export function modeleForme(charges: { date: string; charge: number }[], ctl0 = departForme(charges), atl0 = ctl0): PointForme[] {
   let ctl = ctl0
   let atl = atl0
   return charges.map(({ date, charge }) => {

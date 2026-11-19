@@ -57,3 +57,8 @@ de conversation quand il faut s'en servir. Ici ne restent que les chantiers tech
 - Reste : saison route et VTT (allégées, sortie longue, semaine de course A, affûtage VTT),
   dimanche → lundi (jours durs), changement de montre, nutrition (plancher du maintien, rappels de pesée, mineurs), muscu des mineurs, Révision recalée sur
   le concours, accessibilité, textes, sauvegarde chiffrée, clé de chiffrement dédiée, page de confidentialité, audit en CI.
+- Lot 1 bis fait en 14.14.0 : bouton « J'ai changé de montre » (Réglages → Intervals.icu), fond et fatigue qui partent de
+  la charge des 4 premières semaines (plus de « +91 % »), W/kg du jour du test partout, alerte des zones qui ne revient
+  plus, VFC en ms, axe du pouls d'au moins 10 bpm, « 7 derniers jours » seulement avec assez d'historique, « 1 h 60 »,
+  .FIT à 1 point toutes les 2-4 s et pauses, sortie à la main + importée = une seule, une petite sortie n'emporte plus la
+  séance d'un autre jour, clé Intervals refusée signalée sur Aujourd'hui, flux non reçu relu au prochain import.

@@ -1,6 +1,8 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useState } from 'react'
 import { db } from '../../../core/db'
+import { aujourdhui, depuisJour } from '../../../core/dates'
+import { useReglage } from '../../../core/reglages'
 import { depuis, pluriel } from '../../../core/format'
 import { useSynchro } from '../../../core/synchro'
 import { Bouton } from '../../../core/ui/Bouton'
@@ -58,6 +60,7 @@ export function SectionIntervals() {
             onClick={() => confirm('Délier Intervals.icu ? Les données déjà importées restent.') && agir(async () => { await delierIntervals(); setConnecte(false) })}>
             Délier Intervals.icu
           </button>
+          <NouvelleMontre />
         </div>
       ) : (
         <div className="space-y-2">
@@ -81,5 +84,28 @@ export function SectionIntervals() {
       )}
       {message && <p className="mt-2 text-sm text-texte-2">{message}</p>}
     </Repliable>
+  )
+}
+
+/**
+ * Nouvelle montre (audit du 18/11/2026) : chaque montre mesure la VFC et le pouls à sa façon. Ta normale repart de zéro,
+ * sinon le feu restait orange des semaines.
+ */
+function NouvelleMontre() {
+  const [montre, modifier] = useReglage<{ depuis?: string }>('montre', {})
+  const [demande, setDemande] = useState(false)
+  if (demande) return (
+    <div className="rounded-xl border-[1.5px] border-attention/50 p-3 text-sm">
+      <p className="text-texte-2">Ta normale de VFC et de pouls au repos repart de zéro à partir d'aujourd'hui : 2 semaines d'apprentissage, pendant lesquelles le feu ne juge que ton ressenti et ta nuit.</p>
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        <button type="button" className="rounded-xl bg-accent py-2.5 font-semibold text-fond" onClick={async () => { await modifier({ depuis: aujourdhui() }); setDemande(false) }}>Oui, nouvelle montre</button>
+        <button type="button" className="rounded-xl border border-bordure py-2.5 font-semibold text-texte-2" onClick={() => setDemande(false)}>Annuler</button>
+      </div>
+    </div>
+  )
+  return (
+    <button type="button" className="w-full py-2 text-sm text-texte-3" onClick={() => setDemande(true)}>
+      J'ai changé de montre{montre.depuis ? ` (dernière fois le ${depuisJour(montre.depuis).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })})` : ''}
+    </button>
   )
 }

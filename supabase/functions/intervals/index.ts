@@ -147,8 +147,12 @@ Deno.serve(async (req) => {
       const ids = (Array.isArray(corps.ids) ? corps.ids : []).slice(0, MAX_FLUX).map((x: unknown) => String(x)).filter((x: string) => ID.test(x))
       const flux: Record<string, Record<string, unknown[]>> = {}
       for (const id of ids) {
-        const series = (await intervals(`/activity/${id}/streams.json?types=time,heartrate,watts,velocity_smooth`, c.cle).catch(() => [])) as { type: string; data: unknown[] }[]
+        // Échec (coupure, trop de requêtes) signalé (audit du 18/11/2026) : avant, il passait pour « pas de flux » et la
+        // séance était enregistrée sans zones ni courbe, jamais relue
+        let echec = false
+        const series = (await intervals(`/activity/${id}/streams.json?types=time,heartrate,watts,velocity_smooth`, c.cle).catch(() => { echec = true; return [] })) as { type: string; data: unknown[] }[]
         flux[id] = Object.fromEntries(series.map((s) => [s.type, s.data]))
+        if (echec) flux[id].echec = [1]
         // Tours (laps) de l'activité : Zwift en crée un par étape de la séance ; durée, watts et FC moyens de chacun
         const tours = (await intervals(`/activity/${id}/intervals`, c.cle).catch(() => ({}))) as { icu_intervals?: Record<string, unknown>[] }
         flux[id].tours = (tours.icu_intervals ?? []).map((t) => ({

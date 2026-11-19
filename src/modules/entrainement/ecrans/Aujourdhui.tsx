@@ -1,4 +1,5 @@
 import { useJour } from '../../../core/useJour'
+import { CarteCleIntervals } from '../forme/CarteCleIntervals'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { TuilesMatin } from '../forme/TuilesMatin'
 import { useState } from 'react'
@@ -61,6 +62,7 @@ function AujourdhuiDuJour() {
         <CarteEnchainement />
         <CarteSeancesCles />
         <CarteFcMax />
+        <CarteCleIntervals />
         <CarteCpEnHausse />
         <CarteHorsPlan />
         {/* Le dimanche seulement : bilan de la semaine (le lundi, il est rappelé dans Semaine) */}

@@ -21,7 +21,9 @@ export function ZonesVelo({ zones, cpW, onModifier }: Props) {
   const pctCp = (w?: number) => (cpW && w !== undefined ? Math.round((w / cpW) * 100) : undefined)
   // Zones de puissance qui ne suivent pas les % de CP de l'appli (anciennes zones importées) : proposer de les recaler
   const standard = cpW ? zonesDepuisCp(cpW, zones) : undefined
-  const decalees = !!standard && (standard.length !== zones.length || standard.some((z, i) => z.wMin !== zones[i].wMin || z.wMax !== zones[i].wMax))
+  // La limite Z2 / Z3 suit ton 1er seuil (l'appli la déplace exprès) : elle ne compte pas (audit du 18/11/2026, l'alerte
+  // revenait chaque semaine, même après « Recaler »)
+  const decalees = !!standard && (standard.length !== zones.length || standard.some((z, i) => (i !== 2 && z.wMin !== zones[i].wMin) || (i !== 1 && z.wMax !== zones[i].wMax)))
 
   return (
     <div className="mt-4">

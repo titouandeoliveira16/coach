@@ -72,7 +72,8 @@ export function analyserFlux(flux: Flux, r: Resume, c: Contexte): Seance {
   if (aPuissance) {
     s.kj = Math.round(kjDepuisEchantillons(t, flux.w!))
     s.puissanceMoyW = dureeSec ? Math.round((s.kj * 1000) / dureeSec) : undefined
-    const w1Hz = reechantillonner1Hz(t, flux.w!)
+    // Sans les pauses : puissance normalisée, records et temps par domaine (audit du 18/11/2026)
+    const w1Hz = reechantillonner1Hz(t, flux.w!, true)
     const np = puissanceNormalisee(w1Hz)
     s.puissanceNormW = np ? Math.round(np) : undefined
     // Meilleurs efforts : courbe de puissance et estimation de la CP entre deux tests

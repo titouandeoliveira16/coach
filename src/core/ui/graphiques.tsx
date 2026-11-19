@@ -70,11 +70,13 @@ function Bulle({ x, largeur, children }: { x: number; largeur: number; children:
  * `bande` : zone colorée entre deux valeurs (ex. zone normale de la VFC).
  */
 export function GraphiqueLignes({
-  etiquettes, series, bande, format: formatDonne, formatAxe: formatAxeDonne, zero = false, reperes: reperesDonnes,
+  etiquettes, series, bande, format: formatDonne, formatAxe: formatAxeDonne, zero = false, reperes: reperesDonnes, ecartMin,
 }: {
   etiquettes: string[]
   series: Serie[]
   bande?: { bas: (number | undefined)[]; haut: (number | undefined)[]; nom: string }
+  /** Écart minimal entre le bas et le haut de l'axe (ex. 10 bpm pour le pouls) */
+  ecartMin?: number
   format?: (n: number) => string
   /** Graduations de l'axe (plus courtes) ; par défaut `format` */
   formatAxe?: (n: number) => string
@@ -87,7 +89,10 @@ export function GraphiqueLignes({
   const n = etiquettes.length
   const toutes = [...series.flatMap((s) => s.valeurs), ...(bande ? [...bande.bas, ...bande.haut] : [])].filter((v): v is number => v !== undefined)
   if (!n || !toutes.length) return <p className="py-6 text-center text-sm text-texte-3">Pas encore de données.</p>
-  const e = echelle(Math.min(...toutes, ...(zero ? [0] : [])), Math.max(...toutes, ...(zero ? [0] : [])))
+  const mini = Math.min(...toutes, ...(zero ? [0] : [])), maxi = Math.max(...toutes, ...(zero ? [0] : []))
+  // Écart minimal de l'axe (audit du 18/11/2026) : 2 bpm ne doivent pas remplir toute la hauteur
+  const manque = ecartMin && maxi - mini < ecartMin ? (ecartMin - (maxi - mini)) / 2 : 0
+  const e = echelle(mini - manque, maxi + manque)
   // Par défaut : entiers, ou 1 décimale si les graduations sont plus fines que 1
   const format = formatDonne ?? ((v: number) => (e.pas < 1 ? v.toFixed(1).replace('.', ',') : String(Math.round(v))))
   const formatAxe = formatAxeDonne ?? format

@@ -133,12 +133,16 @@ function plage(s: Pick<Seance, 'debut' | 'dureeSec'>) {
  * sur au moins la moitié de la plus courte (ex. sortie enregistrée à la fois
  * par la montre et par le compteur, lancés à quelques minutes d'écart).
  */
-export function sontDoublons(a: Pick<Seance, 'id' | 'debut' | 'dureeSec' | 'sport' | 'idExterne' | 'autresIds'>, b: typeof a) {
+export function sontDoublons(a: Pick<Seance, 'id' | 'debut' | 'dureeSec' | 'sport' | 'idExterne' | 'autresIds'> & { date?: string; source?: string }, b: typeof a) {
   if (a.id === b.id || a.sport !== b.sport) return false
   const idsA = [a.idExterne, ...(a.autresIds ?? [])].filter(Boolean)
   if (b.idExterne && idsA.includes(b.idExterne)) return true
   const pa = plage(a)
   const pb = plage(b)
+  // Saisie à la main (sans heure) puis la même sortie importée (audit du 18/11/2026 : comptée deux fois) : même jour et
+  // durée à ±20 % près
+  if ((!pa || !pb) && a.date && a.date === b.date && (a.source === 'manuel' || b.source === 'manuel'))
+    return Math.abs(a.dureeSec - b.dureeSec) <= 0.2 * Math.max(a.dureeSec, b.dureeSec)
   if (!pa || !pb) return false
   const commun = Math.min(pa[1], pb[1]) - Math.max(pa[0], pb[0])
   return commun >= 0.5 * Math.min(pa[1] - pa[0], pb[1] - pb[0])
@@ -228,6 +232,9 @@ export async function enregistrerSeance(s: Seance) {
     const lundi = lundiDe(s.date)
     const proches = (await db.prevues.where('date').between(decalerJour(s.date, -2), decalerJour(s.date, 2), true, true).toArray())
       .filter((p) => p.sport === s.sport && p.statut === 'prevue' && lundiDe(p.date) === lundi)
+      // Un autre jour (audit du 18/11/2026) : seulement une sortie d'au moins 60 % de la durée prévue (25 min de vélotaf le
+      // lundi n'emportent plus la séance seuil du mercredi)
+      .filter((p) => p.date === s.date || s.dureeSec / 60 >= 0.6 * p.dureeMin)
       .sort((a, b) => Math.abs(ecartJours(a.date, s.date)) - Math.abs(ecartJours(b.date, s.date)) || a.date.localeCompare(b.date))
     const prevue = proches[0]
     if (prevue) {

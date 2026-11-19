@@ -38,11 +38,30 @@ export function puissanceNormalisee(w1Hz: number[]) {
 }
 
 /** Rééchantillonne une série à 1 point par seconde (les trous sont remplis par 0 : roue libre / pause). */
-export function reechantillonner1Hz(t: number[], v: (number | null)[]) {
+export function reechantillonner1Hz(t: number[], v: (number | null)[], sansPauses = false) {
   if (!t.length) return []
   const debut = t[0]
+  // Audit du 18/11/2026 : enregistrement « intelligent » (un point toutes les 2 à 4 s) → la valeur est tenue jusqu'au
+  // point suivant (avant : 0 W dans chaque seconde vide, puissance normalisée divisée par 2 à 4)
+  const TROU_MAX = 5
+  if (sansPauses) {
+    // Pauses (trou de plus de 5 s, auto-pause) retirées : ni 0 W ni temps « facile » en plus (puissance normalisée, records)
+    const sortie: number[] = []
+    for (let i = 0; i < t.length; i++) {
+      const ecart = i + 1 < t.length ? Math.round(t[i + 1] - t[i]) : 1
+      const n = ecart > TROU_MAX ? 1 : Math.max(1, ecart)
+      for (let k = 0; k < n; k++) sortie.push(v[i] ?? 0)
+    }
+    return sortie
+  }
   const sortie = new Array<number>(Math.round(t[t.length - 1] - debut) + 1).fill(0)
-  for (let i = 0; i < t.length; i++) sortie[Math.round(t[i] - debut)] = v[i] ?? 0
+  for (let i = 0; i < t.length; i++) {
+    const a = Math.round(t[i] - debut)
+    const b = i + 1 < t.length ? Math.round(t[i + 1] - debut) : a + 1
+    // Trou court : valeur tenue ; trou long (pause) : 0, pour garder l'alignement avec le temps de la séance
+    const fin = b - a <= TROU_MAX ? b : a + 1
+    for (let k = a; k < fin && k < sortie.length; k++) sortie[k] = v[i] ?? 0
+  }
   return sortie
 }
 

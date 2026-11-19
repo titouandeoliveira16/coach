@@ -17,8 +17,10 @@ type Filtre = (typeof FILTRES)[number]
 
 /** Durée en "1 h 05" ou "45 min". */
 export function formatDuree(sec: number) {
-  const h = Math.floor(sec / 3600)
-  const m = Math.round((sec % 3600) / 60)
+  // Arrondi à la minute d'abord (sinon 1 h 59 min 30 s s'affichait « 1 h 60 »)
+  const total = Math.round(sec / 60)
+  const h = Math.floor(total / 60)
+  const m = total % 60
   return h ? `${h} h ${String(m).padStart(2, '0')}` : `${m} min`
 }
 

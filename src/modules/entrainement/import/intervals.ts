@@ -30,6 +30,8 @@ export interface EtatIntervals {
   dernierImport?: string
   /** Version de la courbe de puissance déjà calculée pour les séances importées (3 : de 1 s à 2 h) */
   courbeVersion?: number
+  /** Clé refusée au dernier import automatique (audit du 18/11/2026 : l'import échouait sans rien dire) */
+  cleRefusee?: boolean
 }
 
 const CLE = 'intervals'
@@ -161,9 +163,12 @@ async function importerActivites(depuis: string, surProgression?: (n: number) =>
 
   for (let i = 0; i < nouvelles.length; i += 10) {
     const lot = nouvelles.slice(i, i + 10)
-    const { flux } = await appeler<{ flux: Record<string, { time?: number[]; heartrate?: number[]; watts?: number[]; velocity_smooth?: number[]; tours?: Tour[] }> }>('flux', { ids: lot.map((a) => a.id) })
+    const { flux } = await appeler<{ flux: Record<string, { time?: number[]; heartrate?: number[]; watts?: number[]; velocity_smooth?: number[]; tours?: Tour[]; echec?: number[] }> }>('flux', { ids: lot.map((a) => a.id) })
     for (const a of lot) {
       const f = flux[a.id] ?? {}
+      // Flux pas reçu (coupure, trop de requêtes) sur une sortie récente : on la laisse pour le prochain import (les 3
+      // derniers jours sont toujours relus) au lieu de l'enregistrer sans zones ni courbe
+      if (f.echec && a.start_date.slice(0, 10) >= decalerJour(aujourdhui(), -MARGE_JOURS + 1)) continue
       const debut = new Date(a.start_date)
       let s = analyserFlux(
         { t: f.time ?? [], fc: f.heartrate, w: f.watts, v: f.velocity_smooth },
@@ -288,7 +293,7 @@ async function importerIntervalsBrut(surProgression?: (n: number) => void) {
   const { n, viaStrava } = await importerActivites(depuis, surProgression)
   await nettoyerDoublons()
   await nettoyerPeseesEffacees()
-  await ecrireEtat({ ...(await lireEtat()), relie: true, depuis: decalerJour(aujourdhui(), -MARGE_JOURS), dernierImport: new Date().toISOString() })
+  await ecrireEtat({ ...(await lireEtat()), relie: true, depuis: decalerJour(aujourdhui(), -MARGE_JOURS), dernierImport: new Date().toISOString(), cleRefusee: false })
   await completerCourbe().catch(() => {})
   // Nouvelle séance remontée : la fin de la semaine se recalcule (ce qui est fait reste, le reste suit ton budget)
   if (n > 0) {
@@ -315,7 +320,7 @@ async function completerCourbe() {
     for (const s of lot) {
       const f = flux[s.idExterne!]
       if (!f?.time?.length || !f.watts?.length) continue
-      const meilleurs = meilleursEfforts(reechantillonner1Hz(f.time, f.watts))
+      const meilleurs = meilleursEfforts(reechantillonner1Hz(f.time, f.watts, true))
       if (Object.keys(meilleurs).length) await enregistrer(db.seances, { ...s, meilleurs: { ...s.meilleurs, ...meilleurs } })
     }
   }
@@ -329,5 +334,7 @@ export async function importerIntervalsSiBesoin() {
   // Le matin (avant midi), toutes les 20 min : les chiffres de la nuit arrivent parfois en plusieurs fois ; sinon toutes les heures
   const delai = new Date().getHours() < 12 ? 20 * 60_000 : 3600_000
   if (etat.dernierImport && Date.now() - new Date(etat.dernierImport).getTime() < delai) return
-  await importerIntervals().catch(() => {})
+  await importerIntervals().catch(async (e: Error) => {
+    if (/clé intervals\.icu refusée/i.test(e.message)) await ecrireEtat({ ...(await lireEtat()), cleRefusee: true })
+  })
 }

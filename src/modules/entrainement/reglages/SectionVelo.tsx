@@ -26,8 +26,9 @@ export function SectionVelo() {
   const [message, setMessage] = useState<string>()
   const [ps] = useReglage<ProfilSportif>('profil-sportif', { sports: [], materiel: [] })
   const prog = programmeDe(reglages.programme)
-  // Même poids que Progrès : ta dernière pesée (sinon celui du profil)
-  const poids = useLiveQuery(() => poidsAu(aujourdhui()), []) ?? profil.poidsKg
+  // Même W/kg que Progrès (audit du 18/11/2026) : poids du jour du dernier test, sinon ta dernière pesée, sinon le profil
+  const poidsJour = useLiveQuery(() => poidsAu(aujourdhui()), []) ?? profil.poidsKg
+  const poids = [...(reglages.tests ?? [])].reverse().find((t) => t.poidsKg)?.poidsKg ?? poidsJour
   const wkg = reglages.cpW && poids ? reglages.cpW / poids : undefined
 
   return (

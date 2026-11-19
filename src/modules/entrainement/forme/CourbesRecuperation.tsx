@@ -8,6 +8,8 @@ import { donneesProgres } from '../analyse/progres'
 const jj = (d: string) => depuisJour(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'numeric' })
 
 /** VFC 7 jours (avec ta zone normale) et pouls au repos sur 60 jours : dans le détail du feu (déplacé de Progrès le 18/11/2026). */
+const enMs = (ln?: number) => (ln === undefined ? undefined : Math.round(Math.exp(ln)))
+
 export function CourbesRecuperation() {
   const t = useLiveQuery(donneesProgres)
   if (!t) return null
@@ -15,10 +17,11 @@ export function CourbesRecuperation() {
     <div>
       <p className="text-xs text-texte-2">Ta VFC (moyenne 7 jours) et ta zone normale<Aide titre="VFC" texte={`${AIDES.vfc7} ${AIDES.zoneVfc}`} /></p>
       <GraphiqueLignes etiquettes={t.physio.map((p) => jj(p.date))} format={(n) => n.toFixed(1).replace('.', ',')}
-        bande={{ nom: 'Zone normale', bas: t.physio.map((p) => p.bas), haut: t.physio.map((p) => p.haut) }}
-        series={[{ nom: 'VFC 7 j', couleur: SERIES[0], valeurs: t.physio.map((p) => p.ln7) }]} />
+        // En ms (audit du 18/11/2026) : le calcul se fait en logarithme, l'axe montrait « 4,1 » sans unité
+        bande={{ nom: 'Zone normale', bas: t.physio.map((p) => enMs(p.bas)), haut: t.physio.map((p) => enMs(p.haut)) }}
+        series={[{ nom: 'VFC 7 j (ms)', couleur: SERIES[0], valeurs: t.physio.map((p) => enMs(p.ln7)) }]} />
       <p className="mt-3 text-xs text-texte-2">Pouls au repos (bpm)</p>
-      <GraphiqueLignes etiquettes={t.physio.map((p) => jj(p.date))} series={[{ nom: 'FC repos', couleur: SERIES[1], valeurs: t.physio.map((p) => p.fcRepos) }]} />
+      <GraphiqueLignes etiquettes={t.physio.map((p) => jj(p.date))} ecartMin={10} series={[{ nom: 'FC repos', couleur: SERIES[1], valeurs: t.physio.map((p) => p.fcRepos) }]} />
     </div>
   )
 }

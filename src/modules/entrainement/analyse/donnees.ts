@@ -92,11 +92,17 @@ function signalDu(date: string, a: Omit<Analyse, 'signal' | 'signauxPrecedents' 
   return { vfc, signal }
 }
 
+/** Nouvelle montre (audit du 18/11/2026) : les mesures d'avant le changement ne comptent plus dans ta normale. */
+export async function apresChangementMontre() {
+  const depuis = ((await db.reglages.get('montre'))?.valeur as { depuis?: string } | undefined)?.depuis
+  return (m: { date: string }) => !depuis || m.date >= depuis
+}
+
 /** Calcule toute l'analyse du jour (lue en direct par les écrans). */
 export async function analyser(date = aujourdhui()): Promise<Analyse> {
   const contexte = await chargerContexte()
   const seances = await db.seances.toArray()
-  const mesures = (await db.mesures.where('date').between(decalerJour(date, -70), date, true, true).toArray()).map(mesureUtile)
+  const mesures = (await db.mesures.where('date').between(decalerJour(date, -70), date, true, true).toArray()).filter(await apresChangementMontre()).map(mesureUtile)
   const indispos = await db.indispos.toArray()
   const maladeDates = new Set(indispos.filter((i) => i.raison === 'Malade' || i.raison === 'Douleur / blessure').map((i) => i.date))
 
@@ -118,6 +124,11 @@ export async function analyser(date = aujourdhui()): Promise<Analyse> {
     signauxPrecedents,
     monotonie: monotonie(charges7),
     contrainte: contrainte(charges7),
-    ratioPic: ratioPic(charge7, chargesHebdo(seances, contexte, decalerJour(date, -6), 4, 'entrainement')),
+    // « 7 derniers jours : x % de d'habitude » (audit du 18/11/2026) : seulement avec 5 semaines d'historique et au moins
+    // 3 semaines roulées sur les 4 d'avant (sinon 800 % au début ou après une coupure)
+    ratioPic: (() => {
+      const hebdo = chargesHebdo(seances, contexte, decalerJour(date, -6), 4, 'entrainement')
+      return joursHistorique >= 35 && hebdo.filter((c) => c > 0).length >= 3 ? ratioPic(charge7, hebdo) : undefined
+    })(),
   }
 }

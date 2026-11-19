@@ -29,11 +29,13 @@ describe('charge', () => {
 
   it('CTL/ATL : charge constante → convergence ; premier jour = charge / 42 et / 7', () => {
     const jours = Array.from({ length: 400 }, (_, i) => ({ date: String(i), charge: 100 }))
-    const f = modeleForme(jours)
+    const f = modeleForme(jours, 0, 0)
     expect(f[0].ctl).toBeCloseTo(100 / 42, 5)
     expect(f[0].atl).toBeCloseTo(100 / 7, 5)
     expect(f[0].tsb).toBe(0)
     expect(f[399].ctl).toBeCloseTo(100, 0)
+    // Par défaut (18/11/2026) : départ à la charge moyenne des 4 premières semaines → charge stable = fond stable
+    expect(modeleForme(jours)[28].ctl).toBeCloseTo(100, 5)
     expect(f[399].tsb).toBeCloseTo(0, 0)
   })
 
