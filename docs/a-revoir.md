@@ -75,6 +75,9 @@ de conversation quand il faut s'en servir. Ici ne restent que les chantiers tech
   fois ; 1er seuil affiché en Z3 (couleurs en % de CP au lieu de tes zones) ; graphique de la Saison qui ne lisait que
   les 3 premières semaines construites. L'audit construisait chaque semaine le lundi même : il teste maintenant aussi les
   semaines construites 6 semaines à l'avance (et le graphique), et un recalcul le vendredi matin.
+- 19/11 (choix de Titouan) : semaine en cours plus recalculée toute seule (seulement par ses actions, et le lundi avec le
+  vrai bilan) ; toute la saison construite chaque jour avec le vrai moteur (option A : graphique = semaines) ; semaine
+  allégée avec la séance au 1er seuil un cran plus courte (relu : Bosquet 2007, Wang 2023, choix d'entraîneur).
 - À voir : après une panne, la séance dure reportée le même jour que la sortie longue disparaît au recalcul suivant.
 - Contrôle visuel du 19/11 : « Programme adapté » sur un profil vide annonce un total vélo au-dessus du budget (1825 kJ
   pour 1485 visés) ; à vérifier sur un vrai profil.

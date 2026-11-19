@@ -756,7 +756,9 @@ async function genererSemaineVeloBrute(lundi: string) {
   const enduranceSemaine = roles.filter((x) => x === 'velo-z2').length + Math.max(0, roles.filter((x) => x === 'velo-dur').length - 1)
   const sv1DejaFaite = (await db.prevues.where('date').between(lundi, semaine[6], true, true).toArray())
     .some((p) => p.sport === 'velo' && p.statut !== 'abandonnee' && (p.date < aPartirDe || p.statut === 'faite') && p.titre.startsWith('Cycle 1er seuil'))
-  const jourSv1 = phase.type === 'base' && !allegee && !sansBlocs && enduranceSemaine >= 2 && placement.z2.length >= 1 && !sv1DejaFaite
+  // Semaine allégée (19/11/2026, choix de Titouan) : la séance au 1er seuil reste, un cran en dessous (volume en baisse,
+  // intensité gardée)
+  const jourSv1 = phase.type === 'base' && !sansBlocs && enduranceSemaine >= 2 && placement.z2.length >= 1 && !sv1DejaFaite
     ? [...placement.z2].reverse().find((d) => d !== terrain && loinDesIntensifs(d)) ?? [...placement.z2].reverse().find((d) => d !== terrain && !lendemains.has(d)) ?? placement.z2.find((d) => d !== terrain)
     : undefined
   const jourSprints = placement.z2.find((d) => d !== terrain && d !== jourSv1 && !lendemains.has(d)) ?? placement.z2.find((d) => d !== terrain && d !== jourSv1)
@@ -1157,6 +1159,9 @@ export function mettreSemaineAJour(lundi: string) {
     const actuel = lundiDe(aujourdhui())
     if (lundi < actuel || lundi > decalerJour(actuel, 14)) return
     const m = await lireMeta(lundi)
+    // Semaine en cours (19/11/2026, choix de Titouan) : jamais recalculée toute seule tant qu'elle n'est pas finie ; elle
+    // ne change que par tes actions (↻, imprévu, panne, déplacement, test). Seulement construite si elle ne l'est pas.
+    if (m && lundi === actuel) return
     if (m && versJour(new Date(m.genereeLe)) >= aujourdhui()) return
     // Semaine jamais construite : seulement la semaine en cours (si le programme existe) ; les suivantes sont construites d'avance
     if (!m && lundi !== actuel) return
@@ -1181,6 +1186,26 @@ export async function genererSemaineEtSuite(lundi: string) {
   return phrases
 }
 
+/**
+ * Toute la saison à venir construite avec le vrai moteur (19/11/2026, option A choisie par Titouan) : de la semaine
+ * prochaine jusqu'à 3 semaines après le début de la dernière phase, dans l'ordre, chaque semaine en partant de la
+ * précédente comptée comme faite à 100 % (sans le feu du jour). Une fois par jour : le graphique de la Saison et la
+ * Semaine disent les mêmes chiffres, jusqu'à la course. La semaine en cours n'est pas touchée.
+ */
+export async function construireSaison(forcer = false) {
+  const jour = aujourdhui()
+  const fait = (await db.reglages.get('saison-construite'))?.valeur as string | undefined
+  if (!forcer && fait === jour) return
+  const e = (await db.reglages.get('entrainement'))?.valeur as ReglagesEntrainement | undefined
+  const phases = e?.programme?.phases
+  if (!phases?.length) return
+  const actuel = lundiDe(jour)
+  if (!(await lireMeta(actuel))) return
+  const fin = decalerJour([...phases].map((p) => p.debut).sort().pop()!, 21)
+  for (let l = decalerJour(actuel, 7); l <= fin; l = decalerJour(l, 7)) await genererSemaineVelo(l).catch(() => {})
+  await enregistrer(db.reglages, { id: 'saison-construite', valeur: jour })
+}
+
 /** Refait, dans l'ordre, les semaines déjà construites après `lundi`. */
 async function refaireSemainesApres(lundi: string) {
   const metas = (await db.reglages.where('id').startsWith('semaine-').toArray()).map((x) => x.id.slice(8)).filter((l) => l > lundi).sort()
@@ -1199,27 +1224,25 @@ export async function actualiserSemaineEnCours() {
     const m = await lireMeta(l)
     if (m && m.version !== 2) await genererSemaineVelo(l).catch(() => {})
   }
-  // 19/11/2026 : semaines à venir faites avec la fausse « reprise » (jours sans vélo comptés jusqu'à une date future) ou
-  // par d'anciens calculs, avec des trous entre elles : toutes refaites une fois, dans l'ordre, depuis la semaine prochaine
-  if (!(await db.reglages.get('semaines-refaites-1419'))) {
-    await refaireSemainesApres(lundiDe(aujourdhui()))
-    await enregistrer(db.reglages, { id: 'semaines-refaites-1419', valeur: true })
-  }
-  // Chaque jour, la semaine en cours à jour (et le dimanche, la semaine prochaine avec le vrai bilan de celle-ci)
+  // Semaine en cours construite si elle ne l'est pas ; puis, une fois par jour, toute la saison à venir (option A du
+  // 19/11/2026)
   await mettreSemaineAJour(lundiDe(aujourdhui()))
-  if (new Date(`${aujourdhui()}T12:00:00`).getDay() === 0) await mettreSemaineAJour(decalerJour(lundiDe(aujourdhui()), 7))
+  // Nouvelle semaine construite d'avance (semaine d'avant comptée à 100 %) : recalculée une fois avec le vrai bilan,
+  // avant de reconstruire la saison à partir d'elle
   const lundi = lundiDe(aujourdhui())
   if ((await lireMeta(lundi))?.bilanProvisoire) await genererSemaineVelo(lundi).catch(() => {})
+  // Les anciennes semaines lointaines (fausse reprise, anciens calculs) sont refaites dès la première construction
+  await construireSaison()
 }
 
 export const recalculerApresTest = () => recalculerSemainesAVenir()
 
-/** Recalcule la semaine en cours et les 2 suivantes déjà générées (après un test, ou un changement de semaine type / durées). */
+/** Recalcule la semaine en cours puis toute la saison à venir (après un test, ou un changement de semaine type / durées). */
 export async function recalculerSemainesAVenir() {
   const lundi = lundiDe(aujourdhui())
-  for (const l of [lundi, decalerJour(lundi, 7), decalerJour(lundi, 14)]) {
-    if (await lireMeta(l)) await genererSemaineVelo(l).catch(() => {}) // erreur déjà journalisée, semaine d'avant gardée
-  }
+  if (await lireMeta(lundi)) await genererSemaineVelo(lundi).catch(() => {}) // erreur déjà journalisée, semaine d'avant gardée
+  // Puis toute la saison à venir, à partir d'elle (19/11/2026)
+  await construireSaison(true)
 }
 
 /**

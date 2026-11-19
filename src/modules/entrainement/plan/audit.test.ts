@@ -4,7 +4,7 @@ import { db } from '../../../core/db'
 import { decalerJour } from '../../../core/dates'
 import { deplier } from '../../../metrics/programme'
 import { enregistrerArrivee, semaineDepuisJours, type ReponsesArrivee } from '../arrivee/donnees'
-import { genererSemaineVelo } from './programme'
+import { genererSemaineVelo, lireMeta } from './programme'
 
 /**
  * Audit du moteur : une saison entière, semaine par semaine, pour plusieurs profils. Invariants vérifiés :
@@ -85,7 +85,8 @@ describe('audit du moteur sur une saison entière', () => {
       // Semaine du test complet : il remplace la sortie longue (15/11/2026)
       if (!dediee || semaine.some((x) => x.velo?.famille === 'test')) continue
       semainesSv1++
-      expect(longue?.velo?.blocsSv1).toBeGreaterThan(0)
+      // Semaine allégée (19/11/2026) : la séance au 1er seuil reste, un cran plus courte ; la sortie longue sans blocs
+      if (!(await lireMeta(l))?.allegee) expect(longue?.velo?.blocsSv1).toBeGreaterThan(0)
       if (vo2) expect(Math.abs(Date.parse(dediee.date) - Date.parse(vo2.date))).toBeGreaterThanOrEqual(2 * 86_400_000)
     }
     vi.useRealTimers()
