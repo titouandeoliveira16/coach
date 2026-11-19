@@ -174,6 +174,9 @@ export function controlerSeance(o: {
   cpW: number
   /** Tours de l'activité : utilisés en priorité (moyennes exactes de chaque étape) */
   tours?: Tour[]
+  /** 1er seuil (watts, et FC haute de la Z2) : une Z2 un peu au-dessus de sa plage reste de l'endurance tant qu'elle est dessous */
+  sv1W?: number
+  fcSv1?: number
 }): Controle | undefined {
   const { etapes, famille, w1Hz, fc1Hz, cpW } = o
   if (famille === 'test' || (!w1Hz.length && !o.tours?.length)) return undefined
@@ -241,7 +244,12 @@ export function controlerSeance(o: {
   const plafonnee = PLAFONNEES.has(famille)
   const ligne = (libelle: string, w: number, wMin: number, wMax: number, fc?: number, plafond = plafonnee): LigneControle => {
     const verdict: Verdict = w < wMin ? 'bas' : w > wMax ? 'haut' : 'ok'
-    return { libelle, w: Math.round(w), wMin, wMax, verdict, tenu: verdict === 'ok' || (verdict === 'haut' && !plafond), ...(fc ? { fc } : {}) }
+    // Z2 au-dessus de sa plage (19/11/2026, demande de Titouan) : ce n'est « plus une Z2 » que si elle passe ton 1er seuil,
+    // en watts ou en FC ; juste au-dessus de la plage, c'est encore de l'endurance
+    const z2 = libelle.startsWith('Z2')
+    const auDessusSv1 = (o.sv1W !== undefined && w > o.sv1W) || (o.fcSv1 !== undefined && fc !== undefined && fc > o.fcSv1)
+    const bloque = z2 && (o.sv1W !== undefined || o.fcSv1 !== undefined) ? auDessusSv1 : plafond
+    return { libelle, w: Math.round(w), wMin, wMax, verdict, tenu: verdict === 'ok' || (verdict === 'haut' && !bloque), ...(fc ? { fc } : {}) }
   }
 
   const lignes: LigneControle[] = []
@@ -303,7 +311,7 @@ export function controlerSeance(o: {
   if ((famille === 'z2' || famille === 'z2-long') && w1Hz.length) {
     if (k !== undefined) off = (o.tours!.slice(0, k).reduce((a, t) => a + t.dureeSec, 0))
     const z2 = plat.filter((e) => e.libelle.startsWith('Z2'))
-    const limite = Math.max(0.7 * cpW, ...z2.map((e) => e.wMax ?? 0))
+    const limite = o.sv1W ?? Math.max(0.7 * cpW, ...z2.map((e) => e.wMax ?? 0))
     auDessusSeuil1 = 0
     for (const e of z2) {
       const w = fenetre(e.debutSec, e.dureeSec, W)
@@ -335,7 +343,7 @@ export function bilanControle(c: Controle, famille: string) {
     if (hautsPlafond) phrases.push(famille.startsWith('z2')
       ? `${hautsPlafond} au-dessus : ta Z2 est devenue du tempo, plus de fatigue pour le même effet.`
       : `${hautsPlafond} au-dessus : tu es passé au-dessus de ton seuil, ce n'est plus le même travail (plus de fatigue).`)
-    else if (haut.length) phrases.push(`${haut.length} un peu au-dessus : sans conséquence en VO2.`)
+    else if (haut.length) phrases.push(famille.startsWith('z2') ? `${haut.length} un peu au-dessus de la plage, mais sous ton 1er seuil : c'est toujours de l'endurance.` : `${haut.length} un peu au-dessus : sans conséquence en VO2.`)
   }
   if ((c.auDessusSeuil1 ?? 0) >= MAX_AU_DESSUS_SEUIL1) phrases.push(`${Math.round(c.auDessusSeuil1! / 60)} min au-dessus du 1er seuil : ce n'était plus vraiment une Z2.`)
   return phrases.join(' ')

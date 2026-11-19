@@ -200,7 +200,7 @@ async function importerActivites(depuis: string, surProgression?: (n: number) =>
         const blocs = prevue && blocsDeLaSeance(w1Hz, prevue, fc1Hz)
         const t90 = prevue && tempsFc90(prevue, fc1Hz, c.fcMax)
         // Contrôle de toute la séance (séries, over-unders, Z2) : chaque bloc dans sa plage ?
-        const controle = prevue?.velo?.etapes && c.cpW ? controlerSeance({ etapes: prevue.velo.etapes, famille: prevue.velo.famille, w1Hz, fc1Hz, cpW: c.cpW, tours: f.tours }) : undefined
+        const controle = prevue?.velo?.etapes && c.cpW ? controlerSeance({ etapes: prevue.velo.etapes, famille: prevue.velo.famille, w1Hz, fc1Hz, cpW: c.cpW, tours: f.tours, sv1W: c.sv1W, fcSv1: c.bornes[1] }) : undefined
         if (prevue && (blocs || t90 !== undefined || controle)) {
           await enregistrer(db.seances, { ...enregistree, ...(blocs ? { blocs } : {}), ...(t90 !== undefined ? { tempsFc90: t90 } : {}), ...(controle ? { controle } : {}) })
           const intensite = !['z2', 'z2-long', 'test'].includes(prevue.velo?.famille ?? 'z2')
@@ -234,7 +234,7 @@ export async function recontrolerRecentes() {
       if (!f?.time?.length || !f.watts?.length || !prevue?.velo?.etapes) continue
       const controle = controlerSeance({
         etapes: prevue.velo.etapes, famille: prevue.velo.famille, w1Hz: reechantillonner1Hz(f.time, f.watts),
-        fc1Hz: f.heartrate?.length ? reechantillonner1Hz(f.time, f.heartrate) : undefined, cpW: c.cpW, tours: f.tours,
+        fc1Hz: f.heartrate?.length ? reechantillonner1Hz(f.time, f.heartrate) : undefined, cpW: c.cpW, tours: f.tours, sv1W: c.sv1W, fcSv1: c.bornes[1],
       })
       if (!controle) continue
       // Ressenti déjà noté sur un bloc : on le garde

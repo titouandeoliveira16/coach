@@ -18,6 +18,8 @@ export interface Contexte {
   seuilCoursePct: number
   poidsKg?: number
   chargeRef: 'trimp' | 'srpe'
+  /** Watts de ton 1er seuil (limite Z2 / Z3 des zones, que le moteur cale sur ton 1er seuil) */
+  sv1W?: number
 }
 
 /** FC de repos par défaut tant qu'aucune mesure du matin n'existe. */
@@ -46,6 +48,7 @@ export async function chargerContexte(): Promise<Contexte> {
     seuilCoursePct: reglages.seuilCoursePct ?? 87,
     poidsKg: profil.poidsKg,
     chargeRef: reglages.chargeRef ?? 'trimp',
+    sv1W: reglages.zonesVelo?.[1]?.wMax,
   }
 }
 

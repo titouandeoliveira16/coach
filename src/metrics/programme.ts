@@ -378,10 +378,16 @@ export function construireIntervalles(f: Format, palier: number | Palier, cpW: n
   }
 }
 
-/** Sprints de la sortie longue (Almquist 2020) : de plus en plus nombreux, puis plus longs. */
+/**
+ * Sprints courts dans une Z2 (19/11/2026, demande de Titouan, relu : 7 s au plus, au moins 4, de plus en plus nombreux ;
+ * 4 min entre deux, la phosphocréatine est revenue à ~90 % en 3 min, Dawson 1997 ; progression = choix d'entraîneur,
+ * l'essai sur cyclistes a testé des sprints de 30 s, Almquist 2020).
+ */
 export const SPRINTS = [
-  { n: 6, sec: 10 }, { n: 8, sec: 10 }, { n: 6, sec: 15 }, { n: 8, sec: 15 },
+  { n: 4, sec: 7 }, { n: 6, sec: 7 }, { n: 8, sec: 7 },
 ]
+/** Au moins 4 sprints courts : sinon pas de sprints dans cette sortie */
+export const SPRINTS_MIN = 4
 
 /** Montées de la sortie longue en côtes (marathon VTT) : plus nombreuses puis plus longues d'une sortie à l'autre. */
 export const COTES = [
@@ -805,7 +811,9 @@ export function construireZ2(duree: number, z2W: number, sprints?: { n: number; 
   // Chaque sprint et sa récupération très facile finissent avant le retour au calme (audit du 15/11/2026 : 6 sprints de
   // 30″ dans une sortie courte donnaient une étape de durée négative)
   const facileSprint = sprints ? Math.min(Math.round((o.espacementSec ?? 600) / 60) * 60 - sprints.sec - 60, sprints.sec >= 30 ? 300 : 120) : 0
-  const minutes = sprints && !sv1 ? Array.from({ length: sprints.n }, (_, i) => premier + i * Math.round((o.espacementSec ?? 600) / 60)).filter((m) => m <= dureeMin - 10 && m * 60 + sprints.sec + facileSprint <= corpsFin) : []
+  const places = sprints && !sv1 ? Array.from({ length: sprints.n }, (_, i) => premier + i * Math.round((o.espacementSec ?? 600) / 60)).filter((m) => m <= dureeMin - 10 && m * 60 + sprints.sec + facileSprint <= corpsFin) : []
+  // Sprints courts : au moins 4, sinon aucun (2 sprints n'ont pas d'intérêt, 19/11/2026)
+  const minutes = sprints && sprints.sec < 30 && places.length < SPRINTS_MIN ? [] : places
 
   if (sv1) {
     const total = (sv1.reps * sv1.min + (sv1.reps - 1) * RECUP_SV1_MIN) * 60
@@ -1553,7 +1561,7 @@ export function sprintsDeLaPhase(type: TypePhase, discipline: Discipline, n: num
   // (efforts répétés au-dessus de la CP). Ailleurs, les sprints courts suffisent (choix de Titouan, 6/11/2026).
   if ((type === 'fin-prepa' || type === 'specifique') && (discipline === 'xco' || discipline === 'xcc'))
     return { n: 4 + Math.min(2, n % 3), sec: 30, espacementSec: 720 }
-  return { ...SPRINTS[Math.min(n, SPRINTS.length - 1)], espacementSec: 480 }
+  return { ...SPRINTS[Math.min(n, SPRINTS.length - 1)], espacementSec: 240 }
 }
 
 /** 1er seuil de départ : 70 % de la CP (SEUIL1_PCT_CP), puis ajusté par la dérive ; jamais plus de 85 % de la CP. */
