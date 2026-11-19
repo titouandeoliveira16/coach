@@ -25,7 +25,7 @@ export function ModeEmploiRevision() {
           <p>Tu n'as que deux gestes : <B>« Notion finie »</B> quand tu as fini une notion, et <B>su / hésitant / raté</B> après chaque rappel. Tout le reste se recalcule seul à partir de tes vraies dates.</p>
         </Rubrique>
         <Rubrique titre="Une nouvelle notion">
-          <p>Le <B>matin</B>, en blocs de 50 min (minuteur ⏱️) avec un objectif chacun, et une mini feuille blanche à la fin de chaque bloc. Téléphone loin.</p>
+          <p>Le <B>matin</B>, en blocs de 50 min (minuteur) avec un objectif chacun, et une mini feuille blanche à la fin de chaque bloc. Téléphone loin.</p>
           <p>Notion finie → touche <B>« Notion finie »</B> : ce jour devient son J0, ses rappels sont créés (J+1, J+4, J+10, J+21, J+45, J+90) et la notion suivante passe en cours.</p>
           <p>L'après-midi : <B>feuille blanche de fixation</B> (45 min à 1 h), puis coche-la.</p>
         </Rubrique>

@@ -43,7 +43,7 @@ export function SectionIgpsport() {
   return (
     <Repliable titre="Compteur iGPSPORT" libelle="Gérer" resume={resume}>
       {!session ? (
-        <p className="text-sm text-texte-2">Connecte-toi à ton compte (Accueil → ⚙️).</p>
+        <p className="text-sm text-texte-2">Connecte-toi à ton compte (Accueil → Réglages).</p>
       ) : etat?.relie ? (
         <div className="space-y-2">
           <p className="text-sm text-texte-2">

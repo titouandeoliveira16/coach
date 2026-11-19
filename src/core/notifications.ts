@@ -18,17 +18,17 @@ export const notificationsPossibles = () => 'serviceWorker' in navigator && 'Pus
 
 async function appeler<T>(route: string, corps?: unknown): Promise<T> {
   const { data } = await supabase.auth.getSession()
-  if (!data.session) throw new Error('Connecte-toi d’abord à ton compte (Accueil → ⚙️).')
+  if (!data.session) throw new Error('Connecte-toi d’abord à ton compte (Accueil → Réglages).')
   const r = await fetch(`${URL_SUPABASE}/functions/v1/rappels/${route}`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${data.session.access_token}`, apikey: CLE_PUBLIQUE, 'Content-Type': 'application/json' },
     body: JSON.stringify(corps ?? {}),
   }).catch(() => {
-    throw new Error('Pas de connexion internet (ou fonction « rappels » pas encore installée sur Supabase).')
+    throw new Error('Pas de connexion internet : réessaie plus tard.')
   })
   const json = await r.json().catch(() => ({}))
-  if (r.status === 404 && !json.erreur) throw new Error('La fonction « rappels » n’est pas encore installée sur Supabase.')
-  if (!r.ok) throw new Error(json.erreur ?? json.message ?? `Erreur ${r.status}`)
+  if (r.status === 404 && !json.erreur) throw new Error('Les rappels ne répondent pas pour l’instant. Réessaie plus tard.')
+  if (!r.ok) throw new Error(json.erreur ?? 'Les rappels ne répondent pas pour l’instant. Réessaie plus tard.')
   return json as T
 }
 
@@ -58,21 +58,34 @@ export async function activerRappels() {
 }
 
 export async function desactiverRappels() {
+  try { localStorage.removeItem('rappels-version') } catch { /* stockage indisponible */ }
   const abonnement = await abonnementActuel()
   if (!abonnement) return
   await appeler('desabonner', { endpoint: abonnement.endpoint }).catch(() => {})
   await abonnement.unsubscribe()
 }
 
-/** Au démarrage : si les réglages des rappels ont changé depuis l'abonnement de cet appareil, on les renvoie. */
+/**
+ * Au démarrage, au plus une fois par jour, si les rappels ont été activés sur cet appareil : l'abonnement est renvoyé au
+ * serveur (réglages changés, ou abonnement effacé par le serveur après un refus), et refait s'il a disparu de l'iPhone
+ * (iOS en supprime parfois après une mise à jour ; audit du 18/11/2026 : les rappels s'arrêtaient sans prévenir).
+ */
 export async function synchroniserRappels() {
   const cle = 'rappels-version'
   try {
-    if (localStorage.getItem(cle) === VERSION_RAPPELS || Notification.permission !== 'granted') return
-    const abonnement = await abonnementActuel()
-    if (!abonnement) return
+    const active = localStorage.getItem(cle)
+    const jour = new Date().toISOString().slice(0, 10)
+    if (!active || !notificationsPossibles() || Notification.permission !== 'granted') return
+    if (active === VERSION_RAPPELS && localStorage.getItem('rappels-verifie') === jour) return
+    const reg = await navigator.serviceWorker.ready
+    let abonnement = await reg.pushManager.getSubscription()
+    if (!abonnement) {
+      const { cle: publique } = await appeler<{ cle: string }>('cle')
+      abonnement = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: versOctets(publique) })
+    }
     await appeler('abonner', { abonnement: abonnement.toJSON(), fuseau: Intl.DateTimeFormat().resolvedOptions().timeZone, ...RAPPELS })
     localStorage.setItem(cle, VERSION_RAPPELS)
+    localStorage.setItem('rappels-verifie', jour)
   } catch {
     // Pas connecté, pas de réseau ou stockage indisponible : on réessaiera au prochain démarrage
   }

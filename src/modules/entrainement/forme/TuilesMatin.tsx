@@ -89,7 +89,8 @@ export function TuilesMatin({ onPoids, forme = [], ratioPic }: { onPoids?: () =>
   if (ouverte === 'nuit') {
     const quatorze = Array.from({ length: 14 }, (_, i) => decalerJour(jour, i - 13))
     const h = (j: string) => nuits.find((n) => n.date === j)?.h
-    const lo = Math.min(5, ...quatorze.map((j) => h(j) ?? 9)) - 0.2
+    // Barres qui partent de 0 h (audit du 18/11/2026 : depuis 4 h 48, une nuit de 8 h paraissait 2,7 fois plus longue qu'une de 6 h)
+    const lo = 0
     const hi = Math.max(9, ...quatorze.map((j) => h(j) ?? 0)) + 0.2
     const Y = (v: number) => 120 - ((v - lo) / (hi - lo)) * 120
     const bw = 320 / 14
@@ -180,7 +181,7 @@ export function TuilesMatin({ onPoids, forme = [], ratioPic }: { onPoids?: () =>
           {ressenti !== undefined ? <>ressenti <b style={{ color: ressenti < 2.5 ? ORANGE : VERT }}>{formatNombre(ressenti, 1)} / 5</b></> : 'ressenti pas noté'}
         </span>
         <svg viewBox="0 0 100 26" preserveAspectRatio="none" className="mt-1 h-6 w-full" aria-hidden>
-          {sept.map((h, i) => h === undefined ? null : <rect key={i} x={i * 14.3 + 1} y={26 - Math.min(1, Math.max(0.15, (h - 4) / 5)) * 26} width="11" height={Math.min(1, Math.max(0.15, (h - 4) / 5)) * 26} rx="2" fill="var(--color-sommeil)" opacity={i === 6 ? 1 : 0.65} />)}
+          {sept.map((h, i) => h === undefined ? null : <rect key={i} x={i * 14.3 + 1} y={26 - Math.min(1, h / 10) * 26} width="11" height={Math.min(1, h / 10) * 26} rx="2" fill="var(--color-sommeil)" opacity={i === 6 ? 1 : 0.65} />)}
         </svg>
       </button>
       <button type="button" onClick={() => setOuverte('poids')} className="presse entree rounded-[14px] border-[1.5px] border-transparent bg-surface px-3 py-2.5 text-left">
@@ -203,7 +204,7 @@ export function TuilesMatin({ onPoids, forme = [], ratioPic }: { onPoids?: () =>
               const pts = (k: 'ctl' | 'atl') => recents.map((p, i) => `${((i / (recents.length - 1)) * 100).toFixed(1)},${(25 - (p[k] / max) * 23).toFixed(1)}`).join(' ')
               return <>
                 <polyline points={pts('ctl')} fill="none" stroke="var(--color-z2)" strokeWidth="2" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
-                <polyline points={pts('atl')} fill="none" stroke="var(--color-attention)" strokeWidth="1.5" vectorEffect="non-scaling-stroke" strokeLinejoin="round" opacity="0.85" />
+                <polyline points={pts('atl')} fill="none" stroke="var(--color-texte-2)" strokeWidth="1.5" vectorEffect="non-scaling-stroke" strokeLinejoin="round" opacity="0.85" />
               </>
             })()}
           </svg>

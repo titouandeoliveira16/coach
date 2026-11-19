@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useBloquerFond } from './bloquerFond'
+import { decouperAide } from './decouperAide'
 
 /**
  * Petit « ? » à côté d'un chiffre : un toucher ouvre en bas de l'écran
@@ -29,12 +30,17 @@ export function Aide({ texte, titre }: { texte: string; titre?: string }) {
 /** La fenêtre de l'aide : ne dépasse jamais l'écran (le texte défile), « Compris » toujours visible en bas. */
 function FenetreAide({ titre, texte, onFermer }: { titre?: string; texte: string; onFermer: () => void }) {
   useBloquerFond()
+  const [plus, setPlus] = useState(false)
+  const { court, suite } = decouperAide(texte)
   return createPortal(
     <div className="fixed inset-0 z-50 flex touch-none items-end bg-black/60" onClick={onFermer}>
       <div className="pb-sur flex max-h-[85dvh] w-full flex-col rounded-t-3xl border-t border-bordure bg-surface" onClick={(e) => e.stopPropagation()}>
         <div className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-5 pt-5">
           {titre && <p className="mb-2 text-lg font-bold">{titre}</p>}
-          <p className="text-texte-2">{texte}</p>
+          <p className="text-texte-2">{court}</p>
+          {suite && (plus
+            ? <p className="mt-2 text-sm text-texte-2">{suite}</p>
+            : <button type="button" onClick={() => setPlus(true)} className="mt-2 min-h-11 font-semibold text-accent">Pour aller plus loin ›</button>)}
         </div>
         <div className="shrink-0 px-5 pt-3 pb-1">
           <button type="button" onClick={onFermer} className="w-full rounded-xl bg-surface-2 py-3 font-semibold">Compris</button>

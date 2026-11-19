@@ -37,7 +37,7 @@ export function Plafonds() {
             {g.liste.length === 0 && <p className="text-sm text-texte-3">Aucune.</p>}
             {g.liste.map((c) => (
               <div key={c.id}>
-                <ChampNombre libelle={`${c.emoji} ${c.nom}`} unite="€" decimales={2}
+                <ChampNombre libelle={c.nom} unite="€" decimales={2}
                   valeur={(plafondDe(c.id, mois, d.plafonds) ?? 0) / 100 || undefined}
                   onValider={(v) => fixerPlafond(c.id, mois, v ? Math.round(v * 100) : null)} />
                 <button type="button" onClick={() => enregistrerCategorie({ ...c, fixe: !c.fixe })} className="-mt-1 mb-1 text-xs text-texte-3">

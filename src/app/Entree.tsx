@@ -99,7 +99,7 @@ export function Entree() {
         {mentions && (
           <div className="mt-2 space-y-1.5 text-xs leading-relaxed text-texte-3">
             <p><b className="text-texte-2">Santé.</b> Cycle donne des repères d'entraînement, il ne remplace pas un avis médical : en cas de doute ou de douleur, consulte un médecin (un certificat d'aptitude est conseillé). Moins de 15 ans : avec l'accord d'un parent.</p>
-            <p><b className="text-texte-2">Tes données.</b> Elles (santé comprise : sommeil, VFC, poids) servent seulement à calculer ton plan, restent sur ton compte et ton téléphone, ne sont ni vendues ni partagées. Tu peux les exporter ou tout supprimer à tout moment (Réglages → Compte).</p>
+            <p><b className="text-texte-2">Tes données.</b> Elles (santé comprise : sommeil, VFC, poids) servent seulement à calculer ton plan, restent sur ton compte (hébergé en Irlande) et ton téléphone, et ne sont jamais vendues. Elles ne vont vers Intervals.icu ou iGPSPORT que si tu les relies. Tu peux les exporter ou tout supprimer à tout moment (Réglages → Compte). <a href="./confidentialite.html" className="font-semibold text-accent">Tout savoir sur tes données</a></p>
           </div>
         )}
       </div>

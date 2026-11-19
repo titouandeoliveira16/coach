@@ -56,7 +56,7 @@ export function Aujourdhui() {
       {/* Minuteur en cours */}
       {minuteur.etat && (
         <button type="button" onClick={() => setMinuteurOuvert('')} className="w-full rounded-2xl border border-accent bg-surface p-4 text-left">
-          ⏱️ Minuteur en cours{minuteur.etat.objectif ? ` · ${minuteur.etat.objectif}` : ''} ›
+          Minuteur en cours{minuteur.etat.objectif ? ` · ${minuteur.etat.objectif}` : ''} ›
         </button>
       )}
 
@@ -65,7 +65,7 @@ export function Aujourdhui() {
         {maintenant ? <LigneCreneau c={maintenant} /> : <p className="text-texte-2">Rien de prévu à cette heure-ci{ensuite[0] ? '.' : ' : profite.'}</p>}
         {ensuite[0] && <p className="mt-2 text-sm text-texte-3">Ensuite : {ensuite[0].debut.replace(':', ' h ')} · {LIBELLES_CRENEAUX[ensuite[0].type](ensuite[0])}</p>}
         {maintenant && ['notion', 'rappels', 'sujet', 'express', 'memoire', 'synthese'].includes(maintenant.type) && (
-          <Bouton className="mt-3" onClick={() => setMinuteurOuvert(maintenant.type === 'notion' && enCours ? enCours.nom : '')}>⏱️ Lancer un bloc de 50 min</Bouton>
+          <Bouton className="mt-3" onClick={() => setMinuteurOuvert(maintenant.type === 'notion' && enCours ? enCours.nom : '')}>Lancer un bloc de 50 min</Bouton>
         )}
       </Carte>
 

@@ -175,7 +175,7 @@ export function FormulaireSeance() {
             <p className="text-sm text-texte-3">
               {s.rpe !== undefined ? LIBELLES_RPE[Math.floor(s.rpe)] : 'Fais glisser pour noter la difficulté globale'}
               {s.rpe !== undefined && s.rpe < 3 && <span className="ml-2 font-semibold text-nutrition">kJ faciles</span>}
-              {s.rpe !== undefined && s.rpe >= 7.5 && <span className="ml-2 font-semibold text-mauvais">stress</span>}
+              {s.rpe !== undefined && s.rpe >= 7.5 && <span className="ml-2 font-semibold text-mauvais">séance dure</span>}
             </p>
           </div>
           <ChoixNote libelle="Sensations" bornes={['Mauvaises', 'Excellentes']} valeur={s.sensations} onChoisir={(sensations) => changer({ sensations })} />
@@ -189,10 +189,11 @@ export function FormulaireSeance() {
             <div className="grid grid-cols-3 gap-2 text-center">
               <Chiffre libelle="sRPE" aide={AIDES.srpe} valeur={s.rpe !== undefined ? Math.round(srpe(s.rpe, min)) : undefined} />
               <Chiffre libelle={apercu.trimpFlux ? 'TRIMP' : 'TRIMP est.'} aide={AIDES.trimp} valeur={apercu.trimp !== undefined ? Math.round(apercu.trimp) : undefined} />
-              {(s.sport === 'velo' || s.sport === 'course') && (
-                <Chiffre libelle={s.sport === 'velo' ? 'TSS' : 'rTSS'} aide={s.sport === 'velo' ? AIDES.tss : AIDES.rtss} valeur={apercu.tss !== undefined ? Math.round(apercu.tss) : undefined} />
+              {s.sport === 'velo' && (
+                <Chiffre libelle="TSS" aide={AIDES.tss} valeur={apercu.tss !== undefined ? Math.round(apercu.tss) : undefined} />
               )}
             </div>
+            <p className="mt-2 text-xs text-texte-3">sRPE : ton ressenti (0-10) × la durée · TRIMP : la charge vue par ton cœur · TSS : la charge vue par tes watts (100 = 1 h à fond).</p>
             {apercu.decouplage !== undefined && <Ligne libelle="Découplage cardiaque" aide={AIDES.decouplage} valeur={`${formatNombre(apercu.decouplage, 1)} %`} />}
             {apercu.puissanceNormW !== undefined && <Ligne libelle="Puissance normalisée" aide={AIDES.np} valeur={`${Math.round(apercu.puissanceNormW)} W`} />}
           </Carte>

@@ -25,7 +25,7 @@ export function SectionAgenda({ className = '' }: { className?: string } = {}) {
   return (
     <Carte titre="Google Agenda" className={className}>
       {!session ? (
-        <p className="text-sm text-texte-2">Connecte-toi à ton compte (Accueil → ⚙️) : le lien lit tes séances sauvegardées en ligne.</p>
+        <p className="text-sm text-texte-2">Connecte-toi à ton compte (Accueil → Réglages) : le lien lit tes séances sauvegardées en ligne.</p>
       ) : !lien ? (
         <>
           <p className="mb-2 text-sm text-texte-2">Tes séances prévues dans Google Agenda, en journée entière, mises à jour toutes seules quand tu les changes ici.</p>

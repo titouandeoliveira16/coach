@@ -944,7 +944,7 @@ export async function intensiteANoter() {
 }
 
 /**
- * Alertes de cumul vélo + course de la semaine :
+ * Alertes de cumul de la semaine :
  * deux jours durs d'affilée, trop de séances dures, deux séances le même jour, hausse brutale de la course.
  */
 export async function alertesCumul(lundi: string) {
@@ -965,7 +965,7 @@ export async function alertesCumul(lundi: string) {
     if (dur.has(d) && dur.has(lendemain)) alertes.push(`Deux jours durs d'affilée : ${nomJour(d)} et ${nomJour(lendemain)}. Garde au moins 48 h entre deux séances dures.`)
   }
   const nDurs = semaine.filter((d) => dur.has(d)).length
-  if (nDurs > 3) alertes.push(`${nDurs} jours durs cette semaine (vélo + course) : 2 à 3 maximum (règle « stress » du système kJ).`)
+  if (nDurs > 3) alertes.push(`${nDurs} jours durs cette semaine (vélo + renfo) : 2 à 3 maximum (règle « stress » du système kJ).`)
 
   // Deux séances le même jour (hors natation) : la séance faite remplace sa séance prévue
   for (const d of semaine) {
@@ -1219,8 +1219,8 @@ async function signauxFc(seances: Seance[]) {
   const derive = faciles.filter((s) => !s.sansCeinture && (s.decouplage ?? 0) > 5).length
   const dures = faciles.filter((s) => s.reserve === 'non').length
   const r: string[] = []
-  if (derive >= 2) r.push(`❤️ ${derive} sorties faciles avec une FC qui dérive (> 5 %) : fatigue, chaleur ou hydratation ? À croiser avec ta VFC`)
-  if (dures >= 2) r.push(`😮‍💨 ${dures} sorties faciles ressenties comme dures : garde-les vraiment faciles`)
+  if (derive >= 2) r.push(`${derive} sorties faciles avec une FC qui dérive (> 5 %) : fatigue, chaleur ou hydratation ? À croiser avec ta VFC`)
+  if (dures >= 2) r.push(`${dures} sorties faciles ressenties comme dures : garde-les vraiment faciles`)
   return r
 }
 

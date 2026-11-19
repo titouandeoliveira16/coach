@@ -4,7 +4,7 @@ import { allureSecKm, pctVma, rtss, vitesseKmh } from './course'
 import { calageFc, decouplage, domaineDepuisFc, domaines, tempsParZone, type BornesZones } from './fc'
 import { kjDepuisEchantillons, kjDepuisMoyenne, meilleurePuissance, puissanceNormalisee, tss } from './puissance'
 import { analyserVfc, decaler } from './vfc'
-import { adapterSeance, analyserSommeil, calculerSignal } from './signal'
+import { analyserSommeil, calculerSignal } from './signal'
 import { hausseCharge, replanifier, trimpPrevu, type SeancePlan } from './planif'
 
 const secondes = (n: number) => Array.from({ length: n + 1 }, (_, i) => i)
@@ -160,7 +160,6 @@ describe('signal', () => {
     const s = calculerSignal({ vfc: { ...vfcOk, ln7: 3.9 }, tsb: -5 })
     expect(s.couleur).toBe('orange')
     expect(s.alertes[0].code).toBe('vfc')
-    expect(adapterSeance({ intensite: 'haute', dureeMin: 60 }, s)).toMatch(/endurance basse/)
   })
 
   it('sommeil : la nuit et le ressenti = une seule alerte (🟠) ; la dette de la semaine pour info seulement', () => {

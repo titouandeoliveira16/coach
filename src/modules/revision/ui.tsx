@@ -5,7 +5,7 @@ import type { Rappel, Resultat } from './types'
 export const LIBELLES_CRENEAUX: Record<Creneau['type'], (c: Creneau) => string> = Object.fromEntries(
   ([
     ['notion', 'Nouvelle notion'], ['fixation', 'Feuille blanche de la notion'], ['rappels', 'Rappels (feuille blanche)'],
-    ['stage', 'Stage'], ['internat', 'Stage à l’internat'], ['memoire', 'Mémoire de recherche'], ['sujet', '⏱️ Sujet complet'],
+    ['stage', 'Stage'], ['internat', 'Stage à l’internat'], ['memoire', 'Mémoire de recherche'], ['sujet', 'Sujet complet'],
     ['express', 'Sujet express'], ['correction', 'Correction'], ['relecture', 'Relecture'], ['synthese', 'Fiches de synthèse'], ['libre', 'Libre'],
   ] as const).map(([t, l]) => [t, (c: Creneau) => (c.libelle ? `${l.split(' ')[0]} ${c.libelle}` : l) + (c.optionnel ? ' (option)' : '')]),
 ) as Record<Creneau['type'], (c: Creneau) => string>

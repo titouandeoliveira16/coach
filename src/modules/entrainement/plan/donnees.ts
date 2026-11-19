@@ -75,7 +75,7 @@ export async function declarerNonFaite(p: SeancePrevue, raison: Raison) {
  * avec `ensemble`, les deux restent le même jour (ex. renfo le jour d'un footing).
  */
 export async function changerDeJour(p: SeancePrevue, vers: string, ensemble = false) {
-  if (vers === p.date) return []
+  if (vers === p.date || vers < aujourdhui()) return []
   const la = (await db.prevues.where('date').equals(vers).toArray()).filter((x) => x.statut === 'prevue' && x.id !== p.id)
   await enregistrer(db.prevues, { ...p, date: vers, deplacee: true })
   const nom = (d: string) => new Date(`${d}T12:00:00`).toLocaleDateString('fr-FR', { weekday: 'long' })

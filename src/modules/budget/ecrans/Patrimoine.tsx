@@ -117,8 +117,8 @@ function NouveauCompte({ ordre, onFermer }: { ordre: number; onFermer: () => voi
   return (
     <Feuille titre="Nouveau compte" onFermer={onFermer}>
       <div className="space-y-2">
-        <input value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Nom (ex. LDDS)" className={champ} />
-        <select value={type} onChange={(e) => setType(e.target.value as TypeCompte)} className={champ}>
+        <input value={nom} onChange={(e) => setNom(e.target.value)} aria-label="Nom du compte" placeholder="Nom (ex. LDDS)" className={champ} />
+        <select value={type} onChange={(e) => setType(e.target.value as TypeCompte)} aria-label="Type de compte" className={champ}>
           {(Object.keys(NOMS_TYPES) as TypeCompte[]).map((t) => <option key={t} value={t}>{NOMS_TYPES[t]}</option>)}
         </select>
         <ChampSolde valeur={solde} onChanger={setSolde} placeholder="Solde ce matin, avant tes dépenses du jour (€)" />
@@ -161,8 +161,8 @@ function FicheCompte({ c, d, onFermer }: { c: Compte; d: Donnees; onFermer: () =
           <p className="text-[13px] font-semibold text-texte-2">Nouveau relevé</p>
           <p className="text-xs text-texte-3">{invest ? 'Regarde la valeur sur ton appli bancaire et note-la ici.' : 'Pas besoin chaque mois : tes virements suffisent. Utile une fois par an, quand les intérêts arrivent.'}</p>
           <div className="mt-1 flex gap-2">
-            <input type="date" value={releveDate} max={jour} min={c.dateDepart} onChange={(e) => e.target.value && setReleveDate(e.target.value)} className={`${champ} w-auto`} />
-            <input value={releveValeur} onChange={(e) => setReleveValeur(e.target.value)} inputMode="decimal" placeholder="Valeur (€)" className={champ} />
+            <input type="date" aria-label="Date du relevé" value={releveDate} max={jour} min={c.dateDepart} onChange={(e) => e.target.value && setReleveDate(e.target.value)} className={`${champ} w-auto`} />
+            <input value={releveValeur} onChange={(e) => setReleveValeur(e.target.value)} aria-label="Valeur du relevé en euros" inputMode="decimal" placeholder="Valeur (€)" className={champ} />
           </div>
           <Bouton className="mt-2" disabled={lireNombre(releveValeur) === undefined} onClick={async () => {
             await enregistrerReleve(c.id, releveDate, centimes(releveValeur))

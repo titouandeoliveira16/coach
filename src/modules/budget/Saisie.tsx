@@ -5,6 +5,7 @@ import { formatEuros } from '../../core/format'
 import { categoriesParUsage, decalerMois, moisDuRevenu, nomMois } from './calculs'
 import { enregistrerMouvement, nouvelId, useBudget } from './donnees'
 import type { Mouvement, TypeMouvement } from './types'
+import { IconeCategorie } from './IconeCategorie'
 
 const TYPES: { id: TypeMouvement; nom: string }[] = [
   { id: 'depense', nom: 'Dépense' },
@@ -122,9 +123,9 @@ export function Saisie({ initial, onFermer }: { initial?: Partial<Mouvement>; on
           <>
             <div className="mt-3 grid grid-cols-4 gap-1.5">
               {principales.map((c) => (
-                <button key={c.id} type="button" onClick={() => setCategorieId(c.id)}
+                <button key={c.id} type="button" onClick={() => setCategorieId(c.id)} aria-pressed={principale === c.id}
                   className={`flex flex-col items-center gap-0.5 rounded-xl border px-1 py-2 active:scale-95 ${principale === c.id ? 'border-accent bg-accent/15' : 'border-bordure bg-surface-2'}`}>
-                  <span className="text-2xl leading-none">{c.emoji}</span>
+                  <IconeCategorie cle={c.emoji} className="h-6 w-6 text-texte-2" />
                   <span className="line-clamp-2 w-full text-center text-xs leading-tight text-texte-2">{c.nom}</span>
                 </button>
               ))}
@@ -132,8 +133,8 @@ export function Saisie({ initial, onFermer }: { initial?: Partial<Mouvement>; on
             {sousCategories.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {sousCategories.map((s) => (
-                  <button key={s.id} type="button" onClick={() => setCategorieId(categorieId === s.id ? s.parentId : s.id)}
-                    className={`rounded-full border px-3 py-1.5 text-sm font-semibold ${categorieId === s.id ? 'border-accent bg-accent text-fond' : 'border-bordure bg-surface-2 text-texte-2'}`}>{s.emoji} {s.nom}</button>
+                  <button key={s.id} type="button" onClick={() => setCategorieId(categorieId === s.id ? s.parentId : s.id)} aria-pressed={categorieId === s.id}
+                    className={`rounded-full border px-3 py-1.5 text-sm font-semibold ${categorieId === s.id ? 'border-accent bg-accent text-fond' : 'border-bordure bg-surface-2 text-texte-2'}`}>{s.nom}</button>
                 ))}
               </div>
             )}
@@ -142,8 +143,8 @@ export function Saisie({ initial, onFermer }: { initial?: Partial<Mouvement>; on
                 <p className="text-sm text-texte-2">Ce qu'on te rembourse (ça vient en moins de cette dépense) :</p>
                 <div className="mt-1.5 flex flex-wrap gap-1.5">
                   {depensesPrincipales.map((c) => (
-                    <button key={c.id} type="button" onClick={() => setRembourse(c.id)}
-                      className={`rounded-full border px-3 py-1.5 text-sm font-semibold ${rembourse === c.id ? 'border-accent bg-accent text-fond' : 'border-bordure bg-surface-2 text-texte-2'}`}>{c.emoji} {c.nom}</button>
+                    <button key={c.id} type="button" onClick={() => setRembourse(c.id)} aria-pressed={rembourse === c.id}
+                      className={`rounded-full border px-3 py-1.5 text-sm font-semibold ${rembourse === c.id ? 'border-accent bg-accent text-fond' : 'border-bordure bg-surface-2 text-texte-2'}`}>{c.nom}</button>
                   ))}
                 </div>
                 <p className="mt-3 text-sm text-texte-2">C'était une dépense de :</p>

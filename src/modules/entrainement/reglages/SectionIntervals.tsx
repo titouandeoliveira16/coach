@@ -11,7 +11,7 @@ import { delierIntervals, etatIntervalsServeur, importerIntervals, relierInterva
 
 const champ = 'w-full rounded-xl border border-bordure bg-surface-2 px-4 py-3 outline-none focus:border-accent'
 
-/** Intervals.icu : import automatique des séances et des données Garmin (VFC, FC de repos, sommeil, poids). */
+/** Intervals.icu : import automatique des séances et des données Garmin (VFC, pouls au repos, sommeil, poids). */
 export function SectionIntervals() {
   const { session } = useSynchro()
   const etat = useLiveQuery(async () => ((await db.reglages.get('intervals'))?.valeur as EtatIntervals | undefined) ?? {})
@@ -49,7 +49,7 @@ export function SectionIntervals() {
   return (
     <Repliable titre="Intervals.icu" libelle="Gérer" resume={!session ? 'Connecte-toi à ton compte' : connecte ? <span className="text-nutrition">✓ Relié{etat?.dernierImport ? ` · dernier import ${depuis(etat.dernierImport)}` : ''}</span> : connecte === false ? 'Pas encore relié' : ''}>
       {!session ? (
-        <p className="text-sm text-texte-2">Connecte-toi à ton compte (Accueil → ⚙️) pour relier Intervals.icu.</p>
+        <p className="text-sm text-texte-2">Connecte-toi à ton compte (Accueil → Réglages) pour relier Intervals.icu.</p>
       ) : connecte ? (
         <div className="space-y-2">
           <p className="text-sm text-nutrition">✓ Intervals.icu relié{etat?.dernierImport ? ` · dernier import ${depuis(etat.dernierImport)}` : ''}</p>
@@ -65,7 +65,7 @@ export function SectionIntervals() {
       ) : (
         <div className="space-y-2">
           <p className="text-sm text-texte-2">
-            Importe automatiquement tes séances (Garmin, Zwift…) et les données de ta montre : VFC, FC de repos, sommeil, poids.
+            Importe automatiquement tes séances (Garmin, Zwift…) et les données de ta montre : VFC, pouls au repos, sommeil, poids.
             Ta clé reste chiffrée sur le serveur, jamais dans l'appli. Aucune trace GPS n'est récupérée.
           </p>
           <input placeholder="Clé API (Settings → Developer Settings)" value={cle} onChange={(e) => setCle(e.target.value)}

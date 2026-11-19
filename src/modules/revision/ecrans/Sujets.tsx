@@ -42,7 +42,7 @@ export function Sujets() {
           {d.sujets.map((s) => (
             <button key={s.id} type="button" onClick={() => setOuvert(s)} className="flex w-full items-center justify-between gap-3 py-2 text-left active:opacity-60">
               <span className="min-w-0">
-                <span className="block truncate font-medium">{s.type === 'express' ? '⚡' : '⏱️'} {s.intitule || (s.epreuve === 'E1' ? 'Écrit 1' : 'Écrit 2')}</span>
+                <span className="block truncate font-medium">{s.type === 'express' ? 'Express · ' : ''}{s.intitule || (s.epreuve === 'E1' ? 'Écrit 1' : 'Écrit 2')}</span>
                 <span className="block text-xs text-texte-3">{jjmm(s.date)} · {s.epreuve === 'E1' ? 'É1' : 'É2'}{s.notionsFaibles.length ? ` · ${pluriel(s.notionsFaibles.length, 'notion faible', 'notions faibles')}` : ''}</span>
               </span>
               {s.note !== undefined && <b className="shrink-0">{formatNombre(s.note, 1)}/20</b>}

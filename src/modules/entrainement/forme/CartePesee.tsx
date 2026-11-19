@@ -20,7 +20,7 @@ export function FeuillePesee({ onFermer }: { onFermer: () => void }) {
   const kg = poids ?? duJour?.poidsKg ?? dernieres[0]?.poidsKg ?? profil.poidsKg
   return (
     <Feuille titre="Pesée du jour" onFermer={onFermer}>
-      <p className="mb-1 text-xs text-texte-3">Le matin, à jeun, après être passé aux toilettes.</p>
+      <p className="mb-1 text-xs text-texte-3">Le matin, à jeun, après un passage aux toilettes.</p>
       <ChampNombre libelle="Poids" unite="kg" valeur={kg} onValider={setPoids} />
       <Bouton className="mt-2" disabled={!kg} onClick={async () => {
         if (!kg) return
@@ -115,7 +115,7 @@ export function CartePesee({ compact = false }: { compact?: boolean } = {}) {
   const kg = poids ?? duJour?.poidsKg ?? profil.poidsKg
   const contenu = (
     <>
-      <p className="mb-1 text-xs text-texte-3">Le matin, à jeun, après être passé aux toilettes.</p>
+      <p className="mb-1 text-xs text-texte-3">Le matin, à jeun, après un passage aux toilettes.</p>
       <ChampNombre libelle="Poids" unite="kg" valeur={kg} onValider={setPoids} />
       <Bouton className="mt-2" disabled={!kg} onClick={async () => {
         if (!kg) return

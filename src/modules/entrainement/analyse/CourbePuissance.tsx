@@ -43,7 +43,7 @@ export function CourbePuissance({ pied }: { pied?: ReactNode } = {}) {
 
   return (
     <Carte titre="Courbe de puissance">
-      <GraphiqueLignes etiquettes={NOMS} reperes={[0, 2, 6, 8, 10, 12, 13]} format={(n) => `${Math.round(n)}`} series={[
+      <GraphiqueLignes etiquettes={NOMS} reperes={[0, 2, 6, 8, 10, 12]} format={(n) => `${Math.round(n)}`} series={[
         { nom: 'Record', couleur: SERIES[1], valeurs: record.map((e) => e?.w), fond: true },
         { nom: '6 dernières semaines', couleur: SERIES[0], valeurs: recent.map((e) => e?.w), pointille: true },
       ]} />

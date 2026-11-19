@@ -52,7 +52,7 @@ function etatVisuel(p: SeancePrevue, jour: string): { libelle: string; couleur?:
   return { libelle: '' }
 }
 
-/** Semaine : la course saisie depuis Campus Coach, le vélo généré autour, une jauge de kJ. */
+/** Semaine : le vélo généré sur tes jours, les séances ajoutées à la main, une jauge de kJ. */
 export function Semaine() {
   const [lundi, setLundi] = useState(lundiDe(aujourdhui()))
   const jours = joursDe(lundi)
@@ -182,9 +182,9 @@ function CarteVelo({ lundi, deps, onMessage, onPrecedente, onSuivante }: { lundi
     <Carte>
       <div className="flex items-center justify-between gap-2">
         <span className="flex items-center text-sm text-texte-2">
-          <button type="button" onClick={onPrecedente} className="pr-2 text-xl text-accent" aria-label="Semaine précédente">‹</button>
+          <button type="button" onClick={onPrecedente} className="-my-2 flex min-h-11 min-w-11 items-center justify-center text-2xl text-accent" aria-label="Semaine précédente">‹</button>
           {semaine}
-          <button type="button" onClick={onSuivante} className="pl-2 text-xl text-accent" aria-label="Semaine suivante">›</button>
+          <button type="button" onClick={onSuivante} className="-my-2 flex min-h-11 min-w-11 items-center justify-center text-2xl text-accent" aria-label="Semaine suivante">›</button>
         </span>
         {(meta || kj.kjPrevus > 0 || (passee && kj.kjRealises > 0)) && (
           <span className="flex items-center gap-2 text-sm">
@@ -203,7 +203,9 @@ function CarteVelo({ lundi, deps, onMessage, onPrecedente, onSuivante }: { lundi
         </>
       ) : (
         <>
-          <p className="mt-2 text-sm text-texte-2">Ajoute tes autres activités, puis génère ton vélo autour.<Aide titre="Programme vélo" texte={AIDES.programme} /></p>
+          {passee
+            ? <p className="mt-2 text-sm text-texte-3">Pas de vélo généré cette semaine-là.</p>
+            : <p className="mt-2 text-sm text-texte-2">Ajoute tes autres activités, puis génère ton vélo autour.<Aide titre="Programme vélo" texte={AIDES.programme} /></p>}
           {!passee && <Bouton className="mt-3" disabled={occupe} onClick={generer}>{occupe ? 'Calcul…' : 'Générer mon vélo de la semaine'}</Bouton>}
         </>
       )}
@@ -332,8 +334,9 @@ function DetailSeance({ p, jours, prevues, onFermer, onMessage }: {
         </div>
       ) : mode === 'jour' ? (
         <div className="mt-4 space-y-2">
-          <p className="text-texte-2">Vers quel jour ? Si une séance y est déjà prévue, tu peux échanger les deux, ou les garder le même jour (ex. renfo le jour d'un footing).</p>
-          {jours.map((d) => {
+          <p className="text-texte-2">Vers quel jour ? Si une séance y est déjà prévue, tu peux échanger les deux, ou les garder le même jour (ex. renfo le jour d'une endurance).</p>
+          {/* Jamais un jour déjà passé (audit du 18/11/2026) */}
+          {jours.filter((d) => d >= aujourdhui()).map((d) => {
             const la = prevues.filter((x) => x.date === d && x.statut === 'prevue' && x.id !== p.id)
             const jour = <span className="font-semibold capitalize">{depuisJour(d).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric' })}</span>
             if (la.length && d !== p.date) {

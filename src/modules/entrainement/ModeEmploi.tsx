@@ -29,19 +29,19 @@ export function ModeEmploi() {
       <div className="space-y-3 px-4">
         <Rubrique titre="L'idée en 30 secondes" ouverte>
           <p>L'appli construit ton <b className="text-texte">vélo</b> : ta saison jusqu'à ton objectif, ta semaine sur tes jours, et chaque séance adaptée le matin à ta forme.</p>
-          <p>Ton travail : <b className="text-texte">1 minute le matin</b>, <b className="text-texte">5 minutes le dimanche</b>. Le reste se fait tout seul.</p>
-          <p>À l'ouverture, l'<b className="text-texte">Accueil</b> te propose les modules. Le bouton 🏠 Accueil en bas y ramène.</p>
+          <p>Ton travail : <b className="text-texte">30 secondes le matin</b>, <b className="text-texte">5 minutes le dimanche</b>. Le reste se fait tout seul.</p>
+          <p>À l'ouverture, l'<b className="text-texte">Accueil</b> te propose les modules. Le bouton Accueil en bas y ramène.</p>
         </Rubrique>
 
         <Rubrique titre="Chaque matin : Aujourd'hui">
           <Etape n={1}>Remplis <b className="text-texte">Ton matin</b> : les chiffres de ta montre arrivent seuls, tu ajoutes juste tes 5 notes (sommeil, énergie, jambes, motivation, sérénité).</Etape>
           <Etape n={2}>Regarde ton <b className="text-texte">feu</b> et ta <b className="text-texte">séance du jour</b>.</Etape>
-          <p>🟢 Fais la séance prévue.</p>
-          <p>🟠 Fais la <b className="text-texte">version raccourcie</b> affichée (mêmes watts, moins de répétitions).</p>
-          <p>🔴 Pas d'intensité aujourd'hui : 30 à 45 min très facile, ou repos. Ton intensité vélo est <b className="text-texte">reportée</b> au prochain jour possible de la semaine (sauf si tu es malade).</p>
-          <p>Tu peux toujours appuyer sur « Je maintiens quand même ma séance ».</p>
-          <p>Malade ou une douleur ? Appuie sur 🤒 ou 🤕.</p>
-          <p>⚖️ <b className="text-texte">Poids</b> : touche la ligne quand tu veux te peser.</p>
+          <p><b className="text-bon">Vert</b> : fais la séance prévue.</p>
+          <p><b className="text-attention">Orange</b> : fais la <b className="text-texte">version raccourcie</b> affichée (mêmes watts, moins de répétitions).</p>
+          <p><b className="text-mauvais">Rouge</b> : pas d'intensité aujourd'hui : 30 à 45 min très facile, ou repos. Ton intensité vélo est <b className="text-texte">reportée</b> au prochain jour possible de la semaine (sauf si tu es malade).</p>
+          <p>Tu choisis toujours : la séance conseillée, ou la séance prévue si tu te sens bien.</p>
+          <p>Malade, une douleur, pas de vélo possible ? Touche <b className="text-texte">Un imprévu</b>.</p>
+          <p><b className="text-texte">Poids</b> : touche la ligne quand tu veux te peser.</p>
         </Rubrique>
 
         <Rubrique titre="Chaque dimanche : Semaine">
@@ -51,8 +51,8 @@ export function ModeEmploi() {
           <p>Si ta semaine change : déplace ou annule la séance, la semaine se recalcule toute seule (sinon, touche ↻ dans Semaine). Ce qui est déjà fait est gardé.</p>
           <p>Le dimanche, le <b className="text-texte">bilan</b> s'affiche dans Aujourd'hui (rappel le lundi dans Semaine) : ce qui a été fait, ce qui change la semaine suivante, et pourquoi.</p>
           <p className="pt-1 font-semibold text-texte">Les couleurs</p>
-          <p>🟢 faite · 🟠 à valider (rien n'est remonté, ou « Tenue ? » sans réponse) · 🔴 pas faite · sans couleur : à venir.</p>
-          <p>Touche une séance pour voir son <b className="text-texte">déroulé minute par minute</b>, la marquer faite ou pas faite, la modifier, ou <b className="text-texte">↔ changer de jour</b> (si le jour choisi est pris, les deux séances échangent).</p>
+          <p>Vert : faite · orange : à valider (rien n'est remonté, ou « Tenue ? » sans réponse) · rouge : pas faite · sans couleur : à venir. Les jours passés ne se modifient plus.</p>
+          <p>Touche une séance pour voir son <b className="text-texte">déroulé minute par minute</b>, la marquer faite ou pas faite, la modifier, ou <b className="text-texte">changer de jour</b> (si le jour choisi est pris, les deux séances échangent).</p>
         </Rubrique>
 
         <Rubrique titre="Pendant une séance vélo">
@@ -62,16 +62,16 @@ export function ModeEmploi() {
           <p>Après une séance d'intensité, réponds à <b className="text-texte">« Tenue ? »</b> : Oui = la prochaine sera un peu plus longue ou plus forte. Pas tout = un peu plus facile.</p>
         </Rubrique>
 
-        <Rubrique titre="Un imprévu (vélo en panne)">
-          <p>Dans <b className="text-texte">Aujourd'hui</b>, touche « Un imprévu ? Vélo en panne » et dis jusqu'à quand.</p>
-          <p>L'appli annule le vélo de ces jours-là, et déplace l'intensité après la réparation si possible. On ne rattrape pas les séances perdues.</p>
+        <Rubrique titre="Un imprévu">
+          <p>Dans <b className="text-texte">Aujourd'hui</b>, touche <b className="text-texte">Un imprévu</b> : malade, douleur, vélo en panne (et jusqu'à quand) ou pas de vélo possible aujourd'hui.</p>
+          <p>Vélo en panne : l'appli annule le vélo de ces jours-là, et déplace l'intensité après la réparation si possible. On ne rattrape pas les séances perdues.</p>
           <p>Vélo réparé plus tôt ? Touche « Il remarche ».</p>
         </Rubrique>
 
         <Rubrique titre="Les tests CP">
           <p>Ils sont déjà dans ton programme (dates dans <b className="text-texte">Progrès → Mes prochains tests</b>).</p>
           <p>Complet = 3 efforts à fond (1 h 50, le dimanche). Court = 2 efforts (1 h 15).</p>
-          <p>Pèse-toi dans les jours d'avant. Fais-le seulement un jour 🟢.</p>
+          <p>Pèse-toi dans les jours d'avant. Fais-le seulement un jour vert.</p>
           <p>Ensuite : <b className="text-texte">Réglages → Vélo → Calculer depuis mon test</b>, entre tes puissances moyennes. Zones et watts de tes séances se mettent à jour tout seuls.</p>
         </Rubrique>
 
@@ -92,12 +92,12 @@ export function ModeEmploi() {
 
         <Rubrique titre="Rappels">
           <p>Chaque matin à 8 h 30 pour tes 5 notes (les chiffres de ta montre arrivent seuls), les lundi, mardi, mercredi, samedi et dimanche à 7 h pour la pesée. Rien n'arrive si c'est déjà fait.</p>
-          <p>À activer une fois dans <b className="text-texte">Réglages → Rappels</b>, sur l'iPhone.</p>
+          <p>À activer une fois dans <b className="text-texte">Accueil → Réglages → Rappels</b>, sur l'iPhone.</p>
         </Rubrique>
 
         <Rubrique titre="Sauvegarde et mises à jour">
           <p>Tout se sauvegarde <b className="text-texte">seul sur le serveur</b> : téléphone et ordi voient les mêmes données.</p>
-          <p>Après une mise à jour : <b className="text-texte">ferme complètement l'appli puis rouvre-la</b>. Le numéro de version est en bas de Réglages.</p>
+          <p>Après une mise à jour : <b className="text-texte">ferme complètement l'appli puis rouvre-la</b>. Le numéro de version est en bas de Accueil → Réglages.</p>
         </Rubrique>
       </div>
     </>

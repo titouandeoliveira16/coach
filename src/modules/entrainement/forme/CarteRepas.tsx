@@ -1,13 +1,10 @@
-import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { aujourdhui, decalerJour } from '../../../core/dates'
 import { formatNombre, lireNombre } from '../../../core/format'
 import { Bouton } from '../../../core/ui/Bouton'
 import { Carte } from '../../../core/ui/Carte'
 import type { JournalRepas } from '../../../core/db'
-import { besoinsDe, lireReglagesNutrition, modifierReglagesNutrition } from './besoins'
-import { ETALEMENT_MAX_JOUR, SEUIL_EXCES } from '../../../metrics/nutrition'
-import { enregistrerRepas, jourARemplir, kcalDesMacros } from './repas'
+import { enregistrerRepas, kcalDesMacros } from './repas'
 
 const CHAMPS = [
   { cle: 'kcal', nom: 'Calories', unite: 'kcal' },
@@ -15,56 +12,6 @@ const CHAMPS = [
   { cle: 'glucides', nom: 'Glucides', unite: 'g' },
   { cle: 'lipides', nom: 'Lipides', unite: 'g' },
 ] as const
-
-/** Le soir (dès 18 h) : ce que tu as mangé aujourd'hui. Le lendemain matin, rattrapage de la veille si oubliée. */
-export function CarteRepas() {
-  const cible = useLiveQuery(() => jourARemplir())
-  const besoins = useLiveQuery(async () => (cible ? besoinsDe(cible.jour) : undefined), [cible?.jour])
-  const nutrition = useLiveQuery(lireReglagesNutrition)
-  const [edition, setEdition] = useState(false)
-  if (!cible) return null
-  const titre = cible.jour === aujourdhui() ? 'Ton assiette du jour' : "Ton assiette d'hier"
-
-  if (cible.saisie && !edition) {
-    const r = cible.saisie
-    return (
-      <Carte titre={titre}>
-        {r.nonRenseigne ? (
-          <p className="text-texte-2">Pas renseigné ce jour-là.</p>
-        ) : (
-          <>
-            <p className="text-2xl font-bold tabular-nums">
-              {formatNombre(r.kcal)} kcal
-              {besoins && r.kcal !== undefined && <span className="ml-2 text-base font-normal text-texte-2">besoin ≈ {formatNombre(besoins.kcal)} ({r.kcal >= besoins.kcal ? '+' : ''}{formatNombre(r.kcal - besoins.kcal)})</span>}
-            </p>
-            <p className="mt-1 text-sm text-texte-2">
-              {[['P', r.proteines, besoins?.proteines], ['G', r.glucides, besoins?.glucides], ['L', r.lipides, besoins?.lipides]]
-                .filter(([, v]) => v !== undefined).map(([n, v, c]) => `${n} ${formatNombre(v as number)} g${c ? ` / ${c}` : ''}`).join(' · ')}
-            </p>
-          </>
-        )}
-        {besoins?.objectif === 'perte' && nutrition && !r.nonRenseigne && r.kcal !== undefined && r.kcal - besoins.kcal >= SEUIL_EXCES &&
-          !nutrition.etalements?.some((e) => e.date === cible.jour) && !nutrition.etalementsRefuses?.includes(cible.jour) && (
-          <div className="mt-3 rounded-xl bg-surface-2 p-3 text-sm">
-            <p>
-              +{formatNombre(r.kcal - besoins.kcal)} kcal par rapport à ton besoin : rien de grave, c'est la moyenne de la semaine qui compte.
-              Étaler {formatNombre(Math.min(r.kcal - besoins.kcal, 1000))} kcal sur tes prochains jours faciles (−{ETALEMENT_MAX_JOUR} max par jour, jamais un jour de séance dure) ?
-            </p>
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              <button type="button" className="rounded-lg bg-accent py-2 font-semibold text-fond"
-                onClick={() => modifierReglagesNutrition({ etalements: [...(nutrition.etalements ?? []), { date: cible.jour, kcal: Math.min(Math.round(r.kcal! - besoins.kcal), 1000) }] })}>Étaler</button>
-              <button type="button" className="rounded-lg border border-bordure py-2 font-semibold text-texte-2"
-                onClick={() => modifierReglagesNutrition({ etalementsRefuses: [...(nutrition.etalementsRefuses ?? []), cible.jour] })}>Non, ça arrive</button>
-            </div>
-          </div>
-        )}
-        {nutrition?.etalements?.some((e) => e.date === cible.jour) && <p className="mt-2 text-sm text-texte-2">↘ Excès étalé sur tes prochains jours faciles.</p>}
-        <button type="button" onClick={() => setEdition(true)} className="mt-2 text-sm font-semibold text-accent">Modifier</button>
-      </Carte>
-    )
-  }
-  return <Formulaire key={cible.jour} jour={cible.jour} titre={titre} existante={cible.saisie} onFini={() => setEdition(false)} />
-}
 
 export function Formulaire({ jour, titre, existante, onFini }: { jour: string; titre: string; existante?: JournalRepas; onFini: () => void }) {
   const [textes, setTextes] = useState<Record<string, string>>(() =>

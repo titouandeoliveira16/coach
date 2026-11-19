@@ -16,7 +16,7 @@
 //                      séance par jour de la semaine, réécrite chaque semaine (iGPSPORT n'offre pas d'effacement)
 //   /igpsport/cron     → tâche planifiée (en-tête secret « x-coach-cron », sql/09) : tous les comptes reliés
 //
-// Aucun secret à ajouter : la clé de chiffrement est dérivée de la clé « service role » du projet.
+// Secret CLE_CHIFFREMENT (clé de chiffrement dédiée, 18/11/2026) ; sans lui, repli sur l'ancienne clé.
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
@@ -39,22 +39,40 @@ const json = (corps: unknown, status = 200) =>
 // ---------- Chiffrement AES-GCM (mot de passe iGPSPORT ; clé Intervals déjà chiffrée par la fonction « intervals ») ----------
 const b64 = (o: Uint8Array) => btoa(String.fromCharCode(...o))
 const deB64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0))
+// Clé dédiée CLE_CHIFFREMENT (secret de la fonction, audit du 18/11/2026) : avant, la clé était tirée de la clé « service
+// role », si bien qu'une fuite de celle-ci exposait aussi les clés et mots de passe gardés. Valeurs nouvelles : « v2:… » ;
+// les anciennes se lisent encore avec l'ancienne clé et sont rechiffrées à leur prochaine lecture.
 const cles = new Map<string, CryptoKey>()
-async function cleDe(etiquette: string) {
-  if (!cles.has(etiquette)) {
-    const brute = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${etiquette}|${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`)))
-    cles.set(etiquette, await crypto.subtle.importKey('raw', brute, 'AES-GCM', false, ['encrypt', 'decrypt']))
+async function cleDe(etiquette: string, v2: boolean) {
+  const secret = v2 ? Deno.env.get('CLE_CHIFFREMENT') : Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+  if (!secret) throw new Error('Clé de chiffrement absente du serveur.')
+  const id = `${v2 ? 'v2' : 'v1'}|${etiquette}`
+  if (!cles.has(id)) {
+    const brute = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${etiquette}|${secret}`)))
+    cles.set(id, await crypto.subtle.importKey('raw', brute, 'AES-GCM', false, ['encrypt', 'decrypt']))
   }
-  return cles.get(etiquette)!
+  return cles.get(id)!
 }
-async function chiffrer(texte: string) {
+const avecCleDediee = () => !!Deno.env.get('CLE_CHIFFREMENT')
+const estAncien = (valeur: string) => !valeur.startsWith('v2:') && avecCleDediee()
+async function chiffrer(texte: string, etiquette: string) {
+  const v2 = avecCleDediee()
   const iv = crypto.getRandomValues(new Uint8Array(12))
-  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await cleDe('coach-igpsport'), new TextEncoder().encode(texte)))
-  return `${b64(iv)}.${b64(ct)}`
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await cleDe(etiquette, v2), new TextEncoder().encode(texte)))
+  return `${v2 ? 'v2:' : ''}${b64(iv)}.${b64(ct)}`
 }
-async function dechiffrer(valeur: string, etiquette = 'coach-igpsport') {
-  const [iv, ct] = valeur.split('.').map(deB64)
-  return new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, await cleDe(etiquette), ct))
+async function dechiffrer(valeur: string, etiquette: string) {
+  const v2 = valeur.startsWith('v2:')
+  const [iv, ct] = valeur.replace(/^v2:/, '').split('.').map(deB64)
+  return new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, await cleDe(etiquette, v2), ct))
+}
+
+/** Mot de passe iGPSPORT en clair ; rechiffré avec la clé dédiée s'il l'était encore avec l'ancienne. */
+// deno-lint-ignore no-explicit-any
+async function motDePasseDe(compte: any) {
+  const mdp = await dechiffrer(compte.mdp_chiffre, 'coach-igpsport')
+  if (estAncien(compte.mdp_chiffre)) await admin.from('igpsport_comptes').update({ mdp_chiffre: await chiffrer(mdp, 'coach-igpsport') }).eq('user_id', compte.user_id)
+  return mdp
 }
 
 // ---------- iGPSPORT ----------
@@ -137,7 +155,7 @@ async function synchroniser(userId: string, finAvant: number) {
       await maj({ erreur: 'Relie d’abord Intervals.icu (Réglages) : les sorties iGPSPORT y sont envoyées.' })
       return { envoyees: 0, reste: compte.reste ?? 0 }
     }
-    const entetes = await connexionIgp(compte.identifiant, await dechiffrer(compte.mdp_chiffre))
+    const entetes = await connexionIgp(compte.identifiant, await motDePasseDe(compte))
     const toutes = await sortiesIgp(entetes)
     const { data: faits } = await admin.from('igpsport_faits').select('ride_id').eq('user_id', userId)
     const deja = new Set((faits ?? []).map((f: { ride_id: number }) => Number(f.ride_id)))
@@ -176,9 +194,9 @@ async function ecrireSeance(entetes: Record<string, string>, data: Record<string
 
 async function envoyerSeances(userId: string, seances: unknown) {
   if (!Array.isArray(seances) || seances.length > 7 || JSON.stringify(seances).length > 200_000) throw new Error('Séances invalides.')
-  const { data: compte } = await admin.from('igpsport_comptes').select('identifiant, mdp_chiffre, seances_ids').eq('user_id', userId).maybeSingle()
+  const { data: compte } = await admin.from('igpsport_comptes').select('user_id, identifiant, mdp_chiffre, seances_ids').eq('user_id', userId).maybeSingle()
   if (!compte) throw new Error('Relie d’abord ton compteur iGPSPORT.')
-  const entetes = await connexionIgp(compte.identifiant, await dechiffrer(compte.mdp_chiffre))
+  const entetes = await connexionIgp(compte.identifiant, await motDePasseDe(compte))
   const ids: Record<string, string> = { ...(compte.seances_ids ?? {}) }
   let envoyees = 0
   for (const x of seances as Record<string, unknown>[]) {
@@ -243,7 +261,7 @@ Deno.serve(async (req) => {
         return json({ erreur: e instanceof RefusIgp ? e.message : 'iGPSPORT ne répond pas : réessaie dans un moment.' }, 400)
       }
       const { error } = await admin.from('igpsport_comptes').upsert({
-        user_id: user.id, identifiant, mdp_chiffre: await chiffrer(motDePasse), relie_le: new Date().toISOString(), erreur: null,
+        user_id: user.id, identifiant, mdp_chiffre: await chiffrer(motDePasse, 'coach-igpsport'), relie_le: new Date().toISOString(), erreur: null,
       })
       if (error) throw error
       const r = await synchroniser(user.id, debut + 60_000)
@@ -266,9 +284,9 @@ Deno.serve(async (req) => {
       const rideId = Number(corps.rideId)
       const { data: fait } = await admin.from('igpsport_faits').select('ride_id').eq('user_id', user.id).eq('ride_id', rideId).maybeSingle()
       if (!fait) return json({ erreur: 'Sortie inconnue.' }, 404)
-      const { data: compte } = await admin.from('igpsport_comptes').select('identifiant, mdp_chiffre').eq('user_id', user.id).maybeSingle()
+      const { data: compte } = await admin.from('igpsport_comptes').select('user_id, identifiant, mdp_chiffre').eq('user_id', user.id).maybeSingle()
       if (!compte) return json({ erreur: 'Relie d’abord ton compteur iGPSPORT.' }, 409)
-      const fit = await fichierFit(await connexionIgp(compte.identifiant, await dechiffrer(compte.mdp_chiffre)), rideId)
+      const fit = await fichierFit(await connexionIgp(compte.identifiant, await motDePasseDe(compte)), rideId)
       if (!fit) return json({ erreur: 'Fichier introuvable chez iGPSPORT.' }, 404)
       // base64 par morceaux (un gros fichier dépasserait la pile avec un seul String.fromCharCode)
       let bin = ''

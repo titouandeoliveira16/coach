@@ -59,8 +59,17 @@ de conversation quand il faut s'en servir. Ici ne restent que les chantiers tech
   sortie facile, affûtage sur chaque séance dure, 1 semaine de reprise au plus entre deux A, départs XCO chaque semaine et
   simulation 7-13 j avant la A, kJ technique réels, 48 h dimanche → lundi, reprise après 10 jours sans vélo, course
   annulée / repoussée, douleur, plancher du maintien, rappels de pesée (adultes avec objectif de poids).
-- Reste : N4 (formule des mineurs) et N5 (question sur les règles) sans réponse ; nutrition (plancher du maintien, rappels de pesée, mineurs), muscu des mineurs, Révision recalée sur
-  le concours, accessibilité, textes, sauvegarde chiffrée, clé de chiffrement dédiée, page de confidentialité, audit en CI.
+- Lots 3 et 4 faits en 14.18.0 (choix du 19/11) : aides courtes + « Pour aller plus loin », icônes au trait à la place des
+  emoji (catégories du Budget : le champ `emoji` reste la clé enregistrée, traduite dans `budget/IconeCategorie.tsx`),
+  un seul bouton « Imprévu », bilan du dimanche en premier avec la semaine suivante, fin du questionnaire en 3 lignes,
+  jours passés figés, zoom permis, jargon expliqué sur place, accessibilité (aria-pressed, noms des champs, annonces),
+  page `public/confidentialite.html`, code mort retiré, rappels avec délai et envois en parallèle, abonnement aux rappels
+  refait à l'ouverture, audit du moteur et tests d'écrans (`tests-ecrans/parcours.mjs`) dans GitHub, clé de chiffrement
+  dédiée et sauvegarde chiffrée du lundi (voir supabase/README.md).
+- À faire par Titouan : ajouter les secrets `CLE_CHIFFREMENT` (Supabase) et `SAUVEGARDE_CLE` (GitHub), sinon la clé reste
+  l'ancienne et aucune sauvegarde n'est faite. N4 et N5 abandonnés (19/11).
+- Contrôle visuel du 19/11 : « Programme adapté » sur un profil vide annonce un total vélo au-dessus du budget (1825 kJ
+  pour 1485 visés) ; à vérifier sur un vrai profil.
 - Lot 1 bis fait en 14.14.0 : bouton « J'ai changé de montre » (Réglages → Intervals.icu), fond et fatigue qui partent de
   la charge des 4 premières semaines (plus de « +91 % »), W/kg du jour du test partout, alerte des zones qui ne revient
   plus, VFC en ms, axe du pouls d'au moins 10 bpm, « 7 derniers jours » seulement avec assez d'historique, « 1 h 60 »,

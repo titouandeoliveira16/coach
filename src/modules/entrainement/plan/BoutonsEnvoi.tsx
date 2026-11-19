@@ -63,7 +63,7 @@ export function BoutonsEnvoi({ p, etapes }: { p: SeancePrevue; etapes: Etape[] }
         </button>
       )}
       {occupe && <p className="mt-1 text-xs text-texte-3">Envoi…</p>}
-      {message && <p className="mt-1 text-xs text-texte-3">{message}</p>}
+      <p role="status" aria-live="polite" className="mt-1 text-xs text-texte-3">{message}</p>
     </div>
   )
 }

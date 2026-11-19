@@ -31,7 +31,7 @@ export function SaisieMatin({ existante, onTermine }: { existante?: MesureMatin;
           : montre === 'Garmin' || !montre ? 'Garmin Connect → Statut VFC (moyenne de la nuit) et FC au repos (ou l’appli de ta montre).' : `L'appli ${montre} → VFC de la nuit et FC au repos.`}
       </p>
       <ChampNombre libelle="VFC" unite="ms" decimales={0} min={10} max={250} valeur={m.vfcMs} onValider={(v) => changer({ vfcMs: v })} />
-      <ChampNombre libelle="FC de repos" unite="bpm" decimales={0} min={30} max={110} valeur={m.fcRepos} onValider={(v) => changer({ fcRepos: v })} />
+      <ChampNombre libelle="Pouls au repos" unite="bpm" decimales={0} min={30} max={110} valeur={m.fcRepos} onValider={(v) => changer({ fcRepos: v })} />
       <ChampHeures libelle="Durée de sommeil" valeur={m.sommeilH} onValider={(v) => changer({ sommeilH: v })} />
 
       <div className="mt-2 border-t border-bordure pt-2">

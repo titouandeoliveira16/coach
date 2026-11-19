@@ -1,6 +1,7 @@
 import { formatEuros, formatDate } from '../../core/format'
 import { decalerMois, nomMois, type CouleurJauge } from './calculs'
 import type { Categorie, Compte, Mouvement } from './types'
+import { ICONES_MOUVEMENT, IconeCategorie, iconeDe } from './IconeCategorie'
 
 /** Couleurs d'état (jauges, alertes) : les mêmes que le feu du jour. */
 export const ETAT: Record<CouleurJauge, string> = { vert: 'var(--color-bon)', orange: 'var(--color-attention)', rouge: 'var(--color-mauvais)' }
@@ -17,22 +18,22 @@ export function NavMois({ mois, onChanger, max }: { mois: string; onChanger: (m:
   )
 }
 
-/** Libellé, emoji et montant signé d'un mouvement. */
+/** Libellé, icône et montant signé d'un mouvement. */
 export function decrireMouvement(m: Mouvement, categories: Categorie[], comptes: Compte[]) {
   const cat = categories.find((c) => c.id === m.categorieId)
   const parent = cat?.parentId ? categories.find((c) => c.id === cat.parentId) : undefined
   const nomCompte = (id?: string) => comptes.find((c) => c.id === id)?.nom ?? '?'
   switch (m.type) {
     case 'depense':
-      return { emoji: cat?.emoji ?? '💸', titre: parent ? `${parent.nom} · ${cat!.nom}` : cat?.nom ?? 'Dépense', montant: formatEuros(-m.montant), couleur: 'var(--color-texte)' }
+      return { icone: cat ? iconeDe(cat.emoji) : ICONES_MOUVEMENT.depense, titre: parent ? `${parent.nom} · ${cat!.nom}` : cat?.nom ?? 'Dépense', montant: formatEuros(-m.montant), couleur: 'var(--color-texte)' }
     case 'revenu': {
       const pour = m.rembourse ? categories.find((c) => c.id === m.rembourse) : undefined
-      return { emoji: cat?.emoji ?? '💰', titre: pour ? `Remboursement · ${pour.nom}` : cat?.nom ?? 'Revenu', montant: formatEuros(m.montant, { signe: true }), couleur: ETAT.vert }
+      return { icone: cat ? iconeDe(cat.emoji) : ICONES_MOUVEMENT.revenu, titre: pour ? `Remboursement · ${pour.nom}` : cat?.nom ?? 'Revenu', montant: formatEuros(m.montant, { signe: true }), couleur: ETAT.vert }
     }
     case 'virement':
-      return { emoji: '🔁', titre: `${nomCompte(m.compteId)} → ${nomCompte(m.versCompteId)}`, montant: formatEuros(m.montant), couleur: 'var(--color-texte-3)' }
+      return { icone: ICONES_MOUVEMENT.virement, titre: `${nomCompte(m.compteId)} → ${nomCompte(m.versCompteId)}`, montant: formatEuros(m.montant), couleur: 'var(--color-texte-3)' }
     case 'investissement':
-      return { emoji: '📈', titre: `Investi · ${nomCompte(m.versCompteId)}`, montant: formatEuros(m.montant), couleur: '#60a5fa' }
+      return { icone: ICONES_MOUVEMENT.investissement, titre: `Investi · ${nomCompte(m.versCompteId)}`, montant: formatEuros(m.montant), couleur: '#60a5fa' }
   }
 }
 
@@ -46,7 +47,7 @@ export function LigneMouvement({ m, categories, comptes, onToucher, avecDate }: 
     .filter(Boolean).join(' · ')
   return (
     <button type="button" onClick={onToucher} className="flex w-full items-center gap-3 py-2 text-left active:opacity-60">
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-2 text-xl">{d.emoji}</span>
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-2 text-texte-2"><IconeCategorie icone={d.icone} /></span>
       <span className="min-w-0 flex-1">
         <span className="block truncate font-medium">{d.titre}</span>
         {sousTitre && <span className="block truncate text-sm text-texte-3">{sousTitre}</span>}

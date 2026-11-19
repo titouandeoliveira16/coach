@@ -54,3 +54,21 @@ Les scripts SQL restent à exécuter à la main dans le SQL Editor.
 - **SQL Editor** : exécuter `sql/07-erreurs.sql` (table des erreurs, lisible seulement par les coachs).
 - La fonction `rappels` (à redéployer, ou automatiquement si le secret GitHub est en place) prévient les coachs par
   notification dès qu'une nouvelle erreur arrive ; la liste est dans Accueil → ⚙️ → « Erreurs de l'appli ».
+
+## Clé de chiffrement dédiée (19/11/2026)
+Les clés Intervals.icu et les mots de passe iGPSPORT sont chiffrés avec le secret `CLE_CHIFFREMENT` dès qu'il existe
+(avant : clé tirée de la clé « service role »). Sans lui, tout continue avec l'ancienne clé.
+1. Génère une longue phrase secrète (gestionnaire de mots de passe, 40 caractères ou plus) et garde-la.
+2. **Supabase → Edge Functions → Secrets → Add new secret** : nom `CLE_CHIFFREMENT`, valeur = cette phrase. Save.
+3. Rien d'autre : chaque clé ou mot de passe est rechiffré tout seul à sa prochaine lecture.
+Ne supprime ni ne change jamais ce secret ensuite : les valeurs rechiffrées deviendraient illisibles (il faudrait relier
+Intervals.icu et iGPSPORT à nouveau).
+
+## Sauvegarde chiffrée chaque lundi (19/11/2026)
+`.github/workflows/sauvegarde.yml` exporte les tables, les chiffre (AES-256) et les garde 90 jours dans GitHub → Actions
+→ Sauvegarde → le passage voulu → « Artifacts ». Jamais en clair (le dépôt est public).
+- À faire une fois : **GitHub → Settings → Secrets and variables → Actions → New repository secret**, nom
+  `SAUVEGARDE_CLE`, valeur = une longue phrase secrète, gardée aussi dans ton gestionnaire de mots de passe.
+- Lire une sauvegarde (sur un ordinateur) : dézipper l'artifact, puis
+  `openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -md sha256 -in sauvegarde-AAAA-MM-JJ.tar.gz.enc -out s.tar.gz`
+  (la phrase est demandée), puis `tar -xzf s.tar.gz` : un fichier JSON par table.

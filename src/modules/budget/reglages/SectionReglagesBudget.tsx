@@ -9,6 +9,7 @@ import { CarteAbonnements } from './CarteAbonnements'
 import { CarteExport } from './CarteExport'
 import { CarteImport } from './CarteImport'
 import { CarteRemiseAZero } from './CarteRemiseAZero'
+import { ICONES_CATEGORIE, IconeCategorie } from '../IconeCategorie'
 
 const champ = 'w-full rounded-lg border border-bordure bg-surface-2 px-3 py-2.5 outline-none focus:border-accent'
 /** Heures proposées pour le rappel : tous les quarts d'heure de 6 h à 23 h 45 */
@@ -56,19 +57,19 @@ export function SectionReglagesBudget() {
           <span className="text-texte-2">Abonnements à vérifier, le jour du prélèvement (à l'heure du rappel du soir)</span>
           <input type="checkbox" checked={r.rappelAbonnements !== false} onChange={(e) => modifier({ rappelAbonnements: e.target.checked })} className="h-6 w-6 shrink-0 accent-[#facc15]" />
         </label>
-        <p className="text-xs text-texte-3">Pas de rappel de saisie si tu as déjà saisi quelque chose ce jour-là. Les notifications ne montrent jamais de montant. Le 1er du mois, tu reçois aussi l'annonce de ton bilan. Les notifications doivent être activées une fois pour toute l'appli : Accueil → ⚙️.</p>
+        <p className="text-xs text-texte-3">Pas de rappel de saisie si tu as déjà saisi quelque chose ce jour-là. Les notifications ne montrent jamais de montant. Le 1er du mois, tu reçois aussi l'annonce de ton bilan. Les notifications doivent être activées une fois pour toute l'appli : Accueil → Réglages.</p>
       </Repliable>
 
       <CarteAbonnements d={d} />
       <CarteExport d={d} />
 
       {(['depense', 'revenu'] as const).map((genre) => (
-        <Repliable key={genre} titre={genre === 'depense' ? 'Catégories de dépenses' : 'Catégories de revenus'} resume={liste(genre).map((c) => `${c.emoji} ${c.nom}`).join(' · ')}>
+        <Repliable key={genre} titre={genre === 'depense' ? 'Catégories de dépenses' : 'Catégories de revenus'} resume={liste(genre).map((c) => c.nom).join(' · ')}>
           {liste(genre).map((c) => {
             const sous = d.categories.filter((s) => s.parentId === c.id && !s.archive)
             return (
               <button key={c.id} type="button" onClick={() => setOuverte(c)} className="flex w-full items-center gap-3 py-2 text-left active:opacity-60">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg" style={{ background: `color-mix(in srgb, ${c.couleur} 25%, transparent)` }}>{c.emoji}</span>
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full" style={{ background: `color-mix(in srgb, ${c.couleur} 25%, transparent)`, color: c.couleur }}><IconeCategorie cle={c.emoji} /></span>
                 <span className="min-w-0 flex-1">
                   <span className="block font-medium">{c.nom}{c.nature && <span className="ml-1 text-xs text-texte-3">{c.nature}</span>}{c.fixe && <span className="ml-1 text-xs text-texte-3">fixe</span>}</span>
                   {sous.length > 0 && <span className="block truncate text-xs text-texte-3">{sous.map((s) => s.nom).join(', ')}</span>}
@@ -88,7 +89,7 @@ export function SectionReglagesBudget() {
             <div>
               {d.categories.filter((c) => c.archive && !c.parentId).map((c) => (
                 <div key={c.id} className="flex items-center justify-between py-1.5">
-                  <span className="text-texte-2">{c.emoji} {c.nom}</span>
+                  <span className="text-texte-2">{c.nom}</span>
                   <button type="button" onClick={() => enregistrerCategorie({ ...c, archive: false })} className="text-sm font-semibold text-accent">Réactiver</button>
                 </div>
               ))}
@@ -118,12 +119,16 @@ function FicheCategorie({ initiale, toutes, nouvelle, onFermer }: {
   }
 
   return (
-    <Feuille titre={existe ? `${c.emoji} ${c.nom}` : 'Nouvelle catégorie'} onFermer={onFermer}>
+    <Feuille titre={existe ? c.nom : 'Nouvelle catégorie'} onFermer={onFermer}>
       <div className="space-y-3">
-        <div className="flex gap-2">
-          <input value={c.emoji} onChange={(e) => setC({ ...c, emoji: e.target.value })} onBlur={() => enregistrerSiExiste(c)}
-            aria-label="Emoji" className={`${champ} w-16 text-center text-2xl`} />
-          <input value={c.nom} onChange={(e) => setC({ ...c, nom: e.target.value })} onBlur={() => enregistrerSiExiste(c)} placeholder="Nom" className={champ} />
+        <input value={c.nom} onChange={(e) => setC({ ...c, nom: e.target.value })} onBlur={() => enregistrerSiExiste(c)} placeholder="Nom" aria-label="Nom de la catégorie" className={champ} />
+        <div className="grid grid-cols-8 gap-1.5" role="group" aria-label="Icône">
+          {ICONES_CATEGORIE.map(([cle, I, nom]) => (
+            <button key={cle} type="button" aria-label={nom} aria-pressed={c.emoji === cle} onClick={() => enregistrerSiExiste({ ...c, emoji: cle })}
+              className={`flex h-10 items-center justify-center rounded-lg border ${c.emoji === cle ? 'border-accent bg-accent/15 text-accent' : 'border-bordure bg-surface-2 text-texte-2'}`}>
+              <IconeCategorie icone={I} />
+            </button>
+          ))}
         </div>
         <div className="flex flex-wrap gap-2">
           {COULEURS.map((k) => (

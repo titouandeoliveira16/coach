@@ -132,7 +132,12 @@ export function GraphiqueLignes({
             })()} />
         )}
         {series.map((s) => (
-          <path key={s.nom} d={chemin(s.valeurs)} fill="none" stroke={s.couleur} strokeWidth={s.fond ? 6 : 2} strokeOpacity={s.fond ? 0.45 : 1} strokeLinecap="round" strokeLinejoin="round" strokeDasharray={s.pointille ? '4 3' : undefined} />
+          <g key={s.nom}>
+            <path d={chemin(s.valeurs)} fill="none" stroke={s.couleur} strokeWidth={s.fond ? 6 : 2} strokeOpacity={s.fond ? 0.45 : 1} strokeLinecap="round" strokeLinejoin="round" strokeDasharray={s.pointille ? '4 3' : undefined} />
+            {/* Point isolé (voisins sans valeur) : un rond, sinon il n'apparaissait pas (audit du 18/11/2026) */}
+            {s.valeurs.map((v, i) => v !== undefined && s.valeurs[i - 1] === undefined && s.valeurs[i + 1] === undefined
+              ? <circle key={i} cx={x(i)} cy={y(v)} r={s.fond ? 3 : 2.5} fill={s.couleur} fillOpacity={s.fond ? 0.6 : 1} /> : null)}
+          </g>
         ))}
         {survol !== undefined && (
           <g>

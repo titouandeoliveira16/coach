@@ -64,10 +64,13 @@ export function EcranBudget() {
         } />
       </Routes>
 
-      {message && (
-        <div className="fixed inset-x-4 bottom-60 z-30 mx-auto max-w-md rounded-[14px] bg-surface-2 px-4 py-3 text-center font-semibold shadow-lg shadow-black/50"
-          onClick={() => setMessage(undefined)}>{message}</div>
-      )}
+      {/* Annoncé par VoiceOver (aria-live) : la zone existe toujours, le message y apparaît */}
+      <div role="status" aria-live="polite">
+        {message && (
+          <div className="fixed inset-x-4 bottom-60 z-30 mx-auto max-w-md rounded-[14px] bg-surface-2 px-4 py-3 text-center font-semibold shadow-lg shadow-black/50"
+            onClick={() => setMessage(undefined)}>{message}</div>
+        )}
+      </div>
 
       {!surPlafonds && <button type="button" onClick={() => setSaisie({})} aria-label="Nouveau mouvement"
         className="fixed right-5 bottom-44 z-20 flex h-16 w-16 items-center justify-center rounded-full bg-accent text-fond shadow-lg shadow-black/50 active:scale-95">

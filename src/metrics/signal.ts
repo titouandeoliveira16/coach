@@ -133,7 +133,7 @@ export function calculerSignal(e: EntreeSignal, s: Seuils = SEUILS_DEFAUT): Sign
   const fc7Haut = vfc.fcRepos7 !== undefined && vfc.fcReposBase !== undefined && vfc.fcRepos7 > vfc.fcReposBase + s.fcReposEcart
   const deuxHauts = !!vfc.fcReposDeuxJours && vfc.fcReposBaseAvant !== undefined && vfc.fcReposDeuxJours.every((v) => v > vfc.fcReposBaseAvant! + s.fcReposEcart)
   if (fc7Haut)
-    alertes.push({ code: 'fc-repos', texte: `FC de repos 7 j élevée (${Math.round(vfc.fcRepos7!)} bpm, base ${Math.round(vfc.fcReposBase!)})`, compte: true })
+    alertes.push({ code: 'fc-repos', texte: `Pouls au repos élevé sur 7 j (${Math.round(vfc.fcRepos7!)} bpm, base ${Math.round(vfc.fcReposBase!)})`, compte: true })
   else if (deuxHauts)
     alertes.push({ code: 'fc-repos', texte: `Pouls au repos haut 2 matins de suite (${vfc.fcReposDeuxJours!.join(' et ')} bpm, base ${Math.round(vfc.fcReposBaseAvant!)}) : souvent un premier signe de maladie`, compte: true })
 
@@ -225,28 +225,4 @@ function detailsSignal(e: EntreeSignal, alertes: Alerte[], calibration: boolean,
   if (a('tsb')) info('🏋️', 'Fatigue d’entraînement accumulée (pour info)', ['charge', 'Fatigue'])
   if (!a('pic') && !a('tsb') && (e.tsb !== undefined || e.ratioPic !== undefined)) ok('🏋️', 'Charge d’entraînement bien dosée', ['charge', 'Bien dosée'])
   return d
-}
-
-/** Ce qu'il faut faire de la séance prévue selon le signal. */
-export function adapterSeance(
-  prevue: { intensite: 'basse' | 'moyenne' | 'haute'; dureeMin: number } | undefined,
-  signal: Signal,
-  /** Puissance Z2 (vélo) : précise la séance de remplacement */
-  z2W?: number,
-): string {
-  const watts = z2W ? ` à ${z2W} W` : ''
-  if (!prevue) return signal.couleur === 'rouge' ? 'Repos ou récupération active (20-30 min très facile).' : 'Pas de séance prévue.'
-  const intense = prevue.intensite !== 'basse'
-  switch (signal.recommandation) {
-    case 'maintenir':
-      return 'Séance prévue maintenue.'
-    case 'alleger':
-      return `Séance maintenue mais allégée : environ ${Math.round(prevue.dureeMin * 0.75)} min, arrête-toi si les sensations ne suivent pas.`
-    case 'remplacer':
-      return intense
-        ? `Remplace par de l'endurance basse (Z1-Z2) : ${Math.round(prevue.dureeMin * 0.75)} à ${prevue.dureeMin} min${watts}.`
-        : 'Séance facile maintenue, reste bien en zone basse.'
-    case 'repos':
-      return 'Repos ou récupération active (20-30 min très facile). La séance clé est à reporter.'
-  }
 }

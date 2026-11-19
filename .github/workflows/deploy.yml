@@ -29,11 +29,26 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
+      # Tests d'écrans des parcours principaux (audit du 18/11/2026), sur l'appli construite
+      - run: npm i --no-save playwright@1.56.1 && npx playwright install --with-deps chromium
+      - run: npm run test:ecrans
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
+  # Audit complet du moteur (500 saisons, ~2 min), en même temps que la construction : rien ne part en ligne s'il échoue
+  # (audit du 18/11/2026 : avant, il n'était lancé qu'à la main)
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run audit
   deploy:
-    needs: build
+    needs: [build, audit]
     runs-on: ubuntu-latest
     environment:
       name: github-pages

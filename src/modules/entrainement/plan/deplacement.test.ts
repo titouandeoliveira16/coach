@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto'
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { db } from '../../../core/db'
 import type { SeancePrevue } from '../types'
 import { changerDeJour } from './donnees'
@@ -9,6 +9,9 @@ const p = (id: string, date: string, titre: string): SeancePrevue => ({
 })
 
 describe('changer de jour', () => {
+  // Les jours passés sont refusés : « aujourd'hui » fixé avant la semaine testée
+  beforeAll(() => { vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date('2026-11-01T10:00:00')) })
+
   it('vers un jour libre : déplacée', async () => {
     await db.prevues.put(p('c1', '2026-11-02', 'Footing'))
     const m = await changerDeJour((await db.prevues.get('c1'))!, '2026-11-03')

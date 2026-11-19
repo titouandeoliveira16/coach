@@ -27,7 +27,7 @@ En ligne : https://titouandeoliveira16.github.io/coach/ (GitHub Pages, déployé
 - **Le dépôt GitHub est public : aucune donnée personnelle dans le code, les tests ou les docs** (montants, soldes,
   poids, taille, date de naissance, FC, records, employeur, proches). Ses valeurs vivent dans ses données synchronisées ;
   pour les lui faire entrer, préparer un fichier privé (scratchpad, envoyé avec SendUserFile) à importer via
-  Accueil → ⚙️ → « Importer mes données » (`src/app/importDonnees.ts`) ou Budget → Réglages → « Importer des mouvements ».
+  Accueil → Réglages → « Importer mes données » (`src/app/importDonnees.ts`) ou Budget → Réglages → « Importer des mouvements ».
 
 ## Comptes
 - Une seule appli pour Titouan, son frère et ses élèves : chacun son compte (données séparées par RLS), même moteur.
@@ -47,7 +47,7 @@ En ligne : https://titouandeoliveira16.github.io/coach/ (GitHub Pages, déployé
 
 ## Repères dans le code
 - `src/app/` : coquille (accueil, barre du bas propre à chaque module, registre `modules.ts`). Réglages communs
-  (compte, notifications, version) : Accueil → ⚙️ (`ReglagesGeneraux.tsx`) ; chaque module n'affiche que les siens.
+  (compte, notifications, version) : Accueil → Réglages (`ReglagesGeneraux.tsx`) ; chaque module n'affiche que les siens.
 - `src/core/` : base locale Dexie (IndexedDB), écritures via `stockage.ts` (horodatage + suppressions),
   synchro « local d'abord » avec Supabase (`synchro.ts`), notifications (`notifications.ts`), composants `ui/`.
 - `src/metrics/` : formules pures et testées (charge, VFC, signal du jour, programme vélo, planification).

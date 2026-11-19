@@ -48,23 +48,23 @@ export function Mouvements() {
     <div className="space-y-3 pb-20">
       {mois ? <NavMois mois={mois} onChanger={setMois} max={actuel} /> : <p className="py-3 text-center font-semibold">Toute la période</p>}
       <div className="flex gap-2">
-        <input value={recherche} onChange={(e) => setRecherche(e.target.value)} placeholder="Rechercher (note, catégorie, montant)"
+        <input value={recherche} onChange={(e) => setRecherche(e.target.value)} aria-label="Rechercher un mouvement" placeholder="Rechercher (note, catégorie, montant)"
           className="min-w-0 flex-1 rounded-lg border border-bordure bg-surface-2 px-3 py-2 outline-none focus:border-accent" />
         <button type="button" onClick={() => setMois(mois ? undefined : actuel)}
           className={`shrink-0 rounded-lg border px-3 text-sm font-semibold ${mois ? 'border-bordure bg-surface-2 text-texte-2' : 'border-accent bg-accent text-fond'}`}>Tout</button>
       </div>
       <Puces options={TYPES} valeur={type} onChoisir={setType} />
       <div className="flex gap-2">
-        <select value={categorie} onChange={(e) => setCategorie(e.target.value)} className={select}>
+        <select value={categorie} onChange={(e) => setCategorie(e.target.value)} aria-label="Filtrer par catégorie" className={select}>
           <option value="">Toutes catégories</option>
           {d.categories.filter((c) => !c.parentId).map((c) => (
-            <optgroup key={c.id} label={`${c.emoji} ${c.nom}`}>
-              <option value={c.id}>{c.emoji} {c.nom}{c.genre === 'revenu' ? ' (revenu)' : ''}</option>
+            <optgroup key={c.id} label={c.nom}>
+              <option value={c.id}>{c.nom}{c.genre === 'revenu' ? ' (revenu)' : ''}</option>
               {d.categories.filter((s) => s.parentId === c.id).map((s) => <option key={s.id} value={s.id}>  └ {s.nom}</option>)}
             </optgroup>
           ))}
         </select>
-        <select value={compte} onChange={(e) => setCompte(e.target.value)} className={select}>
+        <select value={compte} onChange={(e) => setCompte(e.target.value)} aria-label="Filtrer par compte" className={select}>
           <option value="">Tous comptes</option>
           {d.comptes.map((c) => <option key={c.id} value={c.id}>{c.nom}</option>)}
         </select>

@@ -127,7 +127,7 @@ export function CarteNutrition({ ouverte: ouverteParent, onBasculer }: {
       ) : b.objectif === 'perte' ? (
         <p className="mt-2 text-sm text-texte-2">Objectif : <b className="text-texte">−{b.deficit} kcal</b> aujourd'hui (perte de gras légère){b.plancher ? ', limité pour ne pas manger trop peu' : ''}.</p>
       ) : null}
-      {b.reduction > 0 && <p className="mt-1 text-sm text-texte-2">−{b.reduction} kcal : étalement de ton excès{b.etalementDu ? ` du ${new Date(`${b.etalementDu}T12:00:00`).toLocaleDateString('fr-FR', { day: 'numeric', month: 'numeric' })}` : ''}.</p>}
+      {b.reduction > 0 && <p className="mt-1 text-sm text-texte-2">−{b.reduction} kcal : étalement de ton surplus{b.etalementDu ? ` du ${new Date(`${b.etalementDu}T12:00:00`).toLocaleDateString('fr-FR', { day: 'numeric', month: 'numeric' })}` : ''}.</p>}
       {b.tendance !== undefined && (() => {
         const tropVite = b.tendance < -0.01 * b.kg
         return (
@@ -190,7 +190,7 @@ export function CarteNutrition({ ouverte: ouverteParent, onBasculer }: {
         <div className="mt-3 space-y-1 text-sm text-texte-2">
           <p>Vie quotidienne, marche comprise : <b className="text-texte">{formatNombre(b.quotidien)} kcal</b> <span className="text-texte-3">(métabolisme × 1,4)</span></p>
           {b.detailSeances.map((x, i) => (
-            <p key={i}>{x.faite ? '✅' : '🗓️'} {x.titre} : <b className="text-texte">{formatNombre(x.kcal)} kcal</b>{' '}
+            <p key={i}>{x.titre} : <b className="text-texte">{formatNombre(x.kcal)} kcal</b>{' '}
               <span className="text-texte-3">{x.faite ? '(faite)' : '(prévue : comptée d’avance ; si tu ne la fais pas, le chiffre baisse)'}</span></p>
           ))}
           <p className="border-t border-bordure pt-1">= Maintien ≈ <b className="text-texte">{formatNombre(b.maintien)} kcal</b>{b.objectif === 'perte' && b.deficit ? <> − perte de gras {formatNombre(b.deficit)} kcal</> : null}{b.reduction ? <> − étalement {b.reduction} kcal</> : null}</p>

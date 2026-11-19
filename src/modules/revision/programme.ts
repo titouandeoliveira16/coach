@@ -193,7 +193,7 @@ const decalerHeure = (h: string, min: number) => {
 export function creneauxDu(jour: string, p: Parametres, notionRestante: boolean): Creneau[] {
   const per = periodeDu(jour, p)
   const js = jourSemaine(jour)
-  if (per === 'concours') return [c('08:00', '13:00', 'sujet', jour === p.concours ? '✍️ Écrit 1' : '✍️ Écrit 2')]
+  if (per === 'concours') return [c('08:00', '13:00', 'sujet', jour === p.concours ? 'Écrit 1' : 'Écrit 2')]
   if (per === 'repos') return [c('09:00', '18:00', 'libre', 'Repos total')]
   if (per === 'veille') return [c('09:00', '10:00', 'relecture', 'Relecture (1 h max), puis repos'), c('10:00', '18:00', 'libre', 'Repos')]
   if (per === 'derniere') {

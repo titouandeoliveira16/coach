@@ -41,7 +41,7 @@ const MARGE_JOURS = 3
 
 export async function appeler<T>(route: string, corps?: unknown): Promise<T> {
   const { data } = await supabase.auth.getSession()
-  if (!data.session) throw new Error('Connecte-toi d’abord à ton compte (Accueil → ⚙️).')
+  if (!data.session) throw new Error('Connecte-toi d’abord à ton compte (Accueil → Réglages).')
   const r = await fetch(`${URL_SUPABASE}/functions/v1/intervals/${route}`, {
     // Délai maximum (audit du 14/11/2026) : une réponse qui ne vient pas ne bloque plus l'import
     ...(typeof AbortSignal.timeout === 'function' ? { signal: AbortSignal.timeout(60_000) } : {}),

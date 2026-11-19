@@ -1,10 +1,16 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { CircleCheck } from 'lucide-react'
+import { CircleCheck, Flame, TrendingUp, Trophy } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { Carte } from '../../../core/ui/Carte'
 import { celebrationDuJour, marquerVue, victoiresRecentes } from './victoires'
 
 const COULEURS = ['#ff8a3d', '#4ade80', '#60a5fa', '#facc15']
+
+/** Icône au trait selon le genre de victoire (plus d'emoji, audit visuel du 18/11/2026). */
+function IconeVictoire({ type, className }: { type: string; className: string }) {
+  const I = type === 'record' ? Trophy : type === 'test' ? TrendingUp : type === 'seance' ? CircleCheck : Flame
+  return <I className={className} strokeWidth={1.8} aria-hidden />
+}
 
 /** Séance tenue : un petit moment plein écran (confettis), une fois. */
 export function BravoSeance() {
@@ -44,7 +50,7 @@ export function CarteVictoire() {
   return (
     <Carte className="apparition border-[#facc15]!">
       <div className="flex items-center gap-3">
-        <span className="text-4xl">{v.icone}</span>
+        <IconeVictoire type={v.type} className="h-10 w-10 shrink-0 text-[#facc15]" />
         <div className="min-w-0 flex-1">
           <p className="font-bold">{v.titre}</p>
           <p className="text-sm text-texte-2">{v.texte}</p>
@@ -64,7 +70,7 @@ export function ListeVictoires() {
     <ul className="mb-3 space-y-2">
       {liste.slice(0, 8).map((v) => (
         <li key={v.id} className="flex items-center gap-3 rounded-xl bg-surface-2 px-3 py-2">
-          <span className="text-2xl">{v.icone}</span>
+          <IconeVictoire type={v.type} className="h-6 w-6 shrink-0 text-texte-2" />
           <span className="min-w-0 flex-1">
             <span className="block text-sm font-semibold">{v.titre}</span>
             <span className="block truncate text-xs text-texte-3">{v.texte}</span>

@@ -1212,7 +1212,7 @@ export function budgetSemaine(prec: BilanSemaine | undefined, nominal: number, p
     raison = raisonDepart
   } else if (prec.allegee || prec.reduite) {
     ref = prec.budgetRef
-    raison = prec.allegee ? 'Retour au budget d’avant la semaine allégée' : 'Retour au budget d’avant la semaine réduite'
+    raison = prec.allegee ? 'Retour au budget d’avant la semaine allégée' : 'Retour au budget d’avant la semaine raccourcie'
   } else {
     const part = prec.kjPrevus ? prec.kjRealises / prec.kjPrevus : 0
     // 13/11/2026 (demande de Titouan) : le feu adapte la séance du jour ; la semaine d'après suit ce qui a été fait.
@@ -1826,7 +1826,7 @@ export function procheCourse(d: string, competitions: string[], delai: number | 
 /** La course elle-même, dans le plan : séance dure (et sortie longue au-delà de 2 h). Puissance moyenne ~75 % de la CP (choix d'entraîneur). */
 export function construireCourse(nom: string, niveau: NiveauCourse, dureeMin: number, cpW: number): SeanceConstruite {
   return {
-    titre: `🏁 ${nom} (course ${niveau})`, dureeMin, kj: Math.round((dureeMin * 60 * 0.75 * cpW) / 1000),
+    titre: `${nom} (course ${niveau})`, dureeMin, kj: Math.round((dureeMin * 60 * 0.75 * cpW) / 1000),
     detail: `Ta course ${niveau} : c'est ta séance dure de la semaine${dureeMin > 120 ? ' et ta sortie longue' : ''}.\nÉchauffement de 15' progressif avec 5-6' à 90-100 % de ta CP, puis au moins 10' faciles avant le départ. Mange comme en course (60-90 g de glucides par heure au-delà d'1 h 30).`,
     velo: { famille: 'course', pourquoi: niveau === 'B' ? 'Course B : semaine allégée d’un tiers, mêmes watts.' : niveau === 'C' ? 'Course C : semaine normale, la course remplace ta séance dure.' : 'Ta course principale.' },
   }

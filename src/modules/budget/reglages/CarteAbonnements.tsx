@@ -25,7 +25,7 @@ export function CarteAbonnements({ d }: { d: Donnees }) {
       <p className="text-xs text-texte-3">Comptés d'avance dans ton reste à vivre. Le jour prévu, l'appli te demande s'il est bien passé. Choisis une catégorie de revenu pour un salaire ou une bourse : à partir du 25, il compte pour le mois suivant.</p>
       {liste.map((a) => (
         <button key={a.id} type="button" onClick={() => setOuvert(a)} className="flex w-full items-center justify-between py-2 text-left active:opacity-60">
-          <span className={a.actif ? '' : 'text-texte-3 line-through'}>{estRevenuAttendu(a, d) ? '💰' : '🔁'} {a.nom}</span>
+          <span className={a.actif ? '' : 'text-texte-3 line-through'}>{a.nom}</span>
           <span className="text-sm text-texte-2">{estRevenuAttendu(a, d) ? '+' : ''}{formatEuros(a.montant)} · le {a.jour}</span>
         </button>
       ))}
@@ -48,7 +48,7 @@ function FicheAbonnement({ initial, d, existe, onFermer }: { initial: Abonnement
   const nomCat = (id: string) => {
     const c = d.categories.find((x) => x.id === id)
     const parent = c?.parentId ? d.categories.find((x) => x.id === c.parentId) : undefined
-    return c ? `${c.emoji} ${parent ? `${parent.nom} · ` : ''}${c.nom}` : ''
+    return c ? `${parent ? `${parent.nom} · ` : ''}${c.nom}` : ''
   }
   const valide = a.nom.trim() && m && m > 0 && a.categorieId && a.compteId && a.jour >= 1 && a.jour <= 31
   return (

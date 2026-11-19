@@ -57,6 +57,8 @@ function AujourdhuiDuJour() {
       {complet && !edition && <VisiteGuidee />}
       <AstuceDuJour />
       <BandeauAVoir>
+        {/* Le dimanche : bilan de la semaine en premier (audit du 18/11/2026) ; le lundi, il est rappelé dans Semaine */}
+        {jourSemaine === 0 && !(nutrition && bilanRempli) && <CarteBilan lundi={lundiDuBilan()!} />}
         <CarteVictoire />
         <CarteResultat />
         <CarteEnchainement />
@@ -65,8 +67,6 @@ function AujourdhuiDuJour() {
         <CarteCleIntervals />
         <CarteCpEnHausse />
         <CarteHorsPlan />
-        {/* Le dimanche seulement : bilan de la semaine (le lundi, il est rappelé dans Semaine) */}
-        {jourSemaine === 0 && !(nutrition && bilanRempli) && <CarteBilan lundi={lundiDuBilan()!} />}
         <CarteBilanNutrition lieu="aujourdhui" />
         <CarteCalibration />
       </BandeauAVoir>

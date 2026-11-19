@@ -18,6 +18,7 @@ import { useBudget, useReglagesBudget } from '../donnees'
 import { useOuvrirSaisie } from '../ouvrirSaisie'
 import type { Mouvement } from '../types'
 import { ETAT, Jauge, LigneMouvement, NavMois } from '../ui'
+import { IconeCategorie } from '../IconeCategorie'
 
 /** Jours sans rien noter à la main avant de le signaler (mode rattrapage) */
 const JOURS_SANS_SAISIE = 3
@@ -68,7 +69,7 @@ export function Mois() {
   const parts = new Map<string, { nom: string; couleur: string; valeur: number }>()
   for (const [id, valeur] of parCat) {
     const c = d.categories.find((x) => x.id === id)
-    const nom = c ? `${c.emoji} ${c.nom}` : 'Sans catégorie'
+    const nom = c ? c.nom : 'Sans catégorie'
     const p = parts.get(nom)
     parts.set(nom, { nom, couleur: c?.couleur ?? '#94a3b8', valeur: (p?.valeur ?? 0) + valeur })
   }
@@ -103,13 +104,13 @@ export function Mois() {
           {voirReste && v && (
             <ul className="mt-2 space-y-1 border-t border-bordure pt-2 text-sm">
               {detailFixesRestantes(d, mois).map((x) => (
-                <li key={x.categorie.id} className="flex justify-between gap-2"><span className="text-texte-2">{x.categorie.emoji} {x.categorie.nom} <span className="text-xs text-texte-3">(charge fixe pas encore payée)</span></span><span className="tabular-nums">− {formatEuros(x.montant)}</span></li>
+                <li key={x.categorie.id} className="flex justify-between gap-2"><span className="text-texte-2">{x.categorie.nom} <span className="text-xs text-texte-3">(charge fixe pas encore payée)</span></span><span className="tabular-nums">− {formatEuros(x.montant)}</span></li>
               ))}
               {[...v.depenses, ...v.revenus].sort((a, b) => a.jour - b.jour).map((a) => {
                 const revenu = v.revenus.includes(a)
                 return (
                   <li key={a.id} className="flex justify-between gap-2">
-                    <span className="text-texte-2">{revenu ? '💰' : '🔁'} {a.nom} <span className="text-xs text-texte-3">(prévu le {Number(echeance(a, mois).slice(8))})</span></span>
+                    <span className="text-texte-2">{a.nom} <span className="text-xs text-texte-3">(prévu le {Number(echeance(a, mois).slice(8))})</span></span>
                     <span className="tabular-nums" style={revenu ? { color: ETAT.vert } : undefined}>{revenu ? '+' : '−'} {formatEuros(a.montant)}</span>
                   </li>
                 )
@@ -179,14 +180,14 @@ export function Mois() {
       )}
 
       <Carte titre="Catégories">
-        {jauges.length === 0 && <p className="text-sm text-texte-3">Fixe tes plafonds pour suivre chaque catégorie.</p>}
+        {jauges.length === 0 && <p className="pr-20 text-sm text-texte-3">Fixe tes plafonds pour suivre chaque catégorie.</p>}
         <div className="space-y-3">
           {jauges.map(({ c, depense, plafond }) => {
             const etat = plafond ? couleurJauge(depense, plafond) : undefined
             return (
               <div key={c.id}>
                 <div className="flex items-baseline justify-between gap-2 text-sm">
-                  <span className="truncate font-medium">{c.emoji} {c.nom}{c.fixe && <span className="ml-1 text-xs text-texte-3">fixe</span>}</span>
+                  <span className="flex min-w-0 items-center gap-1.5 truncate font-medium"><IconeCategorie cle={c.emoji} className="h-4 w-4 shrink-0 text-texte-2" />{c.nom}{c.fixe && <span className="ml-1 text-xs text-texte-3">fixe</span>}</span>
                   <span className="shrink-0 tabular-nums">
                     <b>{formatEuros(depense)}</b>
                     {plafond ? <span className="text-texte-3"> / {formatEuros(plafond)}</span> : <span className="text-texte-3"> · pas de plafond</span>}

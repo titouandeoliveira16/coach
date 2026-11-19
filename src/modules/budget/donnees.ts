@@ -158,8 +158,8 @@ export async function enregistrerMouvement(m: Mouvement): Promise<string | undef
   const plafond = plafondDe(cat, mois, plafonds)
   const seuil = seuilFranchi(avant, apres, plafond)
   const c = categories.find((x) => x.id === cat)
-  if (seuil === 100) return `🔴 ${c?.emoji} ${c?.nom} : plafond du mois atteint`
-  if (seuil === 90) return `🟠 ${c?.emoji} ${c?.nom} : 90 % du plafond du mois`
+  if (seuil === 100) return `${c?.nom} : plafond du mois atteint`
+  if (seuil === 90) return `${c?.nom} : 90 % du plafond du mois`
 }
 
 export const supprimerMouvement = (id: string) => supprimer(db.mouvements, id)

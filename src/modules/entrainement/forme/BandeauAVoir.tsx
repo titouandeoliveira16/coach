@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { useBloquerFond } from '../../../core/ui/bloquerFond'
 
 /**
- * Cartes ponctuelles (bilan du dimanche, test à valider, plan Campus…) rangées dans un seul bandeau, pour que
+ * Cartes ponctuelles (bilan du dimanche, test à valider…) rangées dans un seul bandeau, pour que
  * l'écran Aujourd'hui tienne sur un écran : le bandeau compte les cartes affichées et les ouvre dans une feuille.
  * Les cartes restent montées (cachées) : leur état n'est pas perdu à l'ouverture.
  */

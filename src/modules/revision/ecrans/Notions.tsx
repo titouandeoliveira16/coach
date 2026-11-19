@@ -75,7 +75,7 @@ function FicheNotion({ n, d, onFermer }: { n: Notion; d: DonneesRevision; onFerm
             <div className="flex gap-1">
               {([1, 2, 3] as const).map((v) => (
                 <button key={v} type="button" onClick={() => modifierNotion({ ...n, niveau: v })}
-                  className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${n.niveau === v ? 'text-fond' : 'bg-surface-2 text-texte-2'}`}
+                  aria-pressed={n.niveau === v} className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${n.niveau === v ? 'text-fond' : 'bg-surface-2 text-texte-2'}`}
                   style={n.niveau === v ? { background: COULEURS_NIVEAU[v] } : undefined}>{['Fragile', 'Moyen', 'Solide'][v - 1]}</button>
               ))}
             </div>

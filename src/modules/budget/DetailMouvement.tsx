@@ -18,7 +18,7 @@ export function DetailMouvement({ m, onFermer }: { m: Mouvement; onFermer: () =>
   const compte = d.comptes.find((c) => c.id === m.compteId)
 
   return (
-    <Feuille titre={`${desc.emoji} ${desc.titre}`} onFermer={onFermer}>
+    <Feuille titre={desc.titre} onFermer={onFermer}>
       <p className="text-3xl font-bold tabular-nums" style={{ color: desc.couleur }}>{desc.montant}</p>
       <p className="mt-1 text-texte-2">{formatDate(m.date)}{(m.type === 'depense' || m.type === 'revenu') && compte ? ` · ${compte.nom}` : ''}</p>
       {m.note && <p className="mt-1 text-texte-2">« {m.note} »</p>}

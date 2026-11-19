@@ -12,7 +12,7 @@
 //                           dans le calendrier Intervals ; Intervals l'envoie ensuite à Garmin, et à Zwift si « indoor »
 //   /intervals/retirer      { id } → supprime cette séance prévue du calendrier Intervals
 //
-// Aucun secret à ajouter : la clé de chiffrement est dérivée de la clé « service role » du projet.
+// Secret CLE_CHIFFREMENT (clé de chiffrement dédiée, 18/11/2026) ; sans lui, repli sur l'ancienne clé.
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
@@ -32,24 +32,32 @@ const json = (corps: unknown, status = 200) =>
 
 const b64 = (o: Uint8Array) => btoa(String.fromCharCode(...o))
 const deB64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0))
-let cle: CryptoKey | undefined
-async function cleChiffrement() {
-  if (!cle) {
-    const brute = new Uint8Array(
-      await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`coach-intervals|${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`)),
-    )
-    cle = await crypto.subtle.importKey('raw', brute, 'AES-GCM', false, ['encrypt', 'decrypt'])
+// Clé dédiée CLE_CHIFFREMENT (secret de la fonction, audit du 18/11/2026) : avant, la clé était tirée de la clé « service
+// role », si bien qu'une fuite de celle-ci exposait aussi les clés et mots de passe gardés. Valeurs nouvelles : « v2:… » ;
+// les anciennes se lisent encore avec l'ancienne clé et sont rechiffrées à leur prochaine lecture.
+const cles = new Map<string, CryptoKey>()
+async function cleDe(etiquette: string, v2: boolean) {
+  const secret = v2 ? Deno.env.get('CLE_CHIFFREMENT') : Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+  if (!secret) throw new Error('Clé de chiffrement absente du serveur.')
+  const id = `${v2 ? 'v2' : 'v1'}|${etiquette}`
+  if (!cles.has(id)) {
+    const brute = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${etiquette}|${secret}`)))
+    cles.set(id, await crypto.subtle.importKey('raw', brute, 'AES-GCM', false, ['encrypt', 'decrypt']))
   }
-  return cle
+  return cles.get(id)!
 }
-async function chiffrer(texte: string) {
+const avecCleDediee = () => !!Deno.env.get('CLE_CHIFFREMENT')
+const estAncien = (valeur: string) => !valeur.startsWith('v2:') && avecCleDediee()
+async function chiffrer(texte: string, etiquette: string) {
+  const v2 = avecCleDediee()
   const iv = crypto.getRandomValues(new Uint8Array(12))
-  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await cleChiffrement(), new TextEncoder().encode(texte)))
-  return `${b64(iv)}.${b64(ct)}`
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await cleDe(etiquette, v2), new TextEncoder().encode(texte)))
+  return `${v2 ? 'v2:' : ''}${b64(iv)}.${b64(ct)}`
 }
-async function dechiffrer(valeur: string) {
-  const [iv, ct] = valeur.split('.').map(deB64)
-  return new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, await cleChiffrement(), ct))
+async function dechiffrer(valeur: string, etiquette: string) {
+  const v2 = valeur.startsWith('v2:')
+  const [iv, ct] = valeur.replace(/^v2:/, '').split('.').map(deB64)
+  return new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, await cleDe(etiquette, v2), ct))
 }
 
 // ---------- Appels Intervals.icu ----------
@@ -79,7 +87,11 @@ async function intervalsEcrire(chemin: string, cleApi: string, methode: 'POST' |
 
 async function compte(userId: string) {
   const { data } = await admin.from('intervals_cles').select('*').eq('user_id', userId).maybeSingle()
-  return data ? { athlete: data.athlete_id as string, cle: await dechiffrer(data.cle_chiffre) } : null
+  if (!data) return null
+  const cle = await dechiffrer(data.cle_chiffre, 'coach-intervals')
+  // Ancienne clé de chiffrement : rechiffrée avec la clé dédiée
+  if (estAncien(data.cle_chiffre)) await admin.from('intervals_cles').update({ cle_chiffre: await chiffrer(cle, 'coach-intervals') }).eq('user_id', userId)
+  return { athlete: data.athlete_id as string, cle }
 }
 
 const SPORTS = new Set(['Ride', 'VirtualRide', 'GravelRide', 'MountainBikeRide', 'Run', 'TrailRun', 'VirtualRun',
@@ -110,7 +122,7 @@ Deno.serve(async (req) => {
       // « 0 » = l'athlète propriétaire de la clé
       const profil = await intervals(`/athlete/${corps.athlete ? ident(corps.athlete) : '0'}`, cleApi)
       const { error } = await admin.from('intervals_cles').upsert({
-        user_id: user.id, athlete_id: String(profil.id), cle_chiffre: await chiffrer(cleApi), maj_le: new Date().toISOString(),
+        user_id: user.id, athlete_id: String(profil.id), cle_chiffre: await chiffrer(cleApi, 'coach-intervals'), maj_le: new Date().toISOString(),
       })
       if (error) throw error
       return json({ connecte: true, athlete: profil.id, nom: profil.name })

@@ -102,6 +102,8 @@ export async function envoyerPush(abonnement: { endpoint: string; keys: { p256dh
       Urgency: 'high',
     },
     body: corps,
+    // Un service de push qui ne répond pas ne bloque plus tout l'envoi (audit du 18/11/2026)
+    signal: AbortSignal.timeout(8000),
   })
   return r.status
 }
@@ -138,14 +140,19 @@ async function ligne(userId: string, table: string, cle: string) {
 
 // ---------- Séances remontées (Intervals.icu) ----------
 const deB64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0))
-let cleIntervals: CryptoKey | undefined
+// Même chiffrement que la fonction « intervals » : « v2:… » avec la clé dédiée CLE_CHIFFREMENT, sinon l'ancienne clé
+const clesIntervals = new Map<string, CryptoKey>()
 async function dechiffrerCleIntervals(valeur: string) {
-  if (!cleIntervals) {
-    const brute = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`coach-intervals|${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`)))
-    cleIntervals = await crypto.subtle.importKey('raw', brute, 'AES-GCM', false, ['decrypt'])
+  const v2 = valeur.startsWith('v2:')
+  const secret = v2 ? Deno.env.get('CLE_CHIFFREMENT') : Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+  if (!secret) throw new Error('Clé de chiffrement absente du serveur.')
+  const id = v2 ? 'v2' : 'v1'
+  if (!clesIntervals.has(id)) {
+    const brute = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`coach-intervals|${secret}`)))
+    clesIntervals.set(id, await crypto.subtle.importKey('raw', brute, 'AES-GCM', false, ['decrypt']))
   }
-  const [iv, ct] = valeur.split('.').map(deB64)
-  return new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, cleIntervals, ct))
+  const [iv, ct] = valeur.replace(/^v2:/, '').split('.').map(deB64)
+  return new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, clesIntervals.get(id)!, ct))
 }
 const dureeTexte = (sec: number) => (sec >= 3600 ? `${Math.floor(sec / 3600)} h ${String(Math.round((sec % 3600) / 60)).padStart(2, '0')}` : `${Math.round(sec / 60)} min`)
 
@@ -159,7 +166,7 @@ async function seancesRemontees(userId: string, date: string) {
   if (!c) return []
   const cle = await dechiffrerCleIntervals(c.cle_chiffre)
   const depuis = new Date(Date.parse(`${date}T12:00:00Z`) - 2 * 86_400_000).toISOString().slice(0, 10)
-  const r = await fetch(`https://intervals.icu/api/v1/athlete/${c.athlete_id}/activities?oldest=${depuis}&newest=${date}`, { headers: { Authorization: `Basic ${btoa(`API_KEY:${cle}`)}` } })
+  const r = await fetch(`https://intervals.icu/api/v1/athlete/${c.athlete_id}/activities?oldest=${depuis}&newest=${date}`, { headers: { Authorization: `Basic ${btoa(`API_KEY:${cle}`)}` }, signal: AbortSignal.timeout(8000) })
   if (!r.ok) return []
   const activites = ((await r.json()) as { id: string; name?: string; type?: string; moving_time?: number; distance?: number; icu_joules?: number }[]).filter((a) => a.id)
   const etat = (await ligne(userId, 'reglages', 'notif-seances'))?.valeur as { vus?: string[] } | undefined
@@ -237,15 +244,23 @@ async function saisiAujourdhui(userId: string, fuseau: string, date: string) {
   return new Intl.DateTimeFormat('en-CA', { timeZone: fuseau }).format(new Date(data.modifie_le)) === date
 }
 
+/** Traite une liste par paquets de `taille` en parallèle (audit du 18/11/2026 : avant, un appareil après l'autre). */
+async function parPaquets<T, R>(liste: T[], taille: number, f: (x: T) => Promise<R>) {
+  const res: R[] = []
+  for (let i = 0; i < liste.length; i += taille) res.push(...(await Promise.all(liste.slice(i, i + taille).map(f))))
+  return res
+}
+
 async function envoyerRappels() {
   const c = await cles()
   const { data: abonnements } = await admin.from('push_abonnements').select('*')
   let envoyes = 0
   // Séances remontées : une fois par personne (sur tous ses appareils)
   const remontees = new Map<string, { titre: string; texte: string; tag: string; url: string }[]>()
-  for (const a of abonnements ?? []) {
-    if (!remontees.has(a.user_id)) remontees.set(a.user_id, await seancesRemontees(a.user_id, maintenantDans(fuseauValide(a.fuseau) ? a.fuseau : 'Europe/Paris').date).catch(() => []))
-  }
+  const parPersonne = [...new Map((abonnements ?? []).map((a) => [a.user_id, a])).values()]
+  await parPaquets(parPersonne, 5, async (a) => {
+    remontees.set(a.user_id, await seancesRemontees(a.user_id, maintenantDans(fuseauValide(a.fuseau) ? a.fuseau : 'Europe/Paris').date).catch(() => []))
+  })
   // Erreurs de l'appli (tous comptes, sql/07) : le coach est prévenu dès qu'il y en a de nouvelles
   try {
     envoyes += await prevenirCoachs(abonnements ?? [], c)
@@ -253,14 +268,15 @@ async function envoyerRappels() {
     console.error('rappels : alerte erreurs impossible', (e as Error).message)
   }
   // Un abonnement en erreur (données anciennes invalides…) ne coupe plus les rappels des autres
-  for (const a of abonnements ?? []) {
+  const n = await parPaquets(abonnements ?? [], 5, async (a) => {
     try {
-      envoyes += await rappelsDe(a, c, remontees.get(a.user_id) ?? [])
+      return await rappelsDe(a, c, remontees.get(a.user_id) ?? [])
     } catch (e) {
       console.error('rappels : abonnement ignoré', a.user_id, (e as Error).message)
+      return 0
     }
-  }
-  return envoyes
+  })
+  return envoyes + n.reduce((x, y) => x + y, 0)
 }
 
 /** Nouvelles erreurs de l'appli : une notification aux appareils des coachs, puis elles sont marquées « notifiées ». */
@@ -313,7 +329,7 @@ async function rappelsDe(a: any, c: ClesVapid, remontees: { titre: string; texte
         // Le dimanche : tour de taille et photo en même temps (bilan nutrition de la semaine)
         messages.push(t.jour === 0
           ? { titre: '⚖️ Pesée + 📏 tour de taille + 📸 photo', texte: 'À jeun, après les toilettes : poids, tour de taille au nombril (2 mesures) et ta photo. Bilan de la semaine dans l’appli.', tag: 'pesee', url: './#/entrainement/aujourdhui' }
-          : { titre: '⚖️ Pesée', texte: 'Le matin, à jeun, après être passé aux toilettes.', tag: 'pesee', url: './#/entrainement/aujourdhui' })
+          : { titre: '⚖️ Pesée', texte: 'Le matin, à jeun, après un passage aux toilettes.', tag: 'pesee', url: './#/entrainement/aujourdhui' })
     }
 
     // Le lendemain d'un test CP enregistré dans l'appli (réglage « entrainement »), à 9 h : mettre la FTP Zwift à jour

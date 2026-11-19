@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode, useId } from 'react'
 import { aujourdhui, decalerJour } from '../../../core/dates'
 import { premierMars } from '../../../metrics/saison'
 import { APPAREILS, conseilsConnexions } from '../appareils'
@@ -44,9 +44,10 @@ function ChoixMultiple({ options, valeurs, onChanger }: { options: readonly stri
   )
 }
 function Question({ libelle, aide, children }: { libelle: string; aide?: string; children: ReactNode }) {
+  const id = useId()
   return (
-    <div className="space-y-1.5 border-b border-bordure pb-3 last:border-0 last:pb-0">
-      <p className="text-sm text-texte-2">{libelle}</p>
+    <div role="group" aria-labelledby={id} className="space-y-1.5 border-b border-bordure pb-3 last:border-0 last:pb-0">
+      <p id={id} className="text-sm text-texte-2">{libelle}</p>
       {aide && <p className="text-xs text-texte-3">{aide}</p>}
       {children}
     </div>
@@ -107,7 +108,7 @@ export function QuestionnaireArrivee({ montreSeulement = false }: { montreSeulem
           <Carte titre="Toi">
             <div className="space-y-3">
               <Question libelle="Date de naissance"><input type="date" value={r.naissance ?? ''} onChange={(e) => maj({ naissance: e.target.value })} className={champ} /></Question>
-              <Question libelle="Sexe" aide="Pour tes besoins en énergie (formule de Mifflin-St Jeor).">
+              <Question libelle="Sexe" aide="Pour calculer tes besoins en énergie (formule de Mifflin-St Jeor, la plus juste pour estimer ce que ton corps dépense au repos).">
                 <Choix options={[['Homme', 'homme'], ['Femme', 'femme']]} valeur={r.sexe} onChoisir={(sexe) => maj({ sexe })} />
               </Question>
               <div className="grid grid-cols-2 gap-2 [&>div]:border-0">
@@ -118,10 +119,10 @@ export function QuestionnaireArrivee({ montreSeulement = false }: { montreSeulem
           </Carte>
           <Carte titre="Ton vélo">
             <div className="space-y-3">
-              <Question libelle="Ta CP ou ta FTP (W), si tu la connais" aide={AIDES.testDepart}>
+              <Question libelle="Ta CP ou ta FTP (W), si tu la connais : la puissance que tu tiens environ 1 h à fond" aide={AIDES.testDepart}>
                 <input inputMode="numeric" placeholder="Vide si tu ne sais pas" value={textes.cp} onChange={(e) => setTextes({ ...textes, cp: e.target.value })} className={champ} />
               </Question>
-              <Question libelle="Ta FC max (bpm), si tu la connais" aide="Vide : on part d'une estimation selon ton âge, remplacée par la plus haute vue dans tes sorties.">
+              <Question libelle="Ta FC max (bpm), si tu la connais : ton pouls le plus haut à fond" aide="Vide : on part d'une estimation selon ton âge, remplacée par la plus haute vue dans tes sorties.">
                 <input inputMode="numeric" placeholder="Vide si tu ne sais pas" value={textes.fc} onChange={(e) => setTextes({ ...textes, fc: e.target.value })} className={champ} />
               </Question>
               <p className="text-xs text-texte-3">L'appli demande un capteur de puissance (ou un home trainer connecté) : tes séances sont réglées en watts.</p>
@@ -183,7 +184,7 @@ export function QuestionnaireArrivee({ montreSeulement = false }: { montreSeulem
       {etape === 2 && (
         <Carte titre="Ta semaine type">
           <div className="mb-3">
-            <Question libelle="Jours de vélo par semaine" aide="À partir de 4 jours, 2 séances intensives par semaine (sauf en débutant) ; avec 3, une seule et ta sortie longue avec des blocs au 1er seuil.">
+            <Question libelle="Jours de vélo par semaine" aide="À partir de 4 jours, 2 séances d’intensité par semaine (sauf en débutant) ; avec 3, une seule et ta sortie longue avec des blocs au 1er seuil.">
               <Choix options={[3, 4, 5, 6].map((n) => [`${n} jours`, n])} valeur={r.semaineType?.filter((x) => x.startsWith('velo')).length}
                 onChoisir={(n) => maj({ semaineType: semaineDepuisJours(n) })} />
             </Question>
@@ -218,7 +219,7 @@ export function QuestionnaireArrivee({ montreSeulement = false }: { montreSeulem
                     <input type="date" min={decalerJour(jour, 56)} value={r.course?.date ?? ''} onChange={(e) => maj({ course: { nom: 'Test de début de saison', date: e.target.value } })} className={champ} />
                   </Question>
                   <p className="text-sm text-texte-2">
-                    Objectif : progresser en {NOMS_DISCIPLINES[r.discipline ?? 'route'].toLowerCase()} et être prêt pour le début de ta saison. Base, seuils puis VO2max
+                    Objectif : progresser en {NOMS_DISCIPLINES[r.discipline ?? 'route'].toLowerCase()} et arriver en forme au début de ta saison. Endurance (base), puis seuils, puis VO2max (le travail le plus intense)
                     jusqu’à cette date, et la dernière semaine, un test CP pour mesurer tes progrès. Ajoute une course quand tu en as une
                     (Réglages → Mon profil sportif) : tout se recalcule pour la préparer.
                   </p>
@@ -227,7 +228,7 @@ export function QuestionnaireArrivee({ montreSeulement = false }: { montreSeulem
               <Question libelle="Nom"><input value={r.course?.nom ?? ''} placeholder="Ex. cyclosportive, manche XCO…" onChange={(e) => maj({ course: { ...r.course, date: r.course?.date ?? '', nom: e.target.value } })} className={champ} /></Question>
               <Question libelle="Date"><input type="date" min={jour} value={r.course?.date ?? ''} onChange={(e) => maj({ course: { ...r.course, nom: r.course?.nom ?? '', date: e.target.value } })} className={champ} /></Question>
               {r.discipline === 'route' && (
-                <Question libelle="Type de course" aide="On ne prépare pas une course FFC comme une cyclosportive : les 3 dernières semaines changent.">
+                <Question libelle="Type de course" aide="On ne prépare pas une course FFC (compétition officielle avec licence) comme une cyclosportive : les 3 dernières semaines changent.">
                   <Choix options={[['Course en ligne (FFC, UFOLEP…)', 'en-ligne'], ['Cyclosportive, longue distance', 'cyclo']]} valeur={r.typeCourse ?? 'cyclo'} onChoisir={(typeCourse) => maj({ typeCourse })} />
                 </Question>
               )}
@@ -262,8 +263,13 @@ export function QuestionnaireArrivee({ montreSeulement = false }: { montreSeulem
               </ul>
               <p className="mt-2 text-xs text-texte-3">
                 {apercu.saison.semaines} semaines · tests CP : {apercu.saison.testsCp.map(jm).join(', ') || 'aucun (course trop proche)'}.
-                {!apercu.cpConnue && ` Sans CP connue, on part de ${apercu.entrainement.cpW} W en attendant ton 1er test.`} {AIDES.saisonCalculee}
+                {!apercu.cpConnue && ` Sans CP connue, on part de ${apercu.entrainement.cpW} W en attendant ton 1er test.`}
               </p>
+              {/* Audit du 18/11/2026 : 3 lignes, le détail (638 mots) seulement si on le demande */}
+              <details className="mt-1 text-xs text-texte-3">
+                <summary className="min-h-11 cursor-pointer py-2 font-semibold text-accent">Voir le détail de ma saison</summary>
+                <p>{AIDES.saisonCalculee}</p>
+              </details>
             </Carte>
           )}
         </>
@@ -335,7 +341,7 @@ function Montre({ appareils }: { appareils?: string[] }) {
           {e.lien && <a href={e.lien[1]} target="_blank" rel="noreferrer" className="mt-3 block rounded-xl bg-surface-2 px-4 py-3 text-center text-sm font-semibold text-accent">{e.lien[0]} ↗</a>}
           {i === liste.length - 1 && (
             <div className="mt-3 space-y-2">
-              <input value={cle} onChange={(x) => setCle(x.target.value)} placeholder="Ta clé API Intervals.icu" autoComplete="off" autoCapitalize="off" spellCheck={false} className={champ} />
+              <input value={cle} onChange={(x) => setCle(x.target.value)} aria-label="Ta clé API Intervals.icu" placeholder="Ta clé API Intervals.icu" autoComplete="off" autoCapitalize="off" spellCheck={false} className={champ} />
               <Bouton disabled={occupe || cle.trim().length < 10} onClick={async () => {
                 setOccupe(true)
                 setMessage(undefined)

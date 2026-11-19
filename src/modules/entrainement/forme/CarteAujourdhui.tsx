@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { db } from '../../../core/db'
 import { aujourdhui, depuisJour } from '../../../core/dates'
 import { formatNombre } from '../../../core/format'
-import { enregistrer, supprimer } from '../../../core/stockage'
+import { enregistrer } from '../../../core/stockage'
 import { Aide } from '../../../core/ui/Aide'
 import { Carte } from '../../../core/ui/Carte'
 import { AIDES } from '../aides'
@@ -24,7 +24,7 @@ import { useNutritionEffort } from '../reglages/ProfilSportif'
 import { basculerSansMontre, QUESTIONS, scoreRessenti } from './donnees'
 import { SeancesFaites } from './SeancesFaites'
 import { CartePanne } from './CartePanne'
-import type { Raison, Seance } from '../types'
+import type { Seance } from '../types'
 import { plagesForme, positionPct, type Plage } from '../../../metrics/plages'
 import { analyserSommeil, enHeures } from '../../../metrics/signal'
 import { nouvelId } from '../seances/donnees'
@@ -146,10 +146,6 @@ export function CarteAujourdhui({ onModifierMatin, apresForme, remplir = false }
     : 'Règle : 2 signaux en alerte ou plus (ou malade) = pas d’intensité aujourd’hui. Si tu te sens vraiment bien et que tu n’es pas malade, tu peux garder la séance prévue.'
   const choisir = (maintenir: boolean) => enregistrer(db.decisions, { date: jour, couleur: signal.couleur, force: maintenir })
 
-  const signaler = async (raison: Raison) => {
-    if (indispo?.raison === raison) await supprimer(db.indispos, jour)
-    else await enregistrer(db.indispos, { date: jour, raison })
-  }
 
   const etapesDuJour = prevue && (decision?.force ? prevue.velo?.etapes : adaptation!.etapes)
   const minutesAdaptees = adaptation?.etapes ? Math.round(adaptation.etapes.reduce((t, e) => t + e.dureeSec, 0) / 60) : undefined
@@ -214,11 +210,6 @@ export function CarteAujourdhui({ onModifierMatin, apresForme, remplir = false }
               <button type="button" onClick={() => basculerSansMontre(jour)} className={`${petitBouton(false)} ${mesure?.sansMontre ? 'border-accent text-accent' : ''}`}>
                 {mesure?.sansMontre ? '✓ Sans montre' : 'Nuit sans montre'}
               </button>
-              {(['Malade', 'Douleur / blessure'] as Raison[]).map((r) => (
-                <button key={r} type="button" onClick={() => signaler(r)} className={petitBouton(indispo?.raison === r)}>
-                  {r === 'Malade' ? 'Malade' : 'Douleur'}
-                </button>
-              ))}
               <span className="shrink-0 self-center"><Aide titre="Nuit sans montre" texte={AIDES.nuitSansMontre} /></span>
             </div>
           </div>

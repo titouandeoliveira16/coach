@@ -40,7 +40,7 @@ export function Analyses() {
   const seriesCat = [
     ...top.map((id) => {
       const c = d.categories.find((x) => x.id === id)
-      return { nom: c ? `${c.emoji} ${c.nom}` : 'Sans catégorie', couleur: c?.couleur ?? '#94a3b8', valeurs: parMois.map((pm) => (pm.get(id) ?? 0) / 100) }
+      return { nom: c ? c.nom : 'Sans catégorie', couleur: c?.couleur ?? '#94a3b8', valeurs: parMois.map((pm) => (pm.get(id) ?? 0) / 100) }
     }),
     ...(totaux.size > 5 ? [{ nom: 'Autres', couleur: '#6b7380', valeurs: parMois.map((pm) => [...pm].filter(([id]) => !top.includes(id)).reduce((s, [, v]) => s + v, 0) / 100) }] : []),
   ]

@@ -11,7 +11,7 @@ export function Bilan({ d, mois, rituel = false }: { d: Donnees; mois: string; r
   const [detail, setDetail] = useState(false)
   const b = bilanMois(d, mois)
   const cat = (id: string) => d.categories.find((c) => c.id === id)
-  const nom = (id: string) => (cat(id) ? `${cat(id)!.emoji} ${cat(id)!.nom}` : 'Sans catégorie')
+  const nom = (id: string) => (cat(id) ? cat(id)!.nom : 'Sans catégorie')
   const ligne = (libelle: string, valeur: number, opts?: { signe?: boolean }) => (
     <div className="flex justify-between py-0.5"><span className="text-texte-2">{libelle}</span><span className="font-semibold tabular-nums">{formatEuros(valeur, opts)}</span></div>
   )

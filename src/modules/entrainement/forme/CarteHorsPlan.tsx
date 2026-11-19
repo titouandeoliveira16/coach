@@ -25,7 +25,7 @@ export function CarteHorsPlan() {
       .filter((s) => s.sport === 'velo' && !s.prevueId && s.date >= meta.genereeLe.slice(0, 10) && !vus.includes(s.id))
     return seances.length ? { lundi, seances, vus } : null
   })
-  if (message) return <Carte titre="Semaine recalculée"><p className="text-sm text-texte-2">{message}</p></Carte>
+  if (message) return <Carte titre="Semaine recalculée"><p role="status" className="text-sm text-texte-2">{message}</p></Carte>
   if (!hors) return null
   const kj = hors.seances.reduce((a, s) => a + (s.kj ?? 0), 0)
   const marquer = () => enregistrer(db.reglages, { id: CLE, valeur: [...hors.vus, ...hors.seances.map((s) => s.id)].slice(-50) })

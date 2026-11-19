@@ -62,6 +62,17 @@ export function Deroule({ etapes, sansProfil = false }: { etapes: Etape[]; sansP
           <Aide titre="Plages et cadence" texte={AIDES.plagesCadence} />
         </p>
       )}
+      {(() => {
+        // Jargon gardé dans les séances, expliqué une fois sous le déroulé (audit rédaction du 18/11/2026)
+        const txt = etapes.map((e) => [e.libelle, ...(e.repetition?.etapes.map((x) => x.libelle) ?? [])].join(' ')).join(' ')
+        const mots = [
+          /\bZ1\b/.test(txt) && 'Z1 : récupération, très facile',
+          /\bZ2\b/.test(txt) && 'Z2 : endurance, tu peux parler en phrases',
+          /\bRPE\b/.test(txt) && 'RPE : ton effort ressenti sur 10',
+          /W′|W'/.test(txt) && 'W′ : ta réserve d’énergie au-dessus de ta CP',
+        ].filter(Boolean)
+        return mots.length > 0 && <p className="mt-1.5 text-xs text-texte-3">{mots.join(' · ')}</p>
+      })()}
       <ol className="mt-2 divide-y divide-bordure overflow-hidden rounded-xl bg-surface-2 text-sm">
         {etapes.map((e, i) => {
           // Série répétée : on affiche la cible de l'effort (la 1re sous-étape), pas celle de la récup

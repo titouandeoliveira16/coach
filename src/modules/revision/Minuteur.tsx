@@ -101,7 +101,7 @@ export function Minuteur({ objectifPropose, onFermer }: { objectifPropose?: stri
           <p className="text-center text-4xl">📵</p>
           <p className="text-center text-lg font-semibold">Téléphone loin, hors de vue, en silencieux.</p>
           <label className="block text-sm text-texte-2">Objectif de ce bloc
-            <input value={objectif} onChange={(e) => setObjectif(e.target.value)} placeholder="ex. partie 1 de la fiche"
+            <input value={objectif} onChange={(e) => setObjectif(e.target.value)} aria-label="Objectif du bloc" placeholder="ex. partie 1 de la fiche"
               className="mt-1 w-full rounded-lg border border-bordure bg-surface-2 px-3 py-3 text-texte outline-none focus:border-accent" />
           </label>
           <button type="button" onClick={() => demarrer(objectif.trim())} className="rounded-xl bg-accent py-4 text-lg font-bold text-fond">Démarrer 50 min</button>
@@ -119,7 +119,7 @@ export function Minuteur({ objectifPropose, onFermer }: { objectifPropose?: stri
             <p className="text-texte-2">Vraie pause : bouge, bois, pas d'écran. Prochain bloc dans {Math.ceil(reste / 60)} min.</p>
           )}
           {!travail && (
-            <input value={objectif} onChange={(e) => setObjectif(e.target.value)} onBlur={() => ecrire({ ...etat, objectif: objectif.trim() })}
+            <input value={objectif} onChange={(e) => setObjectif(e.target.value)} aria-label="Objectif du bloc" onBlur={() => ecrire({ ...etat, objectif: objectif.trim() })}
               placeholder="Objectif du prochain bloc" className="mt-2 w-full rounded-lg border border-bordure bg-surface-2 px-3 py-3 outline-none" />
           )}
           <button type="button" onClick={() => { arreter(); onFermer() }} className="mt-6 w-full rounded-xl bg-surface-2 py-3 font-semibold">J'ai fini (arrêter)</button>

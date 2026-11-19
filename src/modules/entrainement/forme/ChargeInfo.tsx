@@ -30,7 +30,7 @@ export function ChargeOuverte({ forme, ratioPic }: { forme: PointForme[]; ratioP
         etiquettes={recents.map((p) => depuisJour(p.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }))}
         series={[
           { nom: 'Fond (6 semaines)', couleur: 'var(--color-z2)', valeurs: recents.map((p) => Math.round(p.ctl)) },
-          { nom: 'Fatigue (7 jours)', couleur: 'var(--color-attention)', valeurs: recents.map((p) => Math.round(p.atl)) },
+          { nom: 'Fatigue (7 jours)', couleur: 'var(--color-texte-2)', valeurs: recents.map((p) => Math.round(p.atl)) },
         ]}
         zero
       />

@@ -76,7 +76,7 @@ function UnCompte({ c, d, plusieurs, onFini }: { c: Compte; d: Donnees; plusieur
           </button>
           {ecart < 0 ? (
             <>
-              <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Ou dis d'où il vient (ex. frais)" className={champ} />
+              <input value={note} onChange={(e) => setNote(e.target.value)} aria-label="D’où vient l’écart" placeholder="Ou dis d'où il vient (ex. frais)" className={champ} />
               <button type="button" className="w-full rounded-xl border border-bordure py-2.5 font-semibold text-texte-2" onClick={ajuster}>
                 Ajuster : noter {formatEuros(Math.abs(ecart))} de dépense « à catégoriser »
               </button>
