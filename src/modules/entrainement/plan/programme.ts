@@ -29,6 +29,8 @@ const semaineB = (prog: Pick<ReglagesProgramme, 'competitions' | 'phases'>) => {
 /** Familles de séances d'intensité (hors Z2 et test). */
 const INTENSITES: Famille[] = ['vo2-courts', 'vo2-longs', 'seuil-plus', 'seuil', 'seuil-variable', 'sweet-spot', 'tempo', 'relances', 'sprints']
 export const estIntensite = (p: SeancePrevue) => !!p.velo && (INTENSITES as string[]).includes(p.velo.famille)
+/** Séance d'intensité de la semaine : intervalles, ou simulation et départs XCO (pas une sortie longue, même en côtes ou en simulation). */
+const estIntensiteSemaine = (p: SeancePrevue) => estIntensite(p) || p.velo?.famille === 'simulation-xco'
 
 /** CP par défaut tant qu'aucun test n'est saisi (CP provisoire de la prépa). */
 export const CP_DEFAUT = 260
@@ -411,7 +413,8 @@ async function genererSemaineVeloBrute(lundi: string) {
 
   // Ce qui est déjà fait (ou prévu à la main) cette semaine
   const veloSemaine = prevues.filter((p) => p.sport === 'velo' && dansSemaine(p.date))
-  const intensiteFaite = veloSemaine.some((p) => estIntensite(p) || p.velo?.famille === 'test') ||
+  // Séance dure hors familles d'intervalles (départs XCO, simulation…) : elle compte aussi (19/11/2026 : refaite au recalcul)
+  const intensiteFaite = veloSemaine.some((p) => estIntensiteSemaine(p) || p.velo?.famille === 'test') ||
     seances.some((s) => s.sport === 'velo' && dansSemaine(s.date) && domaineDe(s, c.bornes) === 'haute')
   const longFaite = veloSemaine.some((p) => p.velo?.famille === 'z2-long' || (p.longue && p.statut === 'faite'))
   const z2Faites = veloSemaine.filter((p) => p.velo?.famille === 'z2').length
@@ -447,6 +450,9 @@ async function genererSemaineVeloBrute(lundi: string) {
   // Test complet (relecture du 15/11/2026) : il prend le jour et la place de la sortie longue de la semaine (jamais le
   // lendemain d'une longue : un test fait fatigué donne une CP fausse ; ~2 h avec l'échauffement, il fait le volume)
   const testComplet = !!dateTest && !prog.testsCourts?.includes(dateTest)
+  // Test complet déjà fait cette semaine (recalcul en milieu de semaine, 19/11/2026) : il a fait la sortie longue ; avant,
+  // le recalcul remettait une sortie longue et supprimait une endurance (celle de la séance au 1er seuil)
+  const testCompletFait = !testComplet && veloSemaine.some((p) => p.velo?.famille === 'test' && p.statut === 'faite' && !/court/i.test(p.titre))
   if (testComplet) {
     const jourLong = semaine.find((d, i) => roles[i] === 'velo-long' && d >= aPartirDe && !indispos.has(d) && !occupations.some((o) => o.date === d))
     if (jourLong && !procheCourse(jourLong, competitions, delaiCourse)) dateTest = jourLong
@@ -458,7 +464,7 @@ async function genererSemaineVeloBrute(lundi: string) {
     dateTest = semaine.find((d) => d > t && !indispos.has(d) && !occupations.some((o) => o.date === d || (o.dure && o.date === decalerJour(d, -1))) && !procheCourse(d, competitions, delaiCourse) && !testProcheCourse(d, coursesDurees))
   }
   // Course B ou C : elle est la séance dure de la semaine ; en B, ou si elle dure plus de 2 h, aussi la sortie longue
-  const courseRemplaceLong = (!!courseSecondaire && (courseSecondaire.niveau === 'B' || dureeDe(courseSecondaire.date) > 120)) || testComplet
+  const courseRemplaceLong = (!!courseSecondaire && (courseSecondaire.niveau === 'B' || dureeDe(courseSecondaire.date) > 120)) || testComplet || testCompletFait
   // Retour après au moins 10 jours sans vélo, même sans avoir ouvert l'appli (audit du 18/11/2026, relu : désentraînement
   // en 2 à 4 semaines, Mujika et Padilla 2000 ; 10 jours = choix d'entraîneur) : une semaine de reprise sans intensité ni test
   // Compté jusqu'à aujourd'hui, jamais jusqu'à une semaine future (19/11/2026 : une semaine construite à l'avance voyait
@@ -472,17 +478,27 @@ async function genererSemaineVeloBrute(lundi: string) {
     dateTest = undefined
     phrasesTest.push(`${joursSansVelo} jours sans vélo : semaine de reprise, sans intensité, pour laisser ton corps se réhabituer.`)
   }
+  // Phase, semaine allégée
+  const { phase, semaine: nSemaine } = phaseDe(lundi, prog.phases)
+  // Seule une course B allège la semaine (la A a son affûtage, la C laisse la semaine normale)
+  const course = courseB
+  // Affûtage et récupération : volume fixé en part du budget de référence (pas de semaine allégée en plus)
+  const coefPhase = coefficientPhase(lundi, prog.phases, prog.competitions)
+  const allegee = coefPhase === undefined && (estSemaineAllegee(lundi, prog.phases, semaineB(prog), await semainesPeuFaites(lundi)) || !!course)
+  const raisonAllegee = course ? `semaine de ta course B (${course.nom}) : allégée d’un tiers, mêmes watts` : 'semaine allégée (1 sur 4)'
   // 1re séance dure faite, 2e possible : son jour (le jour « dur » de ta semaine type) reste réservé (19/11/2026 : il
   // restait vide au recalcul, et la 2e séance dure n'avait plus de jour)
-  const dureFaite = veloSemaine.filter((p) => p.statut === 'faite' && estIntensite(p) && p.velo?.famille !== 'test')
+  const dureFaite = veloSemaine.filter((p) => p.statut === 'faite' && estIntensiteSemaine(p))
   const deuxiemeAPlacer = !retourArret && intensiteFaite && dureFaite.length === 1 && !dateTest && !courseSecondaire
+    && !['reprise', 'base', 'recuperation'].includes(phase.type) && !allegee
     && deuxIntensitesPossibles(niveau, roles.filter((x) => x.startsWith('velo')).length)
   const placement = placer(semaine, roles, occupations, indispos, aPartirDe, {
     competitions, delaiApresCourse: delaiCourse, dateTest, intensite: !retourArret && (!intensiteFaite || deuxiemeAPlacer) && (!courseSecondaire || dateTest !== undefined), long: !longFaite && !courseRemplaceLong,
     // Semaine du test complet : il est la séance dure et la sortie longue ; le jour « dur » devient une endurance
-    nZ2: nZ2 + (testComplet && !longFaite ? 1 : 0) + (retourArret ? 1 : 0),
+    nZ2: nZ2 + ((testComplet || testCompletFait) && !longFaite ? 1 : 0) + (retourArret ? 1 : 0),
   })
   // Ce jour-là devient une endurance ; la 2e séance dure le reprend plus bas si la semaine la permet
+  const jourReserveDur = deuxiemeAPlacer ? placement.intensite : undefined
   if (deuxiemeAPlacer && placement.intensite) {
     placement.z2 = [...placement.z2, placement.intensite].sort()
     placement.intensite = undefined
@@ -493,14 +509,6 @@ async function genererSemaineVeloBrute(lundi: string) {
     placement.long = undefined
   }
 
-  // Phase, semaine allégée
-  const { phase, semaine: nSemaine } = phaseDe(lundi, prog.phases)
-  // Seule une course B allège la semaine (la A a son affûtage, la C laisse la semaine normale)
-  const course = courseB
-  // Affûtage et récupération : volume fixé en part du budget de référence (pas de semaine allégée en plus)
-  const coefPhase = coefficientPhase(lundi, prog.phases, prog.competitions)
-  const allegee = coefPhase === undefined && (estSemaineAllegee(lundi, prog.phases, semaineB(prog), await semainesPeuFaites(lundi)) || !!course)
-  const raisonAllegee = course ? `semaine de ta course B (${course.nom}) : allégée d’un tiers, mêmes watts` : 'semaine allégée (1 sur 4)'
   const recuperation = phase.type === 'recuperation'
   const { w: z2W } = await z2Actuel()
   const maxDuJour = (d: string) => (roles[semaine.indexOf(d)] === 'velo-long' ? prog.maxLongMin : prog.maxSemaineMin)
@@ -606,7 +614,7 @@ async function genererSemaineVeloBrute(lundi: string) {
         placement.intensite = loin
       }
     }
-    const durAcote = colle(placement.intensite) || colle(dateTest) || coursesSemaine.some((x) => colle(x.date))
+    const durAcote = colle(placement.intensite) || colle(jourReserveDur) || colle(dateTest) || coursesSemaine.some((x) => colle(x.date))
       || occupations.some((o) => o.dure && colle(o.date))
     if (durAcote) { cotes = false; longueCourseChoisie = undefined }
   }
