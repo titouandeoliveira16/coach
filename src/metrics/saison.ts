@@ -1,4 +1,4 @@
-import type { Phase } from './programme'
+import { estSemaineAllegee, type Phase } from './programme'
 import { decaler } from './vfc'
 
 /**
@@ -157,6 +157,20 @@ export function calculerSaison(e: EntreeSaison) {
     }
     testsCp.push(final)
   }
+  // Audit du 18/11/2026 : chaque test (sauf le 1er) va dans la semaine allégée la plus proche (2 semaines au plus), où
+  // tu es frais ; avant, il tombait parfois dans la semaine la plus chargée
+  const auLundiT = (d: string) => decaler(d, -((new Date(`${d}T12:00:00Z`).getUTCDay() + 6) % 7))
+  for (const [i, t] of testsCp.entries()) {
+    if (t === testsCp[0] || (e.sansCourse && i === testsCp.length - 1)) continue
+    const off = [0, 7, -7, 14, -14].find((o) => estSemaineAllegee(decaler(auLundiT(t), o), phases))
+    if (off === undefined || off === 0) continue
+    const nouveau = decaler(t, off)
+    // Toujours 29 jours au moins entre deux tests
+    const loin = (a: string, b: string) => Math.abs(Date.parse(a) - Date.parse(b)) >= 29 * 86_400_000
+    if (nouveau >= lc || testsCp.includes(nouveau) || (e.aujourdhui && nouveau < e.aujourdhui) || testsCp.some((x, j) => j !== i && !loin(x, nouveau))) continue
+    testsCp[i] = nouveau
+    if (testsCourts.includes(t)) testsCourts[testsCourts.indexOf(t)] = nouveau
+  }
   return { phases, testsCp: [...new Set(testsCp)].sort(), testsCourts, semaines: n }
 }
 
@@ -203,7 +217,9 @@ export function phasesAvecCoursesA(phases: Phase[], datesA: string[]): Phase[] {
       const bloc = r - 3
       blocs.push(['seuil-tirage', Math.min(4, bloc - 1)], ['fin-prepa', bloc - 1 - Math.min(4, bloc - 1)], ['specifique', 2], ['affutage', 2])
     } else {
-      const d = dureesPhases(r)
+      // Après la récupération, 1 semaine de reprise au plus (audit du 18/11/2026, relu : les acquis baissent vite sans
+      // intensité, Mujika et Padilla 2000) : avant, 2 semaines de reprise donnaient 3 semaines sans intensité
+      const d = dureesPhases(r, false, false, 1)
       for (const t of ['reprise', 'entretien', 'base', 'seuil-tirage', 'seuil-maintien', 'fin-prepa', 'specifique', 'affutage'] as const) blocs.push([t, d[t]])
     }
     let l = decaler(lp, 7)

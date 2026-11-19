@@ -51,15 +51,17 @@ describe('saison calculée depuis la course', () => {
   })
   it('semaine allégée : au plus 3 semaines chargées d’affilée, jamais en affûtage', () => {
     const s = calculerSaison({ debut: '2026-11-09', course: '2027-02-14' })
-    expect(estSemaineAllegee('2026-11-30', s.phases)).toBe(true) // 4e semaine de la saison
-    expect(estSemaineAllegee('2026-12-28', s.phases)).toBe(true) // 8e : au plus 3 semaines chargées d'affilée, quelle que soit la phase
+    // Audit du 18/11/2026 : l'allégée tombe en fin de phase (fin du 2e seuil tiré, fin du cycle VO2max)
+    expect(estSemaineAllegee('2026-11-30', s.phases)).toBe(true)
+    expect(estSemaineAllegee('2027-01-04', s.phases)).toBe(true) // dernière semaine du cycle VO2max (4 chargées avant)
+    expect(estSemaineAllegee('2026-12-28', s.phases)).toBe(false)
     expect(estSemaineAllegee('2026-12-21', s.phases)).toBe(false)
     // Course B : sa semaine remet le compteur à zéro
-    expect(estSemaineAllegee('2026-12-28', s.phases, (l) => l === '2026-12-14')).toBe(false)
+    expect(estSemaineAllegee('2027-01-04', s.phases, (l) => l === '2026-12-28')).toBe(false)
     const spe = s.phases.find((p) => p.type === 'specifique')!.debut
     expect(estSemaineAllegee(spe, s.phases)).toBe(false)
     expect(coefficientPhase('2027-02-01', s.phases, [{ date: '2027-02-14' }])).toBe(0.65)
-    expect(coefficientPhase('2027-02-08', s.phases, [{ date: '2027-02-14' }])).toBe(0.45)
+    expect(coefficientPhase('2027-02-08', s.phases, [{ date: '2027-02-14' }])).toBe(0.5)
     expect(coefficientPhase('2027-02-15', s.phases, [{ date: '2027-02-14' }])).toBe(0.6)
   })
 })

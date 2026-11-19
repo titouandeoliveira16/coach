@@ -296,7 +296,11 @@ async function rappelsDe(a: any, c: ClesVapid, remontees: { titre: string; texte
         messages.push({ titre: '☀️ Ton matin', texte: 'Tes 5 notes du matin : 30 secondes pour avoir ton feu du jour.', tag: 'matin', url: './#/entrainement/aujourdhui' })
     }
     // Pesée : les jours choisis, à partir de 7 h (avant le petit-déjeuner), jusqu'à midi
-    const jourPesee = (a.pesee_jours ?? []).includes(t.jour) || (a.pesee_dates ?? []).includes(t.date)
+    // Audit du 18/11/2026 (relu, Mountjoy 2023) : rappels de pesée seulement pour un adulte qui a un objectif de poids,
+    // jamais avant 18 ans
+    const profil = (await ligne(a.user_id, 'reglages', 'profil'))?.valeur as { naissance?: string; objectif?: string } | undefined
+    const majeur = !!profil?.naissance && Date.parse(t.date) - Date.parse(profil.naissance) >= 18 * 365.25 * 86_400_000
+    const jourPesee = majeur && profil?.objectif === 'perte' && ((a.pesee_jours ?? []).includes(t.jour) || (a.pesee_dates ?? []).includes(t.date))
     if (jourPesee && t.heure >= HEURE_PESEE && t.heure < '12:00' && a.derniere_pesee !== t.date) {
       maj.derniere_pesee = t.date
       // Pas de rappel si la pesée est faite, ou si le jour est marqué « pas de pesée aujourd'hui » dans l'appli
@@ -313,7 +317,7 @@ async function rappelsDe(a: any, c: ClesVapid, remontees: { titre: string; texte
       const e = (await ligne(a.user_id, 'reglages', 'entrainement'))?.valeur as { tests?: { date: string; type: string; valeur: number }[] } | undefined
       const test = (e?.tests ?? []).filter((x) => x.type === 'cp').sort((x, y) => x.date.localeCompare(y.date)).pop()
       if (test && lendemain(test.date) === t.date)
-        messages.push({ titre: '🚴 FTP Zwift', texte: `Nouvelle CP : ${Math.round(test.valeur)} W. Mets ta FTP Zwift à ${Math.round(test.valeur)} W et renvoie tes séances déjà envoyées.`, tag: 'ftp', url: './#/entrainement/semaine' })
+        messages.push({ titre: '🚴 FTP Zwift', texte: `Nouvelle CP : ${Math.round(test.valeur)} W. Mets ta FTP à ${Math.round(test.valeur * 0.97)} W (97 % de ta CP) dans Intervals.icu et Zwift, puis renvoie tes séances déjà envoyées.`, tag: 'ftp', url: './#/entrainement/semaine' })
     }
 
     // Budget : rappel de saisie à l'heure choisie dans l'appli (réglage synchronisé « budget »).

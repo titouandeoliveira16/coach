@@ -379,15 +379,23 @@ export async function recalculerSaison(garderTests = false) {
   // Course A : niveau noté, ou (anciennes données sans niveau) la plus lointaine
   const niveaux = niveauxCourses(prog.competitions, prog.phases)
   const a = prog.competitions.filter((c) => niveaux.get(c.date) === 'A' && c.date > decalerJour(jour, 21)).sort((x, y) => x.date.localeCompare(y.date))[0]
-  // Pas de course A : cycle vers le test de début de saison (16/11/2026)
-  const sansCourse = !a && !!prog.finCycle && prog.finCycle > decalerJour(jour, 21)
-  if (!a && !sansCourse) return
+  // Pas de course A : cycle vers le test de début de saison (16/11/2026). Course A annulée (audit du 18/11/2026 : avant,
+  // rien ne changeait et l'affûtage restait pour une course qui n'existait plus) : cycle vers le 1er mars
+  const finCycle = !a && !(prog.finCycle && prog.finCycle > decalerJour(jour, 21)) ? premierMars(jour) : prog.finCycle
+  const sansCourse = !a && !!finCycle && finCycle > decalerJour(jour, 21)
+  const lundiJour = decalerJour(jour, -((new Date(`${jour}T12:00:00`).getDay() + 6) % 7))
+  if (!a && !sansCourse) {
+    // Ni course ni cycle possible : entretien à partir de cette semaine
+    await enregistrer(db.reglages, { id: 'entrainement', valeur: { ...e, programme: { ...prog, phases: [...prog.phases.filter((p) => p.debut < lundiJour), { debut: lundiJour, type: 'entretien' }] } } })
+    await (await import('../plan/programme')).recalculerSemainesAVenir()
+    return
+  }
   const ps = (await db.reglages.get('profil-sportif'))?.valeur as ProfilSportif | undefined
   const historique = await historiqueRecent(jour, e.cpW ?? 260, prog.semaineType, prog.phases)
   const jourLong = prog.semaineType.indexOf('velo-long')
   const jourDur = prog.semaineType.indexOf('velo-dur')
   const saison = calculerSaison({
-    sansCourse, debut: jour, course: a ? a.date : prog.finCycle!, arretSemaines: historique.arret, repriseFaite: historique.repriseFaite, debutant: niveauDuProfil(ps) === 'debutant', prioriteSeuil: ['debutant', 'intermediaire'].includes(niveauDuProfil(ps)), entraine: historique.entraine,
+    sansCourse, debut: jour, course: a ? a.date : finCycle!, arretSemaines: historique.arret, repriseFaite: historique.repriseFaite, debutant: niveauDuProfil(ps) === 'debutant', prioriteSeuil: ['debutant', 'intermediaire'].includes(niveauDuProfil(ps)), entraine: historique.entraine,
     jourLong: jourLong >= 0 ? jourLong : 6, jourDur: jourDur >= 0 ? jourDur : 1, aujourdhui: jour,
   })
   if ((e.tests ?? []).some((t) => t.type === 'cp' && t.date <= jour && ecartJours(t.date, jour) <= 28)) {
@@ -398,8 +406,17 @@ export async function recalculerSaison(garderTests = false) {
   // Les phases déjà passées restent (historique), la nouvelle saison commence cette semaine
   const lundi = decalerJour(jour, -((new Date(`${jour}T12:00:00`).getDay() + 6) % 7))
   const passees = prog.phases.filter((p) => p.debut < lundi)
-  const phases = [...passees, ...phasesAvecCoursesA(saison.phases, datesCoursesA(prog.competitions.map((c) => ({ ...c, niveau: niveaux.get(c.date) }))))]
-  await enregistrer(db.reglages, { id: 'entrainement', valeur: { ...e, programme: { ...prog, phases, ...(garderTests ? {} : { testsCp: [...prog.testsCp.filter((d) => d < lundi), ...saison.testsCp], testsCourts: [...(prog.testsCourts ?? []).filter((d) => d < lundi), ...saison.testsCourts] }), saisonV2: true, saisonV3: true, saisonV4: true, saisonV5: true, saisonV6: true, saisonV7: true } } })
+  // Course repoussée ou changée (audit du 18/11/2026) : on garde la phase en cours au lieu de revenir en arrière (avant, une
+  // course repoussée de 3 semaines renvoyait au 1er seuil pendant un mois) ; elle dure plus longtemps à la place
+  const ORDRE = ['reprise', 'entretien', 'base', 'seuil-tirage', 'seuil-maintien', 'fin-prepa', 'specifique', 'affutage']
+  const enCours = prog.phases.length ? phaseDe(lundi, prog.phases).phase.type : undefined
+  let nouvelles = saison.phases
+  if (enCours && ORDRE.indexOf(enCours) > 2 && !garderTests) {
+    const i = nouvelles.findIndex((p) => ORDRE.indexOf(p.type) >= ORDRE.indexOf(enCours))
+    if (i > 0 && nouvelles[i].type !== 'affutage') nouvelles = [{ ...nouvelles[i], debut: nouvelles[0].debut }, ...nouvelles.slice(i + 1)]
+  }
+  const phases = [...passees, ...phasesAvecCoursesA(nouvelles, datesCoursesA(prog.competitions.map((c) => ({ ...c, niveau: niveaux.get(c.date) }))))]
+  await enregistrer(db.reglages, { id: 'entrainement', valeur: { ...e, programme: { ...prog, ...(finCycle && !a ? { finCycle } : {}), phases, ...(garderTests ? {} : { testsCp: [...prog.testsCp.filter((d) => d < lundi), ...saison.testsCp], testsCourts: [...(prog.testsCourts ?? []).filter((d) => d < lundi), ...saison.testsCourts] }), saisonV2: true, saisonV3: true, saisonV4: true, saisonV5: true, saisonV6: true, saisonV7: true } } })
   const { recalculerSemainesAVenir } = await import('../plan/programme')
   await recalculerSemainesAVenir()
 }

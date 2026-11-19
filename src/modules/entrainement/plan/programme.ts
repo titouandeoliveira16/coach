@@ -6,19 +6,16 @@ import { calculEnCours, debutCalcul, finCalcul, oublierPhoto, photoInterrompue }
 import { aujourdhui, decalerJour, depuisJour, ecartJours, NOMS_JOURS, versJour } from '../../../core/dates'
 import { enregistrer, supprimer } from '../../../core/stockage'
 import {
-  ajustementZ2, departSelonHeures, PALIERS_SV1_DEDIE, meilleurLevier, pistesDeblocage, BLOCS_SV1, signalSv1, signalFcSv1, plageFcSv1, sprintsDeLaPhase, SV1_DEPART_PCT, SV1_MAX_PCT, budgetDePhase, budgetSemaine, plafondEtNominal, formatDe, gardeFouCourse, NOMS_FAMILLES, plafondsReprise, projeterSaison, choisirFormat, construireIntervalles, construireTest, construireZ2, coefficientPhase, estSemaineAllegee, etatProgression, palierRaccourci, tenirDansCreneau,
+  ajustementZ2, departSelonHeures, PALIERS_SV1_DEDIE, meilleurLevier, pistesDeblocage, BLOCS_SV1, signalSv1, signalFcSv1, plageFcSv1, sprintsDeLaPhase, SV1_DEPART_PCT, SV1_MAX_PCT, budgetDePhase, budgetSemaine, plafondEtNominal, formatDe, NOMS_FAMILLES, plafondsReprise, projeterSaison, choisirFormat, construireIntervalles, construireTest, construireZ2, coefficientPhase, estSemaineAllegee, etatProgression, palierRaccourci, tenirDansCreneau,
   construireCycloMontees, construireLongueCotes, construireSimulationLigne, construireSimulationXco, construireSpeciales, construireTerrain, cotesDe, minutesPourKj, NOMS_DISCIPLINES, NOMS_PHASES, deuxIntensitesPossibles, formatsPour, hausseBudget, heuresDe, jourDeuxiemeIntensite, niveauDuProfil, palierPossible, phaseDe, placer, retourDeCoupure, semainesChamboulees, type BilanSemaine, type Famille, type HistoIntensite,
   cibleSortieLongue, dureeLongueVisee, type SeanceConstruite, type TypePhase,
-  construireCourse, construireOuverture, construireSv1Dediee, specifiqueCols, testProcheCourse, delaiApresCourse, dureeDeCourse, epreuveDe, facteursVitesse, type CourseReference, niveauxCourses, procheCourse,
+  construireCourse, construireDepartsXco, construireOuverture, construireSv1Dediee, specifiqueCols, testProcheCourse, delaiApresCourse, dureeDeCourse, epreuveDe, facteursVitesse, type CourseReference, niveauxCourses, procheCourse,
 } from '../../../metrics/programme'
 import { fusionnerSemainesPassees, heuresAu, programmeAu, programmeDe } from '../reglagesEntrainement'
 import type { ProfilSportif } from '../reglages/ProfilSportif'
 import { chargerContexte, domaineDe, lundiDe } from '../seances/donnees'
 import type { ReglagesEntrainement, ReglagesProgramme, Seance, SeancePrevue } from '../types'
-import { chargePrevue, chargesSemaine, joursDe } from './donnees'
-import { chargesHebdo } from '../analyse/donnees'
-import { hausseCharge } from '../../../metrics/planif'
-import { ratioPic } from '../../../metrics/charge'
+import { chargesSemaine, joursDe } from './donnees'
 import { joursPanneVelo } from './imprevus'
 import { lireSemaineChargee, passerSemaineChargee } from './semaineChargee'
 import { chargeDeDepart } from './depart'
@@ -174,12 +171,17 @@ const heuresMin = (min: number) => `${Math.floor(min / 60)} h${min % 60 ? ` ${St
  */
 export async function longueDeLaSemaine(lundi: string, prog: ReglagesProgramme, phase: TypePhase) {
   const cible = cibleSortieLongue(prog.discipline ?? 'route', prog.typeCourse, prog.dureeCourseMin)
-  if (!cible || phase === 'reprise' || phase === 'affutage' || phase === 'recuperation') return { cible, visee: undefined }
+  // Garde-fou (audit du 18/11/2026, relu : choix d'entraîneur prudent, Frandsen 2025 en course à pied) : la sortie longue
+  // ne dépasse jamais de plus de 10 % la plus longue des 4 dernières semaines (faite ou prévue, hors semaines allégées)
+  const precedentes = (await db.prevues.where('date').between(decalerJour(lundi, -28), lundi, true, false).toArray())
+    .filter((p) => p.velo?.famille === 'z2-long' && (p.statut === 'faite' || p.statut === 'prevue') && !p.velo?.allegee).map((p) => p.dureeMin)
+  const plafond10 = precedentes.length ? Math.max(60, Math.round((Math.max(...precedentes) * 1.1) / 5) * 5) : undefined
+  if (!cible || phase === 'reprise' || phase === 'affutage' || phase === 'recuperation') return { cible, visee: undefined, plafond10 }
   // Référence : la plus longue des 4 dernières semaines (relecture du 15/11/2026 : le risque monte quand une séance dépasse
   // de plus de 10 % la plus longue des 30 derniers jours, Frandsen 2025, course à pied)
   const recentes = (await db.prevues.where('date').between(decalerJour(lundi, -28), lundi, true, false).toArray())
     .filter((p) => p.velo?.famille === 'z2-long' && p.statut === 'faite').map((p) => p.dureeMin)
-  return { cible, visee: dureeLongueVisee(cible, prog.minLongMin, recentes.length ? Math.max(...recentes) : undefined) }
+  return { cible, visee: dureeLongueVisee(cible, prog.minLongMin, recentes.length ? Math.max(...recentes) : undefined), plafond10 }
 }
 
 /** Bilan de la semaine précédente (si elle a été générée). */
@@ -449,12 +451,27 @@ async function genererSemaineVeloBrute(lundi: string) {
     const jourLong = semaine.find((d, i) => roles[i] === 'velo-long' && d >= aPartirDe && !indispos.has(d) && !occupations.some((o) => o.date === d))
     if (jourLong && !procheCourse(jourLong, competitions, delaiCourse)) dateTest = jourLong
   }
+  // 48 h entre deux séances dures même d'une semaine à l'autre (audit du 18/11/2026, relu : Stanley 2013) : un test le
+  // lendemain d'une séance dure (ex. sortie en côtes le dimanche, test le lundi) passe au 1er jour possible après
+  if (dateTest && occupations.some((o) => o.dure && o.date === decalerJour(dateTest!, -1))) {
+    const t = dateTest
+    dateTest = semaine.find((d) => d > t && !indispos.has(d) && !occupations.some((o) => o.date === d || (o.dure && o.date === decalerJour(d, -1))) && !procheCourse(d, competitions, delaiCourse) && !testProcheCourse(d, coursesDurees))
+  }
   // Course B ou C : elle est la séance dure de la semaine ; en B, ou si elle dure plus de 2 h, aussi la sortie longue
   const courseRemplaceLong = (!!courseSecondaire && (courseSecondaire.niveau === 'B' || dureeDe(courseSecondaire.date) > 120)) || testComplet
+  // Retour après au moins 10 jours sans vélo, même sans avoir ouvert l'appli (audit du 18/11/2026, relu : désentraînement
+  // en 2 à 4 semaines, Mujika et Padilla 2000 ; 10 jours = choix d'entraîneur) : une semaine de reprise sans intensité ni test
+  const veloAvant = (await db.seances.where('date').between(decalerJour(aPartirDe, -60), aPartirDe, true, false).toArray()).filter((x) => x.sport === 'velo').map((x) => x.date).sort()
+  const joursSansVelo = veloAvant.length ? ecartJours(veloAvant[veloAvant.length - 1], aPartirDe) : 0
+  const retourArret = joursSansVelo >= 10 && !veloSemaine.some((p) => p.statut === 'faite') && !coursesSemaine.length
+  if (retourArret) {
+    dateTest = undefined
+    phrasesTest.push(`${joursSansVelo} jours sans vélo : semaine de reprise, sans intensité, pour laisser ton corps se réhabituer.`)
+  }
   const placement = placer(semaine, roles, occupations, indispos, aPartirDe, {
-    competitions, delaiApresCourse: delaiCourse, dateTest, intensite: !intensiteFaite && (!courseSecondaire || dateTest !== undefined), long: !longFaite && !courseRemplaceLong,
+    competitions, delaiApresCourse: delaiCourse, dateTest, intensite: !retourArret && !intensiteFaite && (!courseSecondaire || dateTest !== undefined), long: !longFaite && !courseRemplaceLong,
     // Semaine du test complet : il est la séance dure et la sortie longue ; le jour « dur » devient une endurance
-    nZ2: nZ2 + (testComplet && !longFaite ? 1 : 0),
+    nZ2: nZ2 + (testComplet && !longFaite ? 1 : 0) + (retourArret ? 1 : 0),
   })
   // Pas de sortie longue la veille ou l'avant-veille d'une course : elle devient une Z2
   if (placement.long && procheCourse(placement.long, competitions, 0)) {
@@ -475,7 +492,7 @@ async function genererSemaineVeloBrute(lundi: string) {
   const maxDuJour = (d: string) => (roles[semaine.indexOf(d)] === 'velo-long' ? prog.maxLongMin : prog.maxSemaineMin)
   // Reprise progressive : durées des séances Z2 plafonnées les premières semaines (phase de reprise, ou retour après 3 semaines très légères)
   const parts = await partsRealisees(lundi)
-  const coupure = retourDeCoupure(semainesChamboulees(parts), semainesChamboulees(parts.slice(1)))
+  const coupure = retourArret ? { facteur: 1, semaineReprise: 0, raison: `${joursSansVelo} jours sans vélo : reprise en douceur` } : retourDeCoupure(semainesChamboulees(parts), semainesChamboulees(parts.slice(1)))
   // Charge habituelle (4 meilleures semaines d'affilée sur 12) : d'où tu repars, et la reprise part de tes durées
   const depart = await chargeDeDepart(lundi, prog.phases)
   const cap = plafondsReprise(phase.type === 'reprise' ? nSemaine : coupure.semaineReprise, prog.maxSemaineMin, prog.maxLongMin, depart?.facteur)
@@ -496,10 +513,17 @@ async function genererSemaineVeloBrute(lundi: string) {
       intensite = construireTest(r.cpW, prog.testsCourts?.includes(dateTest))
       intensite.velo.pourquoi = 'Test prévu : il recale toutes tes cibles en watts.'
     } else if (discipline === 'xco' && phase.type === 'specifique' && !allegee
+      // Audit du 18/11/2026 (relu, choix d'entraîneur) : la simulation seulement 7 à 13 jours avant une course A (une par
+      // bloc) ; avant, elle revenait chaque semaine de la phase
+      && prog.competitions.some((x) => niveaux.get(x.date) === 'A' && ecartJours(placement.intensite!, x.date) >= 7 && ecartJours(placement.intensite!, x.date) <= 13)
       && [4, 3, 2].some((t) => construireSimulationXco(r.cpW, z2W, t).dureeMin <= maxDuJour(placement.intensite!) + 5)) {
       // Simulation de course XCO : autant de tours que ton créneau le permet (audit du 14/11/2026)
       intensite = [4, 3, 2].map((t) => construireSimulationXco(r.cpW, z2W, t)).find((x) => x.dureeMin <= maxDuJour(placement.intensite!) + 5)!
       intensite.velo.pourquoi = 'Proche de ta course · simulation de course XCO (7-10 jours avant)'
+    } else if (discipline === 'xco' && phase.type === 'specifique' && !allegee && construireDepartsXco(r.cpW, z2W).dureeMin <= maxDuJour(placement.intensite) + 5) {
+      // Les autres semaines de la phase spécifique : départs XCO (la course se joue souvent au départ)
+      intensite = construireDepartsXco(r.cpW, z2W)
+      intensite.velo.pourquoi = 'Proche de ta course · départs XCO : la course se joue souvent au départ'
     } else {
       let choix = choisirFormat(lundi, prog.phases, histo, discipline, 0, prog.typeCourse)
       // Jamais fait d'intervalles (relecture du 15/11/2026, choix d'entraîneur ; Milanović 2015 : le fractionné se tolère
@@ -561,7 +585,8 @@ async function genererSemaineVeloBrute(lundi: string) {
     const long = placement.long
     const colle = (d?: string) => !!d && Math.abs(ecartJours(d, long)) < 2 && d !== long
     if (placement.intensite && colle(placement.intensite) && placement.intensite !== dateTest) {
-      const loin = placement.z2.find((d) => Math.abs(ecartJours(d, long)) >= 2 && !procheCourse(d, competitions, delaiCourse))
+      // …et à 48 h de toute autre séance dure, y compris le dimanche d'avant (audit du 18/11/2026)
+      const loin = placement.z2.find((d) => Math.abs(ecartJours(d, long)) >= 2 && !procheCourse(d, competitions, delaiCourse) && !occupations.some((o) => o.dure && Math.abs(ecartJours(o.date, d)) < 2))
       if (loin) {
         placement.z2 = [...placement.z2.filter((d) => d !== loin), placement.intensite].sort()
         placement.intensite = loin
@@ -588,9 +613,13 @@ async function genererSemaineVeloBrute(lundi: string) {
       const histo2: HistoIntensite[] = [...histo, { date: decalerJour(lundi, -1), famille: premier.famille as Famille, formatId: premier.formatId ?? '', palier: premier.palier ?? 0 }]
       const choix2 = choisirFormat(lundi, prog.phases, histo2, discipline, 1, prog.typeCourse)
       const etat2 = etatProgression(histo, datesTests(r.tests))[choix2.famille]
-      const palier2 = palierPossible(choix2.format, etat2.palier, maxDuJour(jour2))
+      // Affûtage (audit du 18/11/2026, relu : Bosquet 2007, Wang 2023) : la 2e séance dure raccourcie comme la 1re (moins
+      // de répétitions, mêmes watts)
+      const palier2Brut = palierPossible(choix2.format, etat2.palier, maxDuJour(jour2))
+      const palier2 = phase.type === 'affutage' ? palierRaccourci(choix2.format, palier2Brut) : palier2Brut
       const s2 = construireIntervalles(choix2.format, tenirDansCreneau(choix2.format, palier2, maxDuJour(jour2)), r.cpW, etat2.bonus, r.wPrimeKj)
-      s2.velo.pourquoi = `2e séance intensive de la semaine (${joursVelo} jours de vélo, pas de séance dure de course ; au moins 48 h après l'autre) · palier ${palier2 + 1}/4`
+      if (phase.type === 'affutage') s2.velo.allegee = true
+      s2.velo.pourquoi = `2e séance intensive de la semaine (${joursVelo} jours de vélo, pas de séance dure de course ; au moins 48 h après l'autre) · palier ${palier2Brut + 1}/4${phase.type === 'affutage' ? ' · affûtage : mêmes watts, moins de répétitions' : ''}`
       intensite2 = { date: jour2, s: s2 }
       placement.z2 = placement.z2.filter((d) => d !== jour2)
     }
@@ -606,9 +635,9 @@ async function genererSemaineVeloBrute(lundi: string) {
   const rolesPlafond = kjIntensite === 0 ? roles.map((x) => (x === 'velo-dur' ? 'velo-z2' : x)) : roles
   const { nominal, plafond } = plafondEtNominal({ semaineType: rolesPlafond, kjIntensite, cap, z2W, sansLongue: !placement.long, longueVisee: longue.visee, heuresMax: heuresSemaine ? heures[1] : undefined, minutesAutres })
   const prec = await bilanPrecedent(lundi)
-  const b = coefPhase !== undefined
+  let b = coefPhase !== undefined
     ? budgetDePhase(prec, nominal, coefPhase, NOMS_PHASES[phase.type])
-    : await avecGardeFou(avecCoupure(avecPlancher(budgetSemaine(prec, !prec && prog.budgetDepart ? prog.budgetDepart : Math.min(nominal, departSelonHeures(ps?.heuresRecentes, z2W) ?? Infinity), plafond, allegee, raisonAllegee, hausseSous(depart, prec, hausseBudget(niveau)), !prec && prog.budgetDepart ? 'Budget de départ : tes kJ des 4 semaines d’avant' : undefined), depart, prec, plafond, allegee), coupure), lundi)
+    : (avecCoupure(avecPlancher(budgetSemaine(prec, !prec && prog.budgetDepart ? prog.budgetDepart : Math.min(nominal, departSelonHeures(ps?.heuresRecentes, z2W) ?? Infinity), plafond, allegee, raisonAllegee, hausseSous(depart, prec, hausseBudget(niveau)), !prec && prog.budgetDepart ? 'Budget de départ : tes kJ des 4 semaines d’avant' : undefined), depart, prec, plafond, allegee), coupure))
 
   // Répartition du reste du budget en Z2 : 60 % pour la sortie longue
   const kjFaits = seances.filter((s) => s.sport === 'velo' && dansSemaine(s.date)).reduce((a, s) => a + (s.kj ?? 0), 0)
@@ -627,12 +656,20 @@ async function genererSemaineVeloBrute(lundi: string) {
   const ouverture = veilleB ? construireOuverture(z2W, r.cpW) : undefined
   if (veilleB) placement.z2 = placement.z2.filter((d) => d !== veilleB)
   const kjCourses = coursesAPrevoir.reduce((a, [, x]) => a + x.kj, 0) + (ouverture?.kj ?? 0)
+  // Semaine d'une course A (audit du 18/11/2026, relu : Bosquet 2007, Wang 2023) : l'entraînement baisse d'environ 50 %,
+  // la course est comptée à part (avant, elle mangeait le budget et l'entraînement baissait de 75 à 80 %)
+  const kjCourseA = phase.type === 'affutage' ? coursesSemaine.filter((x) => x.niveau === 'A').reduce((a, x) => a + construireCourse(x.nom, x.niveau, dureeDe(x.date), r.cpW).kj, 0) : 0
+  if (kjCourseA) b = { ...b, budget: b.budget + kjCourseA, raison: `${b.raison} · + ta course` }
   const reste = Math.max(0, b.budget - kjFaits - kjAutresPrevus - kjIntensite - kjCourses)
   const partLong = placement.long ? (placement.z2.length ? 0.6 : 1) : 0
   const borner = (min: number, max: number, v: number) => Math.min(max, Math.max(min, arrondi5(v)))
   const nLongs = (await db.prevues.toArray()).filter((p) => p.velo?.famille === 'z2-long' && p.statut === 'faite' && p.date < lundi).length
   // Séance technique VTT : le thème tourne sur 4 semaines (séances techniques d'avant, faites ou prévues)
   const nTerrain = (await db.prevues.toArray()).filter((p) => p.velo?.famille === 'vtt-terrain' && p.date < lundi && p.statut !== 'abandonnee').length
+  // kJ par minute de tes 3 dernières séances techniques faites (avec puissance)
+  const idsTerrain = new Set((await db.prevues.toArray()).filter((p) => p.velo?.famille === 'vtt-terrain' && p.statut === 'faite').map((p) => p.id))
+  const techFaites = (await db.seances.toArray()).filter((x) => x.prevueId && idsTerrain.has(x.prevueId) && x.kj && x.dureeSec > 600).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 3)
+  const kjParMinTech = techFaites.length ? techFaites.reduce((t, x) => t + x.kj! / (x.dureeSec / 60), 0) / techFaites.length : undefined
 
   const aCreer: [string, SeanceConstruite][] = []
   if (placement.intensite && intensite) aCreer.push([placement.intensite, intensite])
@@ -671,7 +708,9 @@ async function genererSemaineVeloBrute(lundi: string) {
   // Cycle 1er seuil : une séance dédiée au 1er seuil par semaine, sur un jour d'endurance, à 48 h au moins du rappel VO2
   // si possible (relu le 13/11/2026), sinon pas le lendemain d'une intensité
   const loinDesIntensifs = (d: string) => intensifs.every((i) => Math.abs(ecartJours(d, i)) >= 2)
-  const jourSv1 = phase.type === 'base' && !allegee && !sansBlocs
+  // Débutant à 3 sorties (audit du 18/11/2026, relu : polarisé, choix d'entraîneur) : avec une seule endurance dans la
+  // semaine, elle reste facile (pas de séance dédiée au 1er seuil : sinon 2 séances soutenues sur 3)
+  const jourSv1 = phase.type === 'base' && !allegee && !sansBlocs && placement.z2.length >= 2
     ? [...placement.z2].reverse().find((d) => d !== terrain && loinDesIntensifs(d)) ?? [...placement.z2].reverse().find((d) => d !== terrain && !lendemains.has(d)) ?? placement.z2.find((d) => d !== terrain)
     : undefined
   const jourSprints = placement.z2.find((d) => d !== terrain && d !== jourSv1 && !lendemains.has(d)) ?? placement.z2.find((d) => d !== terrain && d !== jourSv1)
@@ -716,7 +755,7 @@ async function genererSemaineVeloBrute(lundi: string) {
     // (relecture du 9/11/2026 : volume en baisse, intensité gardée, Bosquet 2007 ; durées = choix d'entraîneur)
     const semaineCourse = prog.competitions.some((x) => x.date >= lundi && x.date <= semaine[6])
     const affutage = phase.type === 'affutage' && longue.cible ? (semaineCourse ? Math.min(90, longue.cible) : arrondi5(longue.cible * 0.55)) : undefined
-    const capLong = Math.max(Math.min(60, cap.long), Math.min(affutage ?? Infinity, minutesDispo - 30 * nZ2Restants, phase.type === 'specifique' && discipline === 'xco' ? Math.min(cap.long, 150) : phase.type === 'specifique' && discipline === 'xcc' ? Math.min(cap.long, 120) : cap.long))
+    const capLong = Math.max(Math.min(60, cap.long), Math.min(affutage ?? Infinity, longue.plafond10 ?? Infinity, minutesDispo - 30 * nZ2Restants, phase.type === 'specifique' && discipline === 'xco' ? Math.min(cap.long, 150) : phase.type === 'specifique' && discipline === 'xcc' ? Math.min(cap.long, 120) : cap.long))
     // Simulation de course plus longue que ta sortie longue possible : sortie longue normale (audit du 14/11/2026)
     if (longueCourse === 'simulation-ligne' && construireSimulationLigne(r.cpW, z2W, capLong).dureeMin > capLong + 5) {
       longueCourse = undefined
@@ -740,7 +779,10 @@ async function genererSemaineVeloBrute(lundi: string) {
     if (longueCourse === 'cyclo-montees' && capLong < 180) (avecPhrases ? phrases : []).push('Ta sortie longue maximale est sous 3 h : la sortie avec montées en fin de sortie sera plus courte que conseillé pour une cyclosportive.')
     // Marathon VTT (hors reprise et semaine allégée) : sortie longue en côtes
     const courseProche = prog.competitions.some((x) => x.date >= lundi && x.date <= decalerJour(lundi, 20))
-    const min = reduire(minHabituel, Math.min(LONGUE_MIN, minHabituel), partLongue)
+    // La sortie longue reste la plus longue de la semaine (audit du 18/11/2026) : réduite, jamais sous la plus longue des
+    // autres séances
+    const plusLongueAutre = Math.max(0, ...aCreer.filter(([, x]) => x.velo.famille !== 'course').map(([, x]) => x.dureeMin), seanceSv1?.dureeMin ?? 0)
+    const min = reduire(minHabituel, Math.min(Math.max(LONGUE_MIN, plusLongueAutre), minHabituel), partLongue)
     liste.push([placement.long, longueCourse === 'simulation-ligne'
       ? construireSimulationLigne(r.cpW, z2W, reduction > 0 ? min : capLong)
       : longueCourse === 'cyclo-montees'
@@ -767,7 +809,7 @@ async function genererSemaineVeloBrute(lundi: string) {
     const min = reduire(borner(Math.min(minZ2, cap.z2, maxZ2), maxZ2, minutesPourKj((reste * (1 - partLong) - extraSv1) / placement.z2.length, z2W)), Z2_MIN, partZ2)
     // VTT : la première Z2 de la semaine se fait sur le terrain (technique), jamais la sortie longue
     if (d === jourSv1 && seanceSv1) liste.push([d, seanceSv1])
-    else if (d === terrain && discipline !== 'route') liste.push([d, construireTerrain(discipline, min, z2W, nTerrain)])
+    else if (d === terrain && discipline !== 'route') liste.push([d, construireTerrain(discipline, min, z2W, nTerrain, kjParMinTech)])
     else if (d === jourSprints) liste.push([d, construireZ2(min, z2W, sprints, { longue: false, espacementSec: sprints.espacementSec })])
     else liste.push([d, construireZ2(min, z2W, undefined, lendemains.has(d) && rappel && !sansBlocs ? { sv1: { w: sv1.w, reps: 2, min: 10, fc: fcSv1 } } : {})])
   })
@@ -1220,19 +1262,5 @@ function avecCoupure<B extends { budgetRef: number; budget: number; raison: stri
   return { ...b, budgetRef: Math.round(b.budgetRef * c.facteur), budget: Math.round(b.budget * c.facteur), raison: `${b.raison} · ${c.raison}` }
 }
 
-async function avecGardeFou<B extends { budget: number; raison: string }>(b: B, lundi: string): Promise<B> {
-  const c = await chargerContexte()
-  const seances = await db.seances.toArray()
-  const premier = seances.map((s) => s.date).sort()[0]
-  if (!premier || premier > decalerJour(lundi, -35)) return b
-  const coursePrevue = (await db.prevues.where('date').between(lundi, decalerJour(lundi, 6), true, true).toArray())
-    // Seule la course intense compte (un footing facile ne retire rien au vélo, 12/11/2026)
-    .filter((p) => p.sport === 'course' && p.statut !== 'abandonnee' && p.intensite !== 'basse')
-    .reduce((a, p) => a + chargePrevue(p, c.chargeRef), 0)
-  const charge7 = chargesHebdo(seances, c, lundi, 1, 'entrainement')[0]
-  const g = gardeFouCourse({
-    hausseCoursePct: hausseCharge(coursePrevue, chargesHebdo(seances, c, lundi, 4, 'course-entrainement')),
-    ratioPic: ratioPic(charge7, chargesHebdo(seances, c, decalerJour(lundi, -7), 4, 'entrainement')),
-  })
-  return g ? { ...b, budget: Math.round(b.budget * (1 - g.pct)), raison: `${b.raison} · ${g.raison}` } : b
-}
+// Garde-fou « pic de charge » (−15 % quand les 7 derniers jours dépassent 1,3 × la moyenne) retiré le 19/11/2026
+// (audit du 18/11, relu : ACWR sans seuil validé, Impellizzeri 2020 ; les semaines allégées suffisent)

@@ -128,7 +128,11 @@ export function besoinsDuJour(o: {
   const quotidien = base * FACTEUR_QUOTIDIEN + (o.correction ?? 0)
   const seances = o.activites.reduce((s, a) => s + kcalActivite(a, o.kg), 0)
   const kcalGlucides = o.activites.reduce((s, a) => s + kcalGlucidesSeance(a, o.kg), 0)
-  const maintien = quotidien + seances
+  // Maintien mesuré (audit du 18/11/2026, relu : Loucks 2003, Mountjoy 2023) : la correction tirée des repas notés ne fait
+  // jamais descendre sous 35 kcal par kg de masse maigre (sport déduit), comme la perte de gras ; avant, rien ne l'arrêtait
+  const sansCorrection = base * FACTEUR_QUOTIDIEN + seances
+  const plancherMaintien = Math.min(sansCorrection, DISPONIBILITE_HABITUELLE * o.kg * PART_MASSE_MAIGRE + seances)
+  const maintien = Math.max(quotidien + seances, (o.correction ?? 0) < 0 ? plancherMaintien : 0)
   const journee = kcalGlucides < 150 ? 'facile' : kcalGlucides < 500 ? 'moderee' : 'dure'
   const perte = o.objectif === 'perte'
   const deficitBase = o.deficitBase ?? DEFICIT_BASE

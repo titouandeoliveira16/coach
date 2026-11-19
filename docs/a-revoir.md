@@ -54,8 +54,12 @@ de conversation quand il faut s'en servir. Ici ne restent que les chantiers tech
 - Lot 2 fait en 14.13.0 (choix du 19/11) : règle « saturation » retirée, pouls haut 2 matins de suite → orange (relu,
   Alavi 2022), muscu bloquée avant 18 ans, charge en TSS comme Intervals, FTP = 97 % de la CP partout (relu, Karsten 2021),
   ancien module Muscu, alerte de course à pied et séances course / enduro du catalogue supprimés. Révision mise de côté.
-- Reste : saison route et VTT (allégées, sortie longue, semaine de course A, affûtage VTT),
-  dimanche → lundi (jours durs), changement de montre, nutrition (plancher du maintien, rappels de pesée, mineurs), muscu des mineurs, Révision recalée sur
+- Lot 2 (suite) fait en 14.15.0 (choix du 19/11, relus) : allégées en fin de bloc avec le test CP, sortie longue ≤ +10 %
+  et toujours la plus longue, semaine de course A −50 % course à part, garde-fou « pic » retiré, débutant 3 jours avec une
+  sortie facile, affûtage sur chaque séance dure, 1 semaine de reprise au plus entre deux A, départs XCO chaque semaine et
+  simulation 7-13 j avant la A, kJ technique réels, 48 h dimanche → lundi, reprise après 10 jours sans vélo, course
+  annulée / repoussée, douleur, plancher du maintien, rappels de pesée (adultes avec objectif de poids).
+- Reste : N4 (formule des mineurs) et N5 (question sur les règles) sans réponse ; nutrition (plancher du maintien, rappels de pesée, mineurs), muscu des mineurs, Révision recalée sur
   le concours, accessibilité, textes, sauvegarde chiffrée, clé de chiffrement dédiée, page de confidentialité, audit en CI.
 - Lot 1 bis fait en 14.14.0 : bouton « J'ai changé de montre » (Réglages → Intervals.icu), fond et fatigue qui partent de
   la charge des 4 premières semaines (plus de « +91 % »), W/kg du jour du test partout, alerte des zones qui ne revient

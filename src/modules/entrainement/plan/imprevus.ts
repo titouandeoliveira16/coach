@@ -102,10 +102,14 @@ export const JOURS_REPRISE = 3
  * Renvoie le numéro du jour de reprise (1 à 3), ou null.
  */
 export async function repriseApresMaladie(jour: string): Promise<number | null> {
-  if ((await db.indispos.get(jour))?.raison === 'Malade') return null
+  const arret = (r?: string) => r === 'Malade' || r === 'Douleur / blessure'
+  if (arret((await db.indispos.get(jour))?.raison)) return null
   for (let n = 1; n <= JOURS_REPRISE; n++) {
     const d = decalerJour(jour, -n)
-    if ((await db.indispos.get(d))?.raison !== 'Malade') continue
+    const raison = (await db.indispos.get(d))?.raison
+    if (!arret(raison)) continue
+    // Douleur (audit du 18/11/2026, relu : choix d'entraîneur) : reprise en douceur dès un jour de douleur
+    if (raison === 'Douleur / blessure') return n
     // Dernier jour malade trouvé : la maladie a-t-elle duré au moins 3 jours ?
     let duree = 0
     while ((await db.indispos.get(decalerJour(d, -duree)))?.raison === 'Malade') duree++

@@ -1,3 +1,4 @@
+import { estMineur, useProfil } from '../../../core/profil'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Moon, Scale, TrendingUp } from 'lucide-react'
 import { useState } from 'react'
@@ -58,6 +59,8 @@ function EnTeteOuvert({ Icone, couleur, titre, onFermer }: { Icone: typeof Moon;
 export function TuilesMatin({ onPoids, forme = [], ratioPic }: { onPoids?: () => void; forme?: PointForme[]; ratioPic?: number } = {}) {
   const jour = aujourdhui()
   const [ouverte, setOuverte] = useState<'nuit' | 'poids' | 'charge'>()
+  const [profil] = useProfil()
+  const relancePesee = profil.objectif === 'perte' && !estMineur(profil, jour)
   const d = useLiveQuery(async () => {
     const mesures = (await db.mesures.where('date').between(decalerJour(jour, -40), jour, true, true).toArray()).map(mesureUtile)
     const pesees = (await peseesValides()).filter((p) => p.date >= decalerJour(jour, -28)).reverse()
@@ -183,8 +186,9 @@ export function TuilesMatin({ onPoids, forme = [], ratioPic }: { onPoids?: () =>
       <button type="button" onClick={() => setOuverte('poids')} className="presse entree rounded-[14px] border-[1.5px] border-transparent bg-surface px-3 py-2.5 text-left">
         <span className="flex items-center gap-1.5 text-xs text-texte-2"><Scale className="h-3.5 w-3.5 text-texte-3" strokeWidth={2} />Poids</span>
         <span className="chiffre mt-0.5 block text-[20px] leading-tight">{poids ? `${formatNombre(poids.poidsKg, 1)} kg` : '—'}</span>
-        <span className={`mt-0.5 block truncate text-[11px] ${poids?.date !== jour && !d.sansPesee ? 'text-accent' : 'text-texte-3'}`}>
-          {poids?.date !== jour && !d.sansPesee ? 'à peser ce matin' : sur2 !== undefined ? `${ecartKg(sur2)} en 2 sem.` : ' '}
+        {/* « À peser ce matin » seulement pour un adulte avec un objectif de poids (audit du 18/11/2026) */}
+        <span className={`mt-0.5 block truncate text-[11px] ${relancePesee && poids?.date !== jour && !d.sansPesee ? 'text-accent' : 'text-texte-3'}`}>
+          {relancePesee && poids?.date !== jour && !d.sansPesee ? 'à peser ce matin' : sur2 !== undefined ? `${ecartKg(sur2)} en 2 sem.` : ' '}
         </span>
         <MiniCourbe valeurs={d.pesees.slice(-7).map((p) => p.poidsKg)} />
       </button>

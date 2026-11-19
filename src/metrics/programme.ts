@@ -545,6 +545,31 @@ export function construireCycloMontees(duree: number, z2W: number, cpW: number, 
 }
 
 /**
+ * Départs XCO (audit du 18/11/2026, relu : choix d'entraîneur, Granier 2018 ; catalogue « vtt-depart-xco ») : 3 × (1′ à
+ * fond au-dessus de 150 % de la CP puis 6′ à 95-100 %), 7′ faciles entre ; une fois par semaine en phase spécifique.
+ */
+export function construireDepartsXco(cpW: number, z2W: number): SeanceConstruite {
+  const wEch = arrondi5(z2W * 0.85)
+  const { etapes, dureeMin, kj } = enchainer([
+    { dureeSec: 1200, libelle: 'Échauffement progressif', w: wEch },
+    {
+      dureeSec: 3 * (60 + 360 + 420), libelle: '3 départs : 1\' à fond, puis 6\' au seuil',
+      repetition: { fois: 3, etapes: [
+        { dureeSec: 60, libelle: 'Départ à fond', ...p(arrondi5(cpW * 1.6), 0.94, 1.12), cadence: '90-105' },
+        { dureeSec: 360, libelle: '1er tour au seuil', ...p(arrondi5(cpW * 0.97), 0.98, 1.03), cadence: '85-95' },
+        { dureeSec: 420, libelle: 'Facile', w: wEch },
+      ] },
+    },
+    { dureeSec: 600, libelle: 'Retour au calme', w: wEch },
+  ], z2W)
+  return {
+    titre: 'Départs XCO (3 × 1′ à fond + 6′ au seuil)', dureeMin, kj,
+    detail: `3 départs : 1' à fond (vers ${arrondi5(cpW * 1.6)} W) puis 6' à ${arrondi5(cpW * 0.97)} W, 7' faciles entre`,
+    velo: { famille: 'simulation-xco', formatId: 'departs-xco', cibleW: arrondi5(cpW * 0.97), etapes },
+  }
+}
+
+/**
  * Simulation de course XCO (Næss 2021, Prinz 2021, Granier 2018, Bailey 2009 ; format : choix d'entraîneur) :
  * pré-effort de 5' puis 10' faciles, départ de 1'30 très fort, 4 tours de 8' à relances. Séance dure.
  */
@@ -649,7 +674,7 @@ const SECURITE_TECHNIQUE = 'Casque, une section à ta portée, reconnue à pied 
  * si le créneau est plus long. `n` = nombre de séances techniques d'avant : thème n % 4, cycle n / 4.
  * kJ prévus estimés plus bas qu'une Z2 (arrêts, retours au départ).
  */
-export function construireTerrain(_discipline: Exclude<Discipline, 'route'>, duree: number, z2W: number, n = 0): SeanceConstruite {
+export function construireTerrain(_discipline: Exclude<Discipline, 'route'>, duree: number, z2W: number, n = 0, kjParMinTech?: number): SeanceConstruite {
   const dureeMin = Math.round(duree)
   const tech = Math.min(55, dureeMin)
   const z2 = dureeMin - tech
@@ -668,7 +693,9 @@ export function construireTerrain(_discipline: Exclude<Discipline, 'route'>, dur
   return {
     titre: `Technique · ${theme.nom}${z2 >= 10 ? ` + ${z2}' Z2` : ''}`,
     detail: `Thème ${(n % THEMES_TECHNIQUE.length) + 1} sur 4 : ${theme.nom}. Position d’attaque : pédales à plat, coudes et genoux pliés, un doigt sur chaque frein, regard loin. Intensité basse, tu peux parler${relances ? ' (sauf les relances et les départs : des efforts de 5 à 8 s, 2 min tranquille entre)' : ''}. ${SECURITE_TECHNIQUE}${nouveauCycle ? ' Nouveau cycle : change de section ou prends-en une un peu plus difficile.' : ''} Note ton effort perçu à la fin.`,
-    dureeMin, kj: Math.round((tech * 60 * z2W * 0.6 + z2 * 60 * z2W) / 1000),
+    // kJ de la technique (audit du 18/11/2026, relu : pas d'étude) : ce que tu fais vraiment sur tes dernières séances
+    // techniques ; sans historique, 80 % d'une Z2 (avant 60 % : une séance faite comptait presque deux fois moins qu'en vrai)
+    dureeMin, kj: Math.round(tech * (kjParMinTech ?? (60 * z2W * 0.8) / 1000) + (z2 * 60 * z2W) / 1000),
     velo: { famille: 'vtt-terrain', etapes, pourquoi: `Technique sur le terrain, thème ${theme.nom} : la technique compte beaucoup en VTT (Impellizzeri 2005, Kirkwood 2017). Un geste répété puis enchaîné, au calme et en début de sortie : pratique d’entraîneur (apprendre fatigué apprend moins bien, Branscheidt 2019).` },
   }
 }
@@ -913,19 +940,28 @@ export function estSemaineAllegee(lundi: string, phases: Phase[], semaineB?: (lu
   // Tout est ramené au lundi (une phase saisie un mercredi faisait sauter toutes les semaines allégées)
   const auLundi = (d: string) => decaler(d, -((new Date(`${d}T12:00:00Z`).getUTCDay() + 6) % 7))
   lundi = auLundi(lundi)
-  const premier = auLundi(triees[0]?.debut ?? lundi)
-  if (!triees.length || lundi < premier) return false
+  const ph = triees.map((p) => ({ ...p, debut: auLundi(p.debut) }))
+  const premier = ph[0]?.debut ?? lundi
+  if (!ph.length || lundi < premier) return false
   // Saison courte (moins de 12 semaines avant l'affûtage) : allégée après 4 semaines chargées, pas 3 (relecture du
   // 15/11/2026 : sur 9 semaines, chaque semaine chargée compte ; 3 + 1 ou 4 + 1 : aucune étude ne départage)
-  const affutage = triees.find((p) => p.type === 'affutage')?.debut
-  const maxChargees = affutage && (Date.parse(affutage) - Date.parse(premier)) / (7 * 86_400_000) < 12 ? 4 : 3
+  const affutage = ph.find((p) => p.type === 'affutage')?.debut
+  const maxSaison = affutage && (Date.parse(affutage) - Date.parse(premier)) / (7 * 86_400_000) < 12 ? 4 : 3
+  const typeDe = (l: string) => phaseDe(l, ph).phase.type
+  const derniere = (l: string) => phaseDe(decaler(l, 7), ph).phase.debut !== phaseDe(l, ph).phase.debut
   let chargees = 0
   for (let l = premier; l <= lundi; l = decaler(l, 7)) {
-    const type = phaseDe(l, triees).phase.type
+    const type = typeDe(l)
+    const max = type === 'specifique' ? 5 : maxSaison
+    const avantAffutage = typeDe(decaler(l, 7)) === 'affutage'
     let allegee = false
     if (type === 'affutage' || type === 'recuperation' || semaineB?.(l)) chargees = 0
-    // Phase spécifique : pas d'allégée (l'affûtage en tient lieu), sauf après 5 semaines chargées d'affilée
-    else if (chargees >= (type === 'specifique' ? 5 : maxChargees) && phaseDe(decaler(l, 7), triees).phase.type !== 'affutage') {
+    // Audit du 18/11/2026 (relu : blocs de 3-4 semaines finis par une allégée, Issurin 2010, choix d'entraîneur) : la
+    // semaine allégée tombe en FIN de phase. Bloc plein : allégée, sauf si la semaine suivante finit la phase (elle attend
+    // une semaine) ; dernière semaine d'une phase avec au moins 2 semaines chargées : allégée un peu plus tôt. Jamais
+    // juste avant l'affûtage (il en tient lieu).
+    else if (!avantAffutage && ((chargees >= max && !(derniere(decaler(l, 7)) && !derniere(l) && chargees === max && typeDe(decaler(l, 14)) !== 'affutage'))
+      || (derniere(l) && chargees >= max - 1 && type !== 'reprise'))) {
       allegee = true
       chargees = 0
     }
@@ -938,13 +974,13 @@ export function estSemaineAllegee(lundi: string, phases: Phase[], semaineB?: (lu
 
 /**
  * Volume de l'affûtage et de la récupération, en part du budget de référence (sans hausse ni −35 % en plus) :
- * affûtage 0,65 puis 0,45 la semaine de la course (Bosquet 2007 : volume −41 à −60 %, intensité gardée ;
+ * affûtage 0,65 puis 0,5 la semaine de la course, course comptée à part (Bosquet 2007 : volume −41 à −60 %, intensité gardée ;
  * coefficients : choix d'entraîneur) ; récupération après la course 0,6, sans intensité.
  */
 export function coefficientPhase(lundi: string, phases: Phase[], competitions: { date: string }[]) {
   const { phase } = phaseDe(lundi, phases)
   const fin = decaler(lundi, 6)
-  if (phase.type === 'affutage') return competitions.some((c) => c.date >= lundi && c.date <= fin) ? 0.45 : 0.65
+  if (phase.type === 'affutage') return competitions.some((c) => c.date >= lundi && c.date <= fin) ? 0.5 : 0.65
   if (phase.type === 'recuperation') return 0.6
   return undefined
 }
