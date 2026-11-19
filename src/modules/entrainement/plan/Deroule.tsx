@@ -1,5 +1,5 @@
 import { Aide } from '../../../core/ui/Aide'
-import { COULEUR_A_FOND, COULEURS_ZONES, couleurPctCP } from '../../../core/zones'
+import { COULEUR_A_FOND, COULEURS_ZONES, couleurPctCP, couleurW } from '../../../core/zones'
 import { AIDES } from '../aides'
 import { tempsLimite } from '../../../metrics/col'
 import { deplier, type Etape } from '../../../metrics/programme'
@@ -14,8 +14,10 @@ const horloge = (sec: number) => {
 }
 const duree = (sec: number) => (sec >= 60 ? `${Math.floor(sec / 60)}'${sec % 60 ? String(sec % 60).padStart(2, '0') : ''}` : `${sec}"`)
 
-/** Profil de la séance comme sur Zwift : une barre par étape, hauteur = watts, couleur = zone (en % de la CP). */
+/** Profil de la séance comme sur Zwift : une barre par étape, hauteur = watts, couleur = ta zone (Réglages → Zones). */
 export function Profil({ etapes, cpW, extensible = false }: { etapes: Etape[]; cpW?: number; extensible?: boolean }) {
+  const [r] = useReglagesEntrainement()
+  const zones = r.zonesVelo
   // Répétitions déroulées : une barre par effort et par récup, comme sur Zwift
   const blocs = deplier(etapes).filter((e) => e.dureeSec > 0)
   const total = blocs.reduce((t, e) => t + e.dureeSec, 0)
@@ -28,13 +30,13 @@ export function Profil({ etapes, cpW, extensible = false }: { etapes: Etape[]; c
       <svg viewBox="0 0 1000 60" preserveAspectRatio="none" className={`monte-svg mt-2 block w-full rounded-lg bg-surface-2 ${extensible ? 'h-auto min-h-8 flex-1' : 'h-14'}`} aria-hidden>
         {blocs.map((e, i) => {
           const h = e.w ? Math.max(0.12, e.w / wMax) * 56 : aFond(e) ? 56 : 20
-          return <rect key={i} x={departs[i]} y={60 - h} width={Math.max(largeurs[i] - 1, 1)} height={h} rx="3" fill={couleur(e, cpW)} style={{ animationDelay: `${Math.min(i * 12, 500)}ms` }} />
+          return <rect key={i} x={departs[i]} y={60 - h} width={Math.max(largeurs[i] - 1, 1)} height={h} rx="3" fill={couleur(e, cpW, zones)} style={{ animationDelay: `${Math.min(i * 12, 500)}ms` }} />
         })}
       </svg>
       {/* Légende des zones présentes (la couleur n'est jamais seule) */}
       {cpW && (
         <p className="mt-1 flex flex-wrap gap-x-2.5 gap-y-0.5 text-[11px] text-texte-3">
-          {[...new Set(blocs.filter((e) => e.w || aFond(e)).map((e) => couleur(e, cpW)))].map((c) => (
+          {[...new Set(blocs.filter((e) => e.w || aFond(e)).map((e) => couleur(e, cpW, zones)))].map((c) => (
             <span key={c} className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm" style={{ background: c }} />{c === COULEUR_A_FOND ? 'à fond' : `Z${COULEURS_ZONES.indexOf(c as (typeof COULEURS_ZONES)[number]) + 1}`}</span>
           ))}
         </p>
@@ -46,7 +48,7 @@ export function Profil({ etapes, cpW, extensible = false }: { etapes: Etape[]; c
 // Une étape sans watts n'est « à fond » que si elle le dit (sprint) : sinon gris neutre (16/11/2026 : une séance au seuil
 // sans watts s'affichait toute « à fond »)
 const aFond = (e: Pick<Etape, 'w' | 'libelle'>) => !e.w && /fond|sprint/i.test(e.libelle ?? '')
-const couleur = (e: Pick<Etape, 'w' | 'libelle'>, cpW?: number) => (e.w && cpW ? couleurPctCP((e.w / cpW) * 100) : aFond(e) ? couleurPctCP(undefined) : '#8b949e')
+const couleur = (e: Pick<Etape, 'w' | 'libelle'>, cpW?: number, zones?: { wMax?: number }[]) => (e.w && cpW ? couleurW(e.w, cpW, zones) : aFond(e) ? couleurPctCP(undefined) : '#8b949e')
 
 /** Déroulé minute par minute d'une séance vélo (à suivre sur le compteur), en couleurs de zones comme sur Zwift. */
 export function Deroule({ etapes, sansProfil = false }: { etapes: Etape[]; sansProfil?: boolean }) {
@@ -80,7 +82,7 @@ export function Deroule({ etapes, sansProfil = false }: { etapes: Etape[]; sansP
           // Temps limite à ces watts (modèle CP + W′) : à quel point la répétition approche de l'échec
           const tte = cible.w && r.wPrimeKj ? tempsLimite(cible.w, cpW, r.wPrimeKj) : undefined
           return (
-            <li key={i} className="flex gap-2 border-l-4 px-2.5 py-2" style={{ borderLeftColor: e.dureeSec > 0 ? couleur(cible, cpW) : 'transparent' }}>
+            <li key={i} className="flex gap-2 border-l-4 px-2.5 py-2" style={{ borderLeftColor: e.dureeSec > 0 ? couleur(cible, cpW, r.zonesVelo) : 'transparent' }}>
               <span className="w-11 shrink-0 tabular-nums text-texte-3">{horloge(e.debutSec)}</span>
               <span className="min-w-0 flex-1">
                 {e.libelle}
@@ -94,7 +96,7 @@ export function Deroule({ etapes, sansProfil = false }: { etapes: Etape[]; sansP
                   </span>
                 )}
               </span>
-              {e.dureeSec > 0 && <span className="shrink-0 font-semibold tabular-nums" style={{ color: couleur(cible, cpW) }}>{cible.wMin && cible.wMax ? `${cible.wMin}-${cible.wMax} W` : cible.w ? `${cible.w} W` : aFond(cible) ? 'à fond' : ''}</span>}
+              {e.dureeSec > 0 && <span className="shrink-0 font-semibold tabular-nums" style={{ color: couleur(cible, cpW, r.zonesVelo) }}>{cible.wMin && cible.wMax ? `${cible.wMin}-${cible.wMax} W` : cible.w ? `${cible.w} W` : aFond(cible) ? 'à fond' : ''}</span>}
             </li>
           )
         })}

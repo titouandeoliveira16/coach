@@ -69,6 +69,13 @@ de conversation quand il faut s'en servir. Ici ne restent que les chantiers tech
 - 19/11 : secrets `CLE_CHIFFREMENT` (Supabase), `SAUVEGARDE_CLE` et `SUPABASE_JETON_SAUVEGARDE` (GitHub, jeton en lecture
   seule) ajoutés ; mots de passe iGPSPORT rechiffrés, clés Intervals rechiffrées à leur prochaine lecture ; 1re sauvegarde
   réussie. N4 et N5 abandonnés.
+- 14.18.1 (19/11, remontés par Titouan) : semaines construites à l'avance en fausse reprise (« 53 jours sans vélo » compté
+  jusqu'à une date future) et baisse en cascade ; recalcul en milieu de semaine qui perdait la séance au 1er seuil, la 2e
+  séance dure et réécrivait le budget de la semaine (bonds de +15 à +35 % la semaine d'après) ; technique VTT refaite deux
+  fois ; 1er seuil affiché en Z3 (couleurs en % de CP au lieu de tes zones) ; graphique de la Saison qui ne lisait que
+  les 3 premières semaines construites. L'audit construisait chaque semaine le lundi même : il teste maintenant aussi les
+  semaines construites 6 semaines à l'avance (et le graphique), et un recalcul le vendredi matin.
+- À voir : après une panne, la séance dure reportée le même jour que la sortie longue disparaît au recalcul suivant.
 - Contrôle visuel du 19/11 : « Programme adapté » sur un profil vide annonce un total vélo au-dessus du budget (1825 kJ
   pour 1485 visés) ; à vérifier sur un vrai profil.
 - Lot 1 bis fait en 14.14.0 : bouton « J'ai changé de montre » (Réglages → Intervals.icu), fond et fatigue qui partent de

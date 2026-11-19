@@ -7,7 +7,8 @@ import { heuresAu, programmeAu } from '../../reglagesEntrainement'
 import type { ReglagesEntrainement, SemaineTypeFuture } from '../../types'
 import { adapterDuJour } from '../adaptation'
 import { declarerPanneVelo } from '../imprevus'
-import { genererSemaineVelo, lireMeta, seancesClesSautees } from '../programme'
+import { chargesSemaine } from '../donnees'
+import { genererSemaineEtSuite, genererSemaineVelo, lireMeta, saison, seancesClesSautees } from '../programme'
 
 /**
  * Audit complet du moteur (14/11/2026) : des centaines de profils tirés au hasard (reproductibles par leur graine),
@@ -122,7 +123,9 @@ export async function simuler(sc: Scenario, detail = false, journal?: string[]):
   let refPrec: number | undefined
   let prec: { budget: number; allegee: boolean; reduite: boolean } | undefined
   const derniers = new Map<string, { palier: number; resultat?: string }>()
+  let nSemaine = 0
   for (let l = DEBUT; l <= decalerJour(fin, 14); l = decalerJour(l, 7)) {
+    nSemaine++
     vi.setSystemTime(new Date(`${l}T06:00:00`))
     try {
       await genererSemaineVelo(l)
@@ -252,13 +255,70 @@ export async function simuler(sc: Scenario, detail = false, journal?: string[]):
 
     if (journal) journal.push(`${l} · ${phase.type}${meta.allegee ? ' (allégée)' : ''} · budget ${meta.budget} kJ (réf. ${meta.budgetRef}, visé ${meta.budgetVise ?? meta.budget}) · ${meta.raison}\n    ${toutes.filter((x) => x.date <= decalerJour(l, 6)).sort((x, y) => x.date.localeCompare(y.date)).map((x) => `${x.date.slice(5)} ${x.titre} (${x.dureeMin}′${x.kjPrevu ? `, ${x.kjPrevu} kJ` : ''})`).join(' | ')}`)
     if (detail && problemes.some((x) => x.startsWith(l))) problemes.push(`   semaine : ${toutes.filter((x) => x.date <= decalerJour(l, 6)).sort((x, y) => x.date.localeCompare(y.date)).map((x) => `${x.date.slice(5)} ${x.sport} ${x.titre} (${x.dureeMin}′, ${x.intensite})`).join(' | ')} · roles ${prog.semaineType.join(',')} · courses ${courses.filter(ici).join(',')}`)
+    // Semaines construites à l'avance (19/11/2026 : recalculées loin devant, elles se croyaient après un arrêt — « 53 jours
+    // sans vélo » — et tombaient toutes en reprise sans intensité ; le graphique de la Saison disait autre chose)
+    if (nSemaine === 4 && decalerJour(l, 42) <= fin) {
+      const loin = decalerJour(l, 42)
+      try {
+        await genererSemaineEtSuite(loin)
+        const vue = await saison()
+        for (let w = decalerJour(l, 7); w <= loin; w = decalerJour(w, 7)) {
+          const mw = await lireMeta(w)
+          const pw = (t: string) => problemes.push(`${w} [construite le ${l}] : ${t}`)
+          if (!mw) { pw('pas construite'); continue }
+          const typeW = phaseDe(w, programmeAu(e.programme!, w).phases).phase.type
+          if (/sans vélo|très légères/.test(mw.raison)) pw(`fausse reprise : ${mw.raison}`)
+          const sw = (await db.prevues.where('date').between(w, decalerJour(w, 6), true, true).toArray()).filter((x) => x.sport === 'velo' && x.origine === 'auto' && x.statut === 'prevue')
+          const avecIntensite = sw.some((x) => INTENSES.includes(x.velo?.famille ?? '') || ['test', 'course'].includes(x.velo?.famille ?? '') || x.intensite === 'haute')
+          if (!['reprise', 'recuperation'].includes(typeW) && sw.length >= 3 && !avecIntensite) pw(`aucune intensité (${typeW}${mw.allegee ? ', allégée' : ''}) : ${sw.map((x) => x.titre).join(' | ')}`)
+          // Le graphique de la Saison montre le même chiffre que la Semaine
+          const barre = vue.semaines.find((x) => x.lundi === w)
+          const prevu = Math.round((await chargesSemaine(w)).kjPrevus)
+          if (barre && Math.abs(barre.budget - prevu) > 3) pw(`graphique ${barre.budget} kJ, Semaine ${prevu} kJ`)
+        }
+      } catch (err) {
+        p(`construction à l'avance impossible (${(err as Error).message})`)
+      }
+    }
+
     // La semaine vécue
     const malade = a() < vie.malade
     for (const m of muscus) if (!malade && a() >= vie.muscuSautee) await db.prevues.put({ ...m, statut: 'faite' })
     const vecue = (await db.prevues.where('date').between(l, decalerJour(l, 6), true, true).toArray()).filter((x) => x.sport === 'velo' && x.origine === 'auto' && x.statut === 'prevue').sort((x, y) => x.date.localeCompare(y.date))
     const rouges = a() < vie.rouges ? 2 : 0
+    // Recalcul en milieu de semaine, vendredi matin (19/11/2026 : la séance au 1er seuil du vendredi devenait une Z2 + sprints
+    // quand il ne restait qu'une endurance) : ce qui était prévu après jeudi garde sa séance au 1er seuil et son intensité
+    // (sauf si une séance dure manquée plus tôt prend sa place : report d'intensité)
+    const jeudi = decalerJour(l, 3)
+    const sv1Avant = vecue.some((x) => x.date > jeudi && x.velo?.formatId === 'sv1-dedie')
+    const intenseAvant = vecue.some((x) => x.date > jeudi && INTENSES.includes(x.velo?.famille ?? ''))
+    let recalculee = false
     for (const [i, s] of vecue.entries()) {
       if (i < rouges) await db.decisions.put({ date: s.date, couleur: 'rouge', force: true } as never)
+      // (pas les semaines de panne : la séance dure y est reportée après la réparation ; ni avec une muscu cochée d'avance
+      // après jeudi, artefact de la simulation qui coche la muscu de toute la semaine dès le lundi)
+      if (!recalculee && s.date > jeudi && !malade && !rouges && !panne && !muscus.some((m) => m.date > jeudi)) {
+        recalculee = true
+        vi.setSystemTime(new Date(`${decalerJour(jeudi, 1)}T06:00:00`))
+        await genererSemaineVelo(l).catch((err: Error) => p(`recalcul du jeudi impossible (${err.message})`))
+        const apres = (await db.prevues.where('date').between(decalerJour(jeudi, 1), decalerJour(l, 6), true, true).toArray()).filter((x) => x.sport === 'velo' && x.origine === 'auto' && x.statut === 'prevue')
+        const dureManquee = (await db.prevues.where('date').between(l, jeudi, true, true).toArray()).some((x) => x.statut === 'non-faite' && INTENSES.includes(x.velo?.famille ?? ''))
+        if (sv1Avant && !dureManquee && !apres.some((x) => x.velo?.formatId === 'sv1-dedie')) p(`recalcul du jeudi : séance au 1er seuil perdue (avant : ${vecue.filter((x) => x.date > jeudi).map((x) => `${x.date.slice(5)} ${x.titre}`).join(' | ')} ; après : ${apres.map((x) => `${x.date.slice(5)} ${x.titre}`).join(' | ')} ; fait : ${(await db.prevues.where('date').between(l, jeudi, true, true).toArray()).filter((x) => x.sport === 'velo').map((x) => `${x.date.slice(5)} ${x.titre} ${x.statut}`).join(' | ')})`)
+        const repriseVraie = /sans vélo/.test((await lireMeta(l))?.raison ?? '')
+        if (intenseAvant && !repriseVraie && !apres.some((x) => INTENSES.includes(x.velo?.famille ?? ''))) p(`recalcul du jeudi : intensité perdue (avant : ${vecue.filter((x) => x.date > jeudi).map((x) => `${x.date.slice(5)} ${x.titre}`).join(' | ')} ; après : ${apres.map((x) => `${x.date.slice(5)} ${x.titre}`).join(' | ')} ; fait : ${(await db.prevues.where('date').between(l, jeudi, true, true).toArray()).filter((x) => x.sport === 'velo').map((x) => `${x.date.slice(5)} ${x.titre} ${x.statut}`).join(' | ')})`)
+        vi.setSystemTime(new Date(`${l}T06:00:00`))
+        // La suite de la semaine vit avec les séances recalculées
+        const suite = apres.sort((x, y) => x.date.localeCompare(y.date))
+        for (const t of suite) {
+          const intenseT = INTENSES.includes(t.velo?.famille ?? '')
+          if (a() < vie.rate) { await db.prevues.put({ ...t, statut: 'non-faite' }); continue }
+          const resultatT = intenseT ? (a() < vie.echec ? 'ratee' : 'reussie') : undefined
+          if (intenseT) derniers.set(t.velo!.famille, { palier: t.velo!.palier ?? 0, resultat: t.velo!.allegee ? undefined : resultatT })
+          await db.prevues.put({ ...t, statut: 'faite', ...(resultatT ? { resultat: resultatT } : {}) } as never)
+          await db.seances.put({ id: `s-${t.id}`, date: t.date, sport: 'velo', dureeSec: Math.round(t.dureeMin * 60), kj: Math.round(t.kjPrevu ?? 0), prevueId: t.id, source: 'manuel' } as never)
+        }
+        break
+      }
       const intense = INTENSES.includes(s.velo?.famille ?? '')
       if (malade || a() < vie.rate || (intense && sc.sauts.includes(l))) { await db.prevues.put({ ...s, statut: 'non-faite' }); continue }
       const part = a() < vie.courte ? 0.7 : 1

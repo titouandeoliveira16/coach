@@ -26,7 +26,7 @@ import { joursPanneVelo } from '../plan/imprevus'
 import { annulerSemaineChargee, lireSemaineChargee, passerSemaineChargee } from '../plan/semaineChargee'
 import { FormulairePrevue } from '../plan/FormulairePrevue'
 import { annulerPrevue, changerDeJour, chargesSemaine, joursDe, joursPourDeplacer, supprimerPrevue } from '../plan/donnees'
-import { alertesCumul, estIntensite, genererSemaineVelo, lireMeta, mettreSemaineAJour, noterResultat } from '../plan/programme'
+import { alertesCumul, estIntensite, genererSemaineEtSuite, lireMeta, mettreSemaineAJour, noterResultat } from '../plan/programme'
 import { programmeDe, useReglagesEntrainement } from '../reglagesEntrainement'
 import { lundiDe, nouvelId } from '../seances/donnees'
 import { RAISONS, type Raison, type Seance, type SeancePrevue } from '../types'
@@ -168,7 +168,7 @@ function CarteVelo({ lundi, deps, onMessage, onPrecedente, onSuivante }: { lundi
   const generer = async () => {
     setOccupe(true)
     try {
-      await genererSemaineVelo(lundi)
+      await genererSemaineEtSuite(lundi)
       onMessage([])
     } catch (e) {
       onMessage([(e as Error).message])

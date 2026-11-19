@@ -11,6 +11,18 @@ export const SEUIL1_PCT_CP = 0.7
 export const COULEURS_ZONES = ['#7c7b74', '#3b9eff', '#46a758', '#ffc53d', '#f76b15', '#e5484d'] as const
 export const COULEUR_A_FOND = '#a371f7'
 
+/**
+ * Couleur d'une puissance selon TES zones (Réglages → Zones), quand elles existent : la limite Z2 / Z3 y suit ton
+ * 1er seuil (19/11/2026 : les blocs au 1er seuil, en haut de ta Z2, s'affichaient en Z3 avec les bornes fixes en % de CP).
+ */
+export function couleurW(w: number, cpW: number, zones?: { wMax?: number }[]) {
+  if (zones?.length === COULEURS_ZONES.length) {
+    const i = zones.findIndex((z) => z.wMax === undefined || Math.round(w) <= z.wMax)
+    if (i >= 0) return COULEURS_ZONES[i]
+  }
+  return couleurPctCP((w / cpW) * 100)
+}
+
 export function couleurPctCP(pct: number | undefined) {
   if (pct === undefined) return COULEUR_A_FOND
   return COULEURS_ZONES[[55.5, 70.5, 90.5, 100.5, 120.5].filter((s) => pct >= s).length]
