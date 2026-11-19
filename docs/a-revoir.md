@@ -66,8 +66,9 @@ de conversation quand il faut s'en servir. Ici ne restent que les chantiers tech
   page `public/confidentialite.html`, code mort retiré, rappels avec délai et envois en parallèle, abonnement aux rappels
   refait à l'ouverture, audit du moteur et tests d'écrans (`tests-ecrans/parcours.mjs`) dans GitHub, clé de chiffrement
   dédiée et sauvegarde chiffrée du lundi (voir supabase/README.md).
-- À faire par Titouan : ajouter les secrets `CLE_CHIFFREMENT` (Supabase) et `SAUVEGARDE_CLE` (GitHub), sinon la clé reste
-  l'ancienne et aucune sauvegarde n'est faite. N4 et N5 abandonnés (19/11).
+- 19/11 : secrets `CLE_CHIFFREMENT` (Supabase), `SAUVEGARDE_CLE` et `SUPABASE_JETON_SAUVEGARDE` (GitHub, jeton en lecture
+  seule) ajoutés ; mots de passe iGPSPORT rechiffrés, clés Intervals rechiffrées à leur prochaine lecture ; 1re sauvegarde
+  réussie. N4 et N5 abandonnés.
 - Contrôle visuel du 19/11 : « Programme adapté » sur un profil vide annonce un total vélo au-dessus du budget (1825 kJ
   pour 1485 visés) ; à vérifier sur un vrai profil.
 - Lot 1 bis fait en 14.14.0 : bouton « J'ai changé de montre » (Réglages → Intervals.icu), fond et fatigue qui partent de
