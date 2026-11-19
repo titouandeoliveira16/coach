@@ -314,7 +314,8 @@ export async function simuler(sc: Scenario, detail = false, journal?: string[]):
         vi.setSystemTime(new Date(`${l}T06:00:00`))
         // La semaine d'après part du budget tel que ce recalcul l'a laissé
         const mR = await lireMeta(l)
-        if (mR) { refPrec = mR.budgetRef; prec = { budget: mR.budget, allegee: mR.allegee, reduite: (mR.budgetVise ?? mR.budget) < mR.budgetRef * 0.9 } }
+        // (le budget visé de la semaine est fixe ; le total prévu, lui, baisse quand une séance est manquée)
+        if (mR) { refPrec = mR.budgetRef; prec = { budget: mR.budgetVise ?? mR.budget, allegee: mR.allegee, reduite: (mR.budgetVise ?? mR.budget) < mR.budgetRef * 0.9 } }
         // La suite de la semaine vit avec les séances recalculées
         const suite = apres.sort((x, y) => x.date.localeCompare(y.date))
         for (const t of suite) {
