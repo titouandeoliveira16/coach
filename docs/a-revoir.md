@@ -63,4 +63,4 @@ de conversation quand il faut s'en servir. Ici ne restent que les chantiers tech
   .FIT à 1 point toutes les 2-4 s et pauses, sortie à la main + importée = une seule, une petite sortie n'emporte plus la
   séance d'un autre jour, clé Intervals refusée signalée sur Aujourd'hui, flux non reçu relu au prochain import.
 - 19/11/2026 : jeton `SUPABASE_ACCESS_TOKEN` des GitHub Actions renouvelé (l'ancien était refusé) ; déploiement des 5
-  fonctions vérifié. Il expire : penser à le renouveler avant sa date de fin (supabase.com → Access Tokens).
+  fonctions vérifié. Jeton sans date de fin : le supprimer dans supabase.com → Access Tokens s'il fuit.
