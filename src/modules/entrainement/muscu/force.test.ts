@@ -75,3 +75,18 @@ describe('muscu du cycliste (13/11/2026)', () => {
     expect(preventionDe({ lieu: 'maison', vtt: true }).map((x) => x.nom)).toContain('Pompes')
   })
 })
+
+describe('audit du 18/11/2026', () => {
+  const roles: Role[] = ['renfo', 'velo-dur', 'renfo', 'velo-z2', 'libre', 'velo-long', 'libre']
+  const dates = ['2026-11-16', '2026-11-17', '2026-11-18', '2026-11-19', '2026-11-20', '2026-11-21', '2026-11-22']
+  it('ne propose jamais un jour passé ni un jour qui a déjà sa muscu', () => {
+    const j = joursMuscu({ roles, dates, n: 1, cles: ['2026-11-17', '2026-11-21'], durs: ['2026-11-17'], courses: [], avant: '2026-11-18', deja: ['2026-11-16'] })
+    expect(j.every((x) => x.date >= '2026-11-18' && x.date !== '2026-11-16')).toBe(true)
+    expect(j.every((x) => Math.abs(Date.parse(x.date) - Date.parse('2026-11-16')) >= 2 * 86_400_000)).toBe(true)
+  })
+  it('−5 % après deux échecs baisse vraiment la charge, même sous 50 kg', () => {
+    const exo = EXOS.salle.find((e) => e.pas === 5 && !e.sansCharge)!
+    const r = apresSeance(exo, { charge: 45, echecs: 1 }, { charge: 45, reps: [6, 5, 4], cible: 6, series: 3 })
+    expect(r.charge).toBe(40)
+  })
+})

@@ -6,7 +6,7 @@ de conversation quand il faut s'en servir. Ici ne restent que les chantiers tech
 
 ## Audit du 11/11/2026 (voir AUDIT.md)
 - Plan de correction en 9 étapes, suivi dans AUDIT.md.
-- Supabase : exécuter `sql/05-synchro-seq.sql` si ce n'est pas déjà fait (`sql/06-rappels-secret.sql` : fait le 13/11/2026, rappels vérifiés).
+- Supabase : `sql/05` et `sql/06` sont joués (colonne `seq` présente, rappels vérifiés le 13/11/2026).
 
 ## Audit des experts du 14/11/2026 (lot 1 fait en 14.1.0)
 - Fait : synchro (coupures iPhone, ouverture hors ligne), limites serveur (`sql/08-limites.sql`, appliqué), inscription
@@ -43,3 +43,15 @@ de conversation quand il faut s'en servir. Ici ne restent que les chantiers tech
 - Catalogue : certains PMID restent à vérifier (PubMed inaccessible depuis l'environnement).
 - Budget de l'entretien après la dernière course A (reste au niveau d'avant).
 - Plafond « heures par semaine » du profil sportif : vérifier qu'il ne bloque pas la hausse des kJ.
+
+## Audit complet du 18/11/2026 (32 experts, lot 1 fait en 14.12.0)
+- Fait : recalcul de la semaine qui n'écrase plus une séance faite ou déplacée (test `plan/regeneration.test.ts`), muscu
+  jamais sur un jour passé ni deux fois le même jour, classement « dure » sur la puissance lissée 30 s (≥ 3 min au-dessus de
+  la CP), technique VTT non jugée sur les watts, test CP impossible refusé, VFC et pouls hors limites ignorés, feu sans
+  « tout est normal » quand il manque des mesures, célébration remise à l'écran, Aujourd'hui qui voit le nouveau jour,
+  remboursement du mois suivant, rappels de Révision qui ne se remplissent plus, synchro (horloge, changement de compte,
+  Safari qui vide la base, envoi refusé coupé en deux), écran « Nouvelle version » après une mise à jour, aides corrigées.
+- Reste (lots 2 à 4, choix à faire) : saison route et VTT (allégées, sortie longue, semaine de course A, affûtage VTT),
+  dimanche → lundi (jours durs, muscu), règle « saturation » du feu, pouls et maladie, changement de montre, charge (TSS ou
+  FC), une seule FTP, nutrition (plancher du maintien, rappels de pesée, mineurs), muscu des mineurs, Révision recalée sur
+  le concours, accessibilité, textes, sauvegarde chiffrée, clé de chiffrement dédiée, page de confidentialité, audit en CI.

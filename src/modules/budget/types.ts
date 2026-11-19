@@ -38,6 +38,8 @@ export interface Mouvement {
    * des dépenses de cette catégorie au lieu de compter comme un revenu.
    */
   rembourse?: string
+  /** Mois de la dépense remboursée (AAAA-MM), si ce n'est pas le mois du remboursement (ami qui rembourse le mois suivant) */
+  rembourseMois?: string
 }
 
 /** Abonnement qui revient chaque mois (Spotify, téléphone…), confirmé à la main le jour où il passe. */

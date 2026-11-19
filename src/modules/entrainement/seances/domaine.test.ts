@@ -18,9 +18,11 @@ describe('intensité d’une séance', () => {
   })
 })
 
-it('avec la puissance : haute si ≥ 1 min au-dessus de la CP, moyenne si ≥ 10 min entre 70 et 100 %, même si la FC dit autre chose', () => {
-  const v = (tp: [number, number, number], c: Partial<Seance> = {}) => s({ sport: 'velo', tempsPuissance: tp, tempsZones: [3000, 600, 0, 0, 120], ...c })
-  expect(domaineDe(v([3000, 300, 90]), bornes)).toBe('haute')
+it('avec la puissance : haute si ≥ 3 min au-dessus de la CP (lissée 30 s), moyenne si ≥ 10 min entre 70 et 100 %, même si la FC dit autre chose', () => {
+  const v = (tp: [number, number, number], c: Partial<Seance> = {}) => s({ sport: 'velo', tempsPuissance: tp, tpLisse: true, tempsZones: [3000, 600, 0, 0, 120], ...c })
+  expect(domaineDe(v([3000, 300, 200]), bornes)).toBe('haute')
+  // Audit du 18/11/2026 : une Z2 de 3 h avec des relances (temps brut, d'avant le lissage) reste facile
+  expect(domaineDe(v([10000, 300, 443], { tpLisse: undefined }), bornes)).toBe('basse')
   expect(domaineDe(v([2400, 1500, 30]), bornes)).toBe('moyenne')
   expect(domaineDe(v([3500, 200, 20]), bornes)).toBe('basse')
   expect(domaineDe(v([3500, 200, 20], { rpe: 8 }), bornes)).toBe('haute')

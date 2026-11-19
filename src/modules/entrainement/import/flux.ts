@@ -80,9 +80,16 @@ export function analyserFlux(flux: Flux, r: Resume, c: Contexte): Seance {
     if (Object.keys(meilleurs).length) s.meilleurs = meilleurs
     // Temps par domaine de puissance (pour juger l'intensité avec les watts plutôt qu'avec la FC)
     if (c.cpW) {
+      // Puissance lissée sur 30 s (moyenne glissante) : une relance de 10 s ne compte pas comme du temps au-dessus de la CP
       const tp: [number, number, number] = [0, 0, 0]
-      for (const w of w1Hz) tp[w > c.cpW ? 2 : w >= SEUIL1_PCT_CP * c.cpW ? 1 : 0]++
+      let somme = 0
+      for (let i = 0; i < w1Hz.length; i++) {
+        somme += w1Hz[i] - (i >= 30 ? w1Hz[i - 30] : 0)
+        const w = somme / Math.min(30, i + 1)
+        tp[w > c.cpW ? 2 : w >= SEUIL1_PCT_CP * c.cpW ? 1 : 0]++
+      }
       s.tempsPuissance = tp
+      s.tpLisse = true
     }
   }
   if (aFc && dureeSec >= DUREE_MIN_DECOUPLAGE) {

@@ -8,7 +8,15 @@ import { supabase } from './supabase'
 const dejaSignalees = new Set<string>()
 let compte = 0
 
+/** Rechargement pour une nouvelle version en cours : les erreurs des morceaux déjà déchargés ne sont pas des bugs. */
+let rechargement = false
+export function rechargerPourNouvelleVersion() {
+  rechargement = true
+  location.reload()
+}
+
 export function signalerErreur(e: unknown, contexte?: string) {
+  if (rechargement) return
   try {
     const err = e instanceof Error ? e : new Error(typeof e === 'string' ? e : typeof (e as { message?: unknown })?.message === 'string' ? (e as { message: string }).message : `Erreur sans message (${typeof e})`)
     // Coupures réseau : normales hors ligne, pas des bugs

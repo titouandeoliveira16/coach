@@ -4,7 +4,7 @@ import { modeleForme } from '../../../metrics/charge'
 import { analyserVfc } from '../../../metrics/vfc'
 import { lundiDe } from '../seances/donnees'
 import { poidsAu } from '../forme/pesees'
-import { calculerCP } from '../calculs'
+import { calculerCP, testImpossible } from '../calculs'
 import { DUREES_CP } from '../../../metrics/puissance'
 import { programmeDe } from '../reglagesEntrainement'
 import type { ReglagesEntrainement } from '../types'
@@ -23,7 +23,7 @@ export function estimerCp(seances: { sport: string; date: string; meilleurs?: Re
     const w = Math.max(0, ...recents.map((s) => s.meilleurs?.[d] ?? 0))
     return w ? [{ dureeSec: d, puissanceW: w }] : []
   })
-  const estimation = efforts.length >= 2 ? calculerCP(efforts) : undefined
+  const estimation = efforts.length >= 2 && !testImpossible(efforts) ? calculerCP(efforts) : undefined
   return estimation && estimation.cpW > 0 && estimation.r2 > 0.95 ? Math.round(estimation.cpW) : undefined
 }
 

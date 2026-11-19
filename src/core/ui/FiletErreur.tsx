@@ -1,5 +1,5 @@
 import { Component, type ReactNode } from 'react'
-import { signalerErreur } from '../erreurs'
+import { rechargerPourNouvelleVersion, signalerErreur } from '../erreurs'
 
 /** Morceau d'appli introuvable : l'appli ouverte date d'avant la dernière publication. */
 export const estVersionPerimee = (e: unknown) =>
@@ -20,12 +20,21 @@ export class FiletErreur extends Component<{ children: ReactNode }, { erreur?: E
     if (estVersionPerimee(erreur)) {
       let deja = false
       try { deja = sessionStorage.getItem('coach-recharge-version') === '1'; sessionStorage.setItem('coach-recharge-version', '1') } catch { /* stockage indisponible */ }
-      if (!deja) return location.reload()
+      if (!deja) return rechargerPourNouvelleVersion()
+      // Déjà rechargé il y a moins de 10 s (audit du 18/11/2026) : pas un bug, la nouvelle version finit d'arriver
+      return
     }
     signalerErreur(erreur, 'Écran')
   }
   render() {
     if (!this.state.erreur) return this.props.children
+    if (estVersionPerimee(this.state.erreur)) return (
+      <div className="pt-sur flex min-h-[70dvh] flex-col items-center justify-center gap-3 px-6 text-center">
+        <p className="text-xl font-bold">Nouvelle version</p>
+        <p className="text-sm text-texte-2">Une mise à jour de l'appli vient d'arriver. Recharge pour l'utiliser : tes données ne sont pas touchées.</p>
+        <button type="button" className="presse mt-2 rounded-[14px] bg-accent px-6 py-3 font-bold text-fond" onClick={() => location.reload()}>Recharger</button>
+      </div>
+    )
     return (
       <div className="pt-sur flex min-h-[70dvh] flex-col items-center justify-center gap-3 px-6 text-center">
         <p className="text-xl font-bold">Oups, cet écran a planté</p>

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useBloquerFond } from '../../core/ui/bloquerFond'
 import { aujourdhui, decalerJour } from '../../core/dates'
 import { formatEuros } from '../../core/format'
-import { categoriesParUsage, moisDuRevenu, nomMois } from './calculs'
+import { categoriesParUsage, decalerMois, moisDuRevenu, nomMois } from './calculs'
 import { enregistrerMouvement, nouvelId, useBudget } from './donnees'
 import type { Mouvement, TypeMouvement } from './types'
 
@@ -41,6 +41,7 @@ export function Saisie({ initial, onFermer }: { initial?: Partial<Mouvement>; on
   const [versCompteId, setVersCompteId] = useState(initial?.versCompteId)
   const [date, setDate] = useState(initial?.date ?? dateParDefaut())
   const [rembourse, setRembourse] = useState(initial?.rembourse)
+  const [moisDernier, setMoisDernier] = useState(!!initial?.rembourseMois && initial.rembourseMois !== initial.date?.slice(0, 7))
   const [note, setNote] = useState(initial?.note ?? '')
   const [occupe, setOccupe] = useState(false)
   if (!d) return null
@@ -82,7 +83,7 @@ export function Saisie({ initial, onFermer }: { initial?: Partial<Mouvement>; on
     const m: Mouvement = {
       id: initial?.id ?? nouvelId(), type, montant, date, compteId: de!,
       ...(avecCategorie ? { categorieId } : { versCompteId: vers }),
-      ...(remboursement && rembourse ? { rembourse } : {}),
+      ...(remboursement && rembourse ? { rembourse, ...(moisDernier ? { rembourseMois: decalerMois(date.slice(0, 7), -1) } : {}) } : {}),
       ...(note.trim() ? { note: note.trim() } : {}),
       ...(initial?.abonnementId ? { abonnementId: initial.abonnementId } : {}),
     }
@@ -143,6 +144,15 @@ export function Saisie({ initial, onFermer }: { initial?: Partial<Mouvement>; on
                   {depensesPrincipales.map((c) => (
                     <button key={c.id} type="button" onClick={() => setRembourse(c.id)}
                       className={`rounded-full border px-3 py-1.5 text-sm font-semibold ${rembourse === c.id ? 'border-accent bg-accent text-fond' : 'border-bordure bg-surface-2 text-texte-2'}`}>{c.emoji} {c.nom}</button>
+                  ))}
+                </div>
+                <p className="mt-3 text-sm text-texte-2">C'était une dépense de :</p>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {[false, true].map((avant) => (
+                    <button key={String(avant)} type="button" aria-pressed={moisDernier === avant} onClick={() => setMoisDernier(avant)}
+                      className={`rounded-full border px-3 py-1.5 text-sm font-semibold ${moisDernier === avant ? 'border-accent bg-accent text-fond' : 'border-bordure bg-surface-2 text-texte-2'}`}>
+                      {avant ? nomMois(decalerMois(date.slice(0, 7), -1)) : 'ce mois-ci'}
+                    </button>
                   ))}
                 </div>
               </div>

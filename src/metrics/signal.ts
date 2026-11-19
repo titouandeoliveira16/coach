@@ -175,7 +175,10 @@ export function calculerSignal(e: EntreeSignal, s: Seuils = SEUILS_DEFAUT): Sign
     alertes.length === 0
       ? calibrationVfc
         ? 'Aucun signal d’alerte (VFC encore en calibration).'
-        : 'Tous tes indicateurs sont dans ta zone normale.'
+        // Audit du 18/11/2026 : moins de 3 mesures sur 7 jours, la VFC n'est pas jugée ; ne pas dire « tout est normal »
+        : vfc.ln7 === undefined
+          ? 'Pas assez de mesures de nuit cette semaine (moins de 3) : le feu ne juge que ce qui est mesuré. Porte ta montre la nuit.'
+          : 'Tous tes indicateurs sont dans ta zone normale.'
       : alertes.map((a) => a.texte).join(' · ')
 
   return { couleur, recommandation, alertes, calibrationVfc, raison, details: detailsSignal(e, alertes, calibrationVfc, s) }

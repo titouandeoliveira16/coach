@@ -194,6 +194,8 @@ export interface Seance {
   tempsZones?: number[]
   /** Secondes par domaine de puissance : sous le 1er seuil (70 % de la CP), de 70 à 100 %, au-dessus de la CP */
   tempsPuissance?: [number, number, number]
+  /** Vrai si tempsPuissance est compté sur la puissance lissée sur 30 s (depuis 14.12.0) */
+  tpLisse?: boolean
   trimp?: number
   /** Vrai si le TRIMP vient du flux de FC complet (sinon : estimé depuis la FC moyenne) */
   trimpFlux?: boolean

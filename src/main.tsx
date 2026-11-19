@@ -7,7 +7,7 @@ import { calculEnCours } from './core/calcul'
 import { registerSW } from 'virtual:pwa-register'
 import { apresPremiereSynchro, demarrerSynchro } from './core/synchro'
 import { synchroniserRappels } from './core/notifications'
-import { signalerErreur, surveillerErreurs } from './core/erreurs'
+import { rechargerPourNouvelleVersion, signalerErreur, surveillerErreurs } from './core/erreurs'
 
 surveillerErreurs()
 demanderStockagePersistant()
@@ -23,7 +23,7 @@ window.addEventListener('vite:preloadError', (ev) => {
     sessionStorage.setItem('coach-recharge-version', '1')
   } catch { return }
   ev.preventDefault()
-  location.reload()
+  rechargerPourNouvelleVersion()
 })
 setTimeout(() => { try { sessionStorage.removeItem('coach-recharge-version') } catch { /* stockage indisponible */ } }, 10_000)
 

@@ -112,12 +112,20 @@ export const estRemboursement = (m: Mouvement) => m.type === 'revenu' && !!m.rem
  * dépenses − remboursements rattachés (jamais en dessous de 0 pour une catégorie).
  */
 export function depensesParCategorie(mouvements: Mouvement[], categories: Categorie[], mois: string, exacte = false): Map<string, number> {
-  const r = new Map<string, number>()
   const cle = (id?: string) => (exacte ? id : racine(id, categories)) ?? 'sans'
-  for (const m of mouvements.filter(duMois(mois))) {
-    if (m.type === 'depense') r.set(cle(m.categorieId), (r.get(cle(m.categorieId)) ?? 0) + m.montant)
-    else if (estRemboursement(m)) r.set(cle(m.rembourse), (r.get(cle(m.rembourse)) ?? 0) - m.montant)
+  // Audit du 18/11/2026 : un remboursement compte pour le mois de la dépense remboursée (choisi à la saisie)
+  const brut = (m0: string) => {
+    const r = new Map<string, number>()
+    for (const m of mouvements) {
+      if (m.type === 'depense' && moisDe(m.date) === m0) r.set(cle(m.categorieId), (r.get(cle(m.categorieId)) ?? 0) + m.montant)
+      else if (estRemboursement(m) && (m.rembourseMois ?? moisDe(m.date)) === m0) r.set(cle(m.rembourse), (r.get(cle(m.rembourse)) ?? 0) - m.montant)
+    }
+    return r
   }
+  const r = brut(mois)
+  // Remboursement plus grand que les dépenses de son mois (sans mois choisi) : le reste vient en moins du mois d'avant,
+  // au lieu de disparaître
+  for (const [k, v] of brut(decalerMois(mois, 1))) if (v < 0) r.set(k, (r.get(k) ?? 0) + v)
   for (const [k, v] of r) if (v <= 0) r.delete(k)
   return r
 }

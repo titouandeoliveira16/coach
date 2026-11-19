@@ -5,7 +5,7 @@ import { db } from '../../../core/db'
 import { Bouton } from '../../../core/ui/Bouton'
 import { ChampNombre } from '../../../core/ui/ChampNombre'
 import { formatNombre } from '../../../core/format'
-import { calculerCP } from '../calculs'
+import { calculerCP, testImpossible } from '../calculs'
 
 /** Durées du test 12-7-3 (minutes) */
 const DUREES_MIN = [12, 7, 3]
@@ -28,7 +28,8 @@ export function CalculateurCP({ onUtiliser, cpActuelle, onRefaire }: { onUtilise
     const p = puissances[i]
     return p ? [{ dureeSec: min * 60, puissanceW: p }] : []
   })
-  const resultat = calculerCP(efforts)
+  const impossible = testImpossible(efforts)
+  const resultat = impossible ? undefined : calculerCP(efforts)
   // Effort sous 95 % de ton meilleur récent de même durée : test sans doute pas fait à fond (seuil = choix d'entraîneur)
   const enDessous = DUREES_MIN.map((min, i) => ({ min, w: puissances[i], meilleur: meilleurs?.[i] ?? 0 })).filter((x) => x.w && x.meilleur && x.w < x.meilleur * 0.95)
   const forteHausse = resultat && cpActuelle && resultat.cpW > cpActuelle * 1.1
@@ -49,6 +50,7 @@ export function CalculateurCP({ onUtiliser, cpActuelle, onRefaire }: { onUtilise
         />
       ))}
 
+      {impossible && <p className="mt-3 rounded-xl border-[1.5px] border-attention/50 p-3 text-sm font-semibold text-attention">{impossible}</p>}
       {resultat && (
         <div className="mt-3 space-y-3">
           <div className="grid grid-cols-3 gap-2 text-center">

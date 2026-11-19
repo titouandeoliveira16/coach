@@ -31,5 +31,5 @@ it('appli coupée après les suppressions : la semaine est remise puis recalcul�
   const apres = await db.prevues.where('date').aboveOrEqual('2026-10-26').toArray()
   expect(apres.find((p) => p.id === 'a-moitie')).toBeUndefined()
   expect(apres.filter((p) => p.origine === 'auto').map((p) => p.date).sort()).toEqual(avant.filter((p) => p.origine === 'auto').map((p) => p.date).sort())
-  expect(memoire.size).toBe(0)
+  expect(memoire.has('coach-calcul-semaine')).toBe(false)
 })

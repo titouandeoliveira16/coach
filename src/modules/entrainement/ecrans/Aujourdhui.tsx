@@ -1,3 +1,4 @@
+import { useJour } from '../../../core/useJour'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { TuilesMatin } from '../forme/TuilesMatin'
 import { useState } from 'react'
@@ -26,6 +27,12 @@ import { QUESTIONS, mesuresRecentes } from '../forme/donnees'
 /** Aujourd'hui sur un seul écran : ta forme, la séance (la plus grande), la nutrition, puis pesée et imprévu en bas.
  *  Les cartes se partagent toute la hauteur ; ce qu'on ouvre prend sa place, et la page ne défile qu'ensuite. */
 export function Aujourdhui() {
+  // Nouveau jour (appli restée ouverte depuis la veille) : tout l'écran repart de zéro
+  const jour = useJour()
+  return <AujourdhuiDuJour key={jour} />
+}
+
+function AujourdhuiDuJour() {
   const recentes = useLiveQuery(() => mesuresRecentes(1))
   const [edition, setEdition] = useState(false)
   const [nutriOuverte, setNutriOuverte] = useState(false)

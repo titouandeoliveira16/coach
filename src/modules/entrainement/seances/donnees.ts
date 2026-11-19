@@ -97,8 +97,10 @@ export function domaineDe(s: Seance, bornes: BornesZones): Intensite {
   // (au moins 1 min, ou un pic en Z5 sans le détail des zones ; ceinture cardio), ton RPE (7 ou plus), le type ou le nom.
   if ((s.rpe !== undefined && s.rpe >= 7) || (s.type && TYPES_DURS.includes(s.type)) || /\b(test|comp[ée]t|vma)/i.test(s.titre ?? '')) return 'haute'
   // Avec la puissance, on juge par les watts (la FC réagit en retard et monte avec la chaleur) :
-  // au moins 1 min au-dessus de la CP = haute ; au moins 10 min entre 70 et 100 % = moyenne (choix d'entraîneur).
-  if (s.tempsPuissance) return s.tempsPuissance[2] >= 60 ? 'haute' : s.tempsPuissance[1] >= 600 ? 'moyenne' : 'basse'
+  // au moins 3 min au-dessus de la CP (puissance lissée sur 30 s) = haute ; au moins 10 min entre 70 et 100 % = moyenne
+  // (choix d'entraîneur). Audit du 18/11/2026 : seconde par seconde, une Z2 de 3 h passait 7 min au-dessus de la CP
+  // (relances, bosses) et devenait « dure » ; les séances importées avant gardent leurs secondes brutes, avec un seuil de 10 min.
+  if (s.tempsPuissance) return s.tempsPuissance[2] >= (s.tpLisse ? 180 : 600) ? 'haute' : s.tempsPuissance[1] >= 600 ? 'moyenne' : 'basse'
   const z5 = !s.sansCeinture && (s.tempsZones ? s.tempsZones[4] >= 60 : !!s.fcMax && s.fcMax >= bornes[3])
   if (z5) return 'haute'
   if (s.tempsZones) {
@@ -167,18 +169,25 @@ export function fusionner(gardee: Seance, autre: Seance): Seance {
 export async function nettoyerDoublons() {
   const toutes = (await db.seances.orderBy('date').toArray())
   const supprimees = new Set<string>()
+  const actuelles = new Map<string, Seance>()
   let n = 0
-  for (const a of toutes) {
-    if (supprimees.has(a.id)) continue
-    for (const b of toutes) {
+  for (const depart of toutes) {
+    if (supprimees.has(depart.id)) continue
+    // Revue de code du 18/11/2026 : la fusion repart de la version déjà fusionnée (3 doublons : montre, compteur, Intervals)
+    let a = actuelles.get(depart.id) ?? depart
+    for (const brut of toutes) {
+      const b = actuelles.get(brut.id) ?? brut
       if (b.id === a.id || supprimees.has(b.id) || b.date < decalerJour(a.date, -1) || b.date > decalerJour(a.date, 1)) continue
       if (!sontDoublons(a, b)) continue
       const [gardee, autre] = richesse(b) > richesse(a) ? [b, a] : [a, b]
-      await enregistrer(db.seances, fusionner(gardee, autre))
+      const fusion = fusionner(gardee, autre)
+      await enregistrer(db.seances, fusion)
       await supprimer(db.seances, autre.id)
       supprimees.add(autre.id)
+      actuelles.set(fusion.id, fusion)
       n++
       if (autre.id === a.id) break
+      a = fusion
     }
   }
   return n
@@ -189,10 +198,12 @@ export async function nettoyerDoublons() {
  * (moins de 60 % ou plus de 160 % du prévu). Choix d'entraîneur. Les séances saisies à la main depuis la séance prévue
  * (même titre) sont réputées conformes.
  */
-export function estRealiseDifferent(p: Pick<SeancePrevue, 'intensite' | 'dureeMin' | 'sport'>, s: Seance, domaine: Intensite) {
+export function estRealiseDifferent(p: Pick<SeancePrevue, 'intensite' | 'dureeMin' | 'sport'> & { velo?: { famille?: string } }, s: Seance, domaine: Intensite) {
   if (p.sport !== 'velo' || s.source === 'manuel') return false
   const rapport = s.dureeSec / 60 / Math.max(1, p.dureeMin)
   if (rapport < 0.6 || rapport > 1.6) return true
+  // Technique VTT sur le terrain (audit du 18/11/2026) : les watts ne sont pas jugés (passages courts au-dessus de la CP)
+  if (p.velo?.famille === 'vtt-terrain') return false
   return (p.intensite === 'basse' && domaine === 'haute') || (p.intensite === 'haute' && domaine === 'basse')
 }
 
@@ -252,7 +263,7 @@ export async function supprimerSeance(id: string) {
   }
   if (s?.prevueId) {
     const p = await db.prevues.get(s.prevueId)
-    if (p?.statut === 'faite') await enregistrer(db.prevues, { ...p, statut: 'prevue' })
+    if (p?.statut === 'faite') await enregistrer(db.prevues, { ...p, statut: 'prevue', realiseDifferent: undefined, titreRealise: undefined })
   }
 }
 

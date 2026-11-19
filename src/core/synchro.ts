@@ -2,7 +2,7 @@ import { useSyncExternalStore } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { TABLES_DONNEES, db } from './db'
 import type { Horodate } from './stockage'
-import { surEcriture } from './stockage'
+import { horodatage, noterHorodatage, surEcriture } from './stockage'
 import { supabase } from './supabase'
 
 /**
@@ -135,6 +135,8 @@ async function recevoir(userId: string, curseurs: Curseurs) {
         if (suppression) await db.suppressions.delete(suppression.id)
         if (l.supprime) await table.delete(l.cle)
         else await table.put({ ...l.valeur, _modifie: l.modifie_le, _recu: true })
+        // Une modification faite ensuite ici sera datée après celle reçue (téléphone en retard sur l'autre appareil)
+        noterHorodatage(l.modifie_le)
       }
     })
 
@@ -178,7 +180,9 @@ async function envoyer(userId: string, curseurs: Curseurs, tout: boolean) {
   const depuis = curseurs.envoye ?? ''
   // Date de coupure prise AVANT de lire (audit du 14/11/2026) : une écriture faite pendant la lecture des tables sera
   // plus récente que la coupure et partira la fois suivante (avant, elle pouvait passer pour « déjà envoyée »)
-  const coupure = new Date().toISOString()
+  // Prise sur l'horloge des écritures (18/11/2026) : toute écriture faite ensuite est datée strictement après la coupure,
+  // donc aucune ne peut avoir la même milliseconde qu'elle (revue de code : elle passait pour envoyée à la déconnexion)
+  const coupure = horodatage()
   // Lignes refusées la dernière fois : on les renvoie quelle que soit leur date
   const refusAvant = new Set(lireRefus(userId))
 
@@ -218,11 +222,25 @@ async function envoyer(userId: string, curseurs: Curseurs, tout: boolean) {
   if (error) {
     // Pas de code d'erreur du serveur : c'est le réseau (ex. « Load failed » de Safari), pas un refus
     if (estErreurReseau(error.message) || !(error as { code?: string }).code) throw error
-    // Envoi groupé refusé : ligne par ligne ; une ligne refusée est mise de côté (retentée plus tard) sans bloquer les autres
-    for (const l of lignes) {
-      const r = await supabase.from('donnees').upsert(l, { onConflict: 'user_id,table_nom,cle' })
-      if (r.error && estErreurReseau(r.error.message)) throw r.error
-      if (r.error) refus.push(`${l.table_nom}|${l.cle}`)
+    // Envoi groupé refusé : coupé en deux jusqu'à isoler les lignes refusées (revue de code du 18/11/2026 : ligne par ligne,
+    // une première synchro de milliers de lignes faisait des milliers de requêtes) ; une ligne refusée est mise de côté
+    const essayer = async (paquet: typeof lignes): Promise<void> => {
+      const r = await supabase.from('donnees').upsert(paquet, { onConflict: 'user_id,table_nom,cle' })
+      if (!r.error) return
+      if (estErreurReseau(r.error.message)) throw r.error
+      if (paquet.length === 1) {
+        refus.push(`${paquet[0].table_nom}|${paquet[0].cle}`)
+        return
+      }
+      const m = Math.ceil(paquet.length / 2)
+      await essayer(paquet.slice(0, m))
+      await essayer(paquet.slice(m))
+    }
+    const m = Math.ceil(lignes.length / 2)
+    if (lignes.length === 1) refus.push(`${lignes[0].table_nom}|${lignes[0].cle}`)
+    else {
+      await essayer(lignes.slice(0, m))
+      await essayer(lignes.slice(m))
     }
   }
 
@@ -239,6 +257,8 @@ async function envoyer(userId: string, curseurs: Curseurs, tout: boolean) {
   refusesDernierEnvoi = refus.length
   curseurs.envoye = coupure > depuis ? coupure : depuis
   ecrireCurseurs(userId, curseurs)
+  // Horloge : les écritures suivantes seront toujours datées après cet envoi, même si l'heure du téléphone recule
+  noterHorodatage(curseurs.envoye)
 }
 
 // Safari dit « Load failed », Chrome « Failed to fetch » ; un délai dépassé donne « timeout » ou « aborted »
@@ -341,12 +361,41 @@ async function verifierProprietaire(userId: string) {
   // (sinon elles partiraient sur le mauvais compte). Le nouveau propriétaire n'est noté qu'après : d'ici là, aucune
   // synchro ne part pour lui (audit du 14/11/2026)
   if (avant && avant !== userId) {
+    // Audit du 18/11/2026 : les saisies du compte précédent pas encore envoyées sont mises de côté (elles repartent à sa
+    // prochaine connexion sur cet appareil), au lieu d'être perdues
+    const depuis = lireCurseurs(avant).envoye ?? ''
+    const attente: Record<string, unknown[]> = {}
+    for (const t of TABLES_DONNEES()) {
+      const l = await t.filter((x: Horodate) => !x._recu && (!x._modifie || x._modifie >= depuis)).toArray()
+      if (l.length) attente[t.name] = l
+    }
+    const suppressions = await db.suppressions.toArray()
+    if (suppressions.length) attente.suppressions = suppressions
+    try {
+      if (Object.keys(attente).length) localStorage.setItem(cleAttente(avant), JSON.stringify(attente))
+    } catch { /* trop gros ou stockage indisponible */ }
     await db.transaction('rw', [...TABLES_DONNEES(), db.suppressions], async () => {
       for (const t of [...TABLES_DONNEES(), db.suppressions]) await t.clear()
     })
   }
+  // Base vide (autre compte avant, ou Safari qui l'a effacée) : on relit tout le compte depuis le début, sinon la synchro
+  // ne recevait que les changements récents et l'historique ne revenait jamais
+  if ((avant && avant !== userId) || (await db.reglages.count()) === 0) {
+    const c = lireCurseurs(userId)
+    ecrireCurseurs(userId, { ...c, recu: undefined, recuSeq: undefined } as Curseurs)
+  }
+  // Saisies de ce compte mises de côté lors d'un changement de compte : remises avant la synchro
+  try {
+    const brut = localStorage.getItem(cleAttente(userId))
+    if (brut) {
+      const attente = JSON.parse(brut) as Record<string, (Horodate & Record<string, unknown>)[]>
+      for (const t of [...TABLES_DONNEES(), db.suppressions]) for (const l of attente[t.name] ?? []) await t.put(l)
+      localStorage.removeItem(cleAttente(userId))
+    }
+  } catch { /* rien à remettre */ }
   try { localStorage.setItem(CLE_PROPRIETAIRE, userId) } catch { /* stockage indisponible */ }
 }
+const cleAttente = (userId: string) => `coach-en-attente-${userId}`
 
 /**
  * Déconnexion : dernière synchro, puis effacement des données de cet appareil

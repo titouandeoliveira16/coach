@@ -46,8 +46,13 @@ const moyenne = (v: number[]) => (v.length ? v.reduce((a, b) => a + b, 0) / v.le
  * Analyse au jour J. `jours` : mesures triées par date croissante, jusqu'à J inclus
  * (au plus 60 + 7 jours suffisent).
  */
+/** Valeurs plausibles (audit du 18/11/2026) : une faute de frappe (« 400 » pour « 40 », valeur négative) est ignorée. */
+const VFC_PLAUSIBLE = [10, 250] as const
+const FC_REPOS_PLAUSIBLE = [30, 110] as const
+const dans = (v: number | undefined, [a, b]: readonly [number, number]) => (v !== undefined && v >= a && v <= b ? v : undefined)
+
 export function analyserVfc(jours: JourVfc[], date: string): AnalyseVfc {
-  const jusquA = jours.filter((j) => j.date <= date)
+  const jusquA = jours.filter((j) => j.date <= date).map((j) => ({ ...j, rmssd: dans(j.rmssd, VFC_PLAUSIBLE), fcRepos: dans(j.fcRepos, FC_REPOS_PLAUSIBLE) }))
   const base = jusquA.slice(-JOURS_BASE)
   const sept = jusquA.filter((j) => j.date > decaler(date, -7))
 

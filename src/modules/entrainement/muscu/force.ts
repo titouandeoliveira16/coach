@@ -197,20 +197,24 @@ export function planForce(o: { semainesFaites: number; semainesSans?: number; re
  * séance dure (3 h après le vélo au moins) ; sinon, hors semaine de course, un jour sans vélo même la veille d'une
  * séance clé (mieux qu'aucune séance).
  */
-export function joursMuscu(o: { roles: Role[]; dates: string[]; n: number; cles: string[]; durs: string[]; courses: string[]; indispos?: string[]; velo?: string[] }) {
+export function joursMuscu(o: { roles: Role[]; dates: string[]; n: number; cles: string[]; durs: string[]; courses: string[]; indispos?: string[]; velo?: string[]; avant?: string; deja?: string[] }) {
   if (o.n <= 0) return []
   const ecart = (a: string, b: string) => Math.round((Date.parse(`${b}T12:00:00`) - Date.parse(`${a}T12:00:00`)) / 86_400_000)
   const veille = (d: string) => o.cles.some((c) => ecart(d, c) === 1)
   // Rien dans les 4 jours avant une course, ni dans les 2 jours après (reprise 3 jours après au plus tôt)
   const avantCourse = (d: string) => o.courses.some((c) => (ecart(d, c) >= 0 && ecart(d, c) <= 4) || (ecart(c, d) >= 0 && ecart(c, d) <= 2))
   // Jours sans vélo : rôle sans vélo (les anciens jours « course » comptent comme libres) et aucune séance de vélo prévue
-  const sansVelo = (d: string, i: number) => !o.roles[i].startsWith('velo') && !(o.velo ?? []).includes(d) && !o.indispos?.includes(d) && !o.cles.includes(d) && !avantCourse(d)
+  // Audit du 18/11/2026 : jamais un jour déjà passé (`avant`), ni un jour qui a déjà sa muscu (faite ou déplacée, `deja`)
+  const possible = (d: string) => (!o.avant || d >= o.avant) && !(o.deja ?? []).includes(d)
+  const sansVelo = (d: string, i: number) => possible(d) && !o.roles[i].startsWith('velo') && !(o.velo ?? []).includes(d) && !o.indispos?.includes(d) && !o.cles.includes(d) && !avantCourse(d)
   const rang = (d: string) => (o.roles[o.dates.indexOf(d)] === 'renfo' ? 0 : 1)
   const choisis: { date: string; soir: boolean; reduite?: boolean }[] = []
+  // Les séances déjà là comptent pour l'écart de 2 jours entre deux muscus
+  const autour = [...(o.deja ?? [])]
   const ajouter = (l: string[], soir: boolean, reduite = false) => {
     for (const d of l) {
       if (choisis.length >= o.n) return
-      if (choisis.every((c) => Math.abs(ecart(c.date, d)) >= 2)) choisis.push({ date: d, soir, ...(reduite ? { reduite } : {}) })
+      if (possible(d) && [...autour, ...choisis.map((c) => c.date)].every((c) => Math.abs(ecart(c, d)) >= 2)) choisis.push({ date: d, soir, ...(reduite ? { reduite } : {}) })
     }
   }
   const libres = o.dates.filter((d, i) => sansVelo(d, i)).sort((a, b) => rang(a) - rang(b) || a.localeCompare(b))
@@ -235,7 +239,6 @@ export interface EtatExo {
   derniere?: number
 }
 
-const arrondi = (kg: number, pas: number) => (pas > 0 ? Math.round(kg / pas) * pas : Math.round(kg))
 
 /**
  * Charge proposée : la tienne, adaptée si le nombre de répétitions visé change (équivalence d'Epley : 1RM = charge ×
@@ -265,7 +268,8 @@ export function apresSeance(exo: ExoForce, avant: EtatExo | undefined, faite: { 
   if (faite.legere) return { charge, repsRef: faite.cible, echecs: 0, derniere }
   if (reussie) return { charge: charge + exo.pas, repsRef: faite.cible, echecs: 0, derniere }
   const echecs = (avant?.echecs ?? 0) + 1
-  if (echecs >= 2) return { charge: Math.max(exo.pas || 1, arrondi(charge * 0.95, exo.pas || 1)), repsRef: faite.cible, echecs: 0, derniere }
+  // −5 % arrondi vers le bas, et toujours au moins un pas de moins (sinon, sous 50 kg, l'arrondi remettait la même charge)
+  if (echecs >= 2) return { charge: Math.max(exo.pas || 1, Math.min(charge - (exo.pas || 1), Math.floor((charge * 0.95) / (exo.pas || 1)) * (exo.pas || 1))), repsRef: faite.cible, echecs: 0, derniere }
   return { charge, repsRef: faite.cible, echecs, derniere }
 }
 

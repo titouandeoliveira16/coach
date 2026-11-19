@@ -229,7 +229,9 @@ export function placerRappels(rappels: Rappel[], jour: string, p: Parametres, nb
   for (let i = 0; i < nbJours; i++) {
     const d = decalerJour(jour, i)
     const cap = capacite(d, p)
-    let total = 0
+    // Audit du 18/11/2026 : les rappels déjà faits aujourd'hui prennent leur place dans la capacité du jour (sinon la liste
+    // se remplissait à nouveau une fois finie)
+    let total = i === 0 ? rappels.filter((r) => r.fait === jour).reduce((s2, r) => s2 + dureeRappel(r), 0) : 0
     const duJour: Rappel[] = []
     for (const r of enAttente) {
       if (places.has(r.id) || r.prevu > d) continue

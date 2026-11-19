@@ -75,6 +75,19 @@ async function lireReglages() {
 /** Dates des tests CP réalisés (résultats saisis). */
 const datesTests = (tests: { date: string; type: string }[]) => tests.filter((t) => t.type === 'cp').map((t) => t.date)
 
+/**
+ * Garde-fou de l'audit du 18/11/2026 : une séance auto garde son nom (`auto-<date d'origine>-velo`) quand elle est déplacée
+ * ou faite un autre jour. Les anciennes séances à refaire sont déjà supprimées : si le nom existe encore, c'est une séance
+ * faite, déplacée ou gardée, qu'il ne faut jamais écraser. La nouvelle séance prend alors un autre nom.
+ */
+async function idAuto(date: string, sport: 'velo' | 'muscu') {
+  const base = `auto-${date}-${sport}`
+  for (let i = 0; ; i++) {
+    const id = i ? `${base}-${i + 1}` : base
+    if (!(await db.prevues.get(id))) return id
+  }
+}
+
 const actives = (p: SeancePrevue) => p.statut === 'prevue' || p.statut === 'faite' || p.statut === 'reportee'
 const arrondi5 = (n: number) => Math.round(n / 5) * 5
 
@@ -787,7 +800,7 @@ async function genererSemaineVeloBrute(lundi: string) {
     if (veilleCourse(date)) s.detail = `${s.detail}\nDemain, ta course : échauffement de 15' progressif, 5-6' à 90-100 % de ta CP, puis au moins 10' faciles avant le départ.`
     s.velo.allegee = s.velo.allegee || allegee
     await enregistrer(db.prevues, {
-      id: `auto-${date}-velo`, date, sport: 'velo', titre: s.titre, detail: genoux && s.detail ? `${s.detail}\n${NOTE_GENOUX}` : s.detail, dureeMin: s.dureeMin, kjPrevu: s.kj,
+      id: await idAuto(date, 'velo'), date, sport: 'velo', titre: s.titre, detail: genoux && s.detail ? `${s.detail}\n${NOTE_GENOUX}` : s.detail, dureeMin: s.dureeMin, kjPrevu: s.kj,
       statut: 'prevue', origine: 'auto', velo: s.velo, ...champsVelo(s),
     } satisfies SeancePrevue)
   }
@@ -802,12 +815,17 @@ async function genererSemaineVeloBrute(lundi: string) {
     const derniere = faitesAvant.at(-1)
     const semainesSans = derniere ? Math.max(0, Math.round(ecartJours(lundiDe(derniere.date), lundi) / 7) - 1) : 0
     const plan = planForce({ semainesFaites, semainesSans, repriseEnCours: !!derniere?.muscu?.longue && semainesSans === 0, phase: phase.type, allegee, seancesVoulues: force.seances, apprentissage: semainesApprentissage(force.experience) })
-    const faitesForce = (await db.prevues.where('date').between(lundi, semaine[6], true, true).toArray()).filter((p) => p.sport === 'renfo' && p.muscu && p.statut === 'faite').length
+    const muscuSemaine = (await db.prevues.where('date').between(decalerJour(lundi, -1), semaine[6], true, true).toArray()).filter((p) => p.sport === 'renfo' && p.muscu && p.date >= lundi)
+    const faitesForce = muscuSemaine.filter((p) => p.statut === 'faite').length
+    // Muscu déjà là cette semaine (faite, ou déplacée à la main et gardée) : comptée, et son jour n'est plus proposé
+    const gardees = muscuSemaine.filter((p) => p.statut === 'faite' || (p.statut === 'prevue' && p.date >= aPartirDe))
+    // La muscu du dimanche d'avant compte pour l'écart de 2 jours (pas de muscu dimanche puis lundi)
+    const dimancheAvant = (await db.prevues.where('date').equals(decalerJour(lundi, -1)).toArray()).filter((p) => p.sport === 'renfo' && p.muscu && p.statut !== 'abandonnee').map((p) => p.date)
     const cles = [placement.intensite, intensite2?.date, placement.long, dateTest, ...competitions].filter((d): d is string => !!d)
     const jours = joursMuscu({
-      roles, dates: semaine, n: plan.seances - faitesForce, cles, durs: [placement.intensite, intensite2?.date].filter((d): d is string => !!d && d !== dateTest),
+      roles, dates: semaine, n: plan.seances - gardees.length, avant: aPartirDe, deja: [...dimancheAvant, ...gardees.map((p) => p.date)], cles, durs: [placement.intensite, intensite2?.date].filter((d): d is string => !!d && d !== dateTest),
       courses: prog.competitions.map((x) => x.date), indispos: [...indispos], velo: aCreer.map(([d]) => d),
-    }).filter((j) => j.date >= aPartirDe)
+    })
     const dejaFaites = faitesAvant.length + faitesForce
     for (const [k, j] of jours.entries()) {
       // 2e séance ailleurs si tu l'as choisi (1 salle + 1 maison) ; soulevé et leg curl en alternance (15/11/2026)
@@ -819,7 +837,7 @@ async function genererSemaineVeloBrute(lundi: string) {
         ...(plan.facteur ? { facteur: plan.facteur } : {}), ...(plan.longue ? { longue: true } : {}),
       }
       await enregistrer(db.prevues, {
-        id: `auto-${j.date}-muscu`, date: j.date, sport: 'renfo', titre: `Muscu · ${NOMS_PERIODES[plan.periode]}${j.reduite ? ' (réduite)' : ''}`,
+        id: await idAuto(j.date, 'muscu'), date: j.date, sport: 'renfo', titre: `Muscu · ${NOMS_PERIODES[plan.periode]}${j.reduite ? ' (réduite)' : ''}`,
         detail: `${series} × ${plan.reps} répétitions${plan.legere ? ' légères' : ' lourdes'} · ${exosDe(sf).length} exercices + prévention${lieu !== force.lieu ? (lieu === 'maison' ? ' · à la maison' : ' · en salle') : ''}${plan.facteur ? ` · reprise : charges à ${Math.round(plan.facteur * 100)} %` : ''}${j.soir ? ' · le soir, 3 h après le vélo au moins' : ''}${j.reduite ? ' · version réduite : demain, séance clé' : ''}`,
         dureeMin: dureeForce(sf), intensite: 'moyenne', priorite: 'normale', statut: 'prevue', origine: 'auto', muscu: sf,
       } satisfies SeancePrevue)

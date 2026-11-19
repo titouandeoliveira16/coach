@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { CircleCheck } from 'lucide-react'
+import { createPortal } from 'react-dom'
 import { Carte } from '../../../core/ui/Carte'
 import { celebrationDuJour, marquerVue, victoiresRecentes } from './victoires'
 
@@ -9,8 +10,10 @@ const COULEURS = ['#ff8a3d', '#4ade80', '#60a5fa', '#facc15']
 export function BravoSeance() {
   const v = useLiveQuery(celebrationDuJour)
   if (!v || v.type !== 'seance') return null
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-6" onClick={() => marquerVue(v)}>
+  // Rendue hors de la bande des onglets (audit du 18/11/2026) : à l'intérieur, « fixed » se calait sur les 4 pages et la
+  // fenêtre tombait hors de l'écran
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-6" role="dialog" aria-modal="true" aria-label="Séance tenue" onClick={() => marquerVue(v)}>
       {Array.from({ length: 18 }, (_, i) => (
         <span key={i} className="confetti absolute top-1/4 h-3 w-2 rounded-sm"
           style={{ left: `${8 + i * 5}%`, background: COULEURS[i % 4], animationDelay: `${(i % 6) * 0.08}s` }} />
@@ -29,7 +32,8 @@ export function BravoSeance() {
         )}
         <button type="button" onClick={() => marquerVue(v)} className="mt-4 rounded-xl bg-accent px-8 py-2.5 font-bold text-fond">Super</button>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 
