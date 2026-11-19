@@ -20,7 +20,7 @@ for (let i = 0; i < 40; i++) {
   await new Promise((r) => setTimeout(r, 500))
 }
 
-const navigateur = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {})
+const navigateur = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM, args: ['--no-sandbox'] } : {})
 const ctx = await navigateur.newContext({ viewport: { width: 390, height: 844 } })
 await ctx.route(/supabase\.co|intervals\.icu|igpsport/, (r) => r.abort())
 await ctx.addInitScript(() => {

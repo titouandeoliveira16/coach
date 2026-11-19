@@ -30,8 +30,13 @@ jobs:
       - run: npm test
       - run: npm run build
       # Tests d'écrans des parcours principaux (audit du 18/11/2026), sur l'appli construite
-      - run: npm i --no-save playwright@1.56.1 && npx playwright install --with-deps chromium
-      - run: npm run test:ecrans
+      # Chrome déjà installé sur la machine de GitHub (Playwright ne sait pas installer le sien sur toutes les versions
+      # d'Ubuntu) ; sans navigateur, avertissement sans bloquer la mise en ligne
+      - run: |
+          npm i --no-save playwright@1.56.1
+          CHROMIUM=$(command -v google-chrome || command -v google-chrome-stable || command -v chromium-browser || command -v chromium || true)
+          if [ -z "$CHROMIUM" ]; then echo "::warning::Pas de navigateur : tests d'écrans sautés"; exit 0; fi
+          CHROMIUM="$CHROMIUM" npm run test:ecrans
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
