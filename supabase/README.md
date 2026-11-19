@@ -69,6 +69,8 @@ Intervals.icu et iGPSPORT à nouveau).
 → Sauvegarde → le passage voulu → « Artifacts ». Jamais en clair (le dépôt est public).
 - À faire une fois : **GitHub → Settings → Secrets and variables → Actions → New repository secret**, nom
   `SAUVEGARDE_CLE`, valeur = une longue phrase secrète, gardée aussi dans ton gestionnaire de mots de passe.
+- Et un 2e secret GitHub `SUPABASE_JETON_SAUVEGARDE` : un jeton Supabase (Account → Access Tokens) avec seulement la
+  permission de lire la base (celui des fonctions n'a pas ce droit, et c'est voulu).
 - Lire une sauvegarde (sur un ordinateur) : dézipper l'artifact, puis
   `openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -md sha256 -in sauvegarde-AAAA-MM-JJ.tar.gz.enc -out s.tar.gz`
   (la phrase est demandée), puis `tar -xzf s.tar.gz` : un fichier JSON par table.
