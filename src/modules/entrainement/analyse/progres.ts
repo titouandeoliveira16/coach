@@ -127,5 +127,5 @@ export async function donneesProgres() {
   return {
     a, cpW: r?.cpW, cpPrecedente, tests, cpEstimee, poidsKg: await poidsAu(jour), testsPrevus: programmeDe(r?.programme).testsCp.filter((d) => d >= jour).sort(), testsCourts: programmeDe(r?.programme).testsCourts ?? [],
     efficacite, effRecente, effAvant, kj28, kj28Avant, kj90, kj90Avant, regularite,
-    victoires: { z2: [resumeZ2(precedenteZ2), resumeZ2(derniereZ2)] as const, intervalles: [resumeInt(precedenteInt), resumeInt(derniereInt)] as const }, semaines, kjVelo, chargeCourse, unite: c.chargeRef === 'trimp' ? 'TRIMP' : 'sRPE', forme, physio }
+    victoires: { z2: [resumeZ2(precedenteZ2), resumeZ2(derniereZ2)] as const, intervalles: [resumeInt(precedenteInt), resumeInt(derniereInt)] as const }, semaines, kjVelo, chargeCourse, unite: c.chargeRef === 'trimp' ? 'TSS' : 'sRPE', forme, physio }
 }

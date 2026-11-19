@@ -51,7 +51,9 @@ de conversation quand il faut s'en servir. Ici ne restent que les chantiers tech
   « tout est normal » quand il manque des mesures, célébration remise à l'écran, Aujourd'hui qui voit le nouveau jour,
   remboursement du mois suivant, rappels de Révision qui ne se remplissent plus, synchro (horloge, changement de compte,
   Safari qui vide la base, envoi refusé coupé en deux), écran « Nouvelle version » après une mise à jour, aides corrigées.
-- Reste (lots 2 à 4, choix à faire) : saison route et VTT (allégées, sortie longue, semaine de course A, affûtage VTT),
-  dimanche → lundi (jours durs, muscu), règle « saturation » du feu, pouls et maladie, changement de montre, charge (TSS ou
-  FC), une seule FTP, nutrition (plancher du maintien, rappels de pesée, mineurs), muscu des mineurs, Révision recalée sur
+- Lot 2 fait en 14.13.0 (choix du 19/11) : règle « saturation » retirée, pouls haut 2 matins de suite → orange (relu,
+  Alavi 2022), muscu bloquée avant 18 ans, charge en TSS comme Intervals, FTP = 97 % de la CP partout (relu, Karsten 2021),
+  ancien module Muscu, alerte de course à pied et séances course / enduro du catalogue supprimés. Révision mise de côté.
+- Reste : saison route et VTT (allégées, sortie longue, semaine de course A, affûtage VTT),
+  dimanche → lundi (jours durs), changement de montre, nutrition (plancher du maintien, rappels de pesée, mineurs), muscu des mineurs, Révision recalée sur
   le concours, accessibilité, textes, sauvegarde chiffrée, clé de chiffrement dédiée, page de confidentialité, audit en CI.

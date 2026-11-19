@@ -23,7 +23,8 @@ export const hasard = (graine: number) => {
 const HEURES = ['Moins de 4 h', '4 à 6 h', '6 à 8 h', '8 à 10 h', '10 à 12 h', 'Plus de 12 h']
 const ANCIENNETES = ['Moins d’un an', '1 à 3 ans', '3 à 5 ans', 'Plus de 5 ans']
 const RECENTES = ['Moins de 3 h', '3 à 6 h', '6 à 10 h', 'Plus de 10 h']
-const DISCIPLINES: Discipline[] = ['route', 'route', 'route', 'xco', 'xcc', 'xcm', 'enduro']
+// Enduro et descente ne sont plus proposés (5/11/2026) : l'audit ne simule que les disciplines proposées (19/11/2026)
+const DISCIPLINES: Discipline[] = ['route', 'route', 'route', 'xco', 'xcc', 'xcm']
 const MUSCU = ['Pas pour l’instant', '1 séance par semaine', '2 séances par semaine']
 const DEBUT = '2026-11-09'
 

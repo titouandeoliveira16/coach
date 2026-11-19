@@ -135,7 +135,7 @@ export function CarteAujourdhui({ onModifierMatin, apresForme, remplir = false }
   const troisJours = [signal, ...a.signauxPrecedents].every((s) => s.couleur !== 'vert' && s.alertes.some((x) => x.code === 'malade'))
 
   // Pourquoi la séance est adaptée : les signaux en alerte ce matin, en clair
-  const enAlerte = signal.alertes.filter((x) => x.compte || x.code === 'saturation')
+  const enAlerte = signal.alertes.filter((x) => x.compte)
   const pourquoi = enAlerte.length
     ? `${enAlerte.length === 1 ? '1 signal en alerte' : `${enAlerte.length} signaux en alerte`} ce matin : ${enAlerte.map((x) => x.texte.replace(/^./, (c) => c.toLowerCase())).join(' ; ')}.`
     : ''

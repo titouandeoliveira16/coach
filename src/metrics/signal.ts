@@ -89,7 +89,7 @@ export interface EntreeSignal {
 }
 
 export interface Alerte {
-  code: 'vfc' | 'fc-repos' | 'ressenti' | 'dette' | 'tsb' | 'pic' | 'malade' | 'cv' | 'saturation'
+  code: 'vfc' | 'fc-repos' | 'ressenti' | 'dette' | 'tsb' | 'pic' | 'malade' | 'cv'
   texte: string
   /** false = information seulement (ne compte pas dans le nombre d'indicateurs) */
   compte: boolean
@@ -129,8 +129,13 @@ export function calculerSignal(e: EntreeSignal, s: Seuils = SEUILS_DEFAUT): Sign
   if (vfc.ln7 !== undefined && vfc.zoneBasse !== undefined && vfc.ln7 < vfc.zoneBasse)
     alertes.push({ code: 'vfc', texte: `VFC 7 j sous ta zone normale (ln ${f1(vfc.ln7)} < ${f1(vfc.zoneBasse)})`, compte: true })
 
-  if (vfc.fcRepos7 !== undefined && vfc.fcReposBase !== undefined && vfc.fcRepos7 > vfc.fcReposBase + s.fcReposEcart)
-    alertes.push({ code: 'fc-repos', texte: `FC de repos 7 j élevée (${Math.round(vfc.fcRepos7)} bpm, base ${Math.round(vfc.fcReposBase)})`, compte: true })
+  // Pouls au repos : moyenne 7 j au-dessus de la base, ou 2 matins de suite à plus de 5 bpm (une seule alerte)
+  const fc7Haut = vfc.fcRepos7 !== undefined && vfc.fcReposBase !== undefined && vfc.fcRepos7 > vfc.fcReposBase + s.fcReposEcart
+  const deuxHauts = !!vfc.fcReposDeuxJours && vfc.fcReposBaseAvant !== undefined && vfc.fcReposDeuxJours.every((v) => v > vfc.fcReposBaseAvant! + s.fcReposEcart)
+  if (fc7Haut)
+    alertes.push({ code: 'fc-repos', texte: `FC de repos 7 j élevée (${Math.round(vfc.fcRepos7!)} bpm, base ${Math.round(vfc.fcReposBase!)})`, compte: true })
+  else if (deuxHauts)
+    alertes.push({ code: 'fc-repos', texte: `Pouls au repos haut 2 matins de suite (${vfc.fcReposDeuxJours!.join(' et ')} bpm, base ${Math.round(vfc.fcReposBaseAvant!)}) : souvent un premier signe de maladie`, compte: true })
 
   // Ressenti et nuit : une seule alerte, quelle que soit la cause (note, nuit courte)
   // Relecture du 17/11/2026 (option A choisie par Titouan) : le feu suit ton corps (VFC, pouls au repos, ressenti, nuit de
@@ -158,18 +163,9 @@ export function calculerSignal(e: EntreeSignal, s: Seuils = SEUILS_DEFAUT): Sign
   const n = alertes.filter((a) => a.compte).length
   let couleur: Couleur = e.maladeOuDouleur || n >= 2 ? 'rouge' : n === 1 ? 'orange' : 'vert'
 
-  // VFC très haute + FC de repos basse pendant un bloc chargé : possible saturation parasympathique
-  const saturation =
-    vfc.ln7 !== undefined && vfc.zoneHaute !== undefined && vfc.ln7 > vfc.zoneHaute &&
-    vfc.fcRepos7 !== undefined && vfc.fcReposBase !== undefined && vfc.fcRepos7 < vfc.fcReposBase &&
-    (e.atlSurCtl ?? 0) > 1.1
-  if (saturation && couleur === 'vert') {
-    couleur = 'orange'
-    alertes.push({ code: 'saturation', texte: 'VFC très haute et FC de repos basse en plein bloc chargé : possible saturation, fie-toi à tes sensations', compte: false })
-  }
-
+  // Règle « saturation » retirée le 19/11/2026 (choix de Titouan, audit du 18/11) : la charge ne change jamais la couleur
   const recommandation: Recommandation =
-    couleur === 'rouge' ? 'repos' : couleur === 'orange' ? (saturation ? 'alleger' : 'remplacer') : 'maintenir'
+    couleur === 'rouge' ? 'repos' : couleur === 'orange' ? 'remplacer' : 'maintenir'
 
   const raison =
     alertes.length === 0
@@ -202,7 +198,6 @@ function detailsSignal(e: EntreeSignal, alertes: Alerte[], calibration: boolean,
   else if (calibration) info('💓', 'Récupération : l’appli apprend encore ta normale', ['recuperation', 'En calibration'])
   else if (e.vfc.ln7 !== undefined) ok('💓', 'Récupération normale', ['recuperation', 'Normale'])
   if (a('cv')) info('〰️', 'Récupération irrégulière cette semaine (pour info)')
-  if (a('saturation')) info('🔋', 'Récupération très haute en plein bloc chargé : écoute tes sensations')
 
   // Pouls au repos
   if (a('fc-repos')) alerte('❤️', 'Pouls au repos plus haut que d’habitude', ['pouls', 'Plus haut'])

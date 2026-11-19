@@ -3,10 +3,10 @@
 PWA en français (iPhone d'abord, thème sombre) : un accueil, puis des modules. **Entraînement** est construit
 (vélo seul depuis 11/2026 : la course à pied et le plan Campus sont retirés ; système kJ, CP, feu du jour par VFC) ; **Budget** est construit (saisie manuelle, plafonds, patrimoine) ;
 **Révision CAPEPS** est construit (41 notions, rappels J+1…J+90 en feuille blanche, sujets ; concours le 2/03/2027) ;
-**Muscu** (ancien module, développé couché 5/3/1) est mis de côté, plus sur l'accueil ; la muscu du cycliste est désormais
+l'ancien module **Muscu** (développé couché 5/3/1) est supprimé (19/11/2026) ; la muscu du cycliste est
 dans l'Entraînement (`modules/entrainement/muscu/` : force lourde, réglage `force`, séances `renfo` avec `muscu`, page
 `/entrainement/muscu/:id`) ;
-**Catalogue** affiche le catalogue scientifique de séances (`catalogue/` : route, VTT par discipline, course (plus affichée), renfo, méthodes ;
+**Catalogue** affiche le catalogue scientifique de séances (`catalogue/` : route, VTT par discipline, renfo, méthodes ; course à pied et enduro retirés le 19/11/2026 ;
 l'Entraînement y pioche ses formats d'intensité vélo ; plus sur l'accueil : encart dépliable dans Entraînement → Réglages,
 limité aux sports du profil sportif, `catalogue/ListeCatalogue.tsx`).
 L'accueil n'affiche que Entraînement, Révision CAPEPS et Budget (modules `masque` dans `src/app/modules.ts`).
@@ -60,7 +60,6 @@ En ligne : https://titouandeoliveira16.github.io/coach/ (GitHub Pages, déployé
   (`programme.ts` : périodes, capacités de rappels, journées types, placement, projection) ; paramètres dans `reglages|revision`.
 - `catalogue/` : séances appuyées sur la littérature (`seances.json` généré par `generer.py`, voir son README) ;
   module `src/modules/catalogue/` pour le parcourir.
-- `src/modules/muscu/` : écrans Séance · Progrès ; règles pures et testées (`programme.ts`) ; tout l'état dans le réglage `muscu`.
 - Séances : activités enchaînées regroupées (`seances/enchainements.ts`), watts par bloc vs cible (`plan/blocs.ts`),
   contrôle FC et question « en réserve » selon le type de séance (`plan/controleFc.ts`, repères d'entraîneur).
 - Journal des repas du soir (Entraînement) : table `repas`, carte « Nutrition du jour » `forme/CarteNutrition.tsx` (besoin / mangé / écart ; formulaire dans `forme/CarteRepas.tsx`), suivi dans Progrès.

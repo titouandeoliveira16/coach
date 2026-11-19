@@ -38,6 +38,10 @@ export interface AnalyseVfc {
   /** FC de repos : moyenne 7 j et moyenne de la base */
   fcRepos7?: number
   fcReposBase?: number
+  /** Pouls au repos de la veille et du jour (si mesurés tous les deux) */
+  fcReposDeuxJours?: [number, number]
+  /** Base du pouls au repos avant ces deux jours */
+  fcReposBaseAvant?: number
 }
 
 const moyenne = (v: number[]) => (v.length ? v.reduce((a, b) => a + b, 0) / v.length : undefined)
@@ -83,6 +87,15 @@ export function analyserVfc(jours: JourVfc[], date: string): AnalyseVfc {
   const fcBase = base.filter((j) => j.fcRepos).map((j) => j.fcRepos!)
   if (fc7.length >= 3) res.fcRepos7 = moyenne(fc7)
   if (fcBase.length >= JOURS_MIN_BASE) res.fcReposBase = moyenne(fcBase)
+  // Pouls haut 2 matins de suite (19/11/2026, relu : Alavi 2022, Nature Medicine, +4 bpm 2 nuits ; ici +5, choix
+  // d'entraîneur) : la veille et le jour, mesurés tous les deux, comparés à la base d'avant ces deux jours
+  const veille = decaler(date, -1)
+  const deux = [veille, date].map((d) => jusquA.find((j) => j.date === d)?.fcRepos)
+  const avantDeux = jusquA.filter((j) => j.date < veille && j.fcRepos).slice(-JOURS_BASE).map((j) => j.fcRepos!)
+  if (deux.every((v) => v !== undefined) && avantDeux.length >= JOURS_MIN_BASE) {
+    res.fcReposDeuxJours = deux as [number, number]
+    res.fcReposBaseAvant = moyenne(avantDeux)
+  }
   return res
 }
 

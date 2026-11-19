@@ -1,3 +1,4 @@
+import { FTP_SUR_CP } from '../../../metrics/puissance'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { zonesDepuisCp } from '../../../core/zones'
@@ -56,7 +57,7 @@ export function SectionVelo() {
                 await modifier({ cpW, wPrimeKj, wPrimeComplet, zonesVelo, tests: [...reglages.tests, { date: aujourdhui(), type: 'cp', valeur: cpW, poidsKg }] })
                 setCalculateur(false)
                 await recalculerApresTest()
-                setMessage(`CP ${cpW} W enregistrée : zones et watts de tes séances à venir recalculés. Pense à mettre ta FTP Zwift à ${cpW} W (Zwift → Menu → Paramètres → FTP) et à renvoyer tes séances déjà envoyées.`)
+                setMessage(`CP ${cpW} W enregistrée : zones et watts de tes séances à venir recalculés. Mets ta FTP à ${Math.round(cpW * FTP_SUR_CP)} W (97 % de ta CP) dans Intervals.icu et dans Zwift (Menu → Paramètres → FTP), puis renvoie tes séances déjà envoyées.`)
               }}
             />
           )}

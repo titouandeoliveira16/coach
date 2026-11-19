@@ -19,7 +19,7 @@ export function SectionAnalyse() {
     <Carte titre="Analyse">
       <div className="py-2">
         <p className="mb-2 text-texte-2">Charge de référence<Aide titre="Charge de référence" texte={`${AIDES.trimp} — ${AIDES.srpe}`} /></p>
-        <Puces options={CHARGES} valeur={r.chargeRef} effacable={false} libelle={(o) => (o === 'trimp' ? 'TRIMP (FC)' : 'sRPE (ressenti)')}
+        <Puces options={CHARGES} valeur={r.chargeRef} effacable={false} libelle={(o) => (o === 'trimp' ? 'TSS (watts, sinon FC)' : 'sRPE (ressenti)')}
           onChoisir={(chargeRef) => chargeRef && modifier({ chargeRef })} />
       </div>
 

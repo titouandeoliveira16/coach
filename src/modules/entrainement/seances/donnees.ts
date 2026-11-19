@@ -75,15 +75,23 @@ export function completerMetriques(s: Seance, c: Contexte): Seance {
  * Renfo / muscu : hors budget kJ, compté avec ton ressenti × la durée (la FC monte peu en muscu) ;
  * sans RPE noté, il ne compte pas (relecteur : muscu comptée en sRPE dans la charge totale).
  */
+/** Échelle TRIMP → TSS (choix d'entraîneur, voir chargeDe). */
+export const TRIMP_VERS_TSS = 0.53
+
 export function chargeDe(s: Seance, c: Pick<Contexte, 'chargeRef'>): number {
   if (s.sport === 'renfo' && s.rpe === undefined) return 0
   const min = s.dureeSec / 60
   if (c.chargeRef === 'srpe') return s.rpe !== undefined ? srpe(s.rpe, min) : 0
+  // Charge en TSS, comme Intervals.icu (19/11/2026, choix de Titouan) : vélo avec puissance → TSS (Coggan), sauf VTT sur le
+  // terrain (les watts oublient les bras et la technique)
+  if (s.sport === 'velo' && s.tss !== undefined && !s.terrainVtt) return s.tss
+  // Sans puissance : TRIMP (FC) ramené à l'échelle du TSS (1 TRIMP ≈ 0,53 TSS, rapport moyen mesuré sur des sorties
+  // avec watts et FC ; Intervals fait de même avec sa « HRSS »)
   // VTT sur le terrain : la FC est gonflée (stress, bras) et les watts oublient les bras → effort perçu × durée
-  if (s.trimp !== undefined && !(s.rpe !== undefined && (s.terrainVtt || s.sport === 'renfo'))) return s.trimp
+  if (s.trimp !== undefined && !(s.rpe !== undefined && (s.terrainVtt || s.sport === 'renfo'))) return s.trimp * TRIMP_VERS_TSS
   if (s.rpe !== undefined) {
     const x = Math.min(1, 0.4 + 0.05 * s.rpe)
-    return min * x * 0.64 * Math.exp(1.92 * x)
+    return min * x * 0.64 * Math.exp(1.92 * x) * TRIMP_VERS_TSS
   }
   return 0
 }

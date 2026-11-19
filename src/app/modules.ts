@@ -2,7 +2,6 @@ import type { ComponentType } from 'react'
 import { moduleBudget } from '../modules/budget'
 import { moduleCatalogue } from '../modules/catalogue'
 import { moduleEntrainement } from '../modules/entrainement'
-import { moduleMuscu } from '../modules/muscu'
 import { moduleRevision } from '../modules/revision'
 
 /**
@@ -36,8 +35,6 @@ export const MODULES: ModuleApp[] = [
   moduleEntrainement,
   moduleRevision,
   moduleBudget,
-  // Mis de côté le 3/11/2026 (demande de Titouan) : plus sur l'accueil
-  { ...moduleMuscu, masque: true },
   { ...moduleCatalogue, masque: true },
   // Plus tard : moduleNutrition
 ]

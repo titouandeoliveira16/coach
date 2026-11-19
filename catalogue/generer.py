@@ -1079,12 +1079,15 @@ for x in S:
         x["disciplines"] = ["route", "xco", "xcc", "xcm", "enduro", "dh"]
 
 # ——— Contrôle et écriture ———
+# Vélo seul (19/11/2026, choix de Titouan) : séances de course à pied et séances réservées à l'enduro ou à la descente
+# retirées du catalogue (le code de ces séances reste plus haut, au cas où)
+S = [s for s in S if s["sport"] != "course" and (s.get("programme") or not (s.get("disciplines") and set(s["disciplines"]) <= {"enduro", "dh"}))]
 ids = [s["id"] for s in S]
 assert len(ids) == len(set(ids)), "identifiants en double"
 data = {
     "version": 3,
     "majLe": "2026-11-03",
-    "description": "Catalogue scientifique de séances (vélo route et VTT, course à pied, renforcement, tests, méthodes et profils de discipline). Voir catalogue/README.md.",
+    "description": "Catalogue scientifique de séances (vélo route et VTT, renforcement, tests, méthodes et profils de discipline). Voir catalogue/README.md.",
     "unites": {"%CP": "pourcentage de la puissance critique (≈ FTP)", "%VMA": "pourcentage de la vitesse maximale aérobie", "%1RM": "pourcentage du maximum sur 1 répétition"},
     "seances": S,
 }

@@ -183,10 +183,8 @@ describe('signal', () => {
     expect(calculerSignal({ vfc: vfcOk, maladeOuDouleur: true }).couleur).toBe('rouge')
   })
 
-  it('saturation parasympathique : pas de 🟢 automatique', () => {
-    const s = calculerSignal({ vfc: { ...vfcOk, ln7: 4.4, fcRepos7: 44 }, atlSurCtl: 1.3 })
-    expect(s.couleur).toBe('orange')
-    expect(s.alertes.some((a) => a.code === 'saturation')).toBe(true)
+  it('VFC très haute en plein bloc chargé : la charge ne change pas la couleur (19/11/2026)', () => {
+    expect(calculerSignal({ vfc: { ...vfcOk, ln7: 4.4, fcRepos7: 44 }, atlSurCtl: 1.3 }).couleur).toBe('vert')
   })
 
   it('lignes d’explication sous le feu, sans chiffres', () => {
@@ -266,4 +264,21 @@ it('blocs de travail : retrouve les blocs dans l’ordre', async () => {
   const w = [...Array(300).fill(150), ...Array(120).fill(250), ...Array(60).fill(150), ...Array(120).fill(240), ...Array(200).fill(140)]
   expect(blocsDeTravail(w, 120, 2)).toEqual([250, 240])
   expect(blocsDeTravail(w, 600, 2)).toBeUndefined()
+})
+
+describe('pouls au repos haut 2 matins de suite (19/11/2026)', () => {
+  const jours = (fin: number[]) => {
+    const l = Array.from({ length: 30 }, (_, i) => ({ date: `2026-10-${String(i + 1).padStart(2, '0')}`, rmssd: 58 + (i % 5), fcRepos: 48 }))
+    fin.forEach((v, k) => { l[l.length - fin.length + k].fcRepos = v })
+    return l
+  }
+  it('orange si 2 matins à plus de 5 bpm, une seule alerte même avec la règle des 7 jours', () => {
+    const v = analyserVfc(jours([55, 56]), '2026-10-30')
+    const s = calculerSignal({ vfc: v })
+    expect(s.alertes.filter((a) => a.code === 'fc-repos')).toHaveLength(1)
+    expect(s.couleur).toBe('orange')
+  })
+  it('un seul matin haut ne suffit pas', () => {
+    expect(calculerSignal({ vfc: analyserVfc(jours([48, 56]), '2026-10-30') }).alertes.some((a) => a.code === 'fc-repos')).toBe(false)
+  })
 })

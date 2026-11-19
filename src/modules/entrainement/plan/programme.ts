@@ -1,4 +1,5 @@
 import { db } from '../../../core/db'
+import { estMineur, type Profil } from '../../../core/profil'
 import { dureeForce, exosDe, joursMuscu, NOMS_PERIODES, planForce, semainesApprentissage, type ReglagesForce, type SeanceForce } from '../muscu/force'
 import { signalerErreur } from '../../../core/erreurs'
 import { calculEnCours, debutCalcul, finCalcul, oublierPhoto, photoInterrompue } from '../../../core/calcul'
@@ -12,7 +13,7 @@ import {
 } from '../../../metrics/programme'
 import { fusionnerSemainesPassees, heuresAu, programmeAu, programmeDe } from '../reglagesEntrainement'
 import type { ProfilSportif } from '../reglages/ProfilSportif'
-import { chargeDe, chargerContexte, domaineDe, lundiDe } from '../seances/donnees'
+import { chargerContexte, domaineDe, lundiDe } from '../seances/donnees'
 import type { ReglagesEntrainement, ReglagesProgramme, Seance, SeancePrevue } from '../types'
 import { chargePrevue, chargesSemaine, joursDe } from './donnees'
 import { chargesHebdo } from '../analyse/donnees'
@@ -807,7 +808,9 @@ async function genererSemaineVeloBrute(lundi: string) {
 
   // Muscu reliée à l'Entraînement (13/11/2026) : un jour sans vélo, jamais la veille d'une séance clé
   const force = (await db.reglages.get('force'))?.valeur as ReglagesForce | undefined
-  if (force?.actif) {
+  // Mineur (19/11/2026, choix de Titouan) : pas de muscu lourde sans encadrement ni accord d'un parent (Faigenbaum 2009)
+  const profilMuscu = (await db.reglages.get('profil'))?.valeur as Profil | undefined
+  if (force?.actif && !(profilMuscu && estMineur(profilMuscu, jour))) {
     // Le programme avance avec les semaines vraiment faites ; un arrêt se rattrape (charges et reprise)
     // Semaines à venir construites à l'avance : les séances prévues d'ici là comptent comme faites (comme le vélo à 100 %)
     const faitesAvant = (await db.prevues.where('date').below(lundi).toArray()).filter((p) => p.muscu && (p.statut === 'faite' || (p.statut === 'prevue' && p.date >= jour))).sort((a, b) => a.date.localeCompare(b.date))
@@ -929,16 +932,7 @@ export async function alertesCumul(lundi: string) {
     if (faites.length + reste.length >= 2) alertes.push(`Deux séances le ${nomJour(d)} : tu préfères une seule séance par jour.`)
   }
 
-  // Course : hausse de charge > 30 % par rapport aux 4 semaines précédentes (Nielsen 2014, coureurs en reprise)
-  const chargeCourse = (du: string, au: string) => seances.filter((s) => s.sport === 'course' && s.date >= du && s.date <= au).reduce((a, s) => a + chargeDe(s, c), 0)
-  const quatre = [1, 2, 3, 4].map((n) => chargeCourse(decalerJour(lundi, -7 * n), decalerJour(lundi, -7 * n + 6)))
-  const faitesSemaine = seances.filter((s) => s.sport === 'course' && s.date >= lundi)
-  const resteCourse = prevues.filter((p) => p.sport === 'course' && p.statut === 'prevue' && p.date >= lundi && !faitesSemaine.some((s) => s.prevueId === p.id))
-  const prevueCourse = chargeCourse(lundi, fin) + resteCourse.reduce((a, p) => a + chargePrevue(p, c.chargeRef), 0)
-  // Pas d'alerte juste après une reprise (moins de 3 semaines de course sur les 4) : la comparaison n'a pas de sens
-  const hausse = hausseCharge(prevueCourse, quatre)
-  if (hausse !== undefined && hausse > 30)
-    alertes.push(`Course : charge prévue +${Math.round(hausse)} % par rapport à tes dernières semaines. Au-delà de +30 %, le risque de blessure augmente (Nielsen 2014).`)
+  // Alerte « Course : charge prévue » retirée le 19/11/2026 (vélo seul : la course à pied n'est plus planifiée)
 
   // Muscu (si tu en fais) : pas le jour de l'intensité vélo, ni la veille de l'intensité ou de la sortie longue
   // (Schumann 2022 : interférence surtout dans la même séance, pas à ≥ 3 h d'écart ; la veille : choix d'entraîneur)
@@ -951,13 +945,6 @@ export async function alertesCumul(lundi: string) {
         alertes.push(`Muscu le ${nomJour(m.date)}, la veille d'une séance dure ou de la sortie longue : tes jambes seront moins fraîches. Change-la de jour si tu peux.`)
     }
   }
-
-  // Course : une sortie pas plus de 10 % plus longue que la plus longue des 30 derniers jours (Frandsen 2025)
-  const avant = seances.filter((s) => s.sport === 'course' && s.date >= decalerJour(lundi, -30) && s.date < lundi)
-  const plusLongue = Math.max(0, ...avant.map((s) => s.dureeSec / 60))
-  if (plusLongue > 0)
-    for (const p of resteCourse.filter((p) => p.dureeMin > plusLongue * 1.1))
-      alertes.push(`Course du ${nomJour(p.date)} : ${p.dureeMin} min, plus de 10 % au-dessus de ta plus longue sortie du mois (${Math.round(plusLongue)} min). Raccourcis-la à ${Math.floor(plusLongue * 1.1)} min (Frandsen 2025).`)
 
   return alertes
 }

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { aujourdhui, decalerJour, depuisJour } from '../../../core/dates'
 import { db } from '../../../core/db'
 import { useReglage } from '../../../core/reglages'
+import { estMineur, useProfil } from '../../../core/profil'
 import { Aide } from '../../../core/ui/Aide'
 import { AIDES } from '../aides'
 import { exosDe, FORCE_DEFAUT, semainesApprentissage, type Lieu, type ReglagesForce } from '../muscu/force'
@@ -19,6 +20,7 @@ export function DetailMuscu() {
   const [f, modifier] = useReglage<ReglagesForce>('force', FORCE_DEFAUT)
   const [, modifierPs] = useReglage<{ muscu?: string }>('profil-sportif', {})
   const [message, setMessage] = useState<string>()
+  const [profil] = useProfil()
   const choix = f.actif ? (f.seances === 2 ? CHOIX[2] : CHOIX[1]) : CHOIX[0]
 
   const choisir = async (c: string) => {
@@ -36,6 +38,10 @@ export function DetailMuscu() {
       : erreur ? `La semaine prochaine n’a pas pu être construite : ${erreur}`
       : 'Pas de jour possible : ta semaine type n’a aucun jour sans vélo. Mets un jour sur « muscu » dans Ma semaine type.')
   }
+
+  if (estMineur(profil, aujourdhui())) return (
+    <p className="text-sm text-texte-2">Pas de musculation lourde dans l'appli avant 18 ans : elle demande quelqu'un pour te montrer les mouvements et l'accord d'un parent. Parles-en à ton coach.</p>
+  )
 
   return (
     <div>

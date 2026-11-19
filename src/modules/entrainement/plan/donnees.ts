@@ -3,7 +3,7 @@ import { aujourdhui, decalerJour } from '../../../core/dates'
 import { enregistrer, supprimer } from '../../../core/stockage'
 import { srpe } from '../../../metrics/charge'
 import { replanifier, trimpPrevu, type Deplacement } from '../../../metrics/planif'
-import { chargeDe, chargerContexte, lundiDe } from '../seances/donnees'
+import { chargeDe, chargerContexte, lundiDe, TRIMP_VERS_TSS } from '../seances/donnees'
 import { TYPES_COURSE, type Indispo, type Raison, type SeancePrevue } from '../types'
 import { joursPanneVelo } from './imprevus'
 
@@ -139,7 +139,7 @@ export const supprimerPrevue = (id: string) => supprimer(db.prevues, id)
  * le reste (échauffement, récup, retour au calme) en endurance.
  */
 export function chargePrevue(p: SeancePrevue, ref: 'trimp' | 'srpe') {
-  const charge = (i: SeancePrevue['intensite'], min: number) => (ref === 'trimp' ? trimpPrevu(i, min) : srpe(RPE_TYPIQUE[i], min))
+  const charge = (i: SeancePrevue['intensite'], min: number) => (ref === 'trimp' ? trimpPrevu(i, min) * TRIMP_VERS_TSS : srpe(RPE_TYPIQUE[i], min))
   const cle = p.minutesCle ? Math.min(p.minutesCle, p.dureeMin) : undefined
   return cle !== undefined && p.intensite !== 'basse' ? charge(p.intensite, cle) + charge('basse', p.dureeMin - cle) : charge(p.intensite, p.dureeMin)
 }
@@ -174,6 +174,6 @@ export async function chargesSemaine(lundi: string) {
   const kjPlan = toutes.filter((p) => p.sport === 'velo').reduce((a, p) => a + (p.kjPrevu ?? 0), 0)
   return {
     prevue, realisee, precedente: precedentes[0], moyenne4: precedentes.reduce((a, b) => a + b, 0) / 4,
-    unite: c.chargeRef === 'trimp' ? 'TRIMP' : 'sRPE', kjRealises, kjPrevus: kjPlan,
+    unite: c.chargeRef === 'trimp' ? 'TSS' : 'sRPE', kjRealises, kjPrevus: kjPlan,
   }
 }
