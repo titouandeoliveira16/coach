@@ -205,8 +205,12 @@ async function abonnementsAVerifier(userId: string, date: string) {
     const fin = new Date(Date.UTC(Number(m.slice(0, 4)), Number(m.slice(5, 7)), 0)).getUTCDate()
     const ech = `${m}-${String(Math.min(a.jour, fin)).padStart(2, '0')}`
     const e = v.etatsAbonnements?.[`${a.id}|${m}`]
-    const saisi = mouvements.some((x) => x.date?.startsWith(m)
-      && (x.abonnementId === a.id || (!x.abonnementId && x.categorieId === a.categorieId && Math.abs(x.montant - a.montant) <= a.montant * 0.1)))
+    // Même règle que l'appli (budget/calculs.ts, dejaSaisi) : à 10 jours de l'échéance, même catégorie ou sa catégorie
+    // principale (préfixe de l'identifiant), montant à 10 % près
+    const proche = (x: { date: string }) => !!x.date && Math.abs(Date.parse(x.date) - Date.parse(ech)) <= 10 * 86_400_000
+    const memeCat = (c?: string) => !!c && (c === a.categorieId || a.categorieId.startsWith(`${c}-`))
+    const saisi = mouvements.some((x) => (x.abonnementId === a.id && (x.date?.startsWith(m) || proche(x)))
+      || (!x.abonnementId && proche(x) && memeCat(x.categorieId) && Math.abs(x.montant - a.montant) <= a.montant * 0.1))
     return a.actif && ech >= a.depuis && ech <= date && !e?.statut && (!e?.relance || e.relance <= date) && !saisi
   }
   return v.abonnements.filter((a) => aVerifier(a, precedent) || aVerifier(a, mois)).map((a) => a.nom)

@@ -166,9 +166,13 @@ export const echeance = (a: Abonnement, mois: string) => `${mois}-${String(Math.
  * saisi à la main dans la même catégorie (principale) pour un montant proche (± 10 %).
  */
 export function dejaSaisi(a: Abonnement, mois: string, d: Pick<Donnees, 'mouvements' | 'categories'>) {
-  const cat = racine(a.categorieId, d.categories)
-  return d.mouvements.some((m) => moisDe(m.date) === mois && (m.type === 'depense' || m.type === 'revenu')
-    && (m.abonnementId === a.id || (!m.abonnementId && racine(m.categorieId, d.categories) === cat && Math.abs(m.montant - a.montant) <= a.montant * 0.1)))
+  // Audit du 18/11/2026 : la même catégorie, ou sa catégorie principale saisie telle quelle (avant, n'importe quelle
+  // sous-catégorie : Apple à 9,99 € passait pour le téléphone à 10 €), et un paiement à 10 jours de l'échéance, même le mois d'après (un abonnement du 30 payé le 2)
+  const ech = echeance(a, mois)
+  const proche = (date: string) => Math.abs(Date.parse(date) - Date.parse(ech)) <= 10 * 86_400_000
+  return d.mouvements.some((m) => (m.type === 'depense' || m.type === 'revenu')
+    && (m.abonnementId === a.id ? moisDe(m.date) === mois || proche(m.date)
+      : !m.abonnementId && proche(m.date) && (m.categorieId === a.categorieId || m.categorieId === racine(a.categorieId, d.categories)) && Math.abs(m.montant - a.montant) <= a.montant * 0.1))
 }
 
 /** Abonnements du mois de `jour` pas encore payés ni sautés (y compris ceux en retard) : comptés d'avance. */

@@ -37,7 +37,7 @@ export function ModeEmploiBudget() {
           <p><B>Tu avances pour des amis</B> : note la dépense entière, comme sur ton compte. Quand ils te remboursent, note un revenu « Remboursement » et choisis ce qu'ils te remboursent (ex. Restos) : il vient <B>en moins de cette dépense</B>, pas dans tes revenus. Ton solde colle à ta banque et tes catégories ne montrent que ta part.</p>
           <p><B>Un ami t'avance</B> : rien le jour même ; ta part en dépense le jour où tu le rembourses.</p>
           <p><B>Retrait d'espèces</B> : un virement courant → Espèces ; les achats en liquide se notent ensuite depuis « Espèces ».</p>
-          <p><B>Remboursement d'un achat (retour, Sécu)</B> : un revenu, ou supprime la dépense si c'est la même semaine.</p>
+          <p><B>Remboursement d'un achat (retour, Sécu, mutuelle, un ami)</B> : un revenu « Remboursement », rattaché à la dépense remboursée (et à son mois, même si l'argent arrive le mois d'après) : il vient en moins de cette dépense, il ne compte pas comme un revenu.</p>
         </Rubrique>
         <Rubrique titre="Contrôle du dimanche">
           <p>Chaque dimanche, une carte te demande le solde affiché par ta banque pour ton compte courant (et une notification à l'heure du rappel du soir).</p>

@@ -74,10 +74,20 @@ function UnCompte({ c, d, plusieurs, onFini }: { c: Compte; d: Donnees; plusieur
             onClick={() => ouvrirSaisie({ type: ecart < 0 ? 'depense' : 'revenu', montant: Math.abs(ecart), compteId: c.id, date: jour })}>
             Saisir l'oubli
           </button>
-          <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Ou dis d'où il vient (ex. frais)" className={champ} />
-          <button type="button" className="w-full rounded-xl border border-bordure py-2.5 font-semibold text-texte-2" onClick={ajuster}>
-            Ajuster : noter {formatEuros(Math.abs(ecart))} {ecart < 0 ? 'de dépense' : 'de rentrée'} « à catégoriser »
-          </button>
+          {ecart < 0 ? (
+            <>
+              <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Ou dis d'où il vient (ex. frais)" className={champ} />
+              <button type="button" className="w-full rounded-xl border border-bordure py-2.5 font-semibold text-texte-2" onClick={ajuster}>
+                Ajuster : noter {formatEuros(Math.abs(ecart))} de dépense « à catégoriser »
+              </button>
+            </>
+          ) : (
+            // Banque au-dessus de l'appli (audit du 18/11/2026) : le plus souvent un paiement saisi mais pas encore débité.
+            // Le noter comme revenu gonflait les revenus et les dépenses du mois : on attend qu'il passe
+            <button type="button" className="w-full rounded-xl border border-bordure py-2.5 font-semibold text-texte-2" onClick={onFini}>
+              Un paiement encore en cours : je recontrôlerai dans quelques jours
+            </button>
+          )}
         </div>
       ))}
     </div>

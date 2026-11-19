@@ -127,6 +127,22 @@ export function Mois() {
         </Carte>
       )}
 
+      {/* Demande de Titouan (19/11/2026) : ce que tu as mis de côté et investi depuis le début du mois */}
+      {enCours && (
+        <div className="grid grid-cols-2 gap-2">
+          <div className="rounded-[14px] bg-surface p-3">
+            <p className="text-xs text-texte-2">Épargné ce mois-ci<Aide titre="Épargné ce mois-ci" texte="Revenus du mois − dépenses du mois, jusqu'à aujourd'hui. Il bouge jusqu'à la fin du mois : les dépenses à venir le feront baisser. Un virement d'un livret vers un placement n'est pas de l'épargne en plus." /></p>
+            <p className="chiffre mt-0.5 text-2xl" style={{ color: r.epargne < 0 ? ETAT.rouge : undefined }}>{formatEuros(r.epargne, { signe: true })}</p>
+            <p className="text-[11px] text-texte-3">pour l'instant</p>
+          </div>
+          <div className="rounded-[14px] bg-surface p-3">
+            <p className="text-xs text-texte-2">Investi ce mois-ci<Aide titre="Investi ce mois-ci" texte="Versé sur tes comptes d'investissement (PEA, CTO…) depuis le 1er du mois, retraits déduits." /></p>
+            <p className="chiffre mt-0.5 text-2xl">{formatEuros(r.investi)}</p>
+            <p className="text-[11px] text-texte-3">sur tes placements</p>
+          </div>
+        </div>
+      )}
+
       {aFaire && (
         <Carte titre="À faire" className="border-accent!">
           <div className="space-y-3">
@@ -199,13 +215,14 @@ export function Mois() {
         {rep.besoins + rep.loisirs + rep.epargne > 0 && (
           <div className="mt-4">
             <p className="mb-1.5 text-sm text-texte-2">
-              Besoins · loisirs · mis de côté
+              Besoins · loisirs · {enCours ? 'pas encore dépensé' : 'mis de côté'}
               <Aide titre="Règle 50/30/20" texte="Repère courant en finances personnelles (Elizabeth Warren) : environ 50 % de tes revenus pour les besoins (courses, voiture, santé…), 30 % pour les loisirs (sorties, shopping, abonnements de loisir…) et 20 % mis de côté. Mis de côté = revenus − dépenses du mois : déplacer de l'argent d'un livret vers un placement n'est pas de l'épargne en plus. Un remboursement d'ami vient en moins de la dépense remboursée." />
             </p>
             <BarreRepartition parts={[
               { nom: 'Besoins', couleur: '#3987e5', valeur: rep.besoins },
               { nom: 'Loisirs', couleur: '#d95926', valeur: rep.loisirs },
-              { nom: 'Mis de côté', couleur: '#199e70', valeur: rep.epargne },
+              // Mois en cours (audit du 18/11/2026) : ce reste n'est pas encore « mis de côté », il peut encore être dépensé
+              { nom: enCours ? 'Pas encore dépensé' : 'Mis de côté', couleur: enCours ? '#6b7380' : '#199e70', valeur: rep.epargne },
               ...(rep.autres > 0 ? [{ nom: 'À catégoriser', couleur: '#6b7380', valeur: rep.autres }] : []),
             ]} />
           </div>
