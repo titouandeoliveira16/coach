@@ -65,7 +65,8 @@ async function dechiffrer(valeur: string, etiquette: string) {
 const entete = (cleApi: string) => ({ Authorization: `Basic ${btoa(`API_KEY:${cleApi}`)}` })
 
 async function intervals(chemin: string, cleApi: string) {
-  const r = await fetch(`${API}${chemin}`, { headers: entete(cleApi) })
+  // Délai maximum (audit de vitesse du 20/11/2026) : Intervals qui ne répond pas ne bloque plus l'import
+  const r = await fetch(`${API}${chemin}`, { headers: entete(cleApi), signal: AbortSignal.timeout(15_000) })
   if (r.status === 401 || r.status === 403) throw new Error('CLE')
   if (r.status === 429) throw new Error('LIMITE')
   if (!r.ok) throw new Error(`Intervals.icu ${r.status}`)
@@ -78,6 +79,7 @@ async function intervalsEcrire(chemin: string, cleApi: string, methode: 'POST' |
     method: methode,
     headers: { ...entete(cleApi), 'Content-Type': 'application/json' },
     body: corps === undefined ? undefined : JSON.stringify(corps),
+    signal: AbortSignal.timeout(15_000),
   })
   if (r.status === 401 || r.status === 403) throw new Error('CLE')
   if (r.status === 429) throw new Error('LIMITE')
@@ -158,7 +160,8 @@ Deno.serve(async (req) => {
     if (route === 'flux') {
       const ids = (Array.isArray(corps.ids) ? corps.ids : []).slice(0, MAX_FLUX).map((x: unknown) => String(x)).filter((x: string) => ID.test(x))
       const flux: Record<string, Record<string, unknown[]>> = {}
-      for (const id of ids) {
+      // Par 3 en même temps (20/11/2026) : plus rapide, sans dépasser la limite de requêtes d'Intervals
+      const unFlux = async (id: string) => {
         // Échec (coupure, trop de requêtes) signalé (audit du 18/11/2026) : avant, il passait pour « pas de flux » et la
         // séance était enregistrée sans zones ni courbe, jamais relue
         let echec = false
@@ -172,6 +175,7 @@ Deno.serve(async (req) => {
           ...(t.average_heartrate ? { fc: Math.round(Number(t.average_heartrate)) } : {}),
         }))
       }
+      for (let i = 0; i < ids.length; i += 3) await Promise.all(ids.slice(i, i + 3).map(unFlux))
       return json({ flux })
     }
 

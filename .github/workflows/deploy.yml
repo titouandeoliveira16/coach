@@ -10,6 +10,8 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  # Ticket ouvert quand l'appli devient lente sur téléphone lent (20/11/2026)
+  issues: write
 
 concurrency:
   group: pages
@@ -37,6 +39,22 @@ jobs:
           CHROMIUM=$(command -v google-chrome || command -v google-chrome-stable || command -v chromium-browser || command -v chromium || true)
           if [ -z "$CHROMIUM" ]; then echo "::warning::Pas de navigateur : tests d'écrans sautés"; exit 0; fi
           CHROMIUM="$CHROMIUM" npm run test:ecrans
+      # Vitesse sur téléphone lent + 4G lente : au-dessus de 5 s, un ticket prévient (sans bloquer la mise en ligne)
+      - name: Vitesse sur téléphone lent
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          CHROMIUM=$(command -v google-chrome || command -v google-chrome-stable || command -v chromium-browser || command -v chromium || true)
+          if [ -z "$CHROMIUM" ]; then echo "::warning::Pas de navigateur : vitesse non mesurée"; exit 0; fi
+          set +e
+          CHROMIUM="$CHROMIUM" node tests-ecrans/vitesse.mjs | tee vitesse.txt
+          code=${PIPESTATUS[0]}
+          set -e
+          if [ "$code" = "2" ]; then
+            echo "::warning::$(cat vitesse.txt)"
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "Cycle plus lent sur téléphone lent ($(date -u +%d/%m))" \
+              --body "$(cat vitesse.txt) — version du commit $GITHUB_SHA. La mise en ligne n'a pas été bloquée." || true
+          fi
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

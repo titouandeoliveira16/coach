@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom'
 import { useVisite } from '../modules/entrainement/forme/VisiteGuidee'
 import { useReglage } from '../core/reglages'
 import type { ReglageCompte } from '../core/inscription'
+import { resumeVitesse, type MesureVitesse } from '../core/vitesse'
 
 /** Vrai si l'appli est lancée depuis l'écran d'accueil (et non dans Safari). */
 function estInstallee() {
@@ -25,6 +26,8 @@ function estInstallee() {
 export function ReglagesGeneraux() {
   const installee = estInstallee()
   const [compte] = useReglage<ReglageCompte>('compte', {})
+  const [mesures] = useReglage<MesureVitesse[]>('vitesse', [])
+  const vitesse = resumeVitesse(mesures)
   const [, modifierVisite] = useVisite()
   const naviguer = useNavigate()
   return (
@@ -42,6 +45,7 @@ export function ReglagesGeneraux() {
         <Carte titre="État de l'appli">
           <Ligne libelle="Installée sur l'écran d'accueil" valeur={installee ? 'Oui ✓' : 'Non'} ok={installee} />
           <Ligne libelle="Version" valeur={__VERSION__.replace(/\.0$/, '')} />
+          {vitesse && <Ligne libelle={`Ouverture (${vitesse.n} dernières)`} valeur={`${(vitesse.mediane / 1000).toFixed(1).replace('.', ',')} s · la plus lente ${(vitesse.pire / 1000).toFixed(1).replace('.', ',')} s`} />}
           {!installee && (
             <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-texte-2">
               <li>Ouvre cette page dans Safari</li>

@@ -8,6 +8,7 @@ import { registerSW } from 'virtual:pwa-register'
 import { apresPremiereSynchro, demarrerSynchro } from './core/synchro'
 import { synchroniserRappels } from './core/notifications'
 import { rechargerPourNouvelleVersion, signalerErreur, surveillerErreurs } from './core/erreurs'
+import { mesurerOuverture } from './core/vitesse'
 
 surveillerErreurs()
 demanderStockagePersistant()
@@ -84,3 +85,4 @@ createRoot(document.getElementById('root')!).render(
     <App />
   </StrictMode>,
 )
+mesurerOuverture()
