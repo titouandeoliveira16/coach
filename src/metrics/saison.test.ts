@@ -100,9 +100,10 @@ describe('sortie longue au 1er seuil, sprints de la semaine', () => {
     const z = construireZ2(60, 150, { n: 6, sec: 10 }, { longue: false })
     expect(z.velo.famille).toBe('z2')
     expect(z.titre).toMatch(/sprints/)
-    // Z2 longue de semaine : découpée
+    // Z2 de semaine : découpée dès 46 min (23/11/2026), pas jusqu'à 45 min
     expect(construireZ2(90, 150).velo.etapes!.some((e) => e.repetition)).toBe(true)
-    expect(construireZ2(60, 150).velo.etapes!.some((e) => e.repetition)).toBe(false)
+    expect(construireZ2(60, 150).velo.etapes!.some((e) => e.repetition)).toBe(true)
+    expect(construireZ2(45, 150).velo.etapes!.some((e) => e.repetition)).toBe(false)
     // Dérive
     const f = (...fc: number[]) => fc.map((x) => ({ fc: x }))
     expect(signalSv1(f(140, 142, 143), 4)).toBe(1)

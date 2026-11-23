@@ -682,8 +682,10 @@ const SECURITE_TECHNIQUE = 'Casque, une section à ta portée, reconnue à pied 
  */
 export function construireTerrain(_discipline: Exclude<Discipline, 'route'>, duree: number, z2W: number, n = 0, kjParMinTech?: number): SeanceConstruite {
   const dureeMin = Math.round(duree)
-  const tech = Math.min(55, dureeMin)
-  const z2 = dureeMin - tech
+  // Mise en route au bas de la Z2 et retour au calme de 5 min, comme toutes les séances (23/11/2026, demande de Titouan)
+  const calme = dureeMin >= 30 ? 5 : 0
+  const tech = Math.min(55, dureeMin - calme)
+  const z2 = dureeMin - calme - tech
   const theme = THEMES_TECHNIQUE[n % THEMES_TECHNIQUE.length]
   const nouveauCycle = n >= THEMES_TECHNIQUE.length && n % THEMES_TECHNIQUE.length === 0
   const ech = Math.min(10, Math.max(5, Math.round(tech / 5)))
@@ -692,16 +694,17 @@ export function construireTerrain(_discipline: Exclude<Discipline, 'route'>, dur
   let h = 0
   // Pas de watts sur la technique (on y pilote, on ne vise pas une puissance) ; seulement sur la Z2 de fin
   const ajouter = (min: number, libelle: string, w?: number) => { etapes.push({ debutSec: h, dureeSec: min * 60, libelle, ...(w ? { w: arrondi5(w) } : {}) }); h += min * 60 }
-  ajouter(ech, 'Échauffement facile en roulant vers ta section')
+  ajouter(ech, 'Mise en route en Z2 en roulant vers ta section', z2W * 0.9)
   theme.exos.forEach(([nom, consigne], i) => ajouter(i === 2 ? tech - ech - 2 * parExo : parExo, `${nom} : ${consigne}`))
   if (z2 > 0) ajouter(z2, 'Z2 tranquille pour finir', z2W)
+  if (calme) ajouter(calme, 'Retour au calme', z2W * 0.9)
   const relances = theme.nom === 'relances et départs'
   return {
     titre: `Technique · ${theme.nom}${z2 >= 10 ? ` + ${z2}' Z2` : ''}`,
     detail: `Thème ${(n % THEMES_TECHNIQUE.length) + 1} sur 4 : ${theme.nom}. Position d’attaque : pédales à plat, coudes et genoux pliés, un doigt sur chaque frein, regard loin. Intensité basse, tu peux parler${relances ? ' (sauf les relances et les départs : des efforts de 5 à 8 s, 2 min tranquille entre)' : ''}. ${SECURITE_TECHNIQUE}${nouveauCycle ? ' Nouveau cycle : change de section ou prends-en une un peu plus difficile.' : ''} Note ton effort perçu à la fin.`,
     // kJ de la technique (audit du 18/11/2026, relu : pas d'étude) : ce que tu fais vraiment sur tes dernières séances
     // techniques ; sans historique, 80 % d'une Z2 (avant 60 % : une séance faite comptait presque deux fois moins qu'en vrai)
-    dureeMin, kj: Math.round(tech * (kjParMinTech ?? (60 * z2W * 0.8) / 1000) + (z2 * 60 * z2W) / 1000),
+    dureeMin, kj: Math.round(tech * (kjParMinTech ?? (60 * z2W * 0.8) / 1000) + (z2 * 60 * z2W) / 1000 + (calme * 60 * z2W * 0.9) / 1000),
     velo: { famille: 'vtt-terrain', etapes, pourquoi: `Technique sur le terrain, thème ${theme.nom} : la technique compte beaucoup en VTT (Impellizzeri 2005, Kirkwood 2017). Un geste répété puis enchaîné, au calme et en début de sortie : pratique d’entraîneur (apprendre fatigué apprend moins bien, Branscheidt 2019).` },
   }
 }
@@ -855,10 +858,11 @@ export function construireZ2(duree: number, z2W: number, sprints?: { n: number; 
     titre = `${titre} + ${minutes.length} sprints${sec >= 30 ? ` de ${sec}"` : ''}`
     detailPlus = ` · ${minutes.length} sprints de ${sec}"`
     kjPlus = (minutes.length * sec * z2W * 2.5) / 1000
-  } else if (!longue && !sprints && dureeMin >= 90) {
-    // Z2 découpée : 8 min de Z2, 2 min plus faciles (monotonie sur home trainer ; choix d'entraîneur)
+  } else if (!longue && !sprints && dureeMin > 45) {
+    // Z2 découpée : 8 min de Z2, 2 min plus faciles (monotonie sur home trainer ; choix d'entraîneur), dès 46 min et
+    // au bas de ta Z2 (23/11/2026, choix de Titouan : avant, seulement dès 90 min, et ces 2 min tombaient en Z1)
     const n = Math.floor((corpsFin - ech) / 600)
-    const wFacile = arrondi5(z2W * 0.8)
+    const wFacile = arrondi5(z2W * 0.9)
     etapes.push({
       debutSec: ech, dureeSec: n * 600, w: z2W, libelle: `${n} × (8' Z2 + 2' plus facile) : casse la monotonie`,
       repetition: { fois: n, etapes: [{ dureeSec: 480, libelle: 'Z2', w: z2W, ...plage(z2W, 'z2') }, { dureeSec: 120, libelle: 'Plus facile', w: wFacile }] },

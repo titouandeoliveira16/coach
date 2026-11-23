@@ -97,7 +97,8 @@ describe('moteur VTT : construction des séances', () => {
   it('VTT technique : un thème par semaine sur 4, 55 min au plus puis Z2, déroulé complet ; spéciales d’enduro', () => {
     expect(construireTerrain('xco', 45, 160).titre).toBe('Technique · virages')
     const t = construireTerrain('enduro', 90, 160)
-    expect(t.titre).toBe("Technique · virages + 35' Z2")
+    // 55 min de technique, 5 min de retour au calme (23/11/2026), le reste en Z2
+    expect(t.titre).toBe("Technique · virages + 30' Z2")
     expect(t.velo.famille).toBe('vtt-terrain')
     expect(t.velo.etapes!.reduce((a, e) => a + e.dureeSec, 0)).toBe(90 * 60)
     expect(construireTerrain('xco', 60, 160, 1).titre).toMatch(/montées/)
