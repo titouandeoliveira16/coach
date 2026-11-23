@@ -19,6 +19,7 @@ import { chargesSemaine, joursDe, semaineComptee } from './donnees'
 import { joursPanneVelo } from './imprevus'
 import { lireSemaineChargee, passerSemaineChargee } from './semaineChargee'
 import { chargeDeDepart } from './depart'
+import { deriveSeance } from './controleFc'
 
 /** Semaines d'une course B (elles remettent à zéro le compteur des semaines chargées). */
 const semaineB = (prog: Pick<ReglagesProgramme, 'competitions' | 'phases'>) => {
@@ -121,9 +122,11 @@ export async function z2Actuel() {
   // Chaque sortie Z2 donne un signal (+1 facile et stable, −1 trop dur) ; on ne bouge de ±5 W
   // que lorsque 2 sorties de suite vont dans le même sens (une sortie isolée est trop bruitée)
   const signaux = seances.sort((a, b) => a.date.localeCompare(b.date)).flatMap((s) => {
-    if (s.decouplage === undefined || s.rpe === undefined || s.sansCeinture) return []
-    if (s.decouplage < 5 && s.rpe <= 3) return [1]
-    if (s.decouplage > 5 || s.rpe > 3) return [-1]
+    // Même dérive que la carte du jour : entre les blocs au 1er seuil, ou sur la partie Z2 seule (23/11/2026)
+    const d = deriveSeance(s)?.valeur
+    if (d === undefined || s.rpe === undefined || s.sansCeinture) return []
+    if (d < 5 && s.rpe <= 3) return [1]
+    if (d > 5 || s.rpe > 3) return [-1]
     return []
   })
   const ajustement = ajustementZ2(signaux)
@@ -1331,7 +1334,7 @@ async function signauxFc(seances: Seance[]) {
   const c = await chargerContexte()
   const differentes = await idsPrevuesDifferentes()
   const faciles = seances.filter((s) => (s.sport === 'velo' || s.sport === 'course') && !(s.prevueId && differentes.has(s.prevueId)) && domaineDe(s, c.bornes) === 'basse')
-  const derive = faciles.filter((s) => !s.sansCeinture && (s.decouplage ?? 0) > 5).length
+  const derive = faciles.filter((s) => !s.sansCeinture && (deriveSeance(s)?.valeur ?? 0) > 5).length
   const dures = faciles.filter((s) => s.reserve === 'non').length
   const r: string[] = []
   if (derive >= 2) r.push(`${derive} sorties faciles avec une FC qui dérive (> 5 %) : fatigue, chaleur ou hydratation ? À croiser avec ta VFC`)

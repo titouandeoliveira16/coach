@@ -96,7 +96,7 @@ export function analyserFlux(flux: Flux, r: Resume, c: Contexte): Seance {
   if (aFc && dureeSec >= DUREE_MIN_DECOUPLAGE) {
     const sortie = aPuissance ? flux.w! : flux.v
     if (sortie) {
-      const d = decouplage(t, flux.fc!, sortie, 600)
+      const d = decouplage(t, flux.fc!, sortie, 600, 300)
       if (d !== undefined) s.decouplage = Math.round(d * 10) / 10
     }
   }

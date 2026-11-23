@@ -16,6 +16,22 @@ export const DERIVE_BLOC = { ok: 5, moyen: 8 }
 export const FC_FIN_HAUTE = 0.95
 export const MIN_FC90 = { ok: 8, moyen: 4 }
 
+/**
+ * Dérive retenue pour une séance facile (23/11/2026, choix de Titouan, découplage de Friel mesuré sur un effort régulier) :
+ *  - avec des blocs au 1er seuil : watts ÷ pouls du premier bloc comparé au dernier (la Z2 autour, après des efforts
+ *    soutenus, n'est pas comparable : le pouls y reste un peu plus haut) ;
+ *  - endurance seule : partie Z2 coupée en deux, sans la mise en route ni le retour au calme.
+ */
+export function deriveSeance(s: Pick<Seance, 'controle' | 'decouplage'>): { valeur: number; entreBlocs: boolean } | undefined {
+  const blocs = (s.controle?.lignes ?? []).filter((l) => /^1er seuil/i.test(l.libelle) && l.fc && l.w)
+  if (blocs.length >= 2) {
+    const r = (l: (typeof blocs)[number]) => l.w / l.fc!
+    const a = r(blocs[0]), z = r(blocs[blocs.length - 1])
+    return { valeur: Math.round(((a - z) / a) * 1000) / 10, entreBlocs: true }
+  }
+  return s.decouplage === undefined ? undefined : { valeur: s.decouplage, entreBlocs: false }
+}
+
 export type Categorie = 'facile' | 'plateau' | 'vo2' | 'sans'
 export type Verdict = { couleur: 'vert' | 'orange' | 'rouge' | 'gris'; texte: string }
 
@@ -41,12 +57,14 @@ export function controleFc(s: Seance, categorie: Categorie, fcMax: number): Verd
   const sansFc = !s.fcMoy
   if (categorie === 'facile') {
     if (sansFc) return { couleur: 'gris', texte: 'Pas de FC sur cette séance : verdict sur ton ressenti.' }
-    if (s.decouplage === undefined) return s.dureeSec < 45 * 60 ? undefined : { couleur: 'gris', texte: 'FC trop incomplète pour juger la dérive.' }
-    const d = Math.max(0, s.decouplage)
+    const der = deriveSeance(s)
+    if (der === undefined) return s.dureeSec < 45 * 60 ? undefined : { couleur: 'gris', texte: 'FC trop incomplète pour juger la dérive.' }
+    const d = Math.max(0, der.valeur)
     const v = d.toFixed(1).replace('.', ',')
-    if (d < DERIVE_FACILE.ok) return { couleur: 'vert', texte: `FC stable (dérive ${v} %)` }
-    if (d <= DERIVE_FACILE.moyen) return { couleur: 'orange', texte: `FC qui dérive un peu (${v} %) : chaleur, hydratation ou fatigue ?` }
-    return { couleur: 'rouge', texte: `FC qui monte trop (${v} %) : séance plus dure que prévu, ou fatigue` }
+    const ou = der.entreBlocs ? ' entre tes blocs au 1er seuil' : ''
+    if (d < DERIVE_FACILE.ok) return { couleur: 'vert', texte: `FC stable${ou} (dérive ${v} %)` }
+    if (d <= DERIVE_FACILE.moyen) return { couleur: 'orange', texte: `FC qui dérive un peu${ou} (${v} %) : chaleur, hydratation ou fatigue ?` }
+    return { couleur: 'rouge', texte: `FC qui monte trop${ou} (${v} %) : séance plus dure que prévu, ou fatigue` }
   }
   if (categorie === 'plateau') {
     if (sansFc) return { couleur: 'gris', texte: 'Pas de FC sur cette séance : verdict sur les watts et ton ressenti.' }

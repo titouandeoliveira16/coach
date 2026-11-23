@@ -45,11 +45,13 @@ export function domaineDepuisFc(fcMoy: number, bornes: BornesZones): 'basse' | '
  * Découplage cardiaque en % : (ratio 1re moitié − ratio 2de moitié) / ratio 1re moitié × 100,
  * où ratio = sortie moyenne (vitesse ou puissance) / FC moyenne. Seuls les points avec FC et sortie > 0 comptent.
  */
-export function decouplage(t: number[], fc: (number | null)[], sortie: (number | null)[], ignorerDebutSec = 0) {
+export function decouplage(t: number[], fc: (number | null)[], sortie: (number | null)[], ignorerDebutSec = 0, ignorerFinSec = 0) {
   const points: { t: number; fc: number; s: number }[] = []
+  const fin = t[t.length - 1]
   for (let i = 0; i < t.length; i++) {
-    // L'échauffement (montée normale de la FC) ne compte pas : on mesure sur la partie stable
-    if (t[i] - t[0] < ignorerDebutSec) continue
+    // L'échauffement (montée normale de la FC) et le retour au calme (23/11/2026) ne comptent pas : on mesure sur la
+    // partie Z2 seule
+    if (t[i] - t[0] < ignorerDebutSec || fin - t[i] < ignorerFinSec) continue
     const f = fc[i]
     const s = sortie[i]
     if (f != null && f > 0 && s != null && s > 0) points.push({ t: t[i], fc: f, s })

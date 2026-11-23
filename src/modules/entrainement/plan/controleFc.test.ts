@@ -1,6 +1,6 @@
-import { expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import type { Seance } from '../types'
-import { controleFc } from './controleFc'
+import { controleFc, deriveSeance } from './controleFc'
 
 const s = (extra: Partial<Seance>): Seance => ({ id: 'x', date: '2026-10-27', sport: 'velo', dureeSec: 3600, source: 'intervals', fcMoy: 140, ...extra })
 
@@ -23,4 +23,20 @@ it('VO2 longs : minutes à 90 % de la FC max', () => {
   expect(controleFc(s({ tempsFc90: 300 }), 'vo2', 204)?.couleur).toBe('orange')
   expect(controleFc(s({ tempsFc90: 120 }), 'vo2', 204)?.couleur).toBe('rouge')
   expect(controleFc(s({}), 'sans', 204)).toBeUndefined()
+})
+
+describe('dérive retenue (23/11/2026)', () => {
+  it('avec des blocs au 1er seuil : premier bloc contre dernier, pas la Z2 d’après', () => {
+    const lignes = [
+      { libelle: 'Z2', w: 144, fc: 127 }, { libelle: '1er seuil 1', w: 169, fc: 139 },
+      { libelle: '1er seuil 2', w: 167, fc: 142 }, { libelle: 'Z2', w: 136, fc: 135 },
+    ]
+    const d = deriveSeance({ controle: { lignes } as never, decouplage: 6.1 })
+    expect(d?.entreBlocs).toBe(true)
+    expect(d!.valeur).toBeLessThan(5)
+    expect(d!.valeur).toBeGreaterThan(2.5)
+  })
+  it('endurance seule : le découplage de la partie Z2', () => {
+    expect(deriveSeance({ decouplage: 3.2 })).toEqual({ valeur: 3.2, entreBlocs: false })
+  })
 })
