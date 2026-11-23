@@ -25,7 +25,7 @@ import { NutritionSeance } from '../plan/NutritionSeance'
 import { joursPanneVelo } from '../plan/imprevus'
 import { annulerSemaineChargee, lireSemaineChargee, passerSemaineChargee } from '../plan/semaineChargee'
 import { FormulairePrevue } from '../plan/FormulairePrevue'
-import { annulerPrevue, changerDeJour, chargesSemaine, joursDe, joursPourDeplacer, supprimerPrevue } from '../plan/donnees'
+import { annulerPrevue, changerDeJour, chargesSemaine, faireAujourdhui, joursDe, joursPourDeplacer, supprimerPrevue } from '../plan/donnees'
 import { alertesCumul, estIntensite, genererSemaineEtSuite, lireMeta, mettreSemaineAJour, noterResultat } from '../plan/programme'
 import { programmeDe, useReglagesEntrainement } from '../reglagesEntrainement'
 import { lundiDe, nouvelId } from '../seances/donnees'
@@ -181,14 +181,15 @@ function CarteVelo({ lundi, deps, onMessage, onPrecedente, onSuivante }: { lundi
   return (
     <Carte>
       <div className="flex items-center justify-between gap-2">
-        <span className="flex items-center text-sm text-texte-2">
+        {/* Toujours sur une ligne (23/11/2026 : la date passait sur deux lignes avec un gros chiffre de kJ) */}
+        <span className="flex shrink-0 items-center whitespace-nowrap text-sm text-texte-2">
           <button type="button" onClick={onPrecedente} className="-my-2 flex min-h-11 min-w-11 items-center justify-center text-2xl text-accent" aria-label="Semaine précédente">‹</button>
           {semaine}
           <button type="button" onClick={onSuivante} className="-my-2 flex min-h-11 min-w-11 items-center justify-center text-2xl text-accent" aria-label="Semaine suivante">›</button>
         </span>
         {(meta || kj.kjPrevus > 0 || (passee && kj.kjRealises > 0)) && (
-          <span className="flex items-center gap-2 text-sm">
-            <span><b className="text-lg">{formatNombre(Math.round(kj.kjRealises))}</b>{kj.kjPrevus > 0 ? ` / ${formatNombre(Math.round(kj.kjPrevus))}` : ''} kJ</span>
+          <span className="flex min-w-0 items-center gap-1 whitespace-nowrap text-sm tabular-nums">
+            <span><b className="text-base">{formatNombre(Math.round(kj.kjRealises))}</b>{kj.kjPrevus > 0 ? ` / ${formatNombre(Math.round(kj.kjPrevus))}` : ''} kJ</span>
             {!passee && <button type="button" onClick={generer} disabled={occupe} className="px-1 text-lg text-accent disabled:opacity-40" aria-label="Recalculer le vélo de la semaine">{occupe ? '…' : '↻'}</button>}
           </span>
         )}
@@ -253,6 +254,9 @@ function DetailSeance({ p, jours, prevues, onFermer, onMessage }: {
   const [supprimerOk, setSupprimerOk] = useState(false)
   const possibles = useLiveQuery(() => (mode === 'annuler' ? joursPourDeplacer(p) : Promise.resolve([])), [mode, p.id, p.date])
   const nomJour = (d: string) => depuisJour(d).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric' })
+  // Séance manquée ces 3 derniers jours : la faire aujourd'hui (23/11/2026), même depuis la semaine d'avant
+  const rattrapable = p.date < aujourdhui() && p.date >= decalerJour(aujourdhui(), -3) && (p.statut === 'prevue' || p.statut === 'non-faite') && p.sport === 'velo'
+  const duJour = useLiveQuery(async () => (rattrapable ? (await db.prevues.where('date').equals(aujourdhui()).toArray()).filter((x) => x.statut === 'prevue' && x.sport === 'velo') : []), [rattrapable])
 
   if (mode === 'modifier')
     return (
@@ -317,7 +321,18 @@ function DetailSeance({ p, jours, prevues, onFermer, onMessage }: {
               </div>
             </div>
           )}
-          {p.statut === 'prevue' && <Bouton variante="secondaire" onClick={() => setMode('jour')}>↔ Changer de jour</Bouton>}
+          {rattrapable && duJour && (duJour.length === 0
+            ? <Bouton onClick={async () => { onMessage(await faireAujourdhui(p, 'seule')); onFermer() }}>La faire aujourd'hui</Bouton>
+            : (
+              <div className="rounded-xl bg-surface-2 p-3">
+                <p className="mb-2 text-sm text-texte-2">La faire aujourd'hui ? Tu as déjà {duJour.map((x) => x.titre).join(' et ')}.</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <button type="button" className="min-h-11 rounded-lg border border-bordure font-semibold" onClick={async () => { onMessage(await faireAujourdhui(p, 'a-la-place')); onFermer() }}>À la place</button>
+                  <button type="button" className="min-h-11 rounded-lg border border-bordure font-semibold" onClick={async () => { onMessage(await faireAujourdhui(p, 'ensemble')); onFermer() }}>Les deux</button>
+                </div>
+              </div>
+            ))}
+          {p.statut === 'prevue' && p.date >= aujourdhui() && <Bouton variante="secondaire" onClick={() => setMode('jour')}>↔ Changer de jour</Bouton>}
           {p.statut === 'prevue' && <Bouton variante="secondaire" onClick={() => setMode('annuler')}>✗ Je ne peux pas la faire</Bouton>}
           <Bouton variante="secondaire" onClick={() => setMode('modifier')}>Modifier</Bouton>
           {supprimerOk ? (

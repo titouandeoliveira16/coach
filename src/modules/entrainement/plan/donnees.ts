@@ -95,6 +95,21 @@ export async function changerDeJour(p: SeancePrevue, vers: string, ensemble = fa
 }
 
 /**
+ * Séance manquée ces derniers jours, faite aujourd'hui (23/11/2026, demande de Titouan), même si elle était dans la
+ * semaine d'avant. La séance d'aujourd'hui n'est jamais renvoyée dans le passé : soit les deux le même jour, soit
+ * celle d'hier prend sa place (celle d'aujourd'hui est notée « pas faite », non rattrapée).
+ */
+export async function faireAujourdhui(p: SeancePrevue, mode: 'seule' | 'ensemble' | 'a-la-place') {
+  const jour = aujourdhui()
+  const la = (await db.prevues.where('date').equals(jour).toArray()).filter((x) => x.statut === 'prevue' && x.id !== p.id && x.sport === p.sport)
+  await enregistrer(db.prevues, { ...p, date: jour, statut: 'prevue', deplacee: true })
+  if (mode === 'a-la-place') for (const x of la) await enregistrer(db.prevues, { ...x, statut: 'non-faite', raison: 'Perso' })
+  return mode === 'a-la-place' && la.length
+    ? [`${p.titre} se fait aujourd'hui, à la place de ${la.map((x) => x.titre).join(' et ')} (pas rattrapée).`]
+    : mode === 'ensemble' && la.length ? [`${p.titre} se fait aujourd'hui, en plus de ${la.map((x) => x.titre).join(' et ')}.`] : [`${p.titre} se fait aujourd'hui.`]
+}
+
+/**
  * Jours où déplacer une séance plutôt que l'annuler : de demain (ou aujourd'hui si elle était prévue avant) à dimanche,
  * jours libres sans indisponibilité. Pour une séance dure : « conseillé » s'il n'y a pas de séance dure la veille ni le lendemain.
  */

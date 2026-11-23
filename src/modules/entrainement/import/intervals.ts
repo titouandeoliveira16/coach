@@ -6,7 +6,7 @@ import { enregistrer } from '../../../core/stockage'
 import { CLE_PUBLIQUE, URL_SUPABASE, supabase } from '../../../core/supabase'
 import { chargerContexte, completerMetriques, enregistrerSeance, fusionner, nettoyerDoublons, richesse, trouverDoublon } from '../seances/donnees'
 import { sportDepuisType } from '../sports'
-import type { MesureMatin } from '../types'
+import type { MesureMatin, Seance } from '../types'
 import { meilleursEfforts, reechantillonner1Hz } from '../../../metrics/puissance'
 import { blocsDeLaSeance, tempsFc90, tousTenus } from '../plan/blocs'
 import { controlerSeance, controleTenu, type Tour } from '../../../metrics/controle'
@@ -220,6 +220,39 @@ async function importerActivites(depuis: string, surProgression?: (n: number) =>
  * pour les séances des 14 derniers jours qui en ont un. Une seule fois par version.
  */
 const VERSION_CONTROLE = 3
+/**
+ * Séances prévues faites sans contrôle bloc par bloc (23/11/2026 : fichier de watts pas encore prêt sur Intervals à
+ * l'import, la séance restait sans watts ni pouls par bloc) : fichier redemandé, une fois par jour, sur 14 jours.
+ */
+export async function completerControles() {
+  const cle = 'controle-complete'
+  if ((await db.reglages.get(cle))?.valeur === aujourdhui()) return
+  const c = await chargerContexte()
+  const manquent: Seance[] = []
+  for (const s of await db.seances.where('date').aboveOrEqual(decalerJour(aujourdhui(), -14)).toArray()) {
+    if (s.controle || s.blocs || !s.prevueId || !s.idExterne || s.source !== 'intervals') continue
+    const p = await db.prevues.get(s.prevueId)
+    if (p?.velo?.etapes && p.velo.famille !== 'test') manquent.push(s)
+  }
+  if (manquent.length && c.cpW) {
+    const { flux } = await appeler<{ flux: Record<string, { time?: number[]; heartrate?: number[]; watts?: number[]; tours?: Tour[] }> }>('flux', { ids: manquent.slice(0, 10).map((s) => s.idExterne) })
+    for (const s of manquent.slice(0, 10)) {
+      const f = flux[s.idExterne!]
+      const prevue = await db.prevues.get(s.prevueId!)
+      if (!f?.time?.length || !f.watts?.length || !prevue?.velo?.etapes) continue
+      const w1Hz = reechantillonner1Hz(f.time, f.watts)
+      const fc1Hz = f.heartrate?.length ? reechantillonner1Hz(f.time, f.heartrate) : undefined
+      const blocs = blocsDeLaSeance(w1Hz, prevue, fc1Hz)
+      const controle = controlerSeance({ etapes: prevue.velo.etapes, famille: prevue.velo.famille, w1Hz, fc1Hz, cpW: c.cpW, tours: f.tours, sv1W: c.sv1W, fcSv1: c.bornes[1] })
+      if (!controle && !blocs) continue
+      await enregistrer(db.seances, { ...(await db.seances.get(s.id))!, ...(blocs ? { blocs } : {}), ...(controle ? { controle } : {}) })
+      const intensite = !['z2', 'z2-long', 'test'].includes(prevue.velo.famille)
+      if (intensite && !prevue.resultat && controle && controleTenu(controle)) await enregistrer(db.prevues, { ...prevue, resultat: 'reussie' })
+    }
+  }
+  await enregistrer(db.reglages, { id: cle, valeur: aujourdhui() })
+}
+
 export async function recontrolerRecentes() {
   const cle = 'controle-version'
   if (((await db.reglages.get(cle))?.valeur as number | undefined) === VERSION_CONTROLE) return

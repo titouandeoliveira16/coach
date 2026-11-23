@@ -72,7 +72,7 @@ function AujourdhuiDuJour() {
       </BandeauAVoir>
       {peseeOuverte && <FeuillePesee onFermer={() => setPeseeOuverte(false)} />}
       {complet && !edition ? (
-        <CarteAujourdhui onModifierMatin={() => setEdition(true)} autreOuvert={nutriOuverte} remplir={!nutrition} apresForme={(a) => <TuilesMatin onPoids={() => setPeseeOuverte(true)} forme={a.forme} ratioPic={a.ratioPic} />} />
+        <CarteAujourdhui onModifierMatin={() => setEdition(true)} autreOuvert={nutriOuverte} remplir={!nutrition} apresForme={() => <TuilesMatin onPoids={() => setPeseeOuverte(true)} />} />
       ) : (
         <SaisieMatin key={duJour?.modifieLe} existante={duJour} onTermine={() => setEdition(false)} />
       )}

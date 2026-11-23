@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect } from 'react'
 import { aujourdhui, decalerJour, depuisJour } from '../../../core/dates'
+import { db } from '../../../core/db'
 import { Carte } from '../../../core/ui/Carte'
 import { dimancheDuBilan } from '../forme/bilanNutrition'
 import { bilanDimanche, genererSemaineVelo, lireMeta } from './programme'
@@ -15,6 +16,14 @@ export function lundiDuBilan(jour?: string) {
 /** Bilan de la semaine en 3 lignes : fait, ce qui change, pourquoi. */
 export function CarteBilan({ lundi, deps = [] }: { lundi: string; deps?: unknown[] }) {
   const b = useLiveQuery(() => bilanDimanche(lundi), [lundi, ...deps])
+  // Le dimanche (23/11/2026, demande de Titouan) : pas de bilan tant que la séance du jour n'est pas faite (ses chiffres
+  // seraient ceux d'une semaine finie) ; à 20 h, il s'affiche quand même (jour sans sortie)
+  const pret = useLiveQuery(async () => {
+    const dimanche = decalerJour(lundi, 6)
+    if (aujourdhui() !== dimanche || new Date().getHours() >= 20) return true
+    const duJour = (await db.prevues.where('date').equals(dimanche).toArray()).filter((p) => p.sport === 'velo' && p.statut === 'prevue')
+    return duJour.length === 0
+  }, [lundi, ...deps])
   // Le dimanche, la semaine suivante est calculée tout de suite (audit du 18/11/2026 : avant, le bilan disait « elle se
   // calcule dès que tu l'ouvres », rien à voir le dimanche soir) ; elle sera recalculée lundi avec ta vraie semaine
   useEffect(() => {
@@ -22,7 +31,7 @@ export function CarteBilan({ lundi, deps = [] }: { lundi: string; deps?: unknown
     if (decalerJour(lundi, 6) !== aujourdhui()) return
     void lireMeta(suivant).then((m) => (m ? undefined : genererSemaineVelo(suivant).catch(() => undefined)))
   }, [lundi])
-  if (!b) return null
+  if (!b || !pret) return null
   return (
     <Carte titre={`Bilan de la semaine du ${depuisJour(lundi).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}`}>
       <div className="space-y-2 text-sm">

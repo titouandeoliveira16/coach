@@ -777,8 +777,11 @@ const RECUP_SV1_MIN = 5
  */
 export function construireZ2(duree: number, z2W: number, sprints?: { n: number; sec: number }, o: { longue?: boolean; sv1?: { w: number; reps: number; min: number; repli?: { reps: number; min: number }[]; fc?: [number, number] }; espacementSec?: number } = {}): SeanceConstruite {
   const dureeMin = Math.round(duree)
-  const ech = Math.min(10, dureeMin) * 60
-  const wEch = arrondi5(z2W * 0.85)
+  // Un maximum de Z2 (23/11/2026, demande de Titouan : sur 20-30 min, 10′ de mise en route en Z1 ne laissaient que 5′ de
+  // Z2) : 5′ de mise en route jusqu'à 45 min de séance, 10′ au-delà, au bas de la Z2 (90 % de tes watts Z2) ; 5′ de
+  // retour au calme ; tout le reste en Z2
+  const ech = (dureeMin <= 45 ? 5 : 10) * 60
+  const wEch = arrondi5(z2W * 0.9)
   const fin = dureeMin * 60
   const z2 = (debutSec: number, dureeSec: number, libelle = 'Z2 régulière : RPE ≤ 3, tu peux parler en phrases'): Etape => ({ debutSec, dureeSec, libelle, w: z2W, ...plage(z2W, 'z2') })
   const etapes: Etape[] = [{ debutSec: 0, dureeSec: ech, libelle: 'Mise en route progressive', w: wEch }]
@@ -867,7 +870,7 @@ export function construireZ2(duree: number, z2W: number, sprints?: { n: number; 
   const kj = (ech * wEch + (fin - ech - 300) * z2W + 300 * wEch) / 1000 + kjPlus
   return {
     titre,
-    detail: `10' progressif puis Z2 à ${z2W} W (RPE ≤ 3)${detailPlus}`,
+    detail: `${ech / 60}' progressif puis Z2 à ${z2W} W (RPE ≤ 3)${detailPlus}`,
     dureeMin, kj: Math.round(kj),
     velo: { famille: longue ? 'z2-long' : 'z2', cibleW: z2W, etapes, ...(sv1 ? { sv1W: sv1.w, blocsSv1: sv1.reps, ...(fcSv1 ? { fcSv1 } : {}) } : {}) },
   }
@@ -2045,10 +2048,11 @@ export function construireSv1Dediee(palier: number, maxMin: number, sv1W: number
   while (dureeSv1Dediee(p) > maxMin && p.reps > 2) p = { ...p, reps: p.reps - 1 }
   while (dureeSv1Dediee(p) > maxMin && p.min > 8) p = { ...p, min: p.min - 1 }
   const recup = recupSv1Dedie(p.min)
-  const wEch = arrondi5(z2W * 0.85)
+  // Mise en route et récupérations au bas de la Z2 (23/11/2026 : à 85 %, elles tombaient en Z1)
+  const wEch = arrondi5(z2W * 0.9)
   const pl = plage(sv1W, 'tempo')
   const { etapes, kj } = enchainer([
-    { dureeSec: 600, libelle: 'Mise en route en Z2 basse', w: wEch },
+    { dureeSec: 600, libelle: 'Mise en route progressive jusqu’à ta Z2', w: wEch },
     {
       dureeSec: (p.reps * p.min + (p.reps - 1) * recup) * 60, w: sv1W, libelle: `${p.reps} × ${p.min}′ au 1er seuil, ${recup}′ faciles entre`,
       repetition: {

@@ -51,6 +51,8 @@ apresPremiereSynchro().then(async () => {
     ['budget', () => import('./modules/budget/donnees').then(async (m) => { const { db } = await import('./core/db'); if (await db.comptes.count()) await m.mettreAJour() })],
     // Contrôle des séances récentes recalculé avec les règles du moment (ex. arrêts exclus des moyennes, v0.71)
     ['contrôle des séances', () => import('./modules/entrainement/import/intervals').then((m) => m.recontrolerRecentes())],
+    // Séances faites restées sans contrôle bloc par bloc : fichier redemandé (23/11/2026)
+    ['contrôles manquants', () => import('./modules/entrainement/import/intervals').then((m) => m.completerControles())],
   ]
   for (const [nom, etape] of etapes) await etape().catch((e) => signalerErreur(e, `Démarrage (${nom})`))
 })

@@ -12,9 +12,9 @@ describe('envoi vers Intervals.icu', () => {
   it('une ligne par étape, watts absolus, « freeride » pour les efforts à fond, pas de chiffres dans les libellés', () => {
     const z2 = texteIntervals(construireZ2(60, 180).velo.etapes!)
     expect(z2.split('\n')).toEqual([
-      '- Mise en route progressive 10m 155w',
+      '- Mise en route progressive 10m 160w',
       '- Endurance régulière 45m 180w',
-      '- Retour au calme 5m 155w',
+      '- Retour au calme 5m 160w',
     ])
     const test = texteIntervals(construireTest(260).velo.etapes!)
     expect(test).toMatch(/12m freeride/)
