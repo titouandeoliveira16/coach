@@ -15,7 +15,7 @@ import { fusionnerSemainesPassees, heuresAu, programmeAu, programmeDe } from '..
 import type { ProfilSportif } from '../reglages/ProfilSportif'
 import { chargerContexte, domaineDe, lundiDe } from '../seances/donnees'
 import type { ReglagesEntrainement, ReglagesProgramme, Seance, SeancePrevue } from '../types'
-import { chargesSemaine, joursDe } from './donnees'
+import { chargesSemaine, joursDe, semaineComptee } from './donnees'
 import { joursPanneVelo } from './imprevus'
 import { lireSemaineChargee, passerSemaineChargee } from './semaineChargee'
 import { chargeDeDepart } from './depart'
@@ -212,8 +212,10 @@ async function bilanDe(precedent: string, reel = false): Promise<BilanSemaine | 
   const meta = await lireMeta(precedent)
   if (!meta) return undefined
   const fin = decalerJour(precedent, 6)
-  const prevues = (await db.prevues.where('date').between(precedent, fin, true, true).toArray()).filter((p) => p.origine === 'auto' && p.statut !== 'abandonnee')
-  const seances = await db.seances.where('date').between(precedent, fin, true, true).toArray()
+  // Séances rattrapées la semaine d'après : comptées ici, dans leur semaine d'origine (23/11/2026)
+  const compte = await semaineComptee(precedent, await db.prevues.where('date').between(precedent, fin, true, true).toArray(), await db.seances.where('date').between(precedent, fin, true, true).toArray())
+  const prevues = compte.prevues.filter((p) => p.origine === 'auto' && p.statut !== 'abandonnee')
+  const seances = compte.seances
   const decisions = await db.decisions.where('date').between(precedent, fin, true, true).toArray()
   // Semaine pas encore finie (13/11/2026) : comptée comme si elle se passait à 100 %, sans jour rouge ni orange ; la
   // semaine d'après se recalcule avec le vrai bilan une fois celle-ci finie
@@ -411,11 +413,14 @@ async function genererSemaineVeloBrute(lundi: string) {
     ...seances.filter((s) => s.sport !== 'natation').map((s) => ({ date: s.date, dure: s.sport !== 'renfo' && domaineDe(s, c.bornes) === 'haute' })),
   ].filter((o) => dansSemaine(o.date) || o.dure)
 
-  // Ce qui est déjà fait (ou prévu à la main) cette semaine
-  const veloSemaine = prevues.filter((p) => p.sport === 'velo' && dansSemaine(p.date))
+  // Ce qui est déjà fait (ou prévu à la main) cette semaine ; une séance rattrapée de la semaine d'avant occupe son jour
+  // mais compte pour sa semaine d'origine (23/11/2026) : elle ne remplace ni la sortie longue ni l'intensité d'ici
+  const idsRattrapees = new Set(prevues.filter((p) => p.rattrapageDe && !dansSemaine(p.rattrapageDe)).map((p) => p.id))
+  const seancesSemaine = seances.filter((s) => !(s.prevueId && idsRattrapees.has(s.prevueId)))
+  const veloSemaine = prevues.filter((p) => p.sport === 'velo' && dansSemaine(p.date) && !idsRattrapees.has(p.id))
   // Séance dure hors familles d'intervalles (départs XCO, simulation…) : elle compte aussi (19/11/2026 : refaite au recalcul)
   const intensiteFaite = veloSemaine.some((p) => estIntensiteSemaine(p) || p.velo?.famille === 'test') ||
-    seances.some((s) => s.sport === 'velo' && dansSemaine(s.date) && domaineDe(s, c.bornes) === 'haute')
+    seancesSemaine.some((s) => s.sport === 'velo' && dansSemaine(s.date) && domaineDe(s, c.bornes) === 'haute')
   const longFaite = veloSemaine.some((p) => p.velo?.famille === 'z2-long' || (p.longue && p.statut === 'faite'))
   const z2Faites = veloSemaine.filter((p) => p.velo?.famille === 'z2').length
   const roles = prog.semaineType
@@ -677,7 +682,7 @@ async function genererSemaineVeloBrute(lundi: string) {
   }
 
   // Répartition du reste du budget en Z2 : 60 % pour la sortie longue
-  const kjFaits = seances.filter((s) => s.sport === 'velo' && dansSemaine(s.date)).reduce((a, s) => a + (s.kj ?? 0), 0)
+  const kjFaits = seancesSemaine.filter((s) => s.sport === 'velo' && dansSemaine(s.date)).reduce((a, s) => a + (s.kj ?? 0), 0)
   const kjAutresPrevus = veloSemaine.filter((p) => p.statut === 'prevue').reduce((a, p) => a + (p.kjPrevu ?? 0), 0)
   // La course dans le plan (pas encore faite) : ses kJ estimés comptent dans la semaine
   const coursesAPrevoir = coursesSemaine.filter((x) => x.date >= aPartirDe && !courseFaite(x.date)).map((x) => [x.date, construireCourse(x.nom, x.niveau, dureeDe(x.date), r.cpW)] as [string, SeanceConstruite])
@@ -1226,6 +1231,17 @@ export async function actualiserSemaineEnCours() {
   }
   // Semaine en cours construite si elle ne l'est pas ; puis, une fois par jour, toute la saison à venir (option A du
   // 19/11/2026)
+  // 23/11/2026, une fois : séance manquée faite la semaine suivante avec la 14.21 (avant que la semaine d'origine soit
+  // retenue) : rattachée à sa semaine d'origine (date dans son identifiant), puis la semaine en cours recalculée
+  if (!(await db.reglages.get('rattrapages-1422'))) {
+    let corrigees = 0
+    for (const p of await db.prevues.filter((x) => !!x.deplacee && !x.rattrapageDe && x.date >= '2026-11-23').toArray()) {
+      const origine = /^auto-(\d{4}-\d{2}-\d{2})-/.exec(p.id)?.[1]
+      if (origine && lundiDe(origine) < lundiDe(p.date)) { await enregistrer(db.prevues, { ...p, rattrapageDe: origine }); corrigees++ }
+    }
+    await enregistrer(db.reglages, { id: 'rattrapages-1422', valeur: true })
+    if (corrigees) await recalculerSemainesAVenir()
+  }
   await mettreSemaineAJour(lundiDe(aujourdhui()))
   // Nouvelle semaine construite d'avance (semaine d'avant comptée à 100 %) : recalculée une fois avec le vrai bilan,
   // avant de reconstruire la saison à partir d'elle
@@ -1253,8 +1269,7 @@ export async function bilanDimanche(lundi: string) {
   const fin = decalerJour(lundi, 6)
   const suivant = decalerJour(lundi, 7)
   // Tout ce qui était prévu au départ, séances pas faites comprises (même total que l'écran Semaine)
-  const prevues = await db.prevues.where('date').between(lundi, fin, true, true).toArray()
-  const seances = await db.seances.where('date').between(lundi, fin, true, true).toArray()
+  const { prevues, seances } = await semaineComptee(lundi, await db.prevues.where('date').between(lundi, fin, true, true).toArray(), await db.seances.where('date').between(lundi, fin, true, true).toArray())
   const decisions = await db.decisions.where('date').between(lundi, fin, true, true).toArray()
   if (!prevues.length && !seances.length) return undefined
 

@@ -4,7 +4,7 @@ import { enregistrer, supprimer } from '../../../core/stockage'
 import { srpe } from '../../../metrics/charge'
 import { replanifier, trimpPrevu, type Deplacement } from '../../../metrics/planif'
 import { chargeDe, chargerContexte, lundiDe, TRIMP_VERS_TSS } from '../seances/donnees'
-import { TYPES_COURSE, type Indispo, type Raison, type SeancePrevue } from '../types'
+import { TYPES_COURSE, type Indispo, type Raison, type Seance, type SeancePrevue } from '../types'
 import { joursPanneVelo } from './imprevus'
 
 /** Les 7 dates (lundi → dimanche) de la semaine qui commence `lundi`. */
@@ -102,8 +102,12 @@ export async function changerDeJour(p: SeancePrevue, vers: string, ensemble = fa
 export async function faireAujourdhui(p: SeancePrevue, mode: 'seule' | 'ensemble' | 'a-la-place') {
   const jour = aujourdhui()
   const la = (await db.prevues.where('date').equals(jour).toArray()).filter((x) => x.statut === 'prevue' && x.id !== p.id && x.sport === p.sport)
-  await enregistrer(db.prevues, { ...p, date: jour, statut: 'prevue', deplacee: true })
+  // Autre semaine : elle compte toujours pour sa semaine d'origine
+  const autreSemaine = lundiDe(p.date) !== lundiDe(jour)
+  await enregistrer(db.prevues, { ...p, date: jour, statut: 'prevue', deplacee: true, ...(autreSemaine ? { rattrapageDe: p.rattrapageDe ?? p.date } : {}) })
   if (mode === 'a-la-place') for (const x of la) await enregistrer(db.prevues, { ...x, statut: 'non-faite', raison: 'Perso' })
+  // La semaine en cours (et la saison) repartent du bilan corrigé de la semaine d'origine
+  if (autreSemaine) await import('./programme').then((m) => m.recalculerSemainesAVenir()).catch(() => {})
   return mode === 'a-la-place' && la.length
     ? [`${p.titre} se fait aujourd'hui, à la place de ${la.map((x) => x.titre).join(' et ')} (pas rattrapée).`]
     : mode === 'ensemble' && la.length ? [`${p.titre} se fait aujourd'hui, en plus de ${la.map((x) => x.titre).join(' et ')}.`] : [`${p.titre} se fait aujourd'hui.`]
@@ -168,6 +172,25 @@ export const champsCourse = (t: keyof typeof TYPES_COURSE): Pick<SeancePrevue, '
 })
 
 /** Charges de la semaine : prévue, réalisée, semaine précédente, moyenne des 4 précédentes (même unité que le tableau de bord). */
+/**
+ * Séances prévues et faites d'une semaine telles qu'elles comptent dans ses kJ (23/11/2026, demande de Titouan) : une
+ * séance manquée faite la semaine suivante (« La faire aujourd'hui ») compte pour sa semaine d'origine, pas pour celle
+ * où elle est faite. Sinon la semaine d'origine paraît ratée et la suivante gonflée, et le budget d'après part de faux chiffres.
+ */
+export async function semaineComptee(lundi: string, prevuesDates: SeancePrevue[], seancesDates: Seance[]) {
+  const fin = decalerJour(lundi, 6)
+  const dedans = (d?: string) => !!d && d >= lundi && d <= fin
+  const rattrapees = (await db.prevues.filter((p) => !!p.rattrapageDe).toArray())
+  const parties = new Set(rattrapees.filter((p) => !dedans(p.rattrapageDe)).map((p) => p.id))
+  const venues = rattrapees.filter((p) => dedans(p.rattrapageDe) && !dedans(p.date))
+  const idsVenues = new Set(venues.map((p) => p.id))
+  const seancesVenues = venues.length ? (await db.seances.toArray()).filter((s) => s.prevueId && idsVenues.has(s.prevueId) && !dedans(s.date)) : []
+  return {
+    prevues: [...prevuesDates.filter((p) => !parties.has(p.id)), ...venues],
+    seances: [...seancesDates.filter((s) => !(s.prevueId && parties.has(s.prevueId))), ...seancesVenues],
+  }
+}
+
 export async function chargesSemaine(lundi: string) {
   const c = await chargerContexte()
   const seances = await db.seances.where('date').between(decalerJour(lundi, -28), decalerJour(lundi, 6), true, true).toArray()
@@ -181,12 +204,13 @@ export async function chargesSemaine(lundi: string) {
   const reste = prevues.filter((p) => p.statut === 'prevue').reduce((a, p) => a + estimer(p), 0)
   const prevue = realisee + reste
   const precedentes = [1, 2, 3, 4].map((n) => realiseeEntre(decalerJour(lundi, -7 * n), decalerJour(lundi, -7 * n + 6)))
-  // Budget kJ (vélo) : réalisé + reste à faire
-  const kjRealises = seances.filter((s) => s.date >= lundi && s.date <= decalerJour(lundi, 6)).reduce((a, s) => a + (s.kj ?? 0), 0)
+  // Budget kJ (vélo) : réalisé + reste à faire ; séances rattrapées comptées dans leur semaine d'origine
+  const compte = await semaineComptee(lundi, toutes, seances.filter((s) => s.date >= lundi && s.date <= decalerJour(lundi, 6)))
+  const kjRealises = compte.seances.reduce((a, s) => a + (s.kj ?? 0), 0)
   // Prévu = ce qui était prévu au départ (toutes les séances prévues de la semaine, faites ou non), comme le bilan du
   // dimanche (16/11/2026 : avant, « fait + reste à faire », qui devenait égal au fait une fois la semaine finie)
   // Une séance pas faite reste dans le prévu (17/11/2026, même total que le bilan du dimanche)
-  const kjPlan = toutes.filter((p) => p.sport === 'velo').reduce((a, p) => a + (p.kjPrevu ?? 0), 0)
+  const kjPlan = compte.prevues.filter((p) => p.sport === 'velo').reduce((a, p) => a + (p.kjPrevu ?? 0), 0)
   return {
     prevue, realisee, precedente: precedentes[0], moyenne4: precedentes.reduce((a, b) => a + b, 0) / 4,
     unite: c.chargeRef === 'trimp' ? 'TSS' : 'sRPE', kjRealises, kjPrevus: kjPlan,

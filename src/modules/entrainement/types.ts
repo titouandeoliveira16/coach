@@ -257,6 +257,8 @@ export interface SeancePrevue {
   reporteeDu?: string
   /** Changée de jour à la main : le recalcul du vélo la laisse où elle est */
   deplacee?: boolean
+  /** Séance manquée faite un autre jour de la semaine suivante (23/11/2026) : elle compte pour la semaine de cette date d'origine */
+  rattrapageDe?: string
   /** Faite, mais pas ce qui était prévu (autre intensité ou durée très différente) : ni réussie ni ratée pour la progression */
   realiseDifferent?: boolean
   /** Ce que tu as vraiment fait (titre de l'activité importée) quand c'est différent du prévu */
