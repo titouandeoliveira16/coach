@@ -104,8 +104,8 @@ describe('audit du moteur sur une saison entière', () => {
       await genererSemaineVelo(l)
       const semaine = (await db.prevues.where('date').between(l, decalerJour(l, 6), true, true).toArray()).filter((x) => x.sport === 'velo')
       jours.push(semaine.filter((x) => x.intensite === 'haute' && x.velo?.famille !== 'test').map((x) => new Date(`${x.date}T12:00:00`).getDay()).sort())
-      // 4 jours de vélo chaque semaine, le vendredi compris
-      expect(semaine.length).toBe(4)
+      // 4 jours de vélo, une endurance de moins au plus quand le budget est trop bas (24/11/2026)
+      expect(semaine.length).toBeGreaterThanOrEqual(3)
     }
     vi.useRealTimers()
     expect(jours.some((j) => j.join() === '2,5')).toBe(true)

@@ -196,6 +196,14 @@ export async function simuler(sc: Scenario, detail = false, journal?: string[]):
         if (INTENSES.includes(s.velo.famille) && Math.abs(wMax(ap) - wMax(av)) > 5) p(`feu orange : ${s.titre} à ${wMax(ap)} W au lieu de ${wMax(av)} W`)
       }
     }
+    // Pas de séance trop courte (24/11/2026, choix de Titouan) : endurance ≥ 30 min, sortie longue ≥ 60 min, hors semaine
+    // allégée, affûtage, récupération et reprise
+    if (!meta.allegee && !['affutage', 'recuperation', 'reprise'].includes(phase.type)) {
+      for (const s of semaine) {
+        if (s.velo?.famille === 'z2' && !s.velo.formatId && !s.longue && s.dureeMin < 30) p(`endurance de ${s.dureeMin} min (${s.titre})`)
+        if (s.velo?.famille === 'z2-long' && s.dureeMin < 60) p(`sortie longue de ${s.dureeMin} min (${s.titre})`)
+      }
+    }
     // Heures dans la tranche (hors course)
     const heures = semaine.filter((x) => x.velo?.famille !== 'course').reduce((t, s) => t + s.dureeMin, 0) / 60
     if (heures > heuresDe(tranche)[1] + 0.25) p(`${heures.toFixed(1)} h prévues pour « ${tranche} »`)

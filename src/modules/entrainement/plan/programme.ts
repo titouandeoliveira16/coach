@@ -784,15 +784,16 @@ async function genererSemaineVeloBrute(lundi: string) {
   // Semaine trop courte pour tout (ex. semaine de test avec moins de 4 h) : pas de séance dédiée au 1er seuil cette fois
   const fixesSansSv1 = aCreer.filter(([, x]) => x.velo.famille !== 'course').reduce((t, [, x]) => t + x.dureeMin, 0)
   if (seanceSv1 && heuresSemaine && fixesSansSv1 + seanceSv1.dureeMin + 30 * placement.z2.filter((d) => d !== jourSv1).length + (placement.long ? 60 : 0) > heures[1] * 60) seanceSv1 = undefined
-  const nZ2Restants = placement.z2.filter((d) => !(d === jourSv1 && seanceSv1)).length
+  let nZ2Restants = placement.z2.filter((d) => !(d === jourSv1 && seanceSv1)).length
   const minutesFixes = fixesSansSv1 + (seanceSv1?.dureeMin ?? 0)
   /**
    * Sortie longue et endurances de la semaine. `reduction` (0 à 2, audit des chiffres du 17/11/2026, décision de Titouan) :
-   * quand les séances à leur durée habituelle dépassent le budget, la sortie longue raccourcit d'abord (jusqu'à 45 min),
-   * les endurances un peu (jusqu'à 20 min) ; au-delà de 1, les endurances continuent de raccourcir. Toujours le même
-   * nombre de sorties dans la semaine.
+   * quand les séances à leur durée habituelle dépassent le budget, la sortie longue raccourcit d'abord, les endurances un
+   * peu ; au-delà de 1, les endurances continuent de raccourcir. Planchers (24/11/2026, choix de Titouan) : 60 min pour la
+   * sortie longue, 30 min pour une endurance (5′ de mise en route, 20′ de Z2, 5′ de retour au calme) ; si la semaine ne
+   * rentre toujours pas, une endurance simple de moins (une au plus) : mêmes kJ, donc même progression, en sorties utiles.
    */
-  const LONGUE_MIN = 45, Z2_MIN = 20
+  const LONGUE_MIN = 60, Z2_MIN = 30
   const construireEndurances = (reduction = 0, avecPhrases = true) => {
   const liste: [string, SeanceConstruite][] = []
   let minutesDispo = heuresSemaine ? heures[1] * 60 - minutesFixes : Infinity
@@ -890,6 +891,19 @@ async function genererSemaineVeloBrute(lundi: string) {
       else haut = m
     }
     endurances = construireEndurances(bas >= 2 ? 2 : haut)
+    // Toujours trop aux planchers : une endurance simple de moins (d'abord le lendemain d'une séance dure), une au plus ;
+    // jamais la sortie longue, la séance dure, la séance au 1er seuil ni la technique VTT
+    const retirables = placement.z2.filter((d) => d !== jourSv1 && d !== jourSprints && d !== terrain)
+    if (bas >= 2 && totalAvec(endurances) > b.budget * 1.02 && retirables.length) {
+      const d = retirables.find((x) => lendemains.has(x)) ?? retirables[retirables.length - 1]
+      placement.z2 = placement.z2.filter((x) => x !== d)
+      nZ2Restants = placement.z2.filter((x) => !(x === jourSv1 && seanceSv1)).length
+      let lo = 0, hi = 2
+      if (totalAvec(construireEndurances(2, false)) > b.budget) lo = 2
+      else for (let i = 0; i < 12; i++) { const m = (lo + hi) / 2; if (totalAvec(construireEndurances(m, false)) > b.budget) lo = m; else hi = m }
+      endurances = construireEndurances(lo >= 2 ? 2 : hi)
+      phrases.push('Budget trop bas pour toutes tes endurances à 30 min au moins : une sortie de moins cette semaine (jour de repos), mêmes kJ.')
+    }
   }
   aCreer.push(...endurances)
 

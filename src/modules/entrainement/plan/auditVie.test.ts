@@ -93,7 +93,8 @@ describe('audit vraie vie', () => {
         // 10. Semaine type qui change : autant de séances de vélo que de jours de vélo de la semaine type du moment (hors course)
         if (aVenir && !semaine.some((x) => x.velo?.famille === 'course')) {
           const jours = prog.semaineType.filter((x) => x.startsWith('velo')).length
-          if (semaine.length !== jours) problemes.push(`${l} : ${semaine.length} séances de vélo pour ${jours} jours de vélo dans la semaine type`)
+          // Une endurance de moins au plus quand le budget est trop bas pour des sorties de 30 min (24/11/2026)
+          if (semaine.length > jours || semaine.length < jours - 1) problemes.push(`${l} : ${semaine.length} séances de vélo pour ${jours} jours de vélo dans la semaine type`)
         }
         // 11. Feu orange : séance d'intensité raccourcie aux mêmes watts, séance au 1er seuil en endurance
         for (const x of semaine) {
