@@ -18,10 +18,9 @@ it('seuil : plateau ≤ 5 % ; au-dessus de la CP seulement si > 8 % ET fin de bl
   expect(controleFc(b([3, 10], [180, 196]), 'plateau', 204)?.couleur).toBe('rouge')
 })
 
-it('VO2 longs : minutes à 90 % de la FC max', () => {
-  expect(controleFc(s({ tempsFc90: 600 }), 'vo2', 204)?.couleur).toBe('vert')
-  expect(controleFc(s({ tempsFc90: 300 }), 'vo2', 204)?.couleur).toBe('orange')
-  expect(controleFc(s({ tempsFc90: 120 }), 'vo2', 204)?.couleur).toBe('rouge')
+it('VO2 : le pouls est une indication, jamais une alerte (24/11/2026, la séance se juge sur les watts)', () => {
+  expect(controleFc(s({ tempsFc90: 600 }), 'vo2', 204)?.couleur).toBe('gris')
+  expect(controleFc(s({ tempsFc90: 46, blocs: { cibleW: 270, dureeSec: 180, w: [268, 268, 270, 273], fcFin: [175, 178, 179, 182] } }), 'vo2', 204)?.texte).toMatch(/46 s.*175 · 178 · 179 · 182 bpm.*watts/)
   expect(controleFc(s({}), 'sans', 204)).toBeUndefined()
 })
 

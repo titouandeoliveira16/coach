@@ -219,7 +219,8 @@ async function importerActivites(depuis: string, surProgression?: (n: number) =>
  * Contrôle des séances recalculé avec la dernière version des règles (v0.71 : arrêts exclus ; v0.72 : circuits de la montre),
  * pour les séances des 14 derniers jours qui en ont un. Une seule fois par version.
  */
-const VERSION_CONTROLE = 3
+// 4 (24/11/2026) : tours de la montre recalés sur le fichier (un tour de récupération pris pour un bloc)
+const VERSION_CONTROLE = 4
 /**
  * Séances prévues faites sans contrôle bloc par bloc (23/11/2026 : fichier de watts pas encore prêt sur Intervals à
  * l'import, la séance restait sans watts ni pouls par bloc) : fichier redemandé, une fois par jour, sur 14 jours.

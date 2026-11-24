@@ -763,7 +763,9 @@ async function genererSemaineVeloBrute(lundi: string) {
   // restait qu'une endurance et la séance au 1er seuil du vendredi devenait une Z2 + sprints) ; jamais deux fois la même semaine
   const enduranceSemaine = roles.filter((x) => x === 'velo-z2').length + Math.max(0, roles.filter((x) => x === 'velo-dur').length - 1)
   const sv1DejaFaite = (await db.prevues.where('date').between(lundi, semaine[6], true, true).toArray())
-    .some((p) => p.sport === 'velo' && p.statut !== 'abandonnee' && (p.date < aPartirDe || p.statut === 'faite') && p.titre.startsWith('Cycle 1er seuil'))
+    // Toute séance au 1er seuil encore là (faite, manquée, ou déplacée à la main, gardée par le recalcul) : pas une 2e
+    // (24/11/2026 : une séance déplacée au jeudi n'était pas vue, le recalcul en ajoutait une le mercredi)
+    .some((p) => p.sport === 'velo' && p.statut !== 'abandonnee' && !idsRattrapees.has(p.id) && p.titre.startsWith('Cycle 1er seuil'))
   // Semaine allégée (19/11/2026, choix de Titouan) : la séance au 1er seuil reste, un cran en dessous (volume en baisse,
   // intensité gardée)
   const jourSv1 = phase.type === 'base' && !sansBlocs && enduranceSemaine >= 2 && placement.z2.length >= 1 && !sv1DejaFaite

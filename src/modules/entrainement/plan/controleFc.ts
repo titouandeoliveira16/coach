@@ -14,7 +14,6 @@ export const DERIVE_FACILE = { ok: 5, moyen: 10 }
 export const DERIVE_BLOC = { ok: 5, moyen: 8 }
 /** « Au-dessus de la CP » seulement si la FC monte de plus de 8 % ET finit à 95 % de la FC max ou plus. */
 export const FC_FIN_HAUTE = 0.95
-export const MIN_FC90 = { ok: 8, moyen: 4 }
 
 /**
  * Dérive retenue pour une séance facile (23/11/2026, choix de Titouan, découplage de Friel mesuré sur un effort régulier) :
@@ -80,11 +79,14 @@ export function controleFc(s: Seance, categorie: Categorie, fcMax: number): Verd
   }
   if (categorie === 'vo2') {
     if (sansFc) return { couleur: 'gris', texte: 'Pas de FC sur cette séance : verdict sur les watts et ton ressenti.' }
+    // VO2 jugée sur les watts tenus (24/11/2026, choix de Titouan) : le pouls n'est qu'une indication. Sur des blocs courts
+    // (3-4 min), il n'atteint le haut qu'en fin de bloc : un objectif fixe de minutes à 90 % donnait « stimulus faible » à
+    // une séance bien tenue
     if (s.tempsFc90 === undefined) return undefined
-    const min = Math.round(s.tempsFc90 / 60)
-    if (min >= MIN_FC90.ok) return { couleur: 'vert', texte: `${min} min à 90 % ou plus de ta FC max : bon stimulus VO2` }
-    if (min >= MIN_FC90.moyen) return { couleur: 'orange', texte: `${min} min à 90 % ou plus de ta FC max : stimulus moyen (visé ≈ 10 min)` }
-    return { couleur: 'rouge', texte: `Seulement ${min} min à 90 % ou plus de ta FC max : stimulus faible` }
+    const t = s.tempsFc90
+    const duree = t >= 90 ? `${Math.round(t / 60)} min` : `${t} s`
+    const fin = s.blocs?.fcFin?.length ? ` · pouls en fin de bloc : ${s.blocs.fcFin.join(' · ')} bpm` : ''
+    return { couleur: 'gris', texte: `Pouls (indication) : ${duree} à 90 % ou plus de ta FC max (${Math.round(fcMax * 0.9)} bpm)${fin}. La séance se juge sur tes watts.` }
   }
   return undefined
 }

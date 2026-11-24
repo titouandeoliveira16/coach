@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { bilanControle, controlerSeance, controleTenu } from './controle'
-import { construireIntervalles, construireZ2, deplier, formatDe } from './programme'
+import { construireIntervalles, construireZ2, deplier, formatDe, type Etape } from './programme'
 
 /** Fichier simulé : la séance prévue jouée telle quelle, avec un départ décalé et un facteur sur les efforts. */
 function simuler(etapes: Parameters<typeof deplier>[0], decalage: number, facteurEffort = 1) {
@@ -138,3 +138,25 @@ describe('arrêt pendant un bloc (pause pour parler, roue libre)', () => {
 })
 
 const moyenne = (x: number[]) => x.reduce((a, b) => a + b, 0) / x.length
+
+describe('tours de la montre (24/11/2026)', () => {
+  it('un tour de récupération n’est jamais pris pour un bloc d’effort', () => {
+    const etapes: Etape[] = [
+      { debutSec: 0, dureeSec: 600, libelle: 'Échauffement', w: 140 },
+      ...[0, 1, 2, 3].flatMap((i) => [
+        { debutSec: 600 + i * 360, dureeSec: 180, libelle: `Bloc ${i + 1}`, w: 270, wMin: 260, wMax: 285 },
+        { debutSec: 780 + i * 360, dureeSec: 180, libelle: 'Récup', w: 120 },
+      ]),
+      { debutSec: 2040, dureeSec: 300, libelle: 'Retour au calme', w: 120 },
+    ]
+    const w1Hz = [...Array(600).fill(140), ...[0, 1, 2, 3].flatMap(() => [...Array(180).fill(270), ...Array(180).fill(120)]), ...Array(300).fill(120)]
+    const tours = [{ dureeSec: 600, w: 140 }, ...[0, 1, 2, 3].flatMap(() => [{ dureeSec: 180, w: 270 }, { dureeSec: 180, w: 120 }]), { dureeSec: 300, w: 120 }]
+    // Tours d'effort mal découpés (ex. un tour par circuit qui ne colle pas) : seuls les tours de récup ont la bonne durée
+    const toursDecales = [{ dureeSec: 600, w: 140 }, { dureeSec: 180, w: 270 }, ...[0, 1, 2].flatMap(() => [{ dureeSec: 180, w: 120 }, { dureeSec: 170, w: 268 }]), { dureeSec: 310, w: 120 }]
+    for (const t of [tours, toursDecales]) {
+      const c = controlerSeance({ etapes, famille: 'vo2-longs', w1Hz, cpW: 235, tours: t })!
+      const blocs = c.lignes.filter((l) => l.libelle.startsWith('Bloc'))
+      expect(blocs.every((l) => l.w >= 260)).toBe(true)
+    }
+  })
+})

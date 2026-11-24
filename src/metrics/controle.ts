@@ -41,7 +41,12 @@ export const PAUSE_TOUR_MAX_SEC = 300
  * du bloc (à 6 min près). Rend la position à plat du bloc → son tour. Tous les blocs doivent trouver leur tour,
  * sinon aucun (pas de mélange douteux).
  */
-export function toursDesBlocs(etapes: Etape[], tours: Tour[], off?: number, arretRetire = 0): Map<number, Tour> {
+/**
+ * `wFichier` (24/11/2026) : moyenne du fichier sur la fenêtre du bloc. Un tour n'est retenu que s'il commence à une minute
+ * près de l'endroit attendu et si sa puissance ressemble à celle du fichier (à 15 % près) ; avant, un tour de récupération
+ * d'environ 3 min pouvait être pris pour un bloc d'effort (blocs 2 à 4 d'un 4 × 3′ lus à 110-126 W au lieu de 268-273 W).
+ */
+export function toursDesBlocs(etapes: Etape[], tours: Tour[], off?: number, arretRetire = 0, wFichier?: (debut: number, duree: number) => number | undefined): Map<number, Tour> {
   const plat = deplier(etapes).filter((e) => e.dureeSec > 0)
   const blocs: number[] = []
   let idx = 0
@@ -69,7 +74,9 @@ export function toursDesBlocs(etapes: Etape[], tours: Tour[], off?: number, arre
     for (let x = j; x < tours.length; x++) {
       const ecart = tours[x].dureeSec - d
       if (ecart < -3 || ecart > PAUSE_TOUR_MAX_SEC) continue
-      if (Math.abs(debuts[x] - attendu) > 360 + arretRetire) continue
+      if (Math.abs(debuts[x] - attendu) > (off !== undefined ? 60 : 360) + arretRetire) continue
+      const mFichier = wFichier?.(plat[i].debutSec + decalage, d)
+      if (mFichier && Math.abs(tours[x].w - mFichier) > 0.15 * mFichier) continue
       choisi = x
       break
     }
@@ -213,7 +220,11 @@ export function controlerSeance(o: {
   }
   const fenetre = (debut: number, duree: number, v: number[]) => v.slice(Math.max(0, debut + off), Math.max(0, debut + off + duree))
   // Tours qui correspondent aux grands blocs d'effort (ex. les « circuits » de la montre) : leur moyenne, telle quelle
-  const parBloc = k === undefined && o.tours?.length ? toursDesBlocs(etapes, o.tours, w1Hz.length ? off : undefined, W !== w1Hz ? w1Hz.length - W.length : 0) : new Map<number, Tour>()
+  const moyenneFichier = (debut: number, duree: number) => {
+    const v = fenetre(debut, duree, W).filter((x, j) => !arret[Math.max(0, debut + off) + j] && x > 0)
+    return v.length >= duree * 0.5 ? moyenne(v) : undefined
+  }
+  const parBloc = k === undefined && o.tours?.length ? toursDesBlocs(etapes, o.tours, w1Hz.length ? off : undefined, W !== w1Hz ? w1Hz.length - W.length : 0, w1Hz.length ? moyenneFichier : undefined) : new Map<number, Tour>()
   if (k === undefined && !w1Hz.length && !parBloc.size) return undefined
   let arretSec = 0
   /** Moyennes (watts, FC) d'une étape à plat : son tour (comme sur ta montre ou Zwift), sinon sa fenêtre recalée, arrêts exclus. */

@@ -18,7 +18,8 @@ export function BandeauAVoir({ children }: { children: ReactNode }) {
     if (!el) return
     const lire = () => {
       const t = [...el.children].map((c) => {
-        const titre = c.querySelector('h2')?.textContent ?? (c as HTMLElement).innerText?.split('\n')[0] ?? ''
+        // Sans titre : la première ligne de la carte (24/11/2026 : innerText d'une carte cachée collait les lignes, « VO24 blocs »)
+        const titre = c.querySelector('h2')?.textContent ?? c.firstElementChild?.textContent ?? ''
         return titre.replace(/^[^\p{L}\d]+/u, '').trim()
       }).filter(Boolean)
       setTitres((avant) => (avant.join('|') === t.join('|') ? avant : t))
