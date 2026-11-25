@@ -430,8 +430,9 @@ async function genererSemaineVeloBrute(lundi: string) {
   // Anciennes séances à remplacer : séances auto encore à faire, plan importé et propositions de course (anciennes versions)
   for (const p of await db.prevues.where('date').aboveOrEqual(aPartirDe).toArray()) {
     if (p.statut !== 'prevue') continue
-    // Une séance changée de jour à la main reste où elle est
-    const ancienne = (p.origine === 'auto' && p.date <= semaine[6] && !p.deplacee) || (p.sport === 'velo' && p.id.startsWith('plan-')) || (p.origine === 'propose' && p.sport === 'course')
+    // Une séance changée de jour à la main reste où elle est ; une séance reportée par le feu rouge aussi (26/11/2026 :
+    // le recalcul l'effaçait et remettait l'intensité le jour rouge)
+    const ancienne = (p.origine === 'auto' && p.date <= semaine[6] && !p.deplacee && !p.reporteeDu) || (p.sport === 'velo' && p.id.startsWith('plan-')) || (p.origine === 'propose' && p.sport === 'course')
     if (ancienne) await supprimer(db.prevues, p.id)
   }
 

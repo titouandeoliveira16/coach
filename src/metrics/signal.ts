@@ -206,14 +206,17 @@ function detailsSignal(e: EntreeSignal, alertes: Alerte[], calibration: boolean,
   // Sommeil
   const h = e.sommeilH
   const { nuitCourte, dette, sousRepere } = etatSommeil(h, s)
+  // 26/11/2026 (relecture du feu) : une mauvaise nuit notée compte dans la couleur ; elle est toujours affichée (avant, elle
+  // disparaissait derrière le manque de sommeil de la semaine ou le repère des 7 heures)
+  const mauvaiseNuit = e.sommeil !== undefined && e.sommeil <= s.sommeilMax
   if (nuitCourte) alerte('😴', dette ? 'Nuit courte, et manque de sommeil sur la semaine' : 'Nuit courte', ['sommeil', 'Nuit courte'])
+  else if (mauvaiseNuit) alerte('😴', dette ? 'Mauvaise nuit d’après toi, et manque de sommeil sur la semaine' : 'Mauvaise nuit d’après toi', ['sommeil', 'Mauvaise nuit'])
   else if (dette) info('😴', 'Manque de sommeil sur la semaine (pour info : la couleur suit ta nuit)', ['sommeil', 'En retard'])
   // Conseil (le feu ne change pas) : sieste courte en début d'après-midi (Mesas 2023, Lastella 2021)
   if (nuitCourte || dette) info('💤', CONSEIL_SIESTE)
   // Repère conseillé (sans effet sur la couleur) : on s'habitue à manquer de sommeil sans le sentir (Van Dongen 2003)
   else if (sousRepere) info('🛏️', 'Un peu moins de sept heures en moyenne : dormir plus reste un vrai levier de progrès')
-  else if (e.sommeil !== undefined && e.sommeil <= s.sommeilMax) alerte('😴', 'Mauvaise nuit d’après toi', ['sommeil', 'Mauvaise nuit'])
-  else if (h?.nuit !== undefined || h?.moyenne7 !== undefined) ok('😴', sousRepere ? 'Sommeil dans ta normale' : 'Sommeil suffisant', ['sommeil', sousRepere ? 'Normal' : 'Suffisant'])
+  else if (!mauvaiseNuit && (h?.nuit !== undefined || h?.moyenne7 !== undefined)) ok('😴', 'Sommeil suffisant', ['sommeil', 'Suffisant'])
 
   // Ressenti du matin
   if (e.ressenti === undefined) info('🙂', 'Ressenti du matin pas encore noté', ['ressenti', 'Pas noté'])

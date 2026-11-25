@@ -150,6 +150,11 @@ describe('VFC', () => {
 describe('signal', () => {
   const vfcOk = { nBase: 30, ln7: 4.1, zoneBasse: 4.0, zoneHaute: 4.2, fcRepos7: 48, fcReposBase: 48 }
 
+  it('mauvaise nuit notée : toujours affichée sous le feu, même avec une moyenne sous 7 h (26/11/2026)', () => {
+    const s = calculerSignal({ vfc: vfcOk, sommeilH: { nuit: 7, moyenne7: 6.8 }, sommeil: 1, ressenti: 4 })
+    expect(s.couleur).toBe('orange')
+    expect(s.details.some((d) => d.etat === 'alerte' && /Mauvaise nuit/.test(d.texte))).toBe(true)
+  })
   it('🟢 si tout est dans la zone', () => {
     const s = calculerSignal({ vfc: vfcOk, ressenti: 4, sommeil: 4, tsb: -5 })
     expect(s.couleur).toBe('vert')

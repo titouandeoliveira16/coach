@@ -117,11 +117,15 @@ export function CarteAujourdhui({ onModifierMatin, apresForme, remplir = false }
   const reprise = useLiveQuery(() => repriseApresMaladie(jour), [jour])
   const rougeFatigue = ((a?.signal.couleur === 'rouge' && !maladie) || !!reprise) && !decision?.force
   const aReporter = prevues?.find((p) => p.statut === 'prevue' && p.sport === 'velo' && (estIntensite(p) || p.velo?.famille === 'test'))
+  // Jour orange et test CP prévu (26/11/2026) : le test est reporté aussi (il faut être frais pour qu'il soit juste) ;
+  // avant, le texte disait « reporte le test » mais rien ne le déplaçait
+  const testOrange = a?.signal.couleur === 'orange' && aReporter?.velo?.famille === 'test' && !decision?.force
+  const aDeplacer = rougeFatigue || testOrange
   useEffect(() => {
     if (!a || !prevues || decision === undefined || reportee === undefined || reprise === undefined) return
-    if (rougeFatigue && aReporter) reporterIntensite(aReporter)
-    else if (!rougeFatigue && reportee) annulerReport(jour)
-  }, [a, prevues, decision, reportee, rougeFatigue, aReporter, jour, reprise])
+    if (aDeplacer && aReporter) reporterIntensite(aReporter)
+    else if (!aDeplacer && reportee) annulerReport(jour)
+  }, [a, prevues, decision, reportee, aDeplacer, aReporter, jour, reprise])
 
   if (!a || !prevues) return null
   const { signal } = a
