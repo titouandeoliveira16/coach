@@ -54,6 +54,20 @@ export interface MetaSemaine {
   version?: number
   /** Bridée (25/11/2026) : tes créneaux n'ont pas permis d'atteindre la référence ; la référence est gardée */
   bridee?: boolean
+  /**
+   * Réglages avec lesquels la semaine a été construite (25/11/2026, demande de Titouan) : un changement de réglage
+   * s'applique à partir de la semaine suivante ; la semaine en cours se recalcule toujours avec ceux-là
+   */
+  reglagesSemaine?: ReglagesFiges
+}
+
+interface ReglagesFiges {
+  semaineType: ReglagesProgramme['semaineType']
+  maxSemaineMin: number
+  maxLongMin: number
+  minLongMin?: number
+  heuresSemaine?: string
+  force?: ReglagesForce
 }
 
 /**
@@ -398,12 +412,17 @@ async function genererSemaineVeloBrute(lundi: string) {
     const brut = (await db.reglages.get('entrainement'))?.valeur as Partial<ReglagesEntrainement> | undefined
     await enregistrer(db.reglages, { id: 'entrainement', valeur: { ...brut, programme: fusion } })
   }
-  const prog = programmeAu(fusion, lundi)
+  // Semaine en cours déjà construite : ses réglages d'origine (un changement s'applique à partir de lundi prochain)
+  const figes = lundi === lundiDe(jour) ? (await lireMeta(lundi))?.reglagesSemaine : undefined
+  const progReglages = programmeAu(fusion, lundi)
+  const prog = figes
+    ? { ...progReglages, semaineType: figes.semaineType, maxSemaineMin: figes.maxSemaineMin, maxLongMin: figes.maxLongMin, ...(figes.minLongMin !== undefined ? { minLongMin: figes.minLongMin } : {}) }
+    : progReglages
   const discipline = prog.discipline ?? 'route'
   // Profil sportif (questionnaire) : niveau et heures par semaine règlent le moteur
   const ps = (await db.reglages.get('profil-sportif'))?.valeur as Partial<ProfilSportif> | undefined
   const niveau = niveauDuProfil(ps)
-  const heuresSemaine = heuresAu(prog, ps?.heuresSemaine, lundi)
+  const heuresSemaine = figes ? figes.heuresSemaine : heuresAu(prog, ps?.heuresSemaine, lundi)
   const heures = heuresDe(heuresSemaine)
 
   // Anciennes séances à remplacer : séances auto encore à faire, plan importé et propositions de course (anciennes versions)
@@ -958,7 +977,7 @@ async function genererSemaineVeloBrute(lundi: string) {
   }
 
   // Muscu reliée à l'Entraînement (13/11/2026) : un jour sans vélo, jamais la veille d'une séance clé
-  const force = (await db.reglages.get('force'))?.valeur as ReglagesForce | undefined
+  const force = figes ? figes.force : (await db.reglages.get('force'))?.valeur as ReglagesForce | undefined
   // Mineur (19/11/2026, choix de Titouan) : pas de muscu lourde sans encadrement ni accord d'un parent (Faigenbaum 2009)
   const profilMuscu = (await db.reglages.get('profil'))?.valeur as Profil | undefined
   if (force?.actif && !(profilMuscu && estMineur(profilMuscu, jour))) {
@@ -1017,6 +1036,7 @@ async function genererSemaineVeloBrute(lundi: string) {
     budgetRef: refFinale, budget: total, budgetVise: viseFixe ?? b.budget, raison, allegee, phase: NOMS_PHASES[phase.type],
     semaineDansPhase: nSemaine + 1, z2W, genereeLe: new Date().toISOString(), version: 2, ...(prec?.provisoire || prec?.kjAVenir ? { bilanProvisoire: true } : {}),
     bridee,
+    reglagesSemaine: { semaineType: prog.semaineType, maxSemaineMin: prog.maxSemaineMin, maxLongMin: prog.maxLongMin, minLongMin: prog.minLongMin, heuresSemaine, force },
   }
   await enregistrer(db.reglages, { id: cleSemaine(lundi), valeur: meta })
   // Semaine chargée déjà déclarée : on garde le minimum, même après un recalcul
@@ -1364,6 +1384,16 @@ export async function actualiserSemaineEnCours() {
 }
 
 export const recalculerApresTest = () => recalculerSemainesAVenir()
+
+/**
+ * Après un changement de réglage (jours, durées, profil sportif, muscu, conseil de Saison) : à partir de la semaine
+ * suivante seulement (25/11/2026, demande de Titouan) ; la semaine en cours garde ses réglages d'origine.
+ */
+export async function recalculerApresReglage() {
+  const suivante = decalerJour(lundiDe(aujourdhui()), 7)
+  if (await lireMeta(suivante)) await genererSemaineVelo(suivante).catch(() => {})
+  void construireSaison(true)
+}
 
 /** Recalcule la semaine en cours puis toute la saison à venir (après un test, ou un changement de semaine type / durées). */
 export async function recalculerSemainesAVenir() {

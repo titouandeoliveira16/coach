@@ -11,7 +11,7 @@ import { AIDES } from '../aides'
 import { programmeDe, useReglagesEntrainement } from '../reglagesEntrainement'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { datesCoursesA, phasesAvecCoursesA, premierMars } from '../../../metrics/saison'
-import { poidsDesTests, recalculerSemainesAVenir, referencesVitesse } from '../plan/programme'
+import { poidsDesTests, recalculerApresReglage, referencesVitesse } from '../plan/programme'
 import { CalageVitesse, CoursePrincipale, ListeCourses } from './ListeCourses'
 import type { ReglagesProgramme } from '../types'
 
@@ -73,10 +73,10 @@ export function SectionProfilSportif() {
   const [profil, modifierProfil] = useProfil()
   const [r, modifier] = useReglagesEntrainement()
   const prog = programmeDe(r.programme)
-  // Durées changées : la semaine en cours (et les suivantes déjà calculées) suit tout de suite
+  // Durées changées : à partir de lundi prochain, la semaine en cours ne bouge pas (25/11/2026)
   const changerProg = async (c: Partial<ReglagesProgramme>) => {
     await modifier({ programme: { ...prog, ...c } })
-    await recalculerSemainesAVenir()
+    await recalculerApresReglage()
   }
   const [ligne, setLigne] = useState<string>()
 
@@ -174,6 +174,7 @@ export function SectionProfilSportif() {
         <p className="mt-1.5 text-xs text-texte-3">Niveau retenu : <b>{NOMS_NIVEAUX[niveauDuProfil(ps)]}</b>. {AIDES.profilNiveau}</p>
       </Ligne>
       <p className="mt-4 mb-1 text-[13px] font-semibold text-texte-3 first:mt-0">Mon temps</p>
+      <p className="mb-1 text-xs text-texte-3">Un changement s'applique à partir de lundi prochain : ta semaine en cours ne bouge pas.</p>
       <Ligne {...props('heures')} libelle="Temps par semaine" valeur={ps.heuresSemaine ?? ''}>
         {choixUnique(HEURES, ps.heuresSemaine, (heuresSemaine) => modifierPs({ heuresSemaine }))}
         <p className="mt-1.5 text-xs text-texte-3">{AIDES.profilTemps}</p>

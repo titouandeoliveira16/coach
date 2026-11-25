@@ -6,7 +6,7 @@ import { estMineur, useProfil } from '../../../core/profil'
 import { Aide } from '../../../core/ui/Aide'
 import { AIDES } from '../aides'
 import { exosDe, FORCE_DEFAUT, semainesApprentissage, type Lieu, type ReglagesForce } from '../muscu/force'
-import { genererSemaineVelo, recalculerSemainesAVenir } from '../plan/programme'
+import { genererSemaineVelo, recalculerApresReglage } from '../plan/programme'
 import { lundiDe } from '../seances/donnees'
 
 const CHOIX = ['Pas pour l’instant', '1 séance par semaine', '2 séances par semaine']
@@ -27,7 +27,7 @@ export function DetailMuscu() {
     const actif = c !== CHOIX[0]
     await modifier({ actif, seances: c === CHOIX[2] ? 2 : 1 })
     await modifierPs({ muscu: c })
-    await recalculerSemainesAVenir()
+    await recalculerApresReglage()
     if (!actif) return setMessage(undefined)
     // Plus de jour possible cette semaine : la semaine prochaine est construite tout de suite pour montrer la 1re séance
     const prochaine = async () => (await db.prevues.where('date').aboveOrEqual(aujourdhui()).toArray()).filter((p) => p.muscu && p.statut === 'prevue').sort((a, b) => a.date.localeCompare(b.date))[0]
@@ -54,7 +54,7 @@ export function DetailMuscu() {
           <p className="text-[13px] text-texte-2">Où ?<Aide titre="Muscu du cycliste" texte={AIDES.muscuForce} /></p>
           <div className="mt-1.5 flex gap-2">
             {(['salle', 'maison'] as Lieu[]).map((l) => (
-              <button key={l} type="button" onClick={async () => { await modifier({ lieu: l }); await recalculerSemainesAVenir() }} className={puce(f.lieu === l)}>{l === 'salle' ? 'Salle' : 'Maison'}</button>
+              <button key={l} type="button" onClick={async () => { await modifier({ lieu: l }); await recalculerApresReglage() }} className={puce(f.lieu === l)}>{l === 'salle' ? 'Salle' : 'Maison'}</button>
             ))}
           </div>
           <p className="mt-2 text-xs text-texte-3">{exosDe({ lieu: f.lieu, variante: 'souleve' }).map((e) => e.nom).join(' · ')} (soulevé et leg curl en alternance) · puis prévention</p>
@@ -63,7 +63,7 @@ export function DetailMuscu() {
               <p className="mt-3 text-[13px] text-texte-2">Ta 2e séance de la semaine</p>
               <div className="mt-1.5 flex gap-2">
                 {(['salle', 'maison'] as Lieu[]).map((l) => (
-                  <button key={l} type="button" onClick={async () => { await modifier({ lieu2: l === f.lieu ? undefined : l }); await recalculerSemainesAVenir() }} className={puce((f.lieu2 ?? f.lieu) === l)}>{l === 'salle' ? 'Salle' : 'Maison'}</button>
+                  <button key={l} type="button" onClick={async () => { await modifier({ lieu2: l === f.lieu ? undefined : l }); await recalculerApresReglage() }} className={puce((f.lieu2 ?? f.lieu) === l)}>{l === 'salle' ? 'Salle' : 'Maison'}</button>
                 ))}
               </div>
             </>
@@ -71,7 +71,7 @@ export function DetailMuscu() {
           <p className="mt-3 text-[13px] text-texte-2">As-tu déjà fait du squat avec une charge ?</p>
           <div className="mt-1.5 flex flex-wrap gap-2">
             {([['jamais', 'Jamais'], ['un-peu', 'Un peu'], ['regulier', 'Régulièrement']] as const).map(([v, t]) => (
-              <button key={v} type="button" onClick={async () => { await modifier({ experience: v }); await recalculerSemainesAVenir() }} className={puce((f.experience ?? 'regulier') === v)}>{t}</button>
+              <button key={v} type="button" onClick={async () => { await modifier({ experience: v }); await recalculerApresReglage() }} className={puce((f.experience ?? 'regulier') === v)}>{t}</button>
             ))}
           </div>
           <p className="mt-2 text-[13px] text-texte-2">Placée sur un jour sans vélo (ou un jour « muscu » de ta semaine type) ; sinon le soir d’une séance dure, 3 h après au moins. Jamais la veille d’une séance clé.</p>

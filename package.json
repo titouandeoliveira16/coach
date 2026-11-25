@@ -1,7 +1,7 @@
 {
   "name": "coach",
   "private": true,
-  "version": "14.24.3",
+  "version": "14.25.0",
   "type": "module",
   "scripts": {
     "dev": "vite",

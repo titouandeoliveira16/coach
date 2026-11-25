@@ -14,7 +14,7 @@ import { SemainesAVenir } from './SemainesAVenir'
 import type { ProfilSportif } from './ProfilSportif'
 import { CalculateurCP } from './CalculateurCP'
 import { poidsAu } from '../forme/pesees'
-import { recalculerApresTest, recalculerSemainesAVenir } from '../plan/programme'
+import { recalculerApresReglage, recalculerApresTest } from '../plan/programme'
 
 
 /** Vélo : ta CP (modifiable, même si les tests la mettent à jour) et ta semaine type (‹ › par jour). */
@@ -66,16 +66,16 @@ export function SectionVelo() {
       )}
       {message && <p className="mt-2 text-sm text-nutrition">{message}</p>}
 
-      <p className="mt-3 mb-1 text-xs text-texte-3">Ma semaine type : l'appli place le vélo sur ces jours. Ta semaine en cours se recalcule dès que tu changes quelque chose.</p>
+      <p className="mt-3 mb-1 text-xs text-texte-3">Ma semaine type : l'appli place le vélo sur ces jours. Un changement s'applique à partir de lundi prochain : ta semaine en cours ne bouge pas.</p>
       <EditeurSemaine semaine={prog.semaineType} debutant={niveauDuProfil(ps) === 'debutant'} onChanger={async (semaineType) => {
         await modifier({ programme: { ...prog, semaineType } })
         // Semaine incomplète (ex. sortie longue pas encore placée) : on attend qu'elle soit valide
-        if (verifierSemaineType(semaineType).ok) await recalculerSemainesAVenir()
+        if (verifierSemaineType(semaineType).ok) await recalculerApresReglage()
       }} />
       <SemainesAVenir prog={prog} onChanger={async (semainesTypesFutures) => {
         // Changées à la main : les conseils acceptés ne sont plus annulables un par un (ils font partie de tes semaines types)
         await modifier({ programme: { ...prog, semainesTypesFutures, conseils: undefined } })
-        await recalculerSemainesAVenir()
+        await recalculerApresReglage()
       }} />
     </section>
   )

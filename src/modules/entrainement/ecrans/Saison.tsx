@@ -12,7 +12,7 @@ import type { ProfilSportif } from '../reglages/ProfilSportif'
 import { accepterConseil, annulerConseil, trancheAuDessus, type Changement } from '../plan/pistes'
 import { NOMS_PHASES, niveauxCourses, type SemaineSaison, type TypePhase } from '../../../metrics/programme'
 import { AIDES } from '../aides'
-import { ecouterSaison, recalculerSemainesAVenir, saison, saisonEnConstruction } from '../plan/programme'
+import { ecouterSaison, recalculerApresReglage, saison, saisonEnConstruction } from '../plan/programme'
 
 /** Couleur de chaque phase (rampe validée sur fond sombre). */
 /** Couleur de chaque phase = la zone qu'elle travaille, comme Zwift (Z1 gris → Z6 rouge), 12/11/2026 */
@@ -152,7 +152,7 @@ function Blocage({ b }: { b: BlocageSaison }) {
   const appliquer = async (c: Changement, texte: string) => {
     setOccupe(true)
     await modifier({ programme: accepterConseil(prog, ps.heuresSemaine, b.lundi, c, texte) })
-    await recalculerSemainesAVenir()
+    await recalculerApresReglage()
     setOccupe(false)
   }
   const jours = semaineType.map((x, j) => [x, j] as const).filter(([x]) => !x.startsWith('velo')).map(([, j]) => j)
@@ -218,7 +218,7 @@ function ChoixAcceptes() {
         {liste.map((x) => (
           <li key={x.id} className="flex items-center justify-between gap-2">
             <span className="min-w-0 text-texte-2">{x.texte}</span>
-            <button type="button" onClick={async () => { await modifier({ programme: annulerConseil(prog, ps.heuresSemaine, x.id) }); await recalculerSemainesAVenir() }}
+            <button type="button" onClick={async () => { await modifier({ programme: annulerConseil(prog, ps.heuresSemaine, x.id) }); await recalculerApresReglage() }}
               className="shrink-0 rounded-lg border border-mauvais/60 px-2.5 py-1.5 text-[13px] font-semibold text-mauvais">✕ Annuler</button>
           </li>
         ))}
