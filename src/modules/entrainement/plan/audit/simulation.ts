@@ -150,6 +150,11 @@ export async function simuler(sc: Scenario, detail = false, journal?: string[]):
     // Budget
     if (!Number.isFinite(meta.budget) || meta.budget <= 0) p(`budget ${meta.budget}`)
     if (refPrec && meta.budgetRef > refPrec * 1.1 + 1) p(`budget +${Math.round((meta.budgetRef / refPrec - 1) * 100)} % (${refPrec} → ${meta.budgetRef}) · ${meta.raison}`)
+    // Règle de Titouan (25/11/2026) : la référence ne baisse que si la semaine d'avant a été faite en moins (jours rouges,
+    // semaines très légères, arrêt) ; jamais parce que les créneaux brident
+    if (refPrec && meta.budgetRef < refPrec * 0.99 && !/rouges|légères|sans vélo|reprise|coupure|départ|habituelle|Point de départ/.test(meta.raison)) {
+      p(`référence en baisse sans semaine faite en moins : ${refPrec} → ${meta.budgetRef} · ${meta.raison}`)
+    }
     refPrec = meta.budgetRef
     // Audit des chiffres (17/11/2026) : le budget affiché est le total des séances prévues, et ce qu'il annonce est vrai
     const totalPrevu = semaine.reduce((t, x) => t + (x.kjPrevu ?? 0), 0)

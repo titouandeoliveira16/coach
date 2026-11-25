@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   budgetSemaine, choisirFormat, construireIntervalles, construireZ2, dureeFormat, etatProgression, formatDe, FORMATS,
   palierPossible, phaseDe, deplier, placer, projeterSaison, type HistoIntensite, type Phase, type Role,
+  budgetDePhase,
 } from './programme'
 import catalogue from '../../catalogue/seances.json'
 import { decaler } from './vfc'
@@ -161,8 +162,15 @@ describe('budget kJ', () => {
     expect(b.budget).toBe(1639)
     expect(b.budgetRef).toBe(2118)
   })
+  it('semaine bridée mais faite à moins de 90 % avec 2 jours rouges : la baisse s’applique quand même', () => {
+    expect(budgetSemaine({ ...prec, budgetRef: 2000, kjPrevus: 1600, kjRealises: 1000, rouges: 2, bridee: true, budgetPrevu: 1600 }, 2000, 4000, false).budgetRef).toBe(1700)
+  })
+  it('affûtage de 2 semaines : la 2e part de la référence, pas de la 1re déjà réduite', () => {
+    expect(budgetDePhase({ ...prec, budgetRef: 3000, kjPrevus: 1950, kjRealises: 1950, reduite: true }, 2000, 0.5, 'Affûtage').budget).toBe(1500)
+    expect(budgetDePhase({ ...prec, budgetRef: 3000, kjPrevus: 2600, kjRealises: 2600, bridee: true, budgetPrevu: 2600 }, 2000, 0.65, 'Affûtage').budget).toBe(1690)
+  })
   it('semaine allégée juste après une semaine bridée : plus légère que la semaine d’avant', () => {
-    const b = budgetSemaine({ ...prec, budgetRef: 2118, kjPrevus: 1639, kjRealises: 1639, reduite: true, budgetPrevu: 1639 }, 2000, 4000, true)
+    const b = budgetSemaine({ ...prec, budgetRef: 2118, kjPrevus: 1639, kjRealises: 1639, bridee: true, budgetPrevu: 1639 }, 2000, 4000, true)
     expect(b.budget).toBe(Math.round(1639 * 0.65))
     expect(b.budgetRef).toBe(2118)
   })

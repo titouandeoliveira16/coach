@@ -52,6 +52,8 @@ export interface MetaSemaine {
   budgetVise?: number
   /** 2 (17/11/2026) : `budget` = total des séances prévues, et les séances suivent le budget */
   version?: number
+  /** Bridée (25/11/2026) : tes créneaux n'ont pas permis d'atteindre la référence ; la référence est gardée */
+  bridee?: boolean
 }
 
 /**
@@ -59,7 +61,11 @@ export interface MetaSemaine {
  * la référence est ce qui était vraiment prévu, sinon la semaine suivante chuterait d'un coup.
  */
 /** Semaine réduite sous sa référence (affûtage, récupération, garde-fou) : la suivante y revient, sans hausse en plus. */
-const estReduite = (meta: MetaSemaine) => meta.version === 2 && !meta.allegee && (meta.budgetVise ?? meta.budget) < meta.budgetRef * 0.9
+// Semaine bridée par tes créneaux (25/11/2026) ; avant le drapeau, reconnue à sa raison
+const estBridee = (meta: MetaSemaine) => meta.bridee ?? (meta.version === 2 && !meta.allegee && meta.budget < meta.budgetRef * 0.95 && /plafonné par tes créneaux|limité par tes créneaux/.test(meta.raison))
+const estReduite = (meta: MetaSemaine) => meta.version === 2 && !meta.allegee && !estBridee(meta) && (meta.budgetVise ?? meta.budget) < meta.budgetRef * 0.9
+/** Reprise des réductions et des bridages dans le bilan de la semaine */
+const drapeaux = (meta: MetaSemaine) => ({ ...(estReduite(meta) ? { reduite: true } : {}), ...(estBridee(meta) ? { bridee: true } : {}), budgetPrevu: Math.min(meta.budget, meta.budgetVise ?? meta.budget) })
 const referenceDe = (meta: MetaSemaine, kjPrevus: number) => (meta.version === 2 || meta.allegee ? meta.budgetRef : Math.max(meta.budgetRef, Math.round(kjPrevus)))
 
 const cleSemaine = (lundi: string) => `semaine-${lundi}`
@@ -225,7 +231,7 @@ async function bilanDe(precedent: string, reel = false): Promise<BilanSemaine | 
   // Le dimanche (dernier jour), c'est le vrai bilan : la séance du jour encore prévue compte comme faite (voir plus bas)
   if (!reel && fin > aujourdhui()) {
     const kjPrevus = prevues.reduce((a, p) => a + (p.kjPrevu ?? 0), 0)
-    return { budgetRef: referenceDe(meta, kjPrevus), kjPrevus, kjRealises: kjPrevus, rouges: 0, oranges: 0, allegee: meta.allegee, ...(estReduite(meta) ? { reduite: true, budgetPrevu: meta.budgetVise ?? meta.budget } : {}), chargee: !!(await lireSemaineChargee(precedent)), provisoire: true }
+    return { budgetRef: referenceDe(meta, kjPrevus), kjPrevus, kjRealises: kjPrevus, rouges: 0, oranges: 0, allegee: meta.allegee, ...drapeaux(meta), chargee: !!(await lireSemaineChargee(precedent)), provisoire: true }
   }
   // Bilan du dimanche (15/11/2026, demande de Titouan) : une séance encore prévue aujourd'hui (ou plus tard) compte
   // comme faite tant que la semaine n'est pas finie : pas de « semaine pas validée » avant ta séance du dimanche
@@ -241,7 +247,7 @@ async function bilanDe(precedent: string, reel = false): Promise<BilanSemaine | 
     rouges: decisions.filter((d) => d.couleur === 'rouge').length,
     oranges: decisions.filter((d) => d.couleur === 'orange').length,
     allegee: meta.allegee,
-    ...(estReduite(meta) ? { reduite: true, budgetPrevu: meta.budgetVise ?? meta.budget } : {}),
+    ...drapeaux(meta),
     chargee: !!(await lireSemaineChargee(precedent)),
     ...(await semaineAvecCourseC(precedent) ? { courseC: true } : {}),
   }
@@ -698,6 +704,11 @@ async function genererSemaineVeloBrute(lundi: string) {
   let b = coefPhase !== undefined
     ? budgetDePhase(prec, nominal, coefPhase, NOMS_PHASES[phase.type])
     : (avecCoupure(avecPlancher(budgetSemaine(prec, !prec && prog.budgetDepart ? prog.budgetDepart : Math.min(nominal, departSelonHeures(ps?.heuresRecentes, z2W) ?? Infinity), plafond, allegee, raisonAllegee, hausseSous(depart, prec, hausseBudget(niveau)), !prec && prog.budgetDepart ? 'Budget de départ : tes kJ des 4 semaines d’avant' : undefined), depart, prec, plafond, allegee), coupure))
+  // 25/11/2026 (demande de Titouan) : une semaine ne fait jamais plus de +10 % sur ce qui était vraiment prévu la semaine
+  // d'avant (pas de bond le jour où tes créneaux s'ouvrent), sauf au retour d'une semaine allégée, d'affûtage ou de récup
+  if (prec && !prec.allegee && !prec.reduite && prec.budgetPrevu && !allegee && coefPhase === undefined && b.budget > prec.budgetPrevu * 1.1) {
+    b = { ...b, budget: Math.round(prec.budgetPrevu * 1.1), raison: `${b.raison} · +10 % au plus sur ta semaine d’avant (${prec.budgetPrevu} kJ prévus)` }
+  }
   // Recalcul en milieu de semaine (chaque jour, ou à la main) : le budget fixé à la construction de la semaine est gardé
   // (19/11/2026 : il était recalculé sur ce qui restait, une séance manquée faisait baisser la référence, et la semaine
   // suivante bondissait de 15 à 35 %). Les séances manquées ne sont pas rattrapées : leurs kJ sortent du reste à répartir.
@@ -994,12 +1005,18 @@ async function genererSemaineVeloBrute(lundi: string) {
   const depasse = !premiere && total > b.budget * 1.02
   const raison = premiere ? 'Point de départ : ta semaine type à ses durées habituelles' : limite ? `${b.raison} · limité par tes créneaux et jours libres (${b.budget} kJ visés)`
     : depasse ? `${b.raison} · tes séances clés dépassent à elles seules le budget visé (${b.budget} kJ)` : b.raison
+  // Référence pour la semaine suivante (25/11/2026, demande de Titouan) : elle ne baisse que si tu fais moins (bilan).
+  // Semaine limitée par tes créneaux : la référence est gardée sans monter (avant, elle tombait à ce qui avait pu être
+  // placé, −6 à −10 % à chaque fois) ; la semaine d'après fait au plus +10 % sur ce qui était prévu (voir plus haut).
+  // Semaine allégée ou réduite (affûtage, récupération) : on garde la référence d'avant, on y revient ensuite
+  const refFinale = milieu ? ancienneMeta!.budgetRef : premiere ? total
+    : limite && !allegee && coefPhase === undefined ? Math.max(total, Math.min(b.budgetRef, prec?.budgetRef ?? b.budgetRef)) : b.budgetRef
+  // Décidé à la construction de la semaine : un recalcul en cours de semaine (séance manquée) ne la rend pas « bridée »
+  const bridee = milieu ? !!ancienneMeta!.bridee : !premiere && !allegee && coefPhase === undefined && (total < refFinale * 0.99 || b.budget < b.budgetRef * 0.99)
   const meta: MetaSemaine = {
-    // Semaine limitée par tes créneaux : la suivante repart de ce qui a vraiment été prévu (pas de rattrapage d'un coup)
-    // Semaine normale : la suivante part de ce qui a vraiment été prévu (une hausse de 10 % = 10 % de plus que cette semaine).
-    // Semaine allégée ou réduite (affûtage, récupération, garde-fou) : on garde la référence d'avant, on y revient ensuite
-    budgetRef: milieu ? ancienneMeta!.budgetRef : premiere ? total : !allegee && b.budget >= b.budgetRef * 0.9 ? Math.min(b.budgetRef, total) : b.budgetRef, budget: total, budgetVise: viseFixe ?? b.budget, raison, allegee, phase: NOMS_PHASES[phase.type],
+    budgetRef: refFinale, budget: total, budgetVise: viseFixe ?? b.budget, raison, allegee, phase: NOMS_PHASES[phase.type],
     semaineDansPhase: nSemaine + 1, z2W, genereeLe: new Date().toISOString(), version: 2, ...(prec?.provisoire || prec?.kjAVenir ? { bilanProvisoire: true } : {}),
+    bridee,
   }
   await enregistrer(db.reglages, { id: cleSemaine(lundi), valeur: meta })
   // Semaine chargée déjà déclarée : on garde le minimum, même après un recalcul
@@ -1135,6 +1152,8 @@ export async function saison() {
     if (m || prevu > 0) x.budget = Math.round(prevu)
     // Semaine déjà construite allégée : elle ne « bute » pas sur le plafond (13/11/2026)
     if (m?.allegee) x.bloquee = false
+    // Semaine déjà construite : elle bute si elle a vraiment été bridée par tes créneaux (25/11/2026)
+    else if (m?.version === 2) x.bloquee = estBridee(m)
   }
   // Chaque période où la hausse bute (hors semaine en cours, 3 au plus) : quelle limite, jusqu'à quand (une semaine type
   // à venir peut la relever), et le réglage qui débloque le plus (12/11/2026 : avant, seule la 1re période était dite)
@@ -1333,6 +1352,11 @@ export async function actualiserSemaineEnCours() {
     }
     await enregistrer(db.reglages, { id: 'reference-1425', valeur: true })
   }
+  // 25/11/2026, une fois : saison refaite avec les règles des semaines bridées (référence gardée, +10 % au plus)
+  if (!(await db.reglages.get('bridage-1430'))) {
+    await enregistrer(db.reglages, { id: 'bridage-1430', valeur: true })
+    refaire = true
+  }
   if (refaire) {
     await enregistrer(db.reglages, { id: 'doublons-1425', valeur: true })
     void construireSaison(true)
@@ -1448,7 +1472,7 @@ function avecPlancher<B extends { budgetRef: number; budget: number; raison: str
   if (!depart || b.budgetRef >= depart.plancher) return b
   if (prec && (prec.rouges >= 2 || (prec.kjPrevus > 0 && prec.kjRealises / prec.kjPrevus < 0.75))) return b
   // Juste après une semaine allégée ou réduite : on revient au budget d'avant, sans hausse en plus (audit du 17/11/2026)
-  if (prec?.allegee || prec?.reduite) return b
+  if (prec?.allegee || prec?.reduite || prec?.bridee) return b
   // Audit « vraie vie » du 13/11/2026 : en cours de saison, le plancher ne fait pas remonter de plus de 10 % d'un coup
   // (sinon +15 à +22 % après une semaine ratée) ; il s'applique en entier seulement au départ
   const ref = Math.round(Math.min(plafond, depart.plancher, prec ? prec.budgetRef * 1.1 : Infinity))

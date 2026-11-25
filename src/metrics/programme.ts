@@ -1196,7 +1196,9 @@ export interface BilanSemaine {
   allegee: boolean
   /** Semaine passée en « semaine chargée » : on ne rattrape pas, le budget reste stable */
   chargee?: boolean
-  /** Semaine raccourcie ou bridée : le budget qui y était vraiment prévu (25/11/2026) */
+  /** Bridée par tes créneaux : la référence n'a pas pu être atteinte (25/11/2026) */
+  bridee?: boolean
+  /** Semaine bridée : le total qui y était vraiment prévu */
   budgetPrevu?: number
   /** Semaine pas encore finie : comptée comme faite à 100 % (13/11/2026), recalculée quand elle se termine */
   provisoire?: boolean
@@ -1246,6 +1248,12 @@ export function budgetSemaine(prec: BilanSemaine | undefined, nominal: number, p
       ref = prec.budgetRef * (1 + hausse)
       raison = `+${(hausse * 100).toLocaleString('fr-FR')} % : budget de la semaine dernière validé`
     }
+    // 25/11/2026 : après une semaine bridée par tes créneaux, la référence ne monte pas (les baisses s'appliquent) ;
+    // la semaine elle-même monte de +10 % au plus sur ce qui était vraiment prévu
+    if (prec.bridee && ref > prec.budgetRef) {
+      ref = prec.budgetRef
+      raison = 'Référence gardée : ta semaine d’avant était bridée par tes créneaux'
+    }
   }
   // Jamais sous 60 % de la semaine type, mais sans remonter de plus de 10 % d'un coup (audit « vraie vie » du 13/11/2026 :
   // un changement de phase faisait sauter le budget de +12 %)
@@ -1259,7 +1267,7 @@ export function budgetSemaine(prec: BilanSemaine | undefined, nominal: number, p
   const garde = borne < ref && prec ? Math.max(budget, Math.min(Math.round(ref), Math.round(prec.budgetRef))) : budget
   // Semaine allégée juste après une semaine bridée : −35 % de ce qui était vraiment prévu la semaine d'avant, pas de la
   // référence gardée (sinon elle n'est pas plus légère que la semaine d'avant)
-  const baseAllegee = prec?.reduite && prec.budgetPrevu ? Math.min(budget, prec.budgetPrevu) : budget
+  const baseAllegee = prec?.bridee && prec.budgetPrevu ? Math.min(budget, prec.budgetPrevu) : budget
   return { budgetRef: garde, budget: Math.round(allegee ? baseAllegee * 0.65 : budget), raison: allegee ? `${raison} · ${raisonAllegee} : −35 %` : raison }
 }
 
@@ -1346,7 +1354,7 @@ export function jourAAjouter(semaineType: Role[]): number | undefined {
 export function budgetDePhase(prec: BilanSemaine | undefined, nominal: number, coef: number, nomPhase: string) {
   const ref = Math.round(prec?.budgetRef ?? nominal)
   // Juste après une semaine bridée (référence gardée au-dessus de ce qui était prévu) : la baisse part de ce qui était prévu
-  const base = coef < 1 && prec?.reduite && prec.budgetPrevu ? Math.min(ref, prec.budgetPrevu) : ref
+  const base = coef < 1 && prec?.bridee && prec.budgetPrevu ? Math.min(ref, prec.budgetPrevu) : ref
   return { budgetRef: ref, budget: Math.round(base * coef), raison: `${nomPhase} : ${Math.round(coef * 100)} % de ton budget habituel` }
 }
 
