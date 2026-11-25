@@ -59,6 +59,8 @@ export interface MetaSemaine {
    * s'applique à partir de la semaine suivante ; la semaine en cours se recalcule toujours avec ceux-là
    */
   reglagesSemaine?: ReglagesFiges
+  /** En remontée (26/11/2026) : limitée à +10 % sur la semaine d'avant, pas raccourcie (ce n'est ni un affûtage ni une récup) */
+  remontee?: boolean
 }
 
 interface ReglagesFiges {
@@ -77,7 +79,7 @@ interface ReglagesFiges {
 /** Semaine réduite sous sa référence (affûtage, récupération, garde-fou) : la suivante y revient, sans hausse en plus. */
 // Semaine bridée par tes créneaux (25/11/2026) ; avant le drapeau, reconnue à sa raison
 const estBridee = (meta: MetaSemaine) => meta.bridee ?? (meta.version === 2 && !meta.allegee && meta.budget < meta.budgetRef * 0.95 && /plafonné par tes créneaux|limité par tes créneaux/.test(meta.raison))
-const estReduite = (meta: MetaSemaine) => meta.version === 2 && !meta.allegee && !estBridee(meta) && (meta.budgetVise ?? meta.budget) < meta.budgetRef * 0.9
+const estReduite = (meta: MetaSemaine) => meta.version === 2 && !meta.allegee && !estBridee(meta) && !meta.remontee && (meta.budgetVise ?? meta.budget) < meta.budgetRef * 0.9
 /** Reprise des réductions et des bridages dans le bilan de la semaine */
 const drapeaux = (meta: MetaSemaine) => ({ ...(estReduite(meta) ? { reduite: true } : {}), ...(estBridee(meta) ? { bridee: true } : {}), budgetPrevu: Math.min(meta.budget, meta.budgetVise ?? meta.budget) })
 const referenceDe = (meta: MetaSemaine, kjPrevus: number) => (meta.version === 2 || meta.allegee ? meta.budgetRef : Math.max(meta.budgetRef, Math.round(kjPrevus)))
@@ -574,7 +576,7 @@ async function genererSemaineVeloBrute(lundi: string) {
   const parts = await partsRealisees(lundi)
   const coupure = retourArret ? { facteur: 1, semaineReprise: 0, raison: `${joursSansVelo} jours sans vélo : reprise en douceur` } : retourDeCoupure(semainesChamboulees(parts), semainesChamboulees(parts.slice(1)))
   // Charge habituelle (4 meilleures semaines d'affilée sur 12) : d'où tu repars, et la reprise part de tes durées
-  const depart = await chargeDeDepart(lundi, prog.phases)
+  const depart = await chargeDeDepart(lundi, prog.phases, z2W)
   const cap = plafondsReprise(phase.type === 'reprise' ? nSemaine : coupure.semaineReprise, prog.maxSemaineMin, prog.maxLongMin, depart?.facteur)
   const phrases: string[] = [...phrasesTest]
 
@@ -719,24 +721,41 @@ async function genererSemaineVeloBrute(lundi: string) {
   // Reprise, récupération : le jour « dur » devient une endurance ; le plafond le compte comme tel (audit du 17/11/2026)
   const rolesPlafond = kjIntensite === 0 ? roles.map((x) => (x === 'velo-dur' ? 'velo-z2' : x)) : roles
   const { nominal, plafond } = plafondEtNominal({ semaineType: rolesPlafond, kjIntensite, cap, z2W, sansLongue: !placement.long, longueVisee: longue.visee, heuresMax: heuresSemaine ? heures[1] : undefined, minutesAutres })
-  const prec = await bilanPrecedent(lundi)
+  // 26/11/2026 (demande de Titouan, relu : la dose = durée × intensité relative, Allen & Coggan, Sanders 2017) : ta
+  // puissance d'endurance a changé (test CP, ajustement de ta Z2) → les kJ de la semaine d'avant sont remis à l'échelle,
+  // pour garder les mêmes durées (sinon une CP en hausse raccourcissait tes séances). Dans les deux sens, ±15 % au plus.
+  const precBrut = await bilanPrecedent(lundi)
+  const zAvant = (await lireMeta(decalerJour(lundi, -7)))?.z2W
+  const rapport = zAvant ? Math.min(1.15, Math.max(0.85, z2W / zAvant)) : 1
+  const ech = (x: number) => Math.round(x * rapport)
+  const prec = precBrut && rapport !== 1 ? {
+    ...precBrut, budgetRef: ech(precBrut.budgetRef), kjPrevus: ech(precBrut.kjPrevus), kjRealises: ech(precBrut.kjRealises),
+    ...(precBrut.budgetPrevu ? { budgetPrevu: ech(precBrut.budgetPrevu) } : {}), ...(precBrut.kjAVenir ? { kjAVenir: ech(precBrut.kjAVenir) } : {}),
+  } : precBrut
   let b = coefPhase !== undefined
     ? budgetDePhase(prec, nominal, coefPhase, NOMS_PHASES[phase.type])
     : (avecCoupure(avecPlancher(budgetSemaine(prec, !prec && prog.budgetDepart ? prog.budgetDepart : Math.min(nominal, departSelonHeures(ps?.heuresRecentes, z2W) ?? Infinity), plafond, allegee, raisonAllegee, hausseSous(depart, prec, hausseBudget(niveau)), !prec && prog.budgetDepart ? 'Budget de départ : tes kJ des 4 semaines d’avant' : undefined), depart, prec, plafond, allegee), coupure))
+  if (rapport !== 1 && coefPhase === undefined) b = { ...b, raison: `${b.raison} · kJ remis à ta puissance d’endurance (${rapport > 1 ? '+' : '−'}${Math.abs(Math.round((rapport - 1) * 100))} %, mêmes durées)` }
   // 25/11/2026 (demande de Titouan) : une semaine ne fait jamais plus de +10 % sur ce qui était vraiment prévu la semaine
   // d'avant (pas de bond le jour où tes créneaux s'ouvrent), sauf au retour d'une semaine allégée, d'affûtage ou de récup
+  let remontee = false
   if (prec && !prec.allegee && !prec.reduite && prec.budgetPrevu && !allegee && coefPhase === undefined && b.budget > prec.budgetPrevu * 1.1) {
-    b = { ...b, budget: Math.round(prec.budgetPrevu * 1.1), raison: `${b.raison} · +10 % au plus sur ta semaine d’avant (${prec.budgetPrevu} kJ prévus)` }
+    remontee = true
+    // Pendant la remontée, la référence attend (sinon elle s'envole loin de ce que tu fais vraiment)
+    const cap = Math.round(prec.budgetPrevu * 1.1)
+    b = { ...b, budget: cap, budgetRef: Math.max(cap, Math.min(b.budgetRef, prec.budgetRef)), raison: `${b.raison} · +10 % au plus sur ta semaine d’avant (${prec.budgetPrevu} kJ prévus)` }
   }
   // Recalcul en milieu de semaine (chaque jour, ou à la main) : le budget fixé à la construction de la semaine est gardé
   // (19/11/2026 : il était recalculé sur ce qui restait, une séance manquée faisait baisser la référence, et la semaine
   // suivante bondissait de 15 à 35 %). Les séances manquées ne sont pas rattrapées : leurs kJ sortent du reste à répartir.
   const ancienneMeta = await lireMeta(lundi)
   const milieu = !retourArret && aPartirDe > lundi && ancienneMeta?.version === 2 && !ancienneMeta.bilanProvisoire && !prec?.provisoire
-  const viseFixe = milieu ? ancienneMeta!.budgetVise ?? ancienneMeta!.budget : undefined
+  // Puissance d'endurance changée en cours de semaine (test CP) : budget fixé remis à l'échelle, mêmes durées
+  const rapportSemaine = milieu && ancienneMeta!.z2W ? Math.min(1.15, Math.max(0.85, z2W / ancienneMeta!.z2W)) : 1
+  const viseFixe = milieu ? Math.round((ancienneMeta!.budgetVise ?? ancienneMeta!.budget) * rapportSemaine) : undefined
   if (milieu) {
     const manques = veloSemaine.filter((p) => p.date < aPartirDe && p.statut !== 'faite' && p.origine === 'auto').reduce((t, p) => t + (p.kjPrevu ?? 0), 0)
-    b = { ...b, budgetRef: ancienneMeta!.budgetRef, budget: Math.max(0, viseFixe! - manques), raison: ancienneMeta!.raison.replace(/ · (limité par|tes séances clés).*$/, '') }
+    b = { ...b, budgetRef: Math.round(ancienneMeta!.budgetRef * rapportSemaine), budget: Math.max(0, viseFixe! - manques), raison: ancienneMeta!.raison.replace(/ · tes séances clés.*$/, '') }
   }
 
   // Répartition du reste du budget en Z2 : 60 % pour la sortie longue
@@ -1022,20 +1041,23 @@ async function genererSemaineVeloBrute(lundi: string) {
   const total = Math.round(kjFaits + kjAutresPrevus + aCreer.reduce((a, [, s]) => a + s.kj, 0))
   const limite = !premiere && total < b.budget * 0.95
   const depasse = !premiere && total > b.budget * 1.02
-  const raison = premiere ? 'Point de départ : ta semaine type à ses durées habituelles' : limite ? `${b.raison} · limité par tes créneaux et jours libres (${b.budget} kJ visés)`
+  const raison = premiere ? 'Point de départ : ta semaine type à ses durées habituelles' : b.raison.includes('limité par tes créneaux') ? b.raison : limite ? `${b.raison} · limité par tes créneaux et jours libres (${b.budget} kJ visés)`
     : depasse ? `${b.raison} · tes séances clés dépassent à elles seules le budget visé (${b.budget} kJ)` : b.raison
   // Référence pour la semaine suivante (25/11/2026, demande de Titouan) : elle ne baisse que si tu fais moins (bilan).
   // Semaine limitée par tes créneaux : la référence est gardée sans monter (avant, elle tombait à ce qui avait pu être
   // placé, −6 à −10 % à chaque fois) ; la semaine d'après fait au plus +10 % sur ce qui était prévu (voir plus haut).
   // Semaine allégée ou réduite (affûtage, récupération) : on garde la référence d'avant, on y revient ensuite
-  const refFinale = milieu ? ancienneMeta!.budgetRef : premiere ? total
+  const refFinale = milieu ? Math.round(ancienneMeta!.budgetRef * rapportSemaine) : premiere ? total
     : limite && !allegee && coefPhase === undefined ? Math.max(total, Math.min(b.budgetRef, prec?.budgetRef ?? b.budgetRef)) : b.budgetRef
   // Décidé à la construction de la semaine : un recalcul en cours de semaine (séance manquée) ne la rend pas « bridée »
-  const bridee = milieu ? !!ancienneMeta!.bridee : !premiere && !allegee && coefPhase === undefined && (total < refFinale * 0.99 || b.budget < b.budgetRef * 0.99)
+  // Bridée = tes créneaux ont vraiment limité la semaine (plafond, ou séances qui n'atteignent pas le budget) ; jamais un
+  // simple arrondi des durées (26/11/2026 : une semaine à 97 % était prise pour bridée, et la référence restait figée)
+  const bridee = milieu ? !!ancienneMeta!.bridee : !premiere && !allegee && coefPhase === undefined && (limite || ('plafonne' in b && !!b.plafonne))
   const meta: MetaSemaine = {
     budgetRef: refFinale, budget: total, budgetVise: viseFixe ?? b.budget, raison, allegee, phase: NOMS_PHASES[phase.type],
     semaineDansPhase: nSemaine + 1, z2W, genereeLe: new Date().toISOString(), version: 2, ...(prec?.provisoire || prec?.kjAVenir ? { bilanProvisoire: true } : {}),
     bridee,
+    remontee: milieu ? !!ancienneMeta!.remontee : remontee,
     reglagesSemaine: { semaineType: prog.semaineType, maxSemaineMin: prog.maxSemaineMin, maxLongMin: prog.maxLongMin, minLongMin: prog.minLongMin, heuresSemaine, force },
   }
   await enregistrer(db.reglages, { id: cleSemaine(lundi), valeur: meta })
@@ -1141,7 +1163,7 @@ export async function saison() {
     const h = heuresAu(prog, ps?.heuresSemaine, l)
     return h ? heuresDe(h)[1] : undefined
   }
-  const depart = await chargeDeDepart(lundi, prog.phases)
+  const depart = await chargeDeDepart(lundi, prog.phases, z2W)
   const capDe = (l: string) => {
     const { phase, semaine } = phaseDe(l, prog.phases)
     const pl = programmeAu(prog, l)
@@ -1185,7 +1207,7 @@ export async function saison() {
     const p = calcul(l).plafond
     const k = semaines.findIndex((x, j) => j > i && calcul(x.lundi).plafond > p * 1.02)
     const par = calcul(l).limite
-    // Hausse voulue sur la période bloquée : +7,5 % par semaine normale, sur un cycle de 4 semaines au plus (13/11/2026)
+    // Hausse voulue sur la période bloquée : +10 % par semaine normale, sur un cycle de 4 semaines au plus (13/11/2026)
     const nBloquees = semaines.slice(i, k > 0 ? k : undefined).filter((x) => x.bloquee).length
     // Une seule semaine qui bute (13/11/2026) : pas d'alerte, la charge repart la semaine d'après
     if (nBloquees < 2) {
@@ -1193,7 +1215,7 @@ export async function saison() {
       i = k - 1
       continue
     }
-    const besoin = Math.round(p * (Math.pow(1.075, Math.min(4, Math.max(1, nBloquees))) - 1))
+    const besoin = Math.round(p * (Math.pow(1.1, Math.min(4, Math.max(1, nBloquees))) - 1))
     blocages.push({ lundi: l, jusquA: k > 0 ? semaines[k].lundi : undefined, par, heures: heuresAu(prog, ps?.heuresSemaine, l), besoin, ...(() => {
       const pistes = par === 'jours' ? pistesDeblocage({ semaineType: programmeAu(prog, l).semaineType, cap: capDe(l), z2W, besoin }) : []
       return { pistes, levier: pistes[0] }
@@ -1373,8 +1395,8 @@ export async function actualiserSemaineEnCours() {
     await enregistrer(db.reglages, { id: 'reference-1425', valeur: true })
   }
   // 25/11/2026, une fois : saison refaite avec les règles des semaines bridées (référence gardée, +10 % au plus)
-  if (!(await db.reglages.get('bridage-1430'))) {
-    await enregistrer(db.reglages, { id: 'bridage-1430', valeur: true })
+  if (!(await db.reglages.get('bridage-1431'))) {
+    await enregistrer(db.reglages, { id: 'bridage-1431', valeur: true })
     refaire = true
   }
   if (refaire) {
@@ -1488,7 +1510,7 @@ async function signauxFc(seances: Seance[]) {
  * précédentes, et pic de charge totale sur les 7 derniers jours. Il faut 35 jours d'historique.
  * Seul le budget de la semaine baisse (pas la base) : la semaine d'après repart normalement.
  */
-/** Sous ta charge habituelle, le budget remonte de 10 % par semaine validée (au lieu de 7,5 %). */
+/** Sous ta charge habituelle, le budget remonte d'au moins 10 % par semaine validée (débutant compris). */
 function hausseSous(depart: Awaited<ReturnType<typeof chargeDeDepart>>, prec: BilanSemaine | undefined, hausse: number) {
   return depart && prec && prec.budgetRef < depart.habituelle ? Math.max(hausse, 0.1) : hausse
 }

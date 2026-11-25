@@ -121,6 +121,8 @@ export async function simuler(sc: Scenario, detail = false, journal?: string[]):
   const fin = [r.course.date, ...(r.autresCourses ?? []).map((c) => c.date)].sort().pop()!
   const cp = r.cpW!
   let refPrec: number | undefined
+  let z2Prec: number | undefined
+  let raisonPrec: string | undefined
   let prec: { budget: number; allegee: boolean; reduite: boolean } | undefined
   const derniers = new Map<string, { palier: number; resultat?: string }>()
   let nSemaine = 0
@@ -149,13 +151,24 @@ export async function simuler(sc: Scenario, detail = false, journal?: string[]):
 
     // Budget
     if (!Number.isFinite(meta.budget) || meta.budget <= 0) p(`budget ${meta.budget}`)
+    // Puissance d'endurance changée (test CP, ajustement de Z2) : on compare à puissance égale (26/11/2026)
+    const rz = z2Prec && meta.z2W ? Math.min(1.15, Math.max(0.85, meta.z2W / z2Prec)) : 1
+    if (refPrec) refPrec = Math.round(refPrec * rz)
+    if (prec && rz !== 1) prec = { ...prec, budget: Math.round(prec.budget * rz) }
+    z2Prec = meta.z2W
     if (refPrec && meta.budgetRef > refPrec * 1.1 + 1) p(`budget +${Math.round((meta.budgetRef / refPrec - 1) * 100)} % (${refPrec} → ${meta.budgetRef}) · ${meta.raison}`)
+    // 26/11/2026 : « référence gardée, semaine bridée » seulement si la semaine d'avant a vraiment buté sur tes créneaux
+    // (sinon la saison reste figée sans raison)
+    if (/bridée par tes créneaux/.test(meta.raison) && raisonPrec !== undefined && !/plafonné|limité|sans vélo|reprise|au plus sur ta semaine/.test(raisonPrec)) {
+      p(`référence figée sans créneaux qui brident la semaine d'avant · ${meta.raison}`)
+    }
     // Règle de Titouan (25/11/2026) : la référence ne baisse que si la semaine d'avant a été faite en moins (jours rouges,
     // semaines très légères, arrêt) ; jamais parce que les créneaux brident
     if (refPrec && meta.budgetRef < refPrec * 0.99 && !/rouges|légères|sans vélo|reprise|coupure|départ|habituelle|Point de départ/.test(meta.raison)) {
       p(`référence en baisse sans semaine faite en moins : ${refPrec} → ${meta.budgetRef} · ${meta.raison}`)
     }
     refPrec = meta.budgetRef
+    raisonPrec = meta.raison
     // Audit des chiffres (17/11/2026) : le budget affiché est le total des séances prévues, et ce qu'il annonce est vrai
     const totalPrevu = semaine.reduce((t, x) => t + (x.kjPrevu ?? 0), 0)
     if (Math.abs(totalPrevu - meta.budget) > 3) p(`budget affiché ${meta.budget} kJ ≠ séances prévues ${Math.round(totalPrevu)} kJ`)

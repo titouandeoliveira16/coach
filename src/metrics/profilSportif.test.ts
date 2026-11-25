@@ -13,11 +13,11 @@ describe('profil sportif → moteur', () => {
     expect(heuresDe('Moins de 4 h')).toEqual([2, 4])
     expect(heuresDe()).toEqual([4, 6])
   })
-  it('débutant : +5 % au lieu de +7,5 %', () => {
+  it('débutant : +5 % au lieu de +10 %', () => {
     const prec = { budgetRef: 2000, kjPrevus: 2000, kjRealises: 2000, rouges: 0, oranges: 0, allegee: false }
     expect(hausseBudget('debutant')).toBe(0.05)
     expect(budgetSemaine(prec, 2000, 4000, false, undefined, hausseBudget('debutant')).budgetRef).toBe(2100)
-    expect(budgetSemaine(prec, 2000, 4000, false, undefined, hausseBudget('confirme')).budgetRef).toBe(2150)
+    expect(budgetSemaine(prec, 2000, 4000, false, undefined, hausseBudget('confirme')).budgetRef).toBe(2200)
   })
   it('2 intensités (forme Chauvin) : 4 jours de vélo ou plus, sauf débutant', () => {
     expect(deuxIntensitesPossibles('intermediaire', 4)).toBe(true)

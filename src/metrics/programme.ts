@@ -7,7 +7,7 @@
  *    on mélange, avec une dominante qui change selon la phase ;
  *  - progression par famille : on allonge le temps de travail d'abord, puis +2,5 % de watts
  *    (règle 6 du PDF kJ) ; un bloc non tenu = −5 % ;
- *  - budget kJ hebdomadaire : +7,5 % si validé et signaux au vert, stable si mitigé, −15 % si rouge ;
+ *  - budget kJ hebdomadaire : +10 % (+5 % en débutant) si validé et signaux au vert, stable si mitigé, −15 % si rouge ;
  *    semaine allégée (−35 %) toutes les 4 semaines et la semaine d'une course.
  */
 // Extrait léger du catalogue (séances du programme seulement, catalogue/generer.py) : le catalogue entier pèse 250 Ko
@@ -1267,8 +1267,11 @@ export function budgetSemaine(prec: BilanSemaine | undefined, nominal: number, p
   const garde = borne < ref && prec ? Math.max(budget, Math.min(Math.round(ref), Math.round(prec.budgetRef))) : budget
   // Semaine allégée juste après une semaine bridée : −35 % de ce qui était vraiment prévu la semaine d'avant, pas de la
   // référence gardée (sinon elle n'est pas plus légère que la semaine d'avant)
-  const baseAllegee = prec?.bridee && prec.budgetPrevu ? Math.min(budget, prec.budgetPrevu) : budget
-  return { budgetRef: garde, budget: Math.round(allegee ? baseAllegee * 0.65 : budget), raison: allegee ? `${raison} · ${raisonAllegee} : −35 %` : raison }
+  // (aussi pendant une remontée de +10 % par semaine : la semaine d'avant était sous sa référence, 26/11/2026)
+  const sousRef = !!prec?.budgetPrevu && !prec.allegee && !prec.reduite && prec.budgetPrevu < prec.budgetRef * 0.95
+  const baseAllegee = sousRef ? Math.min(budget, prec!.budgetPrevu!) : budget
+  // `plafonne` : ce sont tes créneaux (ou une reprise) qui ont limité le budget, pas un arrondi (26/11/2026)
+  return { budgetRef: garde, budget: Math.round(allegee ? baseAllegee * 0.65 : budget), raison: allegee ? `${raison} · ${raisonAllegee} : −35 %` : raison, ...(borne < ref * 0.99 ? { plafonne: true } : {}) }
 }
 
 /**
@@ -1354,7 +1357,8 @@ export function jourAAjouter(semaineType: Role[]): number | undefined {
 export function budgetDePhase(prec: BilanSemaine | undefined, nominal: number, coef: number, nomPhase: string) {
   const ref = Math.round(prec?.budgetRef ?? nominal)
   // Juste après une semaine bridée (référence gardée au-dessus de ce qui était prévu) : la baisse part de ce qui était prévu
-  const base = coef < 1 && prec?.bridee && prec.budgetPrevu ? Math.min(ref, prec.budgetPrevu) : ref
+  const sousRef = !!prec?.budgetPrevu && !prec.allegee && !prec.reduite && prec.budgetPrevu < prec.budgetRef * 0.95
+  const base = coef < 1 && sousRef ? Math.min(ref, prec!.budgetPrevu!) : ref
   return { budgetRef: ref, budget: Math.round(base * coef), raison: `${nomPhase} : ${Math.round(coef * 100)} % de ton budget habituel` }
 }
 
@@ -1480,7 +1484,7 @@ export function placer(semaine: string[], roles: Role[], autres: Occupation[], i
 
 /**
  * Profil sportif (réponses du questionnaire) : ce qui règle le moteur (relecture scientifique du 5/11/2026).
- *  - niveau : un débutant monte son budget de +5 % par semaine au lieu de +7,5 % (choix d'entraîneur, Buist 2008 :
+ *  - niveau : un débutant monte son budget de +5 % par semaine au lieu de +10 % (choix d'entraîneur, Buist 2008 :
  *    aucun pourcentage n'est validé) ;
  *  - confirmé ou expert, au moins 6 h par semaine : 2 séances dures par semaine au total (vélo + course), donc une
  *    2e intensité vélo seulement les semaines sans séance dure de course (Mølmen 2025 : la fréquence compte) ;
@@ -1532,7 +1536,8 @@ export function departSelonHeures(heuresRecentes: string | undefined, z2W: numbe
   return h ? Math.round((h * 1.2 * 3600 * z2W) / 1000) : undefined
 }
 /** Hausse du budget kJ quand la semaine est validée et les signaux au vert. */
-export const hausseBudget = (niveau: Niveau) => (niveau === 'debutant' ? 0.05 : 0.075)
+// 26/11/2026 (choix de Titouan, relu : aucune étude ne départage 7,5 et 10 %, Buist 2008, Nielsen 2014) : 10 %
+export const hausseBudget = (niveau: Niveau) => (niveau === 'debutant' ? 0.05 : 0.1)
 /**
  * 2 séances intensives par semaine (forme Chauvin, relue le 6/11/2026) : à partir de 4 jours de vélo, sauf débutant.
  * Avec 3 jours (ou en débutant), 1 seule : la sortie longue avec ses blocs au 1er seuil fait le reste.
@@ -1657,7 +1662,7 @@ export const NOMS_FAMILLES: Record<Famille, string> = {
 
 /**
  * Projette les semaines à venir : phase, semaine allégée / course / test, budget estimé et séance d'intensité.
- * Hypothèse : budget validé chaque semaine (+7,5 %, dans la limite des créneaux).
+ * Hypothèse : budget validé chaque semaine (+10 %, dans la limite des créneaux).
  */
 export function projeterSaison(o: {
   lundi: string
@@ -1699,7 +1704,7 @@ export function projeterSaison(o: {
     const plafond = o.plafondDe?.(l) ?? o.plafond
     const hausse = semaines.length > 0 && !precedenteAllegee && coef === undefined
     const avant = ref
-    if (hausse) ref = ref * (o.habituelle && ref < o.habituelle ? 1.1 : 1.075)
+    if (hausse) ref = ref * 1.1
     // Plancher de la charge habituelle : comme la Semaine, +10 % par semaine au plus, et pas juste après une semaine allégée
     if (o.plancher && hausse) ref = Math.max(ref, Math.min(o.plancher, avant * 1.1))
     const bloquee = hausse && !allegee && ref > plafond
