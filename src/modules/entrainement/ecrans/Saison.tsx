@@ -1,6 +1,6 @@
 import { Flag } from 'lucide-react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { aujourdhui, decalerJour, depuisJour, ecartJours } from '../../../core/dates'
 import { formatNombre } from '../../../core/format'
 import { Aide } from '../../../core/ui/Aide'
@@ -12,7 +12,7 @@ import type { ProfilSportif } from '../reglages/ProfilSportif'
 import { accepterConseil, annulerConseil, trancheAuDessus, type Changement } from '../plan/pistes'
 import { NOMS_PHASES, niveauxCourses, type SemaineSaison, type TypePhase } from '../../../metrics/programme'
 import { AIDES } from '../aides'
-import { recalculerSemainesAVenir, saison } from '../plan/programme'
+import { ecouterSaison, recalculerSemainesAVenir, saison, saisonEnConstruction } from '../plan/programme'
 
 /** Couleur de chaque phase (rampe validée sur fond sombre). */
 /** Couleur de chaque phase = la zone qu'elle travaille, comme Zwift (Z1 gris → Z6 rouge), 12/11/2026 */
@@ -258,9 +258,16 @@ function FinDeCycle() {
 }
 
 export function Saison() {
-  const s = useLiveQuery(saison)
+  // Pendant la reconstruction de la saison (25/11/2026) : l'écran garde ce qu'il montrait et se redessine une seule fois à
+  // la fin (avant, il recalculait tout à chaque semaine écrite : téléphone saturé, écran noir)
+  const [enCours, setEnCours] = useState(saisonEnConstruction())
+  useEffect(() => ecouterSaison(() => setEnCours(saisonEnConstruction())), [])
+  const lu = useLiveQuery(() => (enCours ? Promise.resolve(null) : saison()), [enCours])
+  const derniere = useRef<typeof lu>(undefined)
+  if (lu) derniere.current = lu
+  const s = lu ?? derniere.current
   const [r] = useReglagesEntrainement()
-  if (!s?.semaines.length) return null
+  if (!s?.semaines.length) return <p className="px-4 pt-6 text-center text-texte-2">{enCours ? 'Mise à jour de ta saison…' : 'Chargement de ta saison…'}</p>
   const prog = programmeDe(r.programme)
   const actuelle = s.semaines[0]
   const debut = s.phases[0].debut
@@ -286,6 +293,7 @@ export function Saison() {
 
   return (
     <div className="space-y-3">
+      {enCours && <p role="status" className="px-4 text-sm text-texte-3">Mise à jour de ta saison… les chiffres changent à la fin.</p>}
       <FinDeCycle />
       <Carte>
         <p className="text-[13px] font-semibold text-texte-2">Où j'en suis</p>

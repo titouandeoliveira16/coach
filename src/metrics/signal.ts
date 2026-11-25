@@ -135,7 +135,7 @@ export function calculerSignal(e: EntreeSignal, s: Seuils = SEUILS_DEFAUT): Sign
   if (fc7Haut)
     alertes.push({ code: 'fc-repos', texte: `Pouls au repos élevé sur 7 j (${Math.round(vfc.fcRepos7!)} bpm, base ${Math.round(vfc.fcReposBase!)})`, compte: true })
   else if (deuxHauts)
-    alertes.push({ code: 'fc-repos', texte: `Pouls au repos haut 2 matins de suite (${vfc.fcReposDeuxJours!.join(' et ')} bpm, base ${Math.round(vfc.fcReposBaseAvant!)}) : souvent un premier signe de maladie`, compte: true })
+    alertes.push({ code: 'fc-repos', texte: `Pouls au repos haut 2 matins de suite (${vfc.fcReposDeuxJours!.join(' et ')} bpm, base ${Math.round(vfc.fcReposBaseAvant!)}) : maladie qui couve, ou fatigue d’une séance dure`, compte: true })
 
   // Ressenti et nuit : une seule alerte, quelle que soit la cause (note, nuit courte)
   // Relecture du 17/11/2026 (option A choisie par Titouan) : le feu suit ton corps (VFC, pouls au repos, ressenti, nuit de

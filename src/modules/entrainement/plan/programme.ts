@@ -307,7 +307,18 @@ export async function facteursPersonnels(r: Pick<ReglagesEntrainement, 'tests' |
  * les anciennes séances ; si elle échoue en route (chargement impossible hors ligne, données incohérentes), la semaine
  * d'avant est remise telle quelle au lieu de rester vide, et l'erreur est remontée.
  */
-export async function genererSemaineVelo(lundi: string) {
+/**
+ * Un seul calcul de semaine à la fois (25/11/2026) : deux calculs en même temps de la même semaine (saison reconstruite au
+ * lancement et après un changement de réglage) écrivaient chacun ses séances, d'où des semaines entières en double.
+ */
+let fileCalculs: Promise<unknown> = Promise.resolve()
+export function genererSemaineVelo(lundi: string): Promise<string[]> {
+  const tache = fileCalculs.then(() => genererSemaineVeloSeule(lundi))
+  fileCalculs = tache.catch(() => {})
+  return tache
+}
+
+async function genererSemaineVeloSeule(lundi: string) {
   const avant = await db.prevues.where('date').aboveOrEqual(lundi).toArray()
   // Photo de la semaine d'avant gardée pendant le calcul : remise au démarrage si l'appli est coupée en plein calcul
   debutCalcul(lundi, avant)
@@ -894,7 +905,8 @@ async function genererSemaineVeloBrute(lundi: string) {
     // Toujours trop aux planchers : une endurance simple de moins (d'abord le lendemain d'une séance dure), une au plus ;
     // jamais la sortie longue, la séance dure, la séance au 1er seuil ni la technique VTT
     const retirables = placement.z2.filter((d) => d !== jourSv1 && d !== jourSprints && d !== terrain)
-    if (bas >= 2 && totalAvec(endurances) > b.budget * 1.02 && retirables.length) {
+    // Jamais en semaine allégée, affûtage ou récupération : moins de kJ y est voulu (25/11/2026)
+    if (bas >= 2 && !allegee && coefPhase === undefined && totalAvec(endurances) > b.budget * 1.02 && retirables.length) {
       const d = retirables.find((x) => lendemains.has(x)) ?? retirables[retirables.length - 1]
       placement.z2 = placement.z2.filter((x) => x !== d)
       nZ2Restants = placement.z2.filter((x) => !(x === jourSv1 && seanceSv1)).length
@@ -1216,7 +1228,36 @@ export async function genererSemaineEtSuite(lundi: string) {
  * précédente comptée comme faite à 100 % (sans le feu du jour). Une fois par jour : le graphique de la Saison et la
  * Semaine disent les mêmes chiffres, jusqu'à la course. La semaine en cours n'est pas touchée.
  */
-export async function construireSaison(forcer = false) {
+/** Reconstruction de la saison : une seule à la fois ; une demande pendant qu'elle tourne la relance une fois à la fin. */
+let saisonEnCours: Promise<void> | undefined
+let saisonARefaire = false
+export function construireSaison(forcer = false): Promise<void> {
+  if (saisonEnCours) {
+    if (forcer) saisonARefaire = true
+    return saisonEnCours
+  }
+  saisonEnCours = (async () => {
+    try {
+      await construireSaisonSeule(forcer)
+      while (saisonARefaire) { saisonARefaire = false; await construireSaisonSeule(true) }
+    } finally {
+      saisonEnCours = undefined
+      evenementsSaison.dispatchEvent(new Event('etat'))
+    }
+  })()
+  evenementsSaison.dispatchEvent(new Event('etat'))
+  return saisonEnCours
+}
+const evenementsSaison = new EventTarget()
+/** Vrai pendant la reconstruction de la saison (écran Saison : « Mise à jour de ta saison… »). */
+export const saisonEnConstruction = () => !!saisonEnCours
+/** Prévenu au début et à la fin de chaque reconstruction de la saison. */
+export function ecouterSaison(f: () => void) {
+  evenementsSaison.addEventListener('etat', f)
+  return () => evenementsSaison.removeEventListener('etat', f)
+}
+
+async function construireSaisonSeule(forcer: boolean) {
   const jour = aujourdhui()
   const fait = (await db.reglages.get('saison-construite'))?.valeur as string | undefined
   if (!forcer && fait === jour) return
@@ -1266,8 +1307,11 @@ export async function actualiserSemaineEnCours() {
   // avant de reconstruire la saison à partir d'elle
   const lundi = lundiDe(aujourdhui())
   if ((await lireMeta(lundi))?.bilanProvisoire) await genererSemaineVelo(lundi).catch(() => {})
-  // Les anciennes semaines lointaines (fausse reprise, anciens calculs) sont refaites dès la première construction
-  await construireSaison()
+  // 25/11/2026, une fois : semaines en double (deux reconstructions en même temps) refaites proprement
+  if (!(await db.reglages.get('doublons-1425'))) {
+    await enregistrer(db.reglages, { id: 'doublons-1425', valeur: true })
+    void construireSaison(true)
+  } else void construireSaison()
 }
 
 export const recalculerApresTest = () => recalculerSemainesAVenir()
@@ -1276,8 +1320,10 @@ export const recalculerApresTest = () => recalculerSemainesAVenir()
 export async function recalculerSemainesAVenir() {
   const lundi = lundiDe(aujourdhui())
   if (await lireMeta(lundi)) await genererSemaineVelo(lundi).catch(() => {}) // erreur déjà journalisée, semaine d'avant gardée
-  // Puis toute la saison à venir, à partir d'elle (19/11/2026)
-  await construireSaison(true)
+  const suivante = decalerJour(lundi, 7)
+  if (await lireMeta(suivante)) await genererSemaineVelo(suivante).catch(() => {})
+  // Puis le reste de la saison en arrière-plan (25/11/2026 : attendre les 30 semaines bloquait l'écran, noir)
+  void construireSaison(true)
 }
 
 /**

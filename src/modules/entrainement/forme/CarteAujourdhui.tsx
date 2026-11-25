@@ -33,8 +33,8 @@ const COULEUR = { vert: 'var(--color-bon)', orange: 'var(--color-attention)', ro
 
 /** Une plage : ta normale (zone grise), ta valeur (le point, de la couleur de son état). */
 function LignePlage({ p, etat, couleur }: { p: Plage; etat?: 'ok' | 'alerte' | 'info'; couleur: (e?: 'ok' | 'alerte' | 'info') => string }) {
-  const texte = p.valeur === undefined ? '—'
-    : p.cle === 'recuperation' ? `${Math.round(p.valeur)} ms` : p.cle === 'pouls' ? `${Math.round(p.valeur)} bpm` : enHeures(p.valeur)
+  const texte = p.texte ?? (p.valeur === undefined ? '—'
+    : p.cle === 'recuperation' ? `${Math.round(p.valeur)} ms` : p.cle === 'pouls' ? `${Math.round(p.valeur)} bpm` : enHeures(p.valeur))
   const c = p.valeur === undefined ? 'var(--color-texte-3)' : couleur(etat)
   return (
     <span className="mt-2.5 block">

@@ -19,6 +19,8 @@ export interface Plage {
   /** Échelle de la barre */
   min: number
   max: number
+  /** Texte de la valeur, quand ce n'est pas la moyenne (ex. « 49 · 49 bpm » des 2 derniers matins) */
+  texte?: string
 }
 
 function echelle(bas: number, haut: number, valeur?: number) {
@@ -40,7 +42,13 @@ export function plagesForme(vfc: AnalyseVfc, sommeil: { moyenne7?: number; moyen
     res.push({ cle: 'recuperation', libelle: 'Récupération · 7 jours', valeur: vVfc, bas, haut, ...echelle(bas, haut, vVfc) })
   } else res.push({ cle: 'recuperation', libelle: 'Récupération · 7 jours', valeur: vVfc, min: 0, max: 1 })
   // Pouls au repos (bpm)
-  if (vfc.fcReposBase !== undefined) {
+  // Alerte « 2 matins de suite » (25/11/2026) : la ligne montre ces 2 matins, pour que le point et la couleur disent la même
+  // chose (avant, la moyenne 7 j restait dans la plage alors que la ligne passait en orange)
+  const deux = vfc.fcReposDeuxJours
+  if (deux && vfc.fcReposBaseAvant !== undefined && deux.every((v) => v > vfc.fcReposBaseAvant! + s.fcReposEcart)) {
+    const base = vfc.fcReposBaseAvant, bas = base - s.fcReposEcart, haut = base + s.fcReposEcart, v = (deux[0] + deux[1]) / 2
+    res.push({ cle: 'pouls', libelle: 'Pouls au repos · 2 derniers matins', valeur: v, bas, haut, ...echelle(bas, haut, v), texte: `${deux.join(' · ')} bpm (habituel ${Math.round(base)})` })
+  } else if (vfc.fcReposBase !== undefined) {
     const bas = vfc.fcReposBase - s.fcReposEcart, haut = vfc.fcReposBase + s.fcReposEcart
     res.push({ cle: 'pouls', libelle: 'Pouls au repos · 7 jours', valeur: vfc.fcRepos7, bas, haut, ...echelle(bas, haut, vfc.fcRepos7) })
   } else res.push({ cle: 'pouls', libelle: 'Pouls au repos · 7 jours', valeur: vfc.fcRepos7, min: 0, max: 1 })
