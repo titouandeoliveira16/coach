@@ -225,7 +225,7 @@ async function bilanDe(precedent: string, reel = false): Promise<BilanSemaine | 
   // Le dimanche (dernier jour), c'est le vrai bilan : la séance du jour encore prévue compte comme faite (voir plus bas)
   if (!reel && fin > aujourdhui()) {
     const kjPrevus = prevues.reduce((a, p) => a + (p.kjPrevu ?? 0), 0)
-    return { budgetRef: referenceDe(meta, kjPrevus), kjPrevus, kjRealises: kjPrevus, rouges: 0, oranges: 0, allegee: meta.allegee, ...(estReduite(meta) ? { reduite: true } : {}), chargee: !!(await lireSemaineChargee(precedent)), provisoire: true }
+    return { budgetRef: referenceDe(meta, kjPrevus), kjPrevus, kjRealises: kjPrevus, rouges: 0, oranges: 0, allegee: meta.allegee, ...(estReduite(meta) ? { reduite: true, budgetPrevu: meta.budgetVise ?? meta.budget } : {}), chargee: !!(await lireSemaineChargee(precedent)), provisoire: true }
   }
   // Bilan du dimanche (15/11/2026, demande de Titouan) : une séance encore prévue aujourd'hui (ou plus tard) compte
   // comme faite tant que la semaine n'est pas finie : pas de « semaine pas validée » avant ta séance du dimanche
@@ -241,7 +241,7 @@ async function bilanDe(precedent: string, reel = false): Promise<BilanSemaine | 
     rouges: decisions.filter((d) => d.couleur === 'rouge').length,
     oranges: decisions.filter((d) => d.couleur === 'orange').length,
     allegee: meta.allegee,
-    ...(estReduite(meta) ? { reduite: true } : {}),
+    ...(estReduite(meta) ? { reduite: true, budgetPrevu: meta.budgetVise ?? meta.budget } : {}),
     chargee: !!(await lireSemaineChargee(precedent)),
     ...(await semaineAvecCourseC(precedent) ? { courseC: true } : {}),
   }

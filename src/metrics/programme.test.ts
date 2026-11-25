@@ -161,6 +161,11 @@ describe('budget kJ', () => {
     expect(b.budget).toBe(1639)
     expect(b.budgetRef).toBe(2118)
   })
+  it('semaine allégée juste après une semaine bridée : plus légère que la semaine d’avant', () => {
+    const b = budgetSemaine({ ...prec, budgetRef: 2118, kjPrevus: 1639, kjRealises: 1639, reduite: true, budgetPrevu: 1639 }, 2000, 4000, true)
+    expect(b.budget).toBe(Math.round(1639 * 0.65))
+    expect(b.budgetRef).toBe(2118)
+  })
 })
 
 describe('placement', () => {
