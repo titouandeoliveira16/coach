@@ -1250,8 +1250,12 @@ export function budgetSemaine(prec: BilanSemaine | undefined, nominal: number, p
   const borne = Math.min(plafond, Math.max(prec ? Math.min(nominal * 0.6, prec.budgetRef * 1.1) : nominal * 0.6, ref))
   if (borne < ref) raison += ' (plafonné par tes créneaux)'
   if (prec?.kjAVenir) raison += ' (en comptant ta séance d’aujourd’hui)'
-  ref = Math.round(borne)
-  return { budgetRef: ref, budget: Math.round(allegee ? ref * 0.65 : ref), raison: allegee ? `${raison} · ${raisonAllegee} : −35 %` : raison }
+  // 25/11/2026 (demande de Titouan) : une semaine bridée par ses créneaux (ou une reprise) a moins de kJ, mais sa
+  // référence ne baisse pas : la semaine d'après repart de la vraie référence (+ hausse si validée). Elle ne monte pas
+  // non plus au-delà de ce que la semaine permet. Seule une semaine faite à moins de 90 % (règles plus haut) la fait baisser.
+  const budget = Math.round(borne)
+  const garde = borne < ref && prec ? Math.max(budget, Math.min(Math.round(ref), Math.round(prec.budgetRef))) : budget
+  return { budgetRef: garde, budget: Math.round(allegee ? budget * 0.65 : budget), raison: allegee ? `${raison} · ${raisonAllegee} : −35 %` : raison }
 }
 
 /**

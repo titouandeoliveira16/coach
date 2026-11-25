@@ -156,6 +156,11 @@ describe('budget kJ', () => {
     expect(budgetSemaine({ ...prec, budgetRef: b.budgetRef, allegee: true }, 2000, 4000, false).budgetRef).toBe(2150)
   })
   it('plafonné par les créneaux', () => expect(budgetSemaine(prec, 2000, 2100, false).budgetRef).toBe(2100))
+  it('bridée par les créneaux : moins de kJ cette semaine, mais la référence ne baisse pas (25/11/2026)', () => {
+    const b = budgetSemaine({ ...prec, budgetRef: 2118 }, 2000, 1639, false)
+    expect(b.budget).toBe(1639)
+    expect(b.budgetRef).toBe(2118)
+  })
 })
 
 describe('placement', () => {

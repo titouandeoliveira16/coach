@@ -318,12 +318,26 @@ export function genererSemaineVelo(lundi: string): Promise<string[]> {
   return tache
 }
 
+/** Erreur passagère de la base locale (Safari / iPhone), qui passe en réessayant. */
+const estErreurPassagere = (e: unknown) => {
+  const n = (e as { name?: string; inner?: { name?: string } })?.name ?? ''
+  const m = e instanceof Error ? e.message : String(e)
+  return /UnknownError|TransactionInactive|AbortError/.test(n) || /cursor that doesn't exist|connection is closing|transaction/i.test(m)
+}
+
 async function genererSemaineVeloSeule(lundi: string) {
   const avant = await db.prevues.where('date').aboveOrEqual(lundi).toArray()
   // Photo de la semaine d'avant gardée pendant le calcul : remise au démarrage si l'appli est coupée en plein calcul
   debutCalcul(lundi, avant)
   try {
-    const phrases = await genererSemaineVeloBrute(lundi)
+    const phrases = await genererSemaineVeloBrute(lundi).catch(async (e) => {
+      // 25/11/2026 : sur iPhone, la base locale coupe parfois une lecture quand l'appli passe en arrière-plan
+      // (« Attempt to iterate a cursor that doesn't exist ») : on remet la semaine et on réessaie une fois
+      if (!estErreurPassagere(e)) throw e
+      await remettreSemaine(lundi, avant)
+      await new Promise((r) => setTimeout(r, 1500))
+      return genererSemaineVeloBrute(lundi)
+    })
     // Séances déjà envoyées (Zwift, montre, compteur) et changées par ce calcul : la nouvelle version part toute seule
     void mettreAJourTousEnvois()
     return phrases
@@ -1308,7 +1322,18 @@ export async function actualiserSemaineEnCours() {
   const lundi = lundiDe(aujourdhui())
   if ((await lireMeta(lundi))?.bilanProvisoire) await genererSemaineVelo(lundi).catch(() => {})
   // 25/11/2026, une fois : semaines en double (deux reconstructions en même temps) refaites proprement
-  if (!(await db.reglages.get('doublons-1425'))) {
+  // 25/11/2026, une fois : une semaine bridée par les créneaux (ou une fausse reprise) avait fait baisser la référence ;
+  // la semaine en cours garde ses séances, seule sa référence remonte à celle d'avant, puis la saison est refaite
+  let refaire = !(await db.reglages.get('doublons-1425'))
+  if (!(await db.reglages.get('reference-1425'))) {
+    const m = await lireMeta(lundi), avant = await lireMeta(decalerJour(lundi, -7))
+    if (m && avant && !m.allegee && !avant.allegee && /plafonné|sans vélo/.test(m.raison) && avant.budgetRef > m.budgetRef) {
+      await enregistrer(db.reglages, { id: cleSemaine(lundi), valeur: { ...m, budgetRef: avant.budgetRef } })
+      refaire = true
+    }
+    await enregistrer(db.reglages, { id: 'reference-1425', valeur: true })
+  }
+  if (refaire) {
     await enregistrer(db.reglages, { id: 'doublons-1425', valeur: true })
     void construireSaison(true)
   } else void construireSaison()
