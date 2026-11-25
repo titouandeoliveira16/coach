@@ -186,6 +186,10 @@ export function SectionProfilSportif() {
         <ChampNombre libelle="Au moins" unite="min" decimales={0} valeur={prog.minLongMin} onValider={(v) => v && changerProg({ minLongMin: v })} />
         <ChampNombre libelle="Au plus" unite="min" decimales={0} valeur={prog.maxLongMin} onValider={(v) => v && changerProg({ maxLongMin: v })} />
       </Ligne>
+      <Ligne {...props('tres-longues')} libelle="Sorties très longues avant ta course A" valeur={prog.allongerAvantCourse ? 'Oui' : 'Non'}>
+        <p className="mb-1.5 text-xs text-texte-3">Entre 8 et 3 semaines avant ta course A, ta sortie longue peut dépasser ton maximum et s'allonger peu à peu (+10 % par semaine au plus) jusqu'à 75 % de la durée de ta course.</p>
+        {choixUnique(['Oui', 'Non'], prog.allongerAvantCourse ? 'Oui' : 'Non', (v) => changerProg({ allongerAvantCourse: v === 'Oui' }))}
+      </Ligne>
       <p className="mt-4 mb-1 text-[13px] font-semibold text-texte-3 first:mt-0">Matériel, santé, nutrition, muscu</p>
       <Ligne {...props('materiel')} libelle="Matériel" valeur={ps.materiel.join(', ')}>{choixMultiple(MATERIEL, ps.materiel, (materiel) => modifierPs({ materiel }))}</Ligne>
       <Ligne {...props('appareils')} libelle="Mes appareils" valeur={(ps.appareils ?? []).join(', ')}>

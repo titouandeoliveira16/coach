@@ -87,6 +87,11 @@ export interface ReglagesProgramme {
   maxSemaineMin: number
   maxLongMin: number
   minLongMin: number
+  /**
+   * Sorties très longues avant une course A (26/11/2026, choix de Titouan) : entre 8 et 3 semaines avant, la sortie longue
+   * peut dépasser ton maximum et s'allonger progressivement (+10 % par semaine au plus) vers 75 % de la durée de course
+   */
+  allongerAvantCourse?: boolean
   phases: Phase[]
   /** Dates des tests CP prévus */
   testsCp: string[]

@@ -196,19 +196,25 @@ const heuresMin = (min: number) => `${Math.floor(min / 60)} h${min % 60 ? ` ${St
  * 10 min par semaine vers la durée visée par ta course (`cibleSortieLongue`), hors reprise, affûtage et récupération,
  * sans dépasser ton maximum. Renvoie la cible et la durée minimale de la semaine (undefined : règle habituelle).
  */
-export async function longueDeLaSemaine(lundi: string, prog: ReglagesProgramme, phase: TypePhase) {
+export async function longueDeLaSemaine(lundi: string, prog: ReglagesProgramme, phase: TypePhase, dureeCourse?: (date: string) => number) {
   const cible = cibleSortieLongue(prog.discipline ?? 'route', prog.typeCourse, prog.dureeCourseMin)
   // Garde-fou (audit du 18/11/2026, relu : choix d'entraîneur prudent, Frandsen 2025 en course à pied) : la sortie longue
-  // ne dépasse jamais de plus de 10 % la plus longue des 4 dernières semaines (faite ou prévue, hors semaines allégées)
-  const precedentes = (await db.prevues.where('date').between(decalerJour(lundi, -28), lundi, true, false).toArray())
-    .filter((p) => p.velo?.famille === 'z2-long' && (p.statut === 'faite' || p.statut === 'prevue') && !p.velo?.allegee).map((p) => p.dureeMin)
+  // ne dépasse jamais de plus de 10 % la plus longue des semaines d'avant (faite ou prévue).
+  // 26/11/2026 (relecture du moteur) : sur 6 semaines, sans les semaines allégées, d'affûtage ni de récupération (avant,
+  // après la course d'avril la règle repartait de la sortie de récup : 1 h 35), et tes courses comptent comme des sorties
+  // longues (la Flèche, 4 h 40, prépare la suivante)
+  const exclue = (d: string) => ['affutage', 'recuperation'].includes(phaseDe(lundiDe(d), prog.phases).phase.type)
+  const precedentes = [
+    ...(await db.prevues.where('date').between(decalerJour(lundi, -42), lundi, true, false).toArray())
+      .filter((p) => p.velo?.famille === 'z2-long' && (p.statut === 'faite' || p.statut === 'prevue') && !p.velo?.allegee && !exclue(p.date)).map((p) => p.dureeMin),
+    ...(dureeCourse ? prog.competitions.filter((c) => c.date >= decalerJour(lundi, -42) && c.date < lundi).map((c) => dureeCourse(c.date)) : []),
+  ]
   const plafond10 = precedentes.length ? Math.max(60, Math.round((Math.max(...precedentes) * 1.1) / 5) * 5) : undefined
   if (!cible || phase === 'reprise' || phase === 'affutage' || phase === 'recuperation') return { cible, visee: undefined, plafond10 }
-  // Référence : la plus longue des 4 dernières semaines (relecture du 15/11/2026 : le risque monte quand une séance dépasse
-  // de plus de 10 % la plus longue des 30 derniers jours, Frandsen 2025, course à pied)
-  const recentes = (await db.prevues.where('date').between(decalerJour(lundi, -28), lundi, true, false).toArray())
-    .filter((p) => p.velo?.famille === 'z2-long' && p.statut === 'faite').map((p) => p.dureeMin)
-  return { cible, visee: dureeLongueVisee(cible, prog.minLongMin, recentes.length ? Math.max(...recentes) : undefined), plafond10 }
+  // Référence : la plus longue des semaines d'avant (relecture du 15/11/2026 : le risque monte quand une séance dépasse
+  // de plus de 10 % la plus longue des 30 derniers jours, Frandsen 2025, course à pied). 26/11/2026 : prévues comprises,
+  // sinon les semaines à venir de ta saison ne s'allongeaient jamais (elles restaient à ton minimum)
+  return { cible, visee: dureeLongueVisee(cible, prog.minLongMin, precedentes.length ? Math.max(...precedentes) : undefined), plafond10 }
 }
 
 /** Bilan de la semaine précédente (si elle a été générée). */
@@ -572,13 +578,20 @@ async function genererSemaineVeloBrute(lundi: string) {
 
   const recuperation = phase.type === 'recuperation'
   const { w: z2W } = await z2Actuel()
-  const maxDuJour = (d: string) => (roles[semaine.indexOf(d)] === 'velo-long' ? prog.maxLongMin : prog.maxSemaineMin)
+  // Sorties très longues avant ta course A (26/11/2026, choix de Titouan ; relu le 15/11/2026 : 2 sorties d'au moins 75 % de
+  // la durée de course entre 8 et 3 semaines avant) : la sortie longue peut dépasser ton maximum, en s'allongeant de
+  // +10 % par semaine au plus (règle de la sortie longue)
+  const coursAPrep = prog.allongerAvantCourse
+    ? prog.competitions.filter((x) => niveaux.get(x.date) === 'A' && ecartJours(lundi, x.date) >= 21 && ecartJours(lundi, x.date) <= 56).sort((x, y) => x.date.localeCompare(y.date))[0]
+    : undefined
+  const maxLong = coursAPrep && !allegee && coefPhase === undefined ? Math.max(prog.maxLongMin, Math.round((0.75 * dureeDe(coursAPrep.date)) / 5) * 5) : prog.maxLongMin
+  const maxDuJour = (d: string) => (roles[semaine.indexOf(d)] === 'velo-long' ? maxLong : prog.maxSemaineMin)
   // Reprise progressive : durées des séances Z2 plafonnées les premières semaines (phase de reprise, ou retour après 3 semaines très légères)
   const parts = await partsRealisees(lundi)
   const coupure = retourArret ? { facteur: 1, semaineReprise: 0, raison: `${joursSansVelo} jours sans vélo : reprise en douceur` } : retourDeCoupure(semainesChamboulees(parts), semainesChamboulees(parts.slice(1)))
   // Charge habituelle (4 meilleures semaines d'affilée sur 12) : d'où tu repars, et la reprise part de tes durées
   const depart = await chargeDeDepart(lundi, prog.phases, z2W)
-  const cap = plafondsReprise(phase.type === 'reprise' ? nSemaine : coupure.semaineReprise, prog.maxSemaineMin, prog.maxLongMin, depart?.facteur)
+  const cap = plafondsReprise(phase.type === 'reprise' ? nSemaine : coupure.semaineReprise, prog.maxSemaineMin, maxLong, depart?.facteur)
   const phrases: string[] = [...phrasesTest]
 
   // Séance d'intensité
@@ -716,7 +729,7 @@ async function genererSemaineVeloBrute(lundi: string) {
   // Budget kJ de la semaine
   const kjIntensite = (intensite?.kj ?? 0) + (intensite2?.s.kj ?? 0)
   // Sortie longue qui s'allonge vers la durée visée par ta course : le budget de référence suit
-  const longue = await longueDeLaSemaine(lundi, prog, phase.type)
+  const longue = await longueDeLaSemaine(lundi, prog, phase.type, dureeDe)
   // Plafond aussi limité par tes heures : le haut de ta tranche, moins les autres sports prévus cette semaine
   const minutesAutres = prevues.filter((p) => p.sport === 'course' && dansSemaine(p.date)).reduce((a, p) => a + p.dureeMin, 0)
   // Reprise, récupération : le jour « dur » devient une endurance ; le plafond le compte comme tel (audit du 17/11/2026)
@@ -869,6 +882,8 @@ async function genererSemaineVeloBrute(lundi: string) {
    * rentre toujours pas, une endurance simple de moins (une au plus) : mêmes kJ, donc même progression, en sorties utiles.
    */
   const LONGUE_MIN = 60, Z2_MIN = 30
+  // Sortie longue freinée par sa progression (+10 % par semaine) et pas par tes créneaux : dit dans la raison (26/11/2026)
+  let longueFreinee = false
   const construireEndurances = (reduction = 0, avecPhrases = true) => {
   const liste: [string, SeanceConstruite][] = []
   let minutesDispo = heuresSemaine ? heures[1] * 60 - minutesFixes : Infinity
@@ -899,7 +914,7 @@ async function genererSemaineVeloBrute(lundi: string) {
     const minHabituel = affutage
       ? borner(Math.min(affutage, capLong), capLong, minutesPourKj(kjLong, z2W))
       : borner(minLong * (coefPhase ?? (allegee ? 0.7 : 1)), capLong, minutesPourKj(kjLong, z2W))
-    if (longue.visee && longue.cible && longue.cible > prog.maxLongMin && !allegee)
+    if (longue.visee && longue.cible && longue.cible > maxLong && !allegee)
       (avecPhrases ? phrases : []).push(`Ta course demande une sortie longue d'environ ${heuresMin(longue.cible)} ; ton maximum est ${heuresMin(prog.maxLongMin)} : allonge-le dans Réglages (Ma semaine type) si tu peux.`)
     // Conseil (pas une règle, relecture du 15/11/2026) : entre 8 et 3 semaines avant la course A, 2 sorties d'au moins 75 %
     // de la durée de course quand ta sortie longue habituelle n'y arrive pas
@@ -933,8 +948,12 @@ async function genererSemaineVeloBrute(lundi: string) {
       : construireZ2(min, z2W, jourSprints || blocs ? undefined : sprints, { longue: true, sv1: blocs, espacementSec: sprints.espacementSec })])
     const sl = liste[liste.length - 1][1]
     minutesDispo -= sl.dureeMin
-    // Ce que la sortie longue prend au-delà de sa part (blocs au 1er seuil, allongement) est pris sur les Z2 de semaine
-    extraSv1 = Math.max(0, sl.kj - kjLong)
+    // Ce que la sortie longue prend au-delà de sa part (blocs au 1er seuil, allongement) est pris sur les Z2 de semaine ;
+    // 26/11/2026 : ce qu'elle ne peut pas prendre (plafonnée par sa progression ou ton maximum) va aux Z2 de semaine,
+    // jusqu'à tes créneaux (avant, ces kJ étaient perdus et la semaine finissait sous son budget)
+    const kjMaxLong = (capLong * 60 * z2W) / 1000
+    extraSv1 = Math.max(0, sl.kj - kjLong) - Math.max(0, kjLong - kjMaxLong)
+    if (avecPhrases) longueFreinee = capLong < cap.long - 5 && kjLong > kjMaxLong
   }
   placement.z2.forEach((d) => {
     // Séance 1er seuil allongée au-delà de ton créneau : les autres endurances peuvent descendre à 30 min pour compenser
@@ -1042,7 +1061,7 @@ async function genererSemaineVeloBrute(lundi: string) {
   const total = Math.round(kjFaits + kjAutresPrevus + aCreer.reduce((a, [, s]) => a + s.kj, 0))
   const limite = !premiere && total < b.budget * 0.95
   const depasse = !premiere && total > b.budget * 1.02
-  const raison = premiere ? 'Point de départ : ta semaine type à ses durées habituelles' : b.raison.includes('limité par tes créneaux') ? b.raison : limite ? `${b.raison} · limité par tes créneaux et jours libres (${b.budget} kJ visés)`
+  const raison = premiere ? 'Point de départ : ta semaine type à ses durées habituelles' : / · limité par /.test(b.raison) ? b.raison : limite ? `${b.raison} · ${longueFreinee ? 'limité par la progression de ta sortie longue (+10 % par semaine au plus) et tes créneaux' : 'limité par tes créneaux et jours libres'} (${b.budget} kJ visés)`
     : depasse ? `${b.raison} · tes séances clés dépassent à elles seules le budget visé (${b.budget} kJ)` : b.raison
   // Référence pour la semaine suivante (25/11/2026, demande de Titouan) : elle ne baisse que si tu fais moins (bilan).
   // Semaine limitée par tes créneaux : la référence est gardée sans monter (avant, elle tombait à ce qui avait pu être
@@ -1396,8 +1415,8 @@ export async function actualiserSemaineEnCours() {
     await enregistrer(db.reglages, { id: 'reference-1425', valeur: true })
   }
   // 25/11/2026, une fois : saison refaite avec les règles des semaines bridées (référence gardée, +10 % au plus)
-  if (!(await db.reglages.get('bridage-1431'))) {
-    await enregistrer(db.reglages, { id: 'bridage-1431', valeur: true })
+  if (!(await db.reglages.get('longue-1432'))) {
+    await enregistrer(db.reglages, { id: 'longue-1432', valeur: true })
     refaire = true
   }
   if (refaire) {
