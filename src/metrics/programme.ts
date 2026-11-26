@@ -1429,6 +1429,11 @@ export interface OptionsPlacement {
   long?: boolean
   /** Nombre de séances Z2 (hors sortie longue) à placer */
   nZ2?: number
+  /**
+   * Séances vélo qu'on peut encore ajouter cette semaine : tes jours vélo de la semaine type moins les séances déjà là
+   * (faites, déplacées, rattrapées). 26/11/2026 (demande de Titouan) : jamais plus de séances que de jours vélo
+   */
+  maxSeances?: number
 }
 
 /**
@@ -1446,7 +1451,10 @@ export function placer(semaine: string[], roles: Role[], autres: Occupation[], i
     dur.has(decaler(d, -1)) || dur.has(decaler(d, 1)) || procheCourse(d, competitions, o.delaiApresCourse)
   const role = (d: string) => roles[semaine.indexOf(d)]
   const utilises = new Set<string>()
-  const prendre = (d?: string) => (d && utilises.add(d), d)
+  const reste = () => (o.maxSeances === undefined ? Infinity : o.maxSeances - utilises.size)
+  // Un jour sans vélo de ta semaine type (repos, renfo) ne sert que s'il reste des sorties à placer sous ton nombre de
+  // jours vélo (26/11/2026) ; tes jours vélo restent toujours utilisables
+  const prendre = (d?: string) => (d && (role(d)?.startsWith('velo') || reste() > 0) ? (utilises.add(d), d) : undefined)
 
   let intensite: string | undefined
   if (o.intensite !== false) {
@@ -1477,6 +1485,7 @@ export function placer(semaine: string[], roles: Role[], autres: Occupation[], i
   ]
   for (const d of candidats) {
     if (z2.length >= nZ2) break
+    if (!role(d)?.startsWith('velo') && reste() <= 0) continue
     if (libre(d) && !utilises.has(d)) z2.push(prendre(d)!)
   }
   return { intensite, long, z2: z2.sort() }
