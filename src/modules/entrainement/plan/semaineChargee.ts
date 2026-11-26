@@ -1,3 +1,4 @@
+import { duree } from '../../../core/format'
 import { db } from '../../../core/db'
 import { aujourdhui, decalerJour } from '../../../core/dates'
 import { enregistrer, supprimer } from '../../../core/stockage'
@@ -60,7 +61,7 @@ function raccourcie(p: SeancePrevue, dureeMin: number): SeancePrevue {
     const z = construireZ2(dureeMin, p.velo.cibleW)
     return { ...p, titre: z.titre, detail: z.detail, dureeMin, kjPrevu: z.kj, velo: z.velo, longue: undefined, type: 'Endurance' }
   }
-  return { ...p, dureeMin, detail: `${p.detail ? `${p.detail} · ` : ''}raccourci à ${dureeMin} min (semaine chargée)` }
+  return { ...p, dureeMin, detail: `${p.detail ? `${p.detail} · ` : ''}raccourci à ${duree(dureeMin)} (semaine chargée)` }
 }
 
 /** Passe la semaine en « semaine chargée » (ou la réapplique après un recalcul du vélo). */
@@ -85,7 +86,7 @@ export async function passerSemaineChargee(lundi: string) {
     const p = aVenir.find((x) => x.id === r.id)!
     await enregistrer(db.prevues, raccourcie(p, r.dureeMin))
     if (!etat.raccourcies.some((x) => x.id === p.id)) etat.raccourcies.push(p)
-    phrases.push(`${p.titre} raccourcie à ${r.dureeMin} min.`)
+    phrases.push(`${p.titre} raccourcie à ${duree(r.dureeMin)}.`)
   }
   await enregistrer(db.reglages, { id: cle(lundi), valeur: etat })
   return phrases.length ? phrases : ['Rien à enlever : ta semaine est déjà minimale.']

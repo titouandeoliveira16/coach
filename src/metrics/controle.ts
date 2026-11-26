@@ -282,7 +282,9 @@ export function controlerSeance(o: {
       // Sprints de la sortie longue : à fond, pas de plage à contrôler (la Z2 entre les sprints est contrôlée)
       if (famille === 'z2-long' || famille === 'z2') {
         // Blocs au 1er seuil : une ligne par bloc (la FC du premier et du dernier dit si le cœur a dérivé)
-        const b1 = sous.findIndex((x) => x.libelle === 'Bloc 1er seuil')
+        // Blocs de la sortie longue (« Bloc 1er seuil ») et de la séance dédiée (« 1er seuil (FC …) : … ») ; 26/11/2026 : la
+        // séance dédiée n'avait jamais ses watts par bloc (son nom de bloc n'était pas reconnu)
+        const b1 = sous.findIndex((x) => /^(Bloc )?1er seuil/.test(x.libelle))
         if (b1 >= 0 && sous[b1].wMin && sous[b1].wMax)
           parSous[b1].forEach((k, n) => {
             const g = groupe([k])

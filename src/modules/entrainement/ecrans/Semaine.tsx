@@ -1,3 +1,4 @@
+import { duree } from '../../../core/format'
 import { IconeSport } from '../IconeSport'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useState } from 'react'
@@ -120,7 +121,7 @@ export function Semaine() {
                       {p.realiseDifferent && <span className="block truncate text-xs text-texte-3"><s>Prévu : {p.titre}</s></span>}
                     </span>
                     <span className="shrink-0 text-xs font-semibold" style={{ color: e.couleur ?? (aujourdhuiPrevue ? 'var(--color-accent)' : undefined) }}>
-                      {e.libelle || (aujourdhuiPrevue ? 'aujourd’hui' : <span className="font-normal text-texte-3">{p.dureeMin} min</span>)}
+                      {e.libelle || (aujourdhuiPrevue ? 'aujourd’hui' : <span className="font-normal text-texte-3">{duree(p.dureeMin)}</span>)}
                     </span>
                   </button>
                 )
@@ -282,7 +283,7 @@ function DetailSeance({ p, jours, prevues, onFermer, onMessage }: {
           <span className="text-xs text-texte-3">Seuls tes kJ compteront : sa FC, sa dérive, ta progression et tes victoires l’ignoreront.</span>
         </button>
       )}
-      <p className={`text-sm text-texte-2 ${p.realiseDifferent ? 'line-through' : ''}`}>{p.dureeMin} min{p.kjPrevu ? ` · ${p.kjPrevu} kJ` : ''}</p>
+      <p className={`text-sm text-texte-2 ${p.realiseDifferent ? 'line-through' : ''}`}>{duree(p.dureeMin)}{p.kjPrevu ? ` · ${p.kjPrevu} kJ` : ''}</p>
       {p.detail && <p className="mt-2 text-sm">{p.detail}</p>}
       {p.velo?.etapes && <Deroule etapes={p.velo.etapes} />}
       {p.velo?.etapes && p.statut === 'prevue' && p.date >= aujourdhui() && <BoutonsEnvoi p={p} etapes={p.velo.etapes} />}

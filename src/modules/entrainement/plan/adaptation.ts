@@ -1,3 +1,4 @@
+import { duree } from '../../../core/format'
 import { construireIntervalles, formatDe, palierRaccourci, type Etape } from '../../../metrics/programme'
 import type { Couleur } from '../../../metrics/signal'
 import type { SeancePrevue } from '../types'
@@ -52,7 +53,7 @@ export function adapterDuJour(p: SeancePrevue, couleur: Couleur): Adaptation {
     // watts (progression, −5 % après un raté), pas du palier et de la CP seuls
     const bonus = p.velo!.cibleW && !f.aFond ? p.velo!.cibleW / (cpEff * (f.pct / 100)) - 1 : 0
     const court = construireIntervalles(f, palierRaccourci(f, p.velo!.structure ?? p.velo!.palier ?? 0), cpEff, bonus, p.velo!.wPrimeKj)
-    return { texte: `Feu orange : version raccourcie, mêmes watts (${court.titre}, ${court.dureeMin} min).`, etapes: court.velo.etapes, modifiee: true }
+    return { texte: `Feu orange : version raccourcie, mêmes watts (${court.titre}, ${duree(court.dureeMin)}).`, etapes: court.velo.etapes, modifiee: true }
   }
   if (p.sport === 'course' && p.intensite === 'haute') return { texte: 'Feu orange : un tiers des fractions en moins, mêmes allures.', modifiee: true }
   return { texte: 'Feu orange : séance facile maintenue, reste bien tranquille.', etapes, modifiee: false }

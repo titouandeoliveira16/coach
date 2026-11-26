@@ -1,3 +1,4 @@
+import { duree as dureeTexte } from '../../../core/format'
 import { db } from '../../../core/db'
 import { estMineur, type Profil } from '../../../core/profil'
 import { dureeForce, exosDe, joursMuscu, NOMS_PERIODES, planForce, semainesApprentissage, type ReglagesForce, type SeanceForce } from '../muscu/force'
@@ -1095,7 +1096,7 @@ async function genererSemaineVeloBrute(lundi: string) {
   if (await lireSemaineChargee(lundi)) await passerSemaineChargee(lundi)
 
   phrases.unshift(
-    ...aCreer.sort((x, y) => x[0].localeCompare(y[0])).map(([d, s]) => `${nomJour(d)} : ${s.titre} (${s.dureeMin} min, ${s.kj} kJ)`),
+    ...aCreer.sort((x, y) => x[0].localeCompare(y[0])).map(([d, s]) => `${nomJour(d)} : ${s.titre} (${dureeTexte(s.dureeMin)}, ${s.kj} kJ)`),
     `Total vélo prévu : ${total} kJ${total !== b.budget ? ` (budget visé ${b.budget} kJ)` : ''}.`,
   )
   if (limite) phrases.push('Budget pas atteignable avec tes créneaux et jours libres : on garde ce qui rentre.')

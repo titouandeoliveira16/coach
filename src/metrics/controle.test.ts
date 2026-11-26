@@ -160,3 +160,19 @@ describe('tours de la montre (24/11/2026)', () => {
     }
   })
 })
+
+describe('séance dédiée au 1er seuil (26/11/2026)', () => {
+  it('chaque bloc au 1er seuil a ses watts moyens', async () => {
+    const { construireSv1Dediee } = await import('./programme')
+    const { controlerSeance } = await import('./controle')
+    const s = construireSv1Dediee(2, 75, 170, 145, [150, 160])
+    const etapes = s.velo.etapes!
+    const w: number[] = []
+    type Pas = { dureeSec: number; w?: number; repetition?: { fois: number; etapes: Pas[] } }
+    const plat = (e: Pas): Pas[] => (e.repetition ? Array.from({ length: e.repetition.fois }, () => e.repetition!.etapes.flatMap(plat)).flat() : [e])
+    for (const e of (etapes as Pas[]).flatMap(plat)) for (let t = 0; t < e.dureeSec; t++) w.push(e.w ?? 130)
+    const c = controlerSeance({ etapes, famille: s.velo.famille, w1Hz: w, cpW: 235, sv1W: 170 })
+    const blocs = c?.lignes.filter((l) => l.libelle.startsWith('1er seuil')) ?? []
+    expect(blocs.map((l) => l.w)).toEqual([170, 170])
+  })
+})

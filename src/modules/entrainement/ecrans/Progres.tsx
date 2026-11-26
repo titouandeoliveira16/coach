@@ -1,3 +1,4 @@
+import { duree } from '../../../core/format'
 import { Repartition } from '../analyse/RecordsEtRepartition'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
@@ -202,7 +203,7 @@ function PetitesVictoires({ t, nu = false }: { t: Donnees; nu?: boolean }) {
         )}
         {z2a && z2b && (
           <li>
-            Z2 du {jj(z2b.date)} ({z2b.dureeMin} min) vs {jj(z2a.date)} : {ecart(z2b.w, z2a.w, 'W')} pour {ecart(z2b.fc, z2a.fc, 'bpm', true)}
+            Z2 du {jj(z2b.date)} ({duree(z2b.dureeMin)}) vs {jj(z2a.date)} : {ecart(z2b.w, z2a.w, 'W')} pour {ecart(z2b.fc, z2a.fc, 'bpm', true)}
             {z2a.decouplage !== undefined && z2b.decouplage !== undefined && <> · dérive {formatNombre(z2a.decouplage, 1)} → {formatNombre(z2b.decouplage, 1)} %</>}.
             <span className="block text-xs text-texte-3">Plus de watts ou moins de battements pour la même sortie : tu progresses.</span>
           </li>

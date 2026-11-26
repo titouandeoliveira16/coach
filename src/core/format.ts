@@ -48,3 +48,10 @@ export function formatEuros(centimes: number, { signe = false } = {}): string {
 
 /** "2026-10-26" → "26/10/2026" */
 export const formatDate = (jour: string) => `${jour.slice(8, 10)}/${jour.slice(5, 7)}/${jour.slice(0, 4)}`
+
+/** Durée lisible (26/11/2026, demande de Titouan) : « 45 min » sous l'heure, sinon heures et minutes (« 1 h 45 », « 2 h »). */
+export function duree(min: number): string {
+  const m = Math.round(min)
+  if (m < 60) return `${m} min`
+  return `${Math.floor(m / 60)} h${m % 60 ? ` ${String(m % 60).padStart(2, '0')}` : ''}`
+}

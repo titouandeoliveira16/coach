@@ -1,3 +1,4 @@
+import { duree } from '../../../core/format'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { HeartPulse } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
@@ -256,7 +257,7 @@ export function CarteAujourdhui({ onModifierMatin, apresForme, remplir = false }
                 <p className="mt-1 text-sm"><b style={{ color: COULEUR[signal.couleur] }}>Pourquoi {signal.couleur === 'orange' ? 'raccourcie' : 'pas d’intensité'} ?</b> {pourquoiCourt}<Aide titre="Règle du feu" texte={`${pourquoi} ${regle} ${AIDES.feu}`} /></p>
                 <ChoixSeance maintenue={!!decision?.force} couleur={COULEUR[signal.couleur]} onChoisir={choisir}
                   conseil={signal.couleur === 'orange' ? `Raccourcie${minutesAdaptees ? ` · ${minutesAdaptees} min` : ''}` : 'Très facile ou repos'}
-                  prevu={signal.couleur === 'orange' ? `Complète · ${prevue.dureeMin} min` : 'Séance prévue'} />
+                  prevu={signal.couleur === 'orange' ? `Complète · ${duree(prevue.dureeMin)}` : 'Séance prévue'} />
                 {decision?.force && <p className="mt-1.5 text-sm font-semibold" style={{ color: COULEUR.vert }}>Séance complète maintenue : arrête-toi si les watts ne tiennent pas.</p>}
                 {!decision?.force && !etapesDuJour && <p className="mt-1 line-clamp-2 text-[13px] leading-snug" style={{ color: COULEUR[signal.couleur] }}>{adaptation.texte.replace(/^Feu \w+ : /, '').replace(/^./, (c) => c.toUpperCase())}</p>}
               </>
@@ -274,7 +275,7 @@ export function CarteAujourdhui({ onModifierMatin, apresForme, remplir = false }
             ) : (
               // Renfo, course, séance sans déroulé : le détail est visible directement
               <div className="mt-1.5 min-h-0 overflow-hidden whitespace-pre-line rounded-xl bg-surface-2 px-3 py-1.5 text-[13px] leading-[18px] text-texte-2">
-                {prevue.detail || `${prevue.dureeMin} min`}
+                {prevue.detail || duree(prevue.dureeMin)}
               </div>
             )}
             {prevue.sport !== 'velo' ? (

@@ -1,3 +1,4 @@
+import { duree } from '../../../core/format'
 import { IconeSport } from '../IconeSport'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { ControleSeance } from './ControleSeance'
@@ -42,7 +43,7 @@ function SeanceFaite({ s }: { s: Seance }) {
   // ressenties comme dures) ; sur l'intensité, elle n'était qu'un message (retirée le 6/11/2026)
   const reserve = categorie === 'facile' && (s.sport === 'velo' || s.sport === 'course') ? questionReserve(categorie) : undefined
   const min = Math.round(s.dureeSec / 60)
-  const resume = [`${min} min`, s.distanceKm && `${formatNombre(s.distanceKm, 1)} km`, s.kj && `${s.kj} kJ`, s.parties && s.parties > 1 && `${s.parties} parties`].filter(Boolean).join(' · ')
+  const resume = [duree(min), s.distanceKm && `${formatNombre(s.distanceKm, 1)} km`, s.kj && `${s.kj} kJ`, s.parties && s.parties > 1 && `${s.parties} parties`].filter(Boolean).join(' · ')
   return (
     <div>
       <p className="font-semibold">Faite · <IconeSport sport={s.sport} />{s.titre ?? 'Séance'}</p>
@@ -50,7 +51,7 @@ function SeanceFaite({ s }: { s: Seance }) {
       {s.controle ? <ControleSeance s={{ ...s, controle: s.controle }} famille={info?.famille ?? ''} /> : s.blocs && <Blocs b={s.blocs} />}
       {/* 26/11/2026 : fichier de watts pas encore prêt sur Intervals.icu à l'import ; il est redemandé tout seul (au plus une fois par heure) */}
       {!s.controle && !s.blocs && !differente && info?.aDesBlocs && s.source === 'intervals' && (
-        <p className="mt-1 text-sm text-texte-3">Watts par bloc : en attente du fichier de ta montre sur Intervals.icu. Ils s'affichent tout seuls dès qu'il est prêt.</p>
+        <p className="mt-1 text-sm text-texte-3">Watts par bloc : en attente du fichier de ta séance sur Intervals.icu. Ils s'affichent tout seuls dès qu'il est prêt.</p>
       )}
       {verdict && <p className="mt-1 text-sm" style={{ color: COULEURS[verdict.couleur] }}><span className="mr-1.5 inline-block h-2 w-2 rounded-full align-middle" style={{ background: COULEURS[verdict.couleur] }} />{verdict.texte}<Aide titre="Contrôle FC" texte={AIDES.controleFc} /></p>}
       {differente ? (
