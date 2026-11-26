@@ -931,7 +931,11 @@ async function genererSemaineVeloBrute(lundi: string) {
     // La sortie longue reste la plus longue de la semaine (audit du 18/11/2026) : réduite, jamais sous la plus longue des
     // autres séances
     const plusLongueAutre = Math.max(0, ...aCreer.filter(([, x]) => x.velo.famille !== 'course').map(([, x]) => x.dureeMin), seanceSv1?.dureeMin ?? 0)
-    const min = reduire(minHabituel, Math.min(Math.max(LONGUE_MIN, plusLongueAutre), minHabituel), partLongue)
+    // 26/11/2026 (demande de Titouan : la sortie longue progresse toute la saison) : en semaine normale, le budget ne la
+    // raccourcit plus sous sa durée visée (ton minimum, puis +10 min par semaine) ; ce sont les endurances de semaine
+    // qui s'ajustent. Semaine allégée, affûtage, récupération : elle peut descendre jusqu'à 1 h, comme avant
+    const plancherLongue = !allegee && coefPhase === undefined ? Math.max(LONGUE_MIN, minLong) : LONGUE_MIN
+    const min = reduire(minHabituel, Math.min(Math.max(plancherLongue, plusLongueAutre), minHabituel), partLongue)
     liste.push([placement.long, longueCourse === 'simulation-ligne'
       ? construireSimulationLigne(r.cpW, z2W, reduction > 0 ? min : capLong)
       : longueCourse === 'cyclo-montees'
@@ -1415,8 +1419,8 @@ export async function actualiserSemaineEnCours() {
     await enregistrer(db.reglages, { id: 'reference-1425', valeur: true })
   }
   // 25/11/2026, une fois : saison refaite avec les règles des semaines bridées (référence gardée, +10 % au plus)
-  if (!(await db.reglages.get('longue-1432'))) {
-    await enregistrer(db.reglages, { id: 'longue-1432', valeur: true })
+  if (!(await db.reglages.get('longue-1433'))) {
+    await enregistrer(db.reglages, { id: 'longue-1433', valeur: true })
     refaire = true
   }
   if (refaire) {
