@@ -58,7 +58,10 @@ apresPremiereSynchro().then(async () => {
 })
 // Au retour dans l'appli : l'historique de 6 mois est relu (au plus une fois par heure) tant qu'il est incomplet
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') import('./modules/entrainement/arrivee/donnees').then((m) => m.completerHistorique()).catch(() => {})
+  if (document.visibilityState !== 'visible') return
+  import('./modules/entrainement/arrivee/donnees').then((m) => m.completerHistorique()).catch(() => {})
+  // Watts par bloc des séances importées avant que le fichier de la montre soit prêt (au plus une fois par heure)
+  import('./modules/entrainement/import/intervals').then((m) => m.completerControles()).catch(() => {})
 })
 
 // Mises à jour : on vérifie s'il existe une nouvelle version à chaque retour sur l'appli (iPhone : l'appli est souvent

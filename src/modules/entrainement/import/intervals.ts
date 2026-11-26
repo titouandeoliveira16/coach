@@ -223,11 +223,13 @@ async function importerActivites(depuis: string, surProgression?: (n: number) =>
 const VERSION_CONTROLE = 4
 /**
  * Séances prévues faites sans contrôle bloc par bloc (23/11/2026 : fichier de watts pas encore prêt sur Intervals à
- * l'import, la séance restait sans watts ni pouls par bloc) : fichier redemandé, une fois par jour, sur 14 jours.
+ * l'import, la séance restait sans watts ni pouls par bloc) : fichier redemandé sur 14 jours, au plus une fois par heure, à
+ * l'ouverture et à chaque retour dans l'appli (26/11/2026 : une fois par jour, une séance de l'après-midi attendait le lendemain).
  */
 export async function completerControles() {
   const cle = 'controle-complete'
-  if ((await db.reglages.get(cle))?.valeur === aujourdhui()) return
+  const derniere = (await db.reglages.get(cle))?.valeur as string | undefined
+  if (derniere && derniere.length > 10 && Date.now() - Date.parse(derniere) < 3_600_000) return
   const c = await chargerContexte()
   const manquent: Seance[] = []
   for (const s of await db.seances.where('date').aboveOrEqual(decalerJour(aujourdhui(), -14)).toArray()) {
@@ -251,7 +253,7 @@ export async function completerControles() {
       if (intensite && !prevue.resultat && controle && controleTenu(controle)) await enregistrer(db.prevues, { ...prevue, resultat: 'reussie' })
     }
   }
-  await enregistrer(db.reglages, { id: cle, valeur: aujourdhui() })
+  await enregistrer(db.reglages, { id: cle, valeur: new Date().toISOString() })
 }
 
 export async function recontrolerRecentes() {

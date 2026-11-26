@@ -1429,6 +1429,11 @@ export interface OptionsPlacement {
   long?: boolean
   /** Nombre de séances Z2 (hors sortie longue) à placer */
   nZ2?: number
+  /**
+   * Séances vélo qu'on peut encore ajouter cette semaine : tes jours vélo de la semaine type moins les séances déjà là
+   * (faites, déplacées, rattrapées). 26/11/2026 (demande de Titouan) : jamais plus de séances que de jours vélo
+   */
+  maxSeances?: number
 }
 
 /**
@@ -1446,8 +1451,21 @@ export function placer(semaine: string[], roles: Role[], autres: Occupation[], i
     dur.has(decaler(d, -1)) || dur.has(decaler(d, 1)) || procheCourse(d, competitions, o.delaiApresCourse)
   const role = (d: string) => roles[semaine.indexOf(d)]
   const utilises = new Set<string>()
-  const prendre = (d?: string) => (d && utilises.add(d), d)
+  const reste = () => (o.maxSeances === undefined ? Infinity : o.maxSeances - utilises.size)
+  // Un jour sans vélo de ta semaine type (repos, renfo) ne sert que s'il reste des sorties à placer sous ton nombre de
+  // jours vélo (26/11/2026) ; tes jours vélo restent toujours utilisables
+  const prendre = (d?: string) => (d && (role(d)?.startsWith('velo') || reste() > 0) ? (utilises.add(d), d) : undefined)
 
+  // 26/11/2026 : une seule place pour une séance de plus et la sortie longue est encore à faire : elle passe avant
+  // (sinon une séance de plus prenait la dernière place et la sortie longue sautait)
+  const longDabord = o.maxSeances !== undefined && o.maxSeances <= 1 && o.long !== false
+  let long: string | undefined
+  const weekend = (d: string) => semaine.indexOf(d) >= 5
+  const placerLong = () => (o.long === false ? undefined : prendre(
+    semaine.find((d) => role(d) === 'velo-long' && libre(d) && !utilises.has(d)) ??
+      semaine.find((d) => weekend(d) && libre(d) && !utilises.has(d)),
+  ))
+  if (longDabord) long = placerLong()
   let intensite: string | undefined
   if (o.intensite !== false) {
     if (o.dateTest && semaine.includes(o.dateTest) && libre(o.dateTest)) intensite = prendre(o.dateTest)
@@ -1458,15 +1476,11 @@ export function placer(semaine: string[], roles: Role[], autres: Occupation[], i
         ...semaine.filter((d) => role(d) === 'velo-z2'),
         ...semaine.filter((d) => !['velo-dur', 'velo-z2', 'velo-long'].includes(role(d))),
       ]
-      intensite = prendre(ordre.find((d) => libre(d) && !procheDur(d)))
+      intensite = prendre(ordre.find((d) => libre(d) && !procheDur(d) && !utilises.has(d)))
     }
   }
 
-  const weekend = (d: string) => semaine.indexOf(d) >= 5
-  const long = o.long === false ? undefined : prendre(
-    semaine.find((d) => role(d) === 'velo-long' && libre(d) && !utilises.has(d)) ??
-      semaine.find((d) => weekend(d) && libre(d) && !utilises.has(d)),
-  )
+  if (!longDabord) long = placerLong()
   const z2: string[] = []
   const nZ2 = (o.nZ2 ?? roles.filter((r) => r === 'velo-z2').length) + (o.intensite !== false && !intensite ? 1 : 0) + (o.long !== false && !long ? 1 : 0)
   const candidats = [
@@ -1477,6 +1491,7 @@ export function placer(semaine: string[], roles: Role[], autres: Occupation[], i
   ]
   for (const d of candidats) {
     if (z2.length >= nZ2) break
+    if (!role(d)?.startsWith('velo') && reste() <= 0) continue
     if (libre(d) && !utilises.has(d)) z2.push(prendre(d)!)
   }
   return { intensite, long, z2: z2.sort() }

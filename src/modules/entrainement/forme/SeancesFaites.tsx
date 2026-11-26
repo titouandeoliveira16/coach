@@ -32,7 +32,7 @@ function SeanceFaite({ s }: { s: Seance }) {
   const info = useLiveQuery(async () => {
     const prevue = s.prevueId ? await db.prevues.get(s.prevueId) : undefined
     const c = await chargerContexte()
-    return { categorie: categorieDe(s, prevue, domaineDe(s, c.bornes)), fcMax: c.fcMax, famille: prevue?.velo?.famille ?? '', differente: !!prevue?.realiseDifferent }
+    return { categorie: categorieDe(s, prevue, domaineDe(s, c.bornes)), fcMax: c.fcMax, famille: prevue?.velo?.famille ?? '', differente: !!prevue?.realiseDifferent, aDesBlocs: !!prevue?.velo?.etapes?.length && prevue.velo.famille !== 'test' }
   }, [s.id, s.prevueId, s.fcMoy, s.tempsZones?.join()])
   // Réalisé différent du prévu (13/11/2026) : seuls les kJ comptent, ni RPE ni question « en réserve »
   const differente = !!info?.differente
@@ -48,6 +48,10 @@ function SeanceFaite({ s }: { s: Seance }) {
       <p className="font-semibold">Faite · <IconeSport sport={s.sport} />{s.titre ?? 'Séance'}</p>
       <p className="text-sm text-texte-2">{resume}</p>
       {s.controle ? <ControleSeance s={{ ...s, controle: s.controle }} famille={info?.famille ?? ''} /> : s.blocs && <Blocs b={s.blocs} />}
+      {/* 26/11/2026 : fichier de watts pas encore prêt sur Intervals.icu à l'import ; il est redemandé tout seul (au plus une fois par heure) */}
+      {!s.controle && !s.blocs && !differente && info?.aDesBlocs && s.source === 'intervals' && (
+        <p className="mt-1 text-sm text-texte-3">Watts par bloc : en attente du fichier de ta montre sur Intervals.icu. Ils s'affichent tout seuls dès qu'il est prêt.</p>
+      )}
       {verdict && <p className="mt-1 text-sm" style={{ color: COULEURS[verdict.couleur] }}><span className="mr-1.5 inline-block h-2 w-2 rounded-full align-middle" style={{ background: COULEURS[verdict.couleur] }} />{verdict.texte}<Aide titre="Contrôle FC" texte={AIDES.controleFc} /></p>}
       {differente ? (
         <p className="mt-1 text-sm text-texte-3">Différente du prévu : seuls tes kJ comptent, pas besoin de ressenti.</p>

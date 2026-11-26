@@ -191,6 +191,17 @@ describe('placement', () => {
     expect(placer(semaine, ROLES, autres, new Set(), semaine[0], { dateTest: semaine[4] })).toEqual({ intensite: semaine[4], long: semaine[6], z2: [semaine[2]] })
   })
 
+  it('séances déplacées dans la semaine : pas de 6e sortie pour une semaine type à 5 jours (26/11/2026)', () => {
+    // Semaine type : libre, dur, Z2, Z2, dur, renfo, longue. Lundi : rattrapage ; jeudi, vendredi, dimanche : séances
+    // déplacées à la main, mardi faite : 5 séances pour 5 jours vélo, recalcul le jeudi avec une endurance encore à placer
+    const roles: Role[] = ['libre', 'velo-dur', 'velo-z2', 'velo-z2', 'velo-dur', 'renfo', 'velo-long']
+    const autres = [semaine[0], semaine[1], semaine[3], semaine[4], semaine[6]].map((date) => ({ date, dure: false }))
+    const p = placer(semaine, roles, autres, new Set(), semaine[3], { intensite: false, long: false, nZ2: 1, maxSeances: 0 })
+    expect(p.z2).toEqual([])
+    // Sans limite (ancien comportement) : le samedi du renfo était pris
+    expect(placer(semaine, roles, autres, new Set(), semaine[3], { intensite: false, long: false, nZ2: 1 }).z2).toEqual([semaine[5]])
+  })
+
   it('jamais d’intensité à côté d’une séance dure : sinon elle est déplacée', () => {
     // Séances dures lundi et mercredi : mardi impossible, vendredi possible
     const autres = [{ date: semaine[0], dure: true }, { date: semaine[2], dure: true }, { date: semaine[3], dure: false }, { date: semaine[5], dure: false }]

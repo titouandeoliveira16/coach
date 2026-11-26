@@ -559,7 +559,13 @@ async function genererSemaineVeloBrute(lundi: string) {
   const deuxiemeAPlacer = !retourArret && intensiteFaite && dureFaite.length === 1 && !dateTest && !courseSecondaire
     && !['reprise', 'base', 'recuperation'].includes(phase.type) && !allegee
     && deuxIntensitesPossibles(niveau, roles.filter((x) => x.startsWith('velo')).length)
+  // 26/11/2026 (demande de Titouan) : jamais plus de sorties que de jours vélo dans ta semaine type ; les séances déjà là
+  // (faites, déplacées, rattrapées, manquées) comptent, une séance qui n'a plus de place saute (on ne rattrape pas)
+  // (une séance manquée n'occupe pas de jour : seules comptent les faites et celles encore à faire)
+  const dejaLa = prevues.filter((p) => p.sport === 'velo' && dansSemaine(p.date) && p.statut !== 'reportee' && (p.statut === 'faite' || p.date >= aPartirDe)).length
+  const maxSeances = Math.max(0, roles.filter((x) => x.startsWith('velo')).length - dejaLa)
   const placement = placer(semaine, roles, occupations, indispos, aPartirDe, {
+    maxSeances,
     competitions, delaiApresCourse: delaiCourse, dateTest, intensite: !retourArret && (!intensiteFaite || deuxiemeAPlacer) && (!courseSecondaire || dateTest !== undefined), long: !longFaite && !courseRemplaceLong,
     // Semaine du test complet : il est la séance dure et la sortie longue ; le jour « dur » devient une endurance
     nZ2: nZ2 + ((testComplet || testCompletFait) && !longFaite ? 1 : 0) + (retourArret ? 1 : 0),
@@ -1417,6 +1423,11 @@ export async function actualiserSemaineEnCours() {
       refaire = true
     }
     await enregistrer(db.reglages, { id: 'reference-1425', valeur: true })
+  }
+  // 26/11/2026, une fois : semaine en cours recalculée (mêmes réglages) pour retirer une sortie ajoutée un jour sans vélo
+  if (!(await db.reglages.get('jours-1434'))) {
+    await enregistrer(db.reglages, { id: 'jours-1434', valeur: true })
+    if (await lireMeta(lundi)) await genererSemaineVelo(lundi).catch(() => {})
   }
   // 25/11/2026, une fois : saison refaite avec les règles des semaines bridées (référence gardée, +10 % au plus)
   if (!(await db.reglages.get('longue-1433'))) {
